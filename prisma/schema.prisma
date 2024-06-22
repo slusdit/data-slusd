@@ -68,6 +68,7 @@ model VerificationToken {
 model Role {
   id       String     @id @default(cuid())
   name     String     @unique
+  role     ROLE
   users    User[]     @relation("UserRole")
   UserRole UserRole[]
 }
@@ -79,4 +80,12 @@ model UserRole {
   role   Role   @relation(fields: [roleId], references: [id])
 
   @@id([userId, roleId])
+}
+
+
+enum ROLE {
+  USER
+  ADMIN
+  SUPERADMIN
+  HR
 }
