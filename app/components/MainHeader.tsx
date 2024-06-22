@@ -1,6 +1,7 @@
 import Link from "next/link";
 import LoginButton from "./LoginButton";
 import { Button } from "@/components/ui/button";
+import { SignIn } from "./GoogleSignIn";
 
 export default function MainHeader() {
 
@@ -28,6 +29,9 @@ export default function MainHeader() {
                         Data V2.0
                     </Link>
                 </Button>
+            </div>
+            <div>
+                <SignIn />
             </div>
 
 
