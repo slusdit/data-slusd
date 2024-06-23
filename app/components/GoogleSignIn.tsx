@@ -1,15 +1,17 @@
+'use server'
 import { signIn } from "@/auth"
 import { Button } from "@/components/ui/button"
+
+export async function SignInGoogle() {
+  await signIn("google", {
+    redirectTo: "/profile",
+  })
+}
  
-export function SignIn() {
+export async function SignIn() {
     return (
       <form
-        action={async () => {
-          "use server"
-          await signIn("google", {
-            redirectTo: "/profile",
-          })
-        }}
+        action={SignInGoogle}
       >
         <Button 
         className="bg-primary text-primary-foreground hover:bg-primary/90"

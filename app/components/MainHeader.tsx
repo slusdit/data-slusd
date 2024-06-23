@@ -33,11 +33,7 @@ export default function MainHeader() {
                     </Link>
                 </Button>
             </div>
-            <div>
-                <GoogleAuthButton />
-            </div>
-
-
+            
             <div className="hidden w-full md:flex md:items-center md:w-auto" id="menu">
                 <ul
                     className="
