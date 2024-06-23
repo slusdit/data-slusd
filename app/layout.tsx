@@ -31,18 +31,19 @@ export default async function RootLayout({
 }>) {
   // const session = await serverAuth()
   const session = await auth()
+  
   return (
-    <html lang="en" className='no-scrollbar'>
-      <body suppressHydrationWarning={true} className={` ${fontSans.className}`}>
-        <SessionProvider session={session}>
+    <html lang="en" className=''>
+      <body suppressHydrationWarning={true} className={` ${fontSans.className} m-auto w-11/12 `}>
+        {/* <SessionProvider session={session}> */}
           <ThemeProvider
             attribute='class'
             defaultTheme='system'
             enableSystem
             disableTransitionOnChange
           >
-          <MainHeader />
-            <main className="full mb-12">
+          <MainHeader session={session}/>
+            <main className="full mb-12 p-4">
               {session ? children :
                 <UnauthorizedButton
                   home
@@ -51,7 +52,7 @@ export default async function RootLayout({
             </main>
             <MainFooter />
           </ThemeProvider>
-        </SessionProvider>
+        {/* </SessionProvider> */}
       </body>
     </html>
   );

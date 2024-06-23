@@ -13,6 +13,8 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import Link from "next/link";
 import { ModeToggle } from "./ModeToggle";
 import { useRouter } from "next/router";
+import { User } from "@prisma/client";
+import { useState } from "react";
 
 const HandleSignOut = async () => {
     await SignOutGoogle()
@@ -25,46 +27,68 @@ const HandleSignIn = async () => {
 
 }
 
-export default function LoginButton() {
-    const { data: session } = useSession();
-    if (session) {
-    
-    const imgUrl = session?.user?.image ? session.user.image : undefined  
+export default function LoginButton({
+    user
+}: {
+    user: User | null
+}) {
 
-    const userInitials = session.user ? session?.user?.name?.split(" ").map((initial) => initial[0]).join('') : "NA"
-    // const userInitials = "NA"
-            
-        return(
-            <div >
+
+    if (user) {
+
+        const imgUrl = user.image ?? null
+
+        const userInitials = user ? user?.name?.split(" ").map((initial) => initial[0]).join('') : "NA"
+        // const userInitials = "NA"
+
+        return (
+            <div className="" >
                 <Popover>
                     <PopoverTrigger>
-                    <Avatar className=" hover:shadow-md hover:shadow-primary">
-                        <AvatarImage src={imgUrl} />
-                        <AvatarFallback className="text-foreground bg-background">{userInitials}</AvatarFallback>                  
-                    </Avatar> 
+                        <Avatar className=" hover:shadow-md hover:shadow-primary border border-secondary">
+                            <AvatarImage src={imgUrl} />
+                            <AvatarFallback className="bg-popover text-popover-foreground">{userInitials}</AvatarFallback>
+                        </Avatar>
                     </PopoverTrigger>
-                    <PopoverContent className="grid justify-items-center w-80 bg-popover">
-                        <p>Welcome, {session?.user?.name}</p>
-                        <div className="py-2">
+                    <PopoverContent className="flex flex-col items-center justify-items-center w-80 bg-popover sm:mr-10 sm:mt-2">
+                        <p>Welcome, {user.name}</p>
+                        <p className="text-card-foreground/750 font-thin text-sm">{user.email}</p>
+                        <div className="">
 
-                        <ModeToggle />
-                        <Button asChild variant="link" >
-                        <Link href="/profile" className="text-popover-foreground">User Profile</Link>
+                            <div className="flex gap-1 w-2/3">
 
-                        </Button>
+                                <Button asChild variant="link" >
+                                    <Link href="/profile" className="text-popover-foreground">User Profile</Link>
+                                </Button>
+
+                                {/* <Button asChild variant="link" >
+                            <Link href="/watchlist" className="text-popover-foreground">Watchlist</Link>
+                        </Button> */}
+
+                                {user.admin &&
+                                    <Button asChild variant="link" >
+                                        <Link href="/admin" className="text-popover-foreground">Admin</Link>
+                                    </Button>
+                                }
+
+                            </div>
                         </div>
-                        <Button  
-                            onClick={HandleSignOut}
-                            className="m-auto bg-destructive text-destructive-foreground hover:bg-muted hover:text-muted-foreground "
+                        <div className="flex w-full justify-between ">
+                            <ModeToggle />
+
+                            <Button
+                                onClick={HandleSignOut}
+                                className=" w-24 mr-24 bg-destructive text-destructive-foreground hover:bg-muted hover:text-muted-foreground "
                             >
-                            Sign out
-                        </Button>
+                                Sign out
+                            </Button>
+                        </div>
                     </PopoverContent>
                 </Popover>
             </div>
         )
     }
-    return(
+    return (
         <div className="m-auto">
             <Button className="bg-primary hover:bg-muted text-primary-foreground hover:text-muted-foreground" onClick={HandleSignIn}>Sign in</Button>
         </div>

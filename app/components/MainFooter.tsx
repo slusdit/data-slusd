@@ -1,25 +1,28 @@
-'use client'
-import { useSession } from "next-auth/react"
+
 import { Button } from "@/components/ui/button"
 import Link from "next/link";
+import { auth } from "@/auth";
 
-const MainFooter = () => {
-    const {data:session} = useSession()
+export default async function MainFooter(){
+    
+    const session = await auth()
+    console.log(session?.user?.admin)
     return (
-    <footer className="justify-end flex w-full bottom-0 bg-secondary fixed h-10">
-      {/* {
-      // @ts-ignore
-      session?.user?.role.includes("SUPERADMIN") && 
-                        <Button asChild variant="link" className="text-muted-foreground">
-                            <Link
-                                className="md:p-4 py-2 text-muted"
-                                href="/admin"
-                            >
+
+    <footer className="bottom-0 left-0  w-full fixed h-10">
+        <div className="w-11/12 mx-auto bg-title justify-end flex align-middle">
+      {
+          session?.user?.admin && 
+          
+          <Link
+          className="text-primary p-2"
+          href="/admin"
+          >
                                 Admin
                             </Link>
-                        </Button>
-                    } */}
+                       
+                    }
+                    </div>
       </footer>
 )}
 
-export default MainFooter

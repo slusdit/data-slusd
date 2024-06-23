@@ -1,14 +1,15 @@
+'use client'
 import Link from "next/link";
 import LoginButton from "./LoginButton";
 import { Button } from "@/components/ui/button";
 import { SignIn } from "./GoogleSignIn";
 import { SignOut } from "./GoogleSignOut";
 import GoogleAuthButton from "./GoogleAuthButton";
-
-export default function MainHeader() {
-
-    // const session = await serverAuth()   
-
+import { auth } from "@/auth";
+import { User } from "@prisma/client";
+import type { Session } from "next-auth"
+export default function MainHeader({ session }: {session:Session | null}) { 
+    
     return (
         <nav
             className="
@@ -23,6 +24,9 @@ export default function MainHeader() {
           text-xl
           font-bold
           border-b-2
+          border-primary
+          
+
         "
         >
             <div>
@@ -38,13 +42,13 @@ export default function MainHeader() {
                 <ul
                     className="
               text-base 
-              text-secondary
+              text-title-foreground
               md:flex
               md:pt-0"
                 >
                 </ul>
                 <div className="py-3">
-                    <LoginButton />
+                    <LoginButton user={session?.user}/>
                 </div>
             </div>
         </nav>
