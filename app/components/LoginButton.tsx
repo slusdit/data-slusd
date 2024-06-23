@@ -1,6 +1,9 @@
 'use client'
 
-import { signIn, signOut, auth } from "@/auth"
+// import { signIn, signOut, auth } from "@/auth"
+import { SignOutGoogle } from "./GoogleSignOut";
+import { SignInGoogle } from "./GoogleSignIn";
+
 import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button";
 
@@ -9,6 +12,18 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import Link from "next/link";
 import { ModeToggle } from "./ModeToggle";
+import { useRouter } from "next/router";
+
+const HandleSignOut = async () => {
+    await SignOutGoogle()
+    window.location.href = '/'
+}
+
+const HandleSignIn = async () => {
+    await SignInGoogle()
+
+
+}
 
 export default function LoginButton() {
     const { data: session } = useSession();
@@ -39,7 +54,7 @@ export default function LoginButton() {
                         </Button>
                         </div>
                         <Button  
-                            onClick={() => signOut()}
+                            onClick={HandleSignOut}
                             className="m-auto bg-destructive text-destructive-foreground hover:bg-muted hover:text-muted-foreground "
                             >
                             Sign out
@@ -51,7 +66,7 @@ export default function LoginButton() {
     }
     return(
         <div className="m-auto">
-            <Button className="bg-primary hover:bg-muted text-primary-foreground hover:text-muted-foreground" onClick={() => signIn()}>Sign in</Button>
+            <Button className="bg-primary hover:bg-muted text-primary-foreground hover:text-muted-foreground" onClick={HandleSignIn}>Sign in</Button>
         </div>
     )
 }
