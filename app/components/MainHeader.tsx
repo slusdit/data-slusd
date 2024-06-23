@@ -2,6 +2,7 @@ import Link from "next/link";
 import LoginButton from "./LoginButton";
 import { Button } from "@/components/ui/button";
 import { SignIn } from "./GoogleSignIn";
+import { SignOut } from "./GoogleSignOut";
 
 export default function MainHeader() {
 
@@ -32,6 +33,7 @@ export default function MainHeader() {
             </div>
             <div>
                 <SignIn />
+                <SignOut />
             </div>
 
 

@@ -9,7 +9,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import Link from "next/link";
 import { ModeToggle } from "./ModeToggle";
-import { SignOut } from "./GoogleSignOut";
 
 export default function LoginButton() {
     const { data: session } = useSession();
@@ -39,7 +38,12 @@ export default function LoginButton() {
 
                         </Button>
                         </div>
-                        <SignOut />
+                        <Button  
+                            onClick={() => signOut()}
+                            className="m-auto bg-destructive text-destructive-foreground hover:bg-muted hover:text-muted-foreground "
+                            >
+                            Sign out
+                        </Button>
                     </PopoverContent>
                 </Popover>
             </div>
