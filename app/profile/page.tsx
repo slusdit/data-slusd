@@ -10,7 +10,9 @@ export default async function Profile() {
         <div>
             <h1>Profile</h1>
             <GoogleAuthButton />
+            {session?.user?.admin  &&
             <pre>{JSON.stringify(session, null, 2)}</pre>
+            }
         </div>
     );
 }

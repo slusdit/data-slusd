@@ -8,8 +8,11 @@ export function SignOut() {
         "use server"
         await signOut({redirectTo: "/"});
       }}
-    >
-      <Button type="submit">Sign Out</Button>
+      >
+      <Button 
+      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+      type="submit"
+      >Sign Out</Button>
     </form>
   )
 }

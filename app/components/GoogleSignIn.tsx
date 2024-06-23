@@ -1,4 +1,5 @@
 import { signIn } from "@/auth"
+import { Button } from "@/components/ui/button"
  
 export function SignIn() {
     return (
@@ -10,7 +11,11 @@ export function SignIn() {
           })
         }}
       >
-        <button type="submit">Sign in</button>
+        <Button 
+        className="bg-primary text-primary-foreground hover:bg-primary/90"
+        type="submit"
+        
+        >Sign in</Button>
       </form>
     )
   }

@@ -3,6 +3,7 @@ import LoginButton from "./LoginButton";
 import { Button } from "@/components/ui/button";
 import { SignIn } from "./GoogleSignIn";
 import { SignOut } from "./GoogleSignOut";
+import GoogleAuthButton from "./GoogleAuthButton";
 
 export default function MainHeader() {
 
@@ -21,6 +22,7 @@ export default function MainHeader() {
           px-4
           text-xl
           font-bold
+          border-b-2
         "
         >
             <div>
@@ -32,8 +34,7 @@ export default function MainHeader() {
                 </Button>
             </div>
             <div>
-                <SignIn />
-                <SignOut />
+                <GoogleAuthButton />
             </div>
 
 
