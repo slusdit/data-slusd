@@ -12,7 +12,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       if (account?.provider === "google") {
         console.log('~~~~~~~~~~~~ SIGNING IN WITH GOOGLE ~~~~~~~~~~~~')
-        return profile?.email_verified && profile?.email?.endsWith("@slusd.us")
+        // if (profile?.email_verified && /@slusd\.us$/.test(profile?.email as string) && !/\d/.test(profile?.email as string))
+        const profileEmail = profile?.email 
+        console.log({profileEmail})
+        const result =  profile?.email_verified && /@slusd\.us$/.test(profileEmail as string) && !/\d/.test(profileEmail as string) 
+        console.log({result})
+        return result
+        
+        return profile?.email_verified && profile?.email?.endsWith("@slusd.us"  ) 
       }
 
       return true

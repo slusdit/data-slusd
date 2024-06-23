@@ -24,11 +24,12 @@ const UnauthorizedButton = ({
   return (
     <div className="flex">
       {home &&
-        <div className="flex-col items-center m-auto mt-10 rounded-lg place-content-center">
+        <div className="flex-col text-center m-auto mt-10 rounded-lg place-content-center">
           <div className="text-xl font-weight-800 mb-5">
-            Welcome!
+            Welcome to SLUSD Data 2.0! <br />
+            Please sign in.
           </div>
-          <LoginButton />
+          <LoginButton user={null} />
         </div>
       }
       {signIn &&
