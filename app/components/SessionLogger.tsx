@@ -11,7 +11,7 @@ export default function SessionLogger(
 ) {
     return (<Button
         onClick={() => {
-            console.log({ session })
+            console.log( session )
         }}
     > Click to log session
 
