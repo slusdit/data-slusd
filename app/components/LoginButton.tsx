@@ -41,6 +41,7 @@ export default function LoginButton({
 
     if (user) {
         if (!imgUrl) {
+            setImgUrl(user.image)
 
 
 
