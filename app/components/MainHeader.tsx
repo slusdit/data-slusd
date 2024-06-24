@@ -1,4 +1,4 @@
-'use client'
+
 import Link from "next/link";
 import LoginButton from "./LoginButton";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ export default function MainHeader({ session }: {session:Session | null}) {
         <nav
             className="
           flex flex-wrap
+          h-[4.5rem]
           items-center
           justify-between
           bg-title

@@ -14,7 +14,7 @@ import Link from "next/link";
 import { ModeToggle } from "./ModeToggle";
 import { useRouter } from "next/router";
 import { User } from "@prisma/client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const HandleSignOut = async () => {
     await SignOutGoogle()
@@ -32,11 +32,20 @@ export default function LoginButton({
 }: {
     user: User | null
 }) {
+    const [imgUrl, setImgUrl] = useState<string | null>()
 
+    useEffect(() => {
+
+        setImgUrl(user?.image)
+    }, [])
 
     if (user) {
+        if (!imgUrl) {
 
-        const imgUrl = user.image ?? null
+
+
+        }
+
 
         const userInitials = user ? user?.name?.split(" ").map((initial) => initial[0]).join('') : "NA"
         // const userInitials = "NA"

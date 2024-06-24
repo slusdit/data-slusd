@@ -34,7 +34,7 @@ export default async function RootLayout({
   
   return (
     <html lang="en" className='bg-background'>
-      <body suppressHydrationWarning={true} className={` ${fontSans.className} m-auto w-11/12 min-h-screen bg-title/25 border-primary/10 border-x-2`}>
+      <body suppressHydrationWarning={true} className={` ${fontSans.className} m-auto w-11/12 min-h-screen bg-card/25 border-primary/10 border-x-2`}>
         {/* <SessionProvider session={session}> */}
           <ThemeProvider
             attribute='class'
