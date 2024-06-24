@@ -9,8 +9,8 @@ export default async function MainFooter(){
     console.log(session?.user?.admin)
     return (
 
-    <footer className="bottom-0 left-0  w-full fixed h-10">
-        <div className="w-11/12 mx-auto bg-title justify-end flex align-middle">
+    <footer className="bottom-0 left-0  w-full fixed">
+        <div className="w-11/12 mx-auto bg-title justify-end flex align-middle h-10">
       {
           session?.user?.admin && 
           
