@@ -18,6 +18,7 @@ export default async function Home() {
         }
 
         <li><Link href="/profile" className="hover:underline">Profile</Link></li>
+        <li><Link href="/test/1" className="hover:underline">Test</Link></li>
 
       </ul>
     </div>
