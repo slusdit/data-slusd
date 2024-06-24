@@ -30,7 +30,7 @@ export default async function Home() {
       <h2 className="font-bold text-2xl mb-4">Queries</h2>
       <ul className="flex flex-col gap-1 w-2/3">
 
-        <li><Link href="/query/1" className="hover:underline">Query 1</Link></li>
+        
         {queries.map(query => (
           <li key={query.id}>
             <Link href={`/query/${query.label}`} className="hover:underline">

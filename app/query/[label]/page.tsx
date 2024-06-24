@@ -23,7 +23,7 @@ export default async function Page({ params }: { params: { label: string } }) {
             <br />
             <code id="query" className="text-sm border bg-card p-2">{query}</code>
             <h2 className="text-xl underline font-bold mt-2">Data:</h2>
-            <ul>{(await data).map((row) => <li>{JSON.stringify(row)}</li>)}</ul>
+            <ul>{(await data).map((row) => <li>{JSON.stringify(row, null, 2)}</li>)}</ul>
         </div>
     )
 }
