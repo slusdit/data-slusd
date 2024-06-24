@@ -44,6 +44,7 @@ export async function runQuery(query?: string, params: any[] = []) {
     });
     const result = await request.query(query);
     console.log('SQL result', result.recordset);
+    closePool();
     return result.recordset;
   } catch (err) {
     console.error('SQL error', err);
