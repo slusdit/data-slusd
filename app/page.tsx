@@ -33,7 +33,7 @@ export default async function Home() {
         
         {queries.map(query => (
           <li key={query.id}>
-            <Link href={`/query/${query.label}`} className="hover:underline">
+            <Link href={`/query/${query.id}`} className="hover:underline">
               {query.name}
             </Link>
           </li>
