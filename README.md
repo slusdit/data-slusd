@@ -12,6 +12,7 @@ First, sync the database:
 
 ```bash
 npx prisma db push
+
 ```
 
 :warning:If you get an error about missing dependencies, run `npx prisma generate` to fix it.
