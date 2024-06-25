@@ -18,12 +18,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         console.log("~~~~~~~~~~~~ SIGNING IN WITH GOOGLE ~~~~~~~~~~~~");
         const profileEmail = profile?.email;
         console.log({ profileEmail });
-        const result =
-          profile?.email_verified &&
-          /@slusd\.us$/.test(profileEmail as string) &&
-          !/\d/.test(profileEmail as string);
-        console.log({ result });
-        return result;
+       
+        // TODO:Query Aeries if email is a teacher to pull their school
 
         return profile?.email_verified && profile?.email?.endsWith("@slusd.us");
       }
@@ -33,9 +29,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async session({ session, user }) {
       const dbUser = await prisma.user.findUnique({
         where: { id: user.id },
-        include: { userRole: true }, // Include roles if needed
+        include: {
+          userRole: true,
+          school: true,
+        }, // Include roles if needed
       });
-
+      session.user.schools = dbUser?.school.map((school) => school.sc) || [];
       session.user.roles = dbUser?.userRole.map((role) => role.role) || [];
       return session;
     },
