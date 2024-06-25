@@ -34,7 +34,7 @@ export default async function RootLayout({
   
   return (
     <html lang="en" className='bg-background'>
-      <body suppressHydrationWarning={true} className={` ${fontSans.className} m-auto w-11/12 min-h-screen bg-card/25 border-primary/10 border-x-2`}>
+      <body suppressHydrationWarning={true} className={` ${fontSans.className} m-auto  w-full min-h-screen bg-card/25 border-primary/10 border-x-2`}>
         {/* <SessionProvider session={session}> */}
           <ThemeProvider
             attribute='class'
@@ -43,7 +43,7 @@ export default async function RootLayout({
             disableTransitionOnChange
           >
           <MainHeader session={session}/>
-            <main className="full mb-12 p-4">
+            <main className="w-full mb-12 mx-4">
               {session ? children :
                 <UnauthorizedButton
                   home
