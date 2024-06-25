@@ -24,7 +24,8 @@ model User {
   email         String?         @unique
   emailVerified DateTime?
   image         String?
-  userRole      Role[]          @relation("UserRole") 
+  queryEdit     Boolean         @default(false)
+  userRole      Role[]          @relation("UserRole")
   role          ROLE            @default(USER)
   admin         Boolean         @default(false)
   Session       Session[]
@@ -102,6 +103,8 @@ model Role {
   role     ROLE
   users    User[]     @relation("UserRole")
   UserRole UserRole[]
+  Query    Query?     @relation(fields: [queryId], references: [id])
+  queryId  String?
 }
 
 model UserRole {
@@ -118,4 +121,34 @@ enum ROLE {
   ADMIN
   SUPERADMIN
   HR
+}
+
+// Backend and Query tables
+
+model Query {
+  id          String            @id @default(cuid())
+  query       String
+  name        String
+  label       String            @unique
+  createdBy   String
+  description String
+  publicQuery Boolean           @default(false)
+  roles       Role[]
+  categories  QueryToCategory[] @relation("QueryToCategory")
+}
+
+model QueryCategory {
+  id      String            @id @default(cuid())
+  label   String            @unique
+  value   String            @unique
+  queries QueryToCategory[] @relation("QueryToCategory")
+}
+
+model QueryToCategory {
+  queryId    String
+  categoryId String
+  query      Query         @relation(name: "QueryToCategory", fields: [queryId], references: [id], onDelete: Cascade)
+  category   QueryCategory @relation(name: "QueryToCategory", fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([queryId, categoryId])
 }

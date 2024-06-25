@@ -12,6 +12,7 @@ First, sync the database:
 
 ```bash
 npx prisma db push
+
 ```
 
 :warning:If you get an error about missing dependencies, run `npx prisma generate` to fix it.
@@ -46,4 +47,32 @@ Open [http://localhost:3000](http://localhost:3000) or URL with your browser to 
 
 ## Backend
 
-Look at [backend branch...](https://github.com/dmellons-slusd/data-slusd/tree/Backend)
+### Query Builder
+
+Built with direct connection to Aeries database using config in `/lib/aeries.ts`
+
+~~Fast API server is running on [http://localhost:8000](http://localhost:8000)
+Using same .env file as frontend~~
+
+~~### FastAPI Getting Started~~
+
+~~First install the dependencies:~~
+
+```bash
+pip install -r requirements.txt
+```
+
+~~Then, run the development server:~~
+
+:warning: **Forwarding port 8000 if development server is not on non-local server**
+
+
+
+```bash
+python main.py
+# or
+python3 main.py
+```
+
+~~Open [http://localhost:8000/docs](http://localhost:8000/docs) or URL with your browser to see the result.~~
+
