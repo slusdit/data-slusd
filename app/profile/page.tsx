@@ -4,7 +4,6 @@ import GoogleAuthButton from "@/app/components/GoogleAuthButton";
 export default async function Profile() {
 
     const session = await auth()
-    const user = await user()
     console.log({session})
 
     return (
