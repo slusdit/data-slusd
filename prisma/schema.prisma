@@ -18,24 +18,25 @@ datasource db {
 // //
 
 model User {
-  id            String          @id @default(cuid())
-  name          String?
-  username      String?         @unique
-  email         String?         @unique
+  id    String  @id @default(cuid())
+  name  String?
+  email String? @unique
+  image String?
+
+  school        SchoolInfo[]    @relation("UserSchool")
   emailVerified DateTime?
-  image         String?
   queryEdit     Boolean         @default(false)
-  userRole      Role[]          @relation("UserRole")
-  role          ROLE            @default(USER)
   admin         Boolean         @default(false)
+  userRole      Role[]          @relation("UserRole")
+  primaryRole   ROLE            @default(USER)
   Session       Session[]
   Account       Account?
   // Optional for WebAuthn support
   Authenticator Authenticator[]
-
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  UserRole  UserRole[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  UserRole      UserRole[]
+  UserSchool    UserSchool[]
 }
 
 model Account {
@@ -107,6 +108,23 @@ model Role {
   queryId  String?
 }
 
+model SchoolInfo {
+  id         String       @id @default(cuid())
+  sc         String       @unique
+  name       String
+  users      User[]       @relation("UserSchool")
+  UserSchool UserSchool[]
+}
+
+model UserSchool {
+  userId   String
+  schoolSc String
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  school   SchoolInfo @relation(fields: [schoolSc], references: [id])
+
+  @@id([userId, schoolSc])
+}
+
 model UserRole {
   userId String
   roleId String
@@ -116,31 +134,34 @@ model UserRole {
   @@id([userId, roleId])
 }
 
+// Backend and Query tables
+
+model Query {
+  id          String         @id @default(cuid())
+  query       String
+  name        String
+  label       String         @unique
+  createdBy   String
+  description String
+  publicQuery Boolean        @default(false)
+  roles       Role[]         @relation
+  categoryId  String?
+  category    QueryCategory? @relation(fields: [categoryId], references: [id])
+}
+
+model QueryCategory {
+  id      String  @id @default(cuid())
+  label   String  @unique
+  value   String  @unique
+  queries Query[] @relation
+}
+
 enum ROLE {
   USER
   ADMIN
   SUPERADMIN
   HR
-}
-
-// Backend and Query tables
-
-model Query {
-  id          String          @id @default(cuid())
-  query       String
-  name        String
-  label       String          @unique
-  createdBy   String
-  description String
-  publicQuery Boolean         @default(false)
-  roles       Role[]          @relation
-  categoryId  String?
-  category    QueryCategory?  @relation(fields: [categoryId], references: [id])
-}
-
-model QueryCategory {
-  id      String    @id @default(cuid())
-  label   String    @unique
-  value   String    @unique
-  queries Query[]   @relation
+  TEACHER
+  SITEADMIN
+  STAFF
 }
