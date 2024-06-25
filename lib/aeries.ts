@@ -1,6 +1,7 @@
 'use server'
 
 import sql from 'mssql';
+import { Dispatch, SetStateAction } from 'react';
 
 // Define the configuration for your SQL Server
 const config = {
@@ -32,23 +33,44 @@ const poolPromise = new sql.ConnectionPool(config)
   });
 
 // Function to execute a query
-export async function runQuery(query?: string, params: any[] = []) {
-  if(!query){
-    query = "SELECT to 30 * from stu";
-  }
+export async function runQuery(query: string,
+  //  params: any[] = []
+  ) {
+
+    const queryBlockList = ['drop', 'update', 'insert', 'delete']
+    const queryLower = query?.toLowerCase()
+    if (queryBlockList.some(term => queryLower?.includes(term))) {
+      throw Error('Dangerous query')
+    }
+
+    const cleanQuery = query?.replace(/\s+/g, ' ').trim();
+    // const cleanRegex = /^[a-zA-Z0-9\s\(\),.=<>]+$/;
+    // if (!cleanRegex.test(cleanQuery)) {
+    //   throw Error('Invalid query');
+    // }
   const pool = await poolPromise;
   try {
     const request = pool.request();
-    params.forEach((param, index) => {
-      request.input(`param${index + 1}`, param);
-    });
-    const result = await request.query(query);
-    console.log('SQL result', result.recordset);
-    closePool();
-    return result.recordset;
+    // params.forEach((param, index) => {
+    //   request.input(`param${index + 1}`, param);
+    // });
+    let result;
+    try {
+
+       result = await request.query(query);
+
+      console.log('SQL result', result.recordset);
+      // await closePool(); 
+      return result.recordset;
+    } catch (error) {
+      closePool();
+      console.error('SQL error', error);
+      throw new Error('SQL error', { cause: error })
+      // setError(error)
+    }
   } catch (err) {
     console.error('SQL error', err);
-    throw err;
+    throw new Error('SQL error', { cause: err }) // err;
   }
 }
 
