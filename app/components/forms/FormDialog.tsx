@@ -29,7 +29,7 @@ export default function FormDialog({
             <DialogContent>
                 <DialogTitle>{title ?? ''}</DialogTitle>
                 {children}
-                <DialogFooter className="justify-start">
+                <DialogFooter >
 
                     <DialogClose asChild>
                         <Button type="button" variant="link">

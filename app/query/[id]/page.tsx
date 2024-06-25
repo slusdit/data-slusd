@@ -1,4 +1,5 @@
 import QueryInput from "@/app/components/QueryInput";
+import FormDialog from "@/app/components/forms/FormDialog";
 import { auth } from "@/auth";
 import { Input } from "@/components/ui/input";
 import { runQuery } from "@/lib/aeries";
@@ -17,7 +18,12 @@ export default async function Page({ params }: { params: { id: string } }) {
 
     return (
       <div>
+        
         <h1 className="text-3xl Underline font-bold">{result.name}</h1>
+        <FormDialog triggerMessage="+ Add Query" title="Add Query"  formId="editQueryForm">
+
+        </FormDialog>
+        <br></br>
         <label htmlFor="description">Description:</label>
         <div id="description">{result.description}</div>
         <p>Public/Private: {result.publicQuery ? "Public" : "Private"}</p>
