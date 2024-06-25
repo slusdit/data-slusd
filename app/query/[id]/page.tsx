@@ -6,10 +6,10 @@ import { PrismaClient } from "@prisma/client";
 import { Query } from "@prisma/client";
 
 const prisma = new PrismaClient();
-export default async function Page({ params }: { params: { label: string } }) {
+export default async function Page({ params }: { params: { id: string } }) {
   const session = await auth();
-  const label = params.label;
-  const result = await prisma.query.findUnique({ where: { label: label } }); //const {id, name, query, description, publicQuery, createdBy }:Query | null = await prisma.query.findUnique({ where: { label: label } })
+  const id = params.id;
+  const result = await prisma.query.findUnique({ where: { id: id } }); //const {id, name, query, description, publicQuery, createdBy }:Query | null = await prisma.query.findUnique({ where: { label: label } })
   console.log(result);
   if (result) {
     const data = await runQuery(result?.query);
