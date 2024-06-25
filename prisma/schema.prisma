@@ -108,10 +108,11 @@ model Role {
 }
 
 model UserRole {
-  userId  String
-  roleId  String
-  user    User    @relation(fields: [userId], references: [id])
-  role    Role    @relation(fields: [roleId], references: [id])
+  userId String
+  roleId String
+  user   User   @relation(fields: [userId], references: [id])
+  role   Role   @relation(fields: [roleId], references: [id])
+
   @@id([userId, roleId])
 }
 
@@ -125,13 +126,29 @@ enum ROLE {
 // Backend and Query tables
 
 model Query {
-  id                String     @id @default(cuid())
-  query             String
-  name              String
-  label             String      @unique
-  createdBy         String
-  category          String
-  description       String      
-  publicQuery       Boolean     @default(false)
-  roles             Role[]
+  id          String            @id @default(cuid())
+  query       String
+  name        String
+  label       String            @unique
+  createdBy   String
+  description String
+  publicQuery Boolean           @default(false)
+  roles       Role[]
+  categories  QueryToCategory[] @relation("QueryToCategory")
+}
+
+model QueryCategory {
+  id      String            @id @default(cuid())
+  label   String            @unique
+  value   String            @unique
+  queries QueryToCategory[] @relation("QueryToCategory")
+}
+
+model QueryToCategory {
+  queryId    String
+  categoryId String
+  query      Query         @relation(name: "QueryToCategory", fields: [queryId], references: [id], onDelete: Cascade)
+  category   QueryCategory @relation(name: "QueryToCategory", fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([queryId, categoryId])
 }
