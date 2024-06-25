@@ -134,7 +134,7 @@ model Query {
   description String
   publicQuery Boolean         @default(false)
   roles       Role[]
-  categoryId  String
+  categoryId  String?
   category    QueryCategory?   @relation(fields: [categoryId], references: [id])
 }
 
