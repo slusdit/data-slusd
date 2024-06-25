@@ -126,29 +126,21 @@ enum ROLE {
 // Backend and Query tables
 
 model Query {
-  id          String            @id @default(cuid())
+  id          String          @id @default(cuid())
   query       String
   name        String
-  label       String            @unique
+  label       String          @unique
   createdBy   String
   description String
-  publicQuery Boolean           @default(false)
+  publicQuery Boolean         @default(false)
   roles       Role[]
-  categories  QueryToCategory[] @relation("QueryToCategory")
+  categoryId  String
+  category    QueryCategory?   @relation(fields: [categoryId], references: [id])
 }
 
 model QueryCategory {
-  id      String            @id @default(cuid())
-  label   String            @unique
-  value   String            @unique
-  queries QueryToCategory[] @relation("QueryToCategory")
-}
-
-model QueryToCategory {
-  queryId    String
-  categoryId String
-  query      Query         @relation(name: "QueryToCategory", fields: [queryId], references: [id], onDelete: Cascade)
-  category   QueryCategory @relation(name: "QueryToCategory", fields: [categoryId], references: [id], onDelete: Cascade)
-
-  @@id([queryId, categoryId])
+  id      String    @id @default(cuid())
+  label   String    @unique
+  value   String    @unique
+  queries Query[]   @relation
 }
