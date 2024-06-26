@@ -56,7 +56,10 @@ export async function runQuery(query: string,
     // });
     let result;
     try {
-
+        const schoolCode = '9'; // TODO: get from session, feed in from auth() call
+        if (query.includes('@sc')) {
+          query = query.replace('@sc', schoolCode);
+        }
        result = await request.query(query);
 
       console.log('SQL result', result.recordset);
