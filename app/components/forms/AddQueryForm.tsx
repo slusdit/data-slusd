@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/select";
 import { useEffect } from "react";
 import { PrismaClient } from "@prisma/client";
+import { addQuery } from "@/lib/formActions";
 
 const prisma = new PrismaClient();
 type PageValues = {
@@ -50,14 +51,14 @@ interface Props {
   dialogState?: () => void;
 }
 
-const formSchema = z.object({
-  id: z.string(),
+export const queryFormSchema = z.object({
   query: z.string().min(1, { message: "Query must not be empty" }),
   name: z.string().min(1, { message: "Query Titel must not be empty" }),
   // label: z.string(),
   createdBy: z.string().email({ message: "Must be a valid email" }),
   description: z.string().min(1, { message: "Description must not be empty" }),
   publicQuery: z.boolean().default(false),
+  categoryId: z.string().optional(),
 });
 
 export default function AddQueryForm({
@@ -76,87 +77,61 @@ export default function AddQueryForm({
 
   //   {query, name, description, publicQuery, categoryId, id}  = pageValues
   // }
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<z.infer<typeof queryFormSchema>>({
+    resolver: zodResolver(queryFormSchema),
     defaultValues: {
       query: query ?? "",
       createdBy: createdBy ?? "",
       name: name ?? "",
       description: description ?? "",
       publicQuery: publicQuery ?? false,
-      // categoryId: categoryId ?? "",
+      categoryId: categoryId ?? "",
     },
   });
 
+  function onError(errors: any) {
+    console.log("Form validation failed", errors);
+  }
+
   // const { closeDialog } = useDialog()
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof queryFormSchema>) {
     console.log("submit");
-    
+    console.log('values', {values})
+    try {
+      // TODO: validate SQL, try running it?
 
-    // try {
+    } catch (e) {
+      console.error(e);
+      toast.error(`Error running query \n Error: ${e}`);
+    }
+
+    try {
       console.log(`Values - ${JSON.stringify(values)}`);
-
-      const response = await fetch("/api/credential/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(values),
-      });
-      const credential = await response.json();
+      const response = await addQuery(values);
+      console.log({response})
+      // const query = await response.json();
       form.reset();
-      toast.success("Credential inserted successfully");
-
-    // } catch (e) {
-    //   toast.error(`Error creating credential \n Error: ${e}`);
-    // }
+      toast.success("Query inserted successfully");
+    } catch (e) {
+      console.error(e);
+      toast.error(`Error creating query \n Error: ${e}`);
+    }
   }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <div className="flex w-full m-2 jutify-between">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>
-                  Query Name<span className="text-red-500">*</span>
-                </FormLabel>
-                <FormControl>
-                  <Input placeholder={name} {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="createdBy"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>
-                  Created By<span className="text-red-500">*</span>
-                </FormLabel>
-                <FormControl>
-                  <Input className="w-fit" {...field} disabled />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+    <form onSubmit={form.handleSubmit(onSubmit, onError)} className="space-y-8">
+      <div className="flex w-full m-2 justify-between">
         <FormField
           control={form.control}
-          name="description"
+          name="name"
           render={({ field }) => (
             <FormItem>
               <FormLabel>
-                Description<span className="text-red-500">*</span>
+                Query Name<span className="text-red-500">*</span>
               </FormLabel>
               <FormControl>
-                <Input placeholder={description} {...field} />
+                <Input placeholder={name} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -164,80 +139,107 @@ export default function AddQueryForm({
         />
         <FormField
           control={form.control}
-          name="query"
+          name="createdBy"
           render={({ field }) => (
             <FormItem>
               <FormLabel>
-                Query<span className="text-red-500">*</span>
+                Created By<span className="text-red-500">*</span>
               </FormLabel>
               <FormControl>
-                <Input placeholder={query} {...field} />
+                <Input className="w-fit" {...field} disabled />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
+      </div>
+      <FormField
+        control={form.control}
+        name="description"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>
+              Description<span className="text-red-500">*</span>
+            </FormLabel>
+            <FormControl>
+              <Input placeholder={description} {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="query"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>
+              Query<span className="text-red-500">*</span>
+            </FormLabel>
+            <FormControl>
+              <Input placeholder={query} {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
 
-        <div className="p-2 border-2 rounded w-full">
+      <div className="flex justify-between w-full p-2 border-2 rounded">
+        <FormField
+          control={form.control}
+          name="publicQuery"
+          render={({ field }) => (
+            <FormItem className="m-1">
+              <FormLabel className="m-1">Public Query</FormLabel>
+              <FormControl>
+                <Switch
+                  {...field}
+                  id="publicQuery"
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                  
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
           <FormField
-            control={form.control}
-            name="publicQuery"
-            render={({ field }) => (
-              <FormItem className="m-1">
-                <FormLabel>Public Query</FormLabel>
-                <FormControl>
-                  <Switch
-                    {...field}
-                    id="publicQuery"
-                    label="Public Query"
-                    defaultChecked={publicQuery}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="categoryId"
-            render={({ field }) => (
-              <FormItem className="m-1">
-                <FormLabel>Query Category</FormLabel>
-                <FormControl>
-                  <Select>
-                    <SelectTrigger className="w-1/2">
-                      <SelectValue placeholder="Select a category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                      <SelectItem
-                            id="0"
-                            value={null}
-                          >
-                            None
-                          </SelectItem>
-                        {categories.map((category) => (
-                          <SelectItem
-                            id={category.id}
-                            value={category.value}
-                          >
-                            {category.label}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        <Button type="submit">
-          {submitTitle ?? "Add"}
-          <Plus className="py-1" />
-        </Button>
-      </form>
-    </Form>
+          className="w-full"
+          control={form.control}
+          name="categoryId"
+          render={({ field }) => (
+            <FormItem className="m-1">
+              <FormLabel>Query Category</FormLabel>
+              <FormControl>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <SelectTrigger className="w-1/2">
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem key="0" value="0">
+                        None
+                      </SelectItem>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.label}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+      <Button type="submit">
+        {submitTitle ?? "Add"}
+        <Plus className="py-1" />
+      </Button>
+    </form>
+  </Form>
   );
 }
