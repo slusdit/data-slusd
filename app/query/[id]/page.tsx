@@ -2,14 +2,11 @@ import QueryInput from "@/app/components/QueryInput";
 import AddQueryForm from "@/app/components/forms/AddQueryForm";
 import FormDialog from "@/app/components/forms/FormDialog";
 import { auth } from "@/auth";
-import { Input } from "@/components/ui/input";
 import { runQuery } from "@/lib/aeries";
 import { PrismaClient } from "@prisma/client";
-import { Query } from "@prisma/client";
 import { Plus } from "lucide-react";
-import { DataTable } from "./datatable/QueryDataTable";
-import { columns } from "./datatable/columns";
 import DynamicTable from "@/app/components/DynamicTable";
+import { format } from "sql-formatter";
 
 const prisma = new PrismaClient();
 export default async function Page({ params }: { params: { id: string } }) {
@@ -59,7 +56,7 @@ export default async function Page({ params }: { params: { id: string } }) {
               <label htmlFor="query">Query: </label>
               <div className="max-w-[650px]">
             <div id="query" className="border bg-card p-2 ">
-              {result.query}
+              {format(result.query, { language: "sql" }) || result.query}
             </div>
               </div>
 

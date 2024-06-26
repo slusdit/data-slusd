@@ -94,11 +94,15 @@ export async function runQuery(
 
     let result;
     try {
-      const schoolCode = await getSchoolsFromEmail({ email,  pool });
+     
+      
+      // TEST: Remove email to test @@sc overrice
+      const schoolCode = await getSchoolsFromEmail({ email:email,  pool });
+
       console.log(schoolCode);
       
       // Handle @SC variable
-      if (query.includes("@sc")) {
+      if (query.includes("@@sc")) {
         if (schoolCode === "0") {
           let allSchools:
             | {
@@ -112,14 +116,14 @@ export async function runQuery(
           allSchools = allSchools.map((school) => `${school.sc}`).join(",");
           console.log("All schools", allSchools);
 
-          query = query.replace("= @sc", `in (${allSchools})`);
+          query = query.replace("= @@sc", `in (${allSchools})`);
           console.log("Query", query);
         } else {
           if (typeof schoolCode === "string") {
-            query = query.replace("@sc", schoolCode);
+            query = query.replace("@@sc", schoolCode);
           }
           if (Array.isArray(schoolCode)) {
-            query = query.replace("= @sc", `in (${schoolCode.join(",")})`); // TODO: make this work with comma separated school codes
+            query = query.replace("= @@sc", `in (${schoolCode.join(",")})`); // TODO: make this work with comma separated school codes
           }
           console.log("Query", query);
         }
