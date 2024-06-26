@@ -1,10 +1,12 @@
 import QueryInput from "@/app/components/QueryInput";
+import AddQueryForm from "@/app/components/forms/AddQueryForm";
 import FormDialog from "@/app/components/forms/FormDialog";
 import { auth } from "@/auth";
 import { Input } from "@/components/ui/input";
 import { runQuery } from "@/lib/aeries";
 import { PrismaClient } from "@prisma/client";
 import { Query } from "@prisma/client";
+import { Plus } from "lucide-react";
 
 const prisma = new PrismaClient();
 export default async function Page({ params }: { params: { id: string } }) {
@@ -20,8 +22,8 @@ export default async function Page({ params }: { params: { id: string } }) {
       <div>
         
         <h1 className="text-3xl Underline font-bold">{result.name}</h1>
-        <FormDialog triggerMessage="+ Add Query" title="Add Query"  formId="editQueryForm">
-
+        <FormDialog triggerMessage="Add Query" icon={<Plus className="py-1" />} title="Add Query" >
+          <AddQueryForm session={session} query={result.query}  />
         </FormDialog>
         <br></br>
         <label htmlFor="description">Description:</label>
@@ -36,13 +38,13 @@ export default async function Page({ params }: { params: { id: string } }) {
             {result.createdBy}{" "}
           </a>
         </p>
-        <label htmlFor="query">Query:</label>
-        <br />
+        
         {session?.user?.queryEdit ? (
-          <QueryInput initialValue={result.query} initialResult={data} />
+          <QueryInput  pageValues={result} initialResult={data} />
         ) : (
           <>
-            <code id="query">{result.query}</code>
+            <label htmlFor="query" >Query: </label>
+            <code id="query" className="border bg-card p-2 ">{result.query}</code>
 
             <h2 className="text-xl underline font-bold mt-2">Data:</h2>
             <ul>

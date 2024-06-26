@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { toast } from "sonner"
-import { useSession } from 'next-auth/react'
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+import { useSession } from "next-auth/react";
 import {
   Form,
   FormControl,
@@ -14,73 +14,83 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form"
-import { Plus, Save, Send } from "lucide-react"
-import { User } from "next-auth"
+} from "@/components/ui/form";
+import { Plus, Save, Send } from "lucide-react";
+import { Session } from "next-auth";
+import { Switch } from "@/components/ui/switch";
 
-
+type PageValues = {
+  id: string;
+  query: string;
+  name: string;
+  label: string;
+  createdBy: string;
+  description: string;
+  publicQuery: boolean;
+  categoryId: string | null; 
+}
 interface Props {
-  user: User
-  query: string
-  submitTitle?: string
-  dialogState?: () => void
-  icon: React.ReactElement
+  session: Session;
+  // query: string;
+  submitTitle?: string;
+  pageValues?: PageValues;
+  dialogState?: () => void;
+  icon: React.ReactElement;
 }
 
+
 const formSchema = z.object({
-  seid: z.string().safeParse(undefined),
-  created_by: z.string().email({
-    message: "Must be a valid email"
-  }),
-  docTitle: z.string().min(1, { message: "Document Title must not be empty" }),
-  authCode: z.string().min(1, { message: "Authorization Code must not be empty" }),
-  subjectCodeMajor: z.string().optional(),
-  subjectCodeMinor: z.string().optional(),
+  id: z.string(),
+  query: z.string().min(1, { message: "Query must not be empty" }),
+  name: z.string().min(1, { message: "Query Titel must not be empty" }),
+  // label: z.string(),
+  createdBy: z.string().email({ message: "Must be a valid email" }),
+  description: z.string().min(1, { message: "Description must not be empty" }),
+  publicQuery: z.boolean().default(false),
 
-})
+});
 
-export function CredentialForm({
-  seid,
-  docTitle,
-  authCode,
+export default function AddQueryForm({
+  session,
+  // query,
   submitTitle,
+  pageValues,
   dialogState,
-  icon
- }: Props) {
-  const session = useSession()
-  const created_by = session.data?.user?.email?.toString()
+  icon,
+}: Props) {
+  const createdBy = session.user?.email?.toString();
+  let {query, name, description, publicQuery, categoryId, id} = pageValues || {}
+  // if (pageValues) {
+    
+  //   {query, name, description, publicQuery, categoryId, id}  = pageValues
+  // } 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      seid: seid ?? '',
-      docTitle: docTitle ?? '',
-      authCode: authCode ?? '',
-      created_by: created_by,
-
-    }
-  })
+      query: query ?? "",
+    },
+  });
 
   // const { closeDialog } = useDialog()
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log('submit')
+    console.log("submit");
 
     try {
-      console.log(`Values - ${JSON.stringify(values)}`)
+      console.log(`Values - ${JSON.stringify(values)}`);
 
-      const response = await fetch('/api/credential/', {
+      const response = await fetch("/api/credential/", {
         method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(values)
+        body: JSON.stringify(values),
       });
-      const credential = await response.json()
-      form.reset()
-      toast.success("Credential inserted successfully")
+      const credential = await response.json();
+      form.reset();
+      toast.success("Credential inserted successfully");
       // closeDialog()
-
     } catch (e) {
-      toast.error(`Error creating credential \n Error: ${e}`)
+      toast.error(`Error creating credential \n Error: ${e}`);
     }
   }
 
@@ -88,45 +98,48 @@ export function CredentialForm({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <div className="flex w-full m-2 jutify-between">
-
+          
         <FormField
           control={form.control}
-          name="seid"
+          name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Teacher Seid<span className="text-red-500">*</span></FormLabel>
+              <FormLabel>
+                Query Name<span className="text-red-500">*</span>
+              </FormLabel>
               <FormControl>
-                {seid ?
-                  <Input value={seid} disabled /> :
-                  <Input placeholder="seid" {...field} />
-                }
+                <Input placeholder={name} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
+        />
+          <FormField
+            control={form.control}
+            name="createdBy"
+            render={({ field }) => (   
+              <FormItem>
+                <FormLabel>
+                  Created By<span className="text-red-500">*</span>
+                </FormLabel>
+                <FormControl>
+                  <Input className="w-fit" placeholder={createdBy} {...field} disabled />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
+        </div>
         <FormField
           control={form.control}
-          name="created_by"
+          name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Entered By<span className="text-red-500">*</span></FormLabel>
+              <FormLabel>
+                Description<span className="text-red-500">*</span>
+              </FormLabel>
               <FormControl>
-                <Input  {...field} disabled /> 
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-          />
-          </div>
-        <FormField
-          control={form.control}
-          name="docTitle"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Document Title<span className="text-red-500">*</span></FormLabel>
-              <FormControl>
-                <Input placeholder="Doc Title" {...field} />
+                <Input   {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -134,26 +147,31 @@ export function CredentialForm({
         />
         <FormField
           control={form.control}
-          name="authCode"
+          name="query"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Authorization Code<span className="text-red-500">*</span></FormLabel>
+              <FormLabel>
+                Query<span className="text-red-500">*</span>
+              </FormLabel>
               <FormControl>
-                <Input placeholder="Authorization Code" {...field} />
+                <Input {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
+        
+        
         <div className="flex p-2 border-2 rounded">
           <FormField
             control={form.control}
-            name="subjectCodeMajor"
+            name="publicQuery"
             render={({ field }) => (
               <FormItem className="m-1">
-                <FormLabel>Subject Code Major</FormLabel>
+                <FormLabel>Public Query</FormLabel>
                 <FormControl>
-                  <Input placeholder="Subject Code Major" {...field} />
+                  <Switch {...field} label="Public Query" defaultChecked={false} />
+                  
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -173,10 +191,11 @@ export function CredentialForm({
             )}
           />
         </div>
-        <Button
-          type="submit"
-        >{submitTitle ?? "Add"}<Save className="py-1"/></Button>
+        <Button type="submit">
+          {submitTitle ?? "Add"}
+          <Save className="py-1" />
+        </Button>
       </form>
     </Form>
-  )
+  );
 }

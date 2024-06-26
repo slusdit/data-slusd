@@ -6,13 +6,13 @@ import { IRecordSet } from "mssql";
 import { useState } from "react";
 
 const QueryInput = ({
-  initialValue = "",
+  initialValue: initialQueryRow,
   initialResult = undefined,
 }: {
-  initialValue: string;
+  initialValue: any;
   initialResult: IRecordSet<any> | undefined;
 }) => {
-  const [value, setValue] = useState(initialValue);
+  const [value, setValue] = useState(initialQueryRow.query);
   const [error, setError] = useState<string>();
   const [result, setResult] = useState(initialResult);
   const handleQuery = () => runQuery(value).then(setResult).catch(setError);
@@ -24,6 +24,7 @@ const QueryInput = ({
           name="query"
           id="query"
           value={value}
+          className="w-1/2 place-content-start"
           onChange={(e) => setValue(e.target.value)}
         />
         <Button variant="outline" onClick={handleQuery}>
