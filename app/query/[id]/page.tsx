@@ -12,6 +12,7 @@ const prisma = new PrismaClient();
 export default async function Page({ params }: { params: { id: string } }) {
   const session = await auth();
   const id = params.id;
+  const categories = await prisma.queryCategory.findMany();
   const result = await prisma.query.findUnique({ where: { id: id } }); //const {id, name, query, description, publicQuery, createdBy }:Query | null = await prisma.query.findUnique({ where: { label: label } })
   console.log(result);
   if (result) {
@@ -23,7 +24,9 @@ export default async function Page({ params }: { params: { id: string } }) {
         
         <h1 className="text-3xl Underline font-bold">{result.name}</h1>
         <FormDialog triggerMessage="Add Query" icon={<Plus className="py-1" />} title="Add Query" >
-          <AddQueryForm session={session} query={result.query}  />
+          {session?.user?.admin &&
+            <AddQueryForm session={session}  pageValues={result} categories={categories} />
+          }
         </FormDialog>
         <br></br>
         <label htmlFor="description">Description:</label>
@@ -40,7 +43,7 @@ export default async function Page({ params }: { params: { id: string } }) {
         </p>
         
         {session?.user?.queryEdit ? (
-          <QueryInput  pageValues={result} initialResult={data} />
+          <QueryInput  initialValue={result?.query} initialResult={data} />
         ) : (
           <>
             <label htmlFor="query" >Query: </label>

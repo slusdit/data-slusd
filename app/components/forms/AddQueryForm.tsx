@@ -18,7 +18,20 @@ import {
 import { Plus, Save, Send } from "lucide-react";
 import { Session } from "next-auth";
 import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useEffect } from "react";
+import { PrismaClient } from "@prisma/client";
 
+const prisma = new PrismaClient();
 type PageValues = {
   id: string;
   query: string;
@@ -27,17 +40,15 @@ type PageValues = {
   createdBy: string;
   description: string;
   publicQuery: boolean;
-  categoryId: string | null; 
-}
+  categoryId: string | null;
+};
 interface Props {
   session: Session;
-  // query: string;
+  categories: any[];
   submitTitle?: string;
   pageValues?: PageValues;
   dialogState?: () => void;
-  icon: React.ReactElement;
 }
-
 
 const formSchema = z.object({
   id: z.string(),
@@ -47,33 +58,40 @@ const formSchema = z.object({
   createdBy: z.string().email({ message: "Must be a valid email" }),
   description: z.string().min(1, { message: "Description must not be empty" }),
   publicQuery: z.boolean().default(false),
-
 });
 
 export default function AddQueryForm({
   session,
-  // query,
+  categories,
   submitTitle,
   pageValues,
   dialogState,
-  icon,
 }: Props) {
   const createdBy = session.user?.email?.toString();
-  let {query, name, description, publicQuery, categoryId, id} = pageValues || {}
+  const { query, name, description, publicQuery, categoryId, id } =
+    pageValues || {};
+  console.log({ query, name, description, publicQuery, categoryId, id });
+
+
   // if (pageValues) {
-    
+
   //   {query, name, description, publicQuery, categoryId, id}  = pageValues
-  // } 
+  // }
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       query: query ?? "",
+      createdBy: createdBy ?? "",
+      name: name ?? "",
+      description: description ?? "",
+      publicQuery: publicQuery ?? false,
     },
   });
 
   // const { closeDialog } = useDialog()
   async function onSubmit(values: z.infer<typeof formSchema>) {
     console.log("submit");
+    console.log({ values });
 
     try {
       console.log(`Values - ${JSON.stringify(values)}`);
@@ -98,32 +116,31 @@ export default function AddQueryForm({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <div className="flex w-full m-2 jutify-between">
-          
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>
-                Query Name<span className="text-red-500">*</span>
-              </FormLabel>
-              <FormControl>
-                <Input placeholder={name} {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  Query Name<span className="text-red-500">*</span>
+                </FormLabel>
+                <FormControl>
+                  <Input placeholder={name} {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           <FormField
             control={form.control}
             name="createdBy"
-            render={({ field }) => (   
+            render={({ field }) => (
               <FormItem>
                 <FormLabel>
                   Created By<span className="text-red-500">*</span>
                 </FormLabel>
                 <FormControl>
-                  <Input className="w-fit" placeholder={createdBy} {...field} disabled />
+                  <Input className="w-fit" {...field} disabled />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -139,7 +156,7 @@ export default function AddQueryForm({
                 Description<span className="text-red-500">*</span>
               </FormLabel>
               <FormControl>
-                <Input   {...field} />
+                <Input placeholder={description} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -154,15 +171,14 @@ export default function AddQueryForm({
                 Query<span className="text-red-500">*</span>
               </FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input placeholder={query} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        
-        
-        <div className="flex p-2 border-2 rounded">
+
+        <div className="p-2 border-2 rounded w-full">
           <FormField
             control={form.control}
             name="publicQuery"
@@ -170,8 +186,12 @@ export default function AddQueryForm({
               <FormItem className="m-1">
                 <FormLabel>Public Query</FormLabel>
                 <FormControl>
-                  <Switch {...field} label="Public Query" defaultChecked={false} />
-                  
+                  <Switch
+                    {...field}
+                    id="publicQuery"
+                    label="Public Query"
+                    defaultChecked={publicQuery}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -179,12 +199,34 @@ export default function AddQueryForm({
           />
           <FormField
             control={form.control}
-            name="subjectCodeMinor"
+            name="categoryId"
             render={({ field }) => (
               <FormItem className="m-1">
-                <FormLabel>Subject Code Minor</FormLabel>
+                <FormLabel>Query Category</FormLabel>
                 <FormControl>
-                  <Input placeholder="Subject Code Minor" {...field} />
+                  <Select>
+                    <SelectTrigger className="w-1/2">
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                      <SelectItem
+                            id="0"
+                            value={null}
+                          >
+                            None
+                          </SelectItem>
+                        {categories.map((category) => (
+                          <SelectItem
+                            id={category.id}
+                            value={category.value}
+                          >
+                            {category.label}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -193,7 +235,7 @@ export default function AddQueryForm({
         </div>
         <Button type="submit">
           {submitTitle ?? "Add"}
-          <Save className="py-1" />
+          <Plus className="py-1" />
         </Button>
       </form>
     </Form>
