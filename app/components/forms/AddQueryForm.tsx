@@ -45,7 +45,7 @@ type PageValues = {
 };
 interface Props {
   session: Session;
-  categories: any[];
+  categories?: any[];
   submitTitle?: string;
   pageValues?: PageValues;
   dialogState?: () => void;

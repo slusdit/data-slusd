@@ -94,7 +94,7 @@ export async function runQuery(
 
     let result;
     try {
-      const schoolCode = await getSchoolsFromEmail({ email,  pool }); // TODO: get from session, feed in from auth() call
+      const schoolCode = await getSchoolsFromEmail({ email,  pool });
       console.log(schoolCode);
       
       // Handle @SC variable
@@ -124,6 +124,12 @@ export async function runQuery(
           console.log("Query", query);
         }
       }
+
+      // Handle @TN variable
+      if (query.includes("@tn")) {
+        // TODO: get from session, feed in from auth() call or Aeries query
+      }
+
       result = await request.query(query);
 
       console.log("SQL result", result.recordset);

@@ -1,9 +1,10 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea"
 import { runQuery } from "@/lib/aeries";
 import { IRecordSet } from "mssql";
 import { useState } from "react";
+import DynamicTable from "./DynamicTable";
 
 const QueryInput = ({
   initialValue: initialQueryRow,
@@ -20,8 +21,7 @@ const QueryInput = ({
   return (
     <div>
       <div className="flex w-full items-center justify-center gap-2">
-        <Input
-          type="text"
+        <Textarea
           name="query"
           id="query"
           value={value}
@@ -38,6 +38,12 @@ const QueryInput = ({
        
       </div>
       <div>
+        <div className="mt-4 flex items-center justify-center w-full">
+          <div className="m-auto">
+            
+        <DynamicTable data={result} />
+        </div>
+        </div>
         <pre>{JSON.stringify(result, null, 2)}</pre>
       </div>
     </div>

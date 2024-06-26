@@ -7,6 +7,9 @@ import { runQuery } from "@/lib/aeries";
 import { PrismaClient } from "@prisma/client";
 import { Query } from "@prisma/client";
 import { Plus } from "lucide-react";
+import { DataTable } from "./datatable/QueryDataTable";
+import { columns } from "./datatable/columns";
+import DynamicTable from "@/app/components/DynamicTable";
 
 const prisma = new PrismaClient();
 export default async function Page({ params }: { params: { id: string } }) {
@@ -21,13 +24,20 @@ export default async function Page({ params }: { params: { id: string } }) {
 
     return (
       <div>
-        
         <h1 className="text-3xl Underline font-bold">{result.name}</h1>
-        <FormDialog triggerMessage="Add Query" icon={<Plus className="py-1" />} title="Add Query" >
-          {session?.user?.admin &&
-            <AddQueryForm session={session}  pageValues={result} categories={categories} />
-          }
-        </FormDialog>
+        {session?.user?.admin && (
+          <FormDialog
+            triggerMessage="Add Query"
+            icon={<Plus className="py-1" />}
+            title="Add Query"
+          >
+            <AddQueryForm
+              session={session}
+              pageValues={result}
+              categories={categories}
+            />
+          </FormDialog>
+        )}
         <br></br>
         <label htmlFor="description">Description:</label>
         <div id="description">{result.description}</div>
@@ -41,15 +51,23 @@ export default async function Page({ params }: { params: { id: string } }) {
             {result.createdBy}{" "}
           </a>
         </p>
-        
+        {/* <DataTable columns={columns} data={data} /> */}
         {session?.user?.queryEdit ? (
-          <QueryInput  initialValue={result?.query} initialResult={data} />
+          <QueryInput initialValue={result?.query} initialResult={data} />
         ) : (
           <>
-            <label htmlFor="query" >Query: </label>
-            <code id="query" className="border bg-card p-2 ">{result.query}</code>
+              <label htmlFor="query">Query: </label>
+              <div className="max-w-[650px]">
+            <div id="query" className="border bg-card p-2 ">
+              {result.query}
+            </div>
+              </div>
 
-            <h2 className="text-xl underline font-bold mt-2">Data:</h2>
+              <h2 className="text-xl underline font-bold mt-2">Data:</h2>
+              <div className="m-4">
+
+              <DynamicTable data={data} />
+              </div>
             <ul>
               {data?.map((row) => (
                 <li key={result.id}>{JSON.stringify(row, null, 2)}</li>
