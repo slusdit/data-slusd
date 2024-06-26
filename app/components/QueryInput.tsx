@@ -5,6 +5,7 @@ import { runQuery } from "@/lib/aeries";
 import { IRecordSet } from "mssql";
 import { useState } from "react";
 import DynamicTable from "./DynamicTable";
+import { format } from "sql-formatter";
 
 const QueryInput = ({
   initialValue: initialQueryRow,
