@@ -70,8 +70,7 @@ export default function AddQueryForm({
   const createdBy = session.user?.email?.toString();
   const { query, name, description, publicQuery, categoryId, id } =
     pageValues || {};
-  console.log({ query, name, description, publicQuery, categoryId, id });
-
+  
 
   // if (pageValues) {
 
@@ -85,15 +84,16 @@ export default function AddQueryForm({
       name: name ?? "",
       description: description ?? "",
       publicQuery: publicQuery ?? false,
+      // categoryId: categoryId ?? "",
     },
   });
 
   // const { closeDialog } = useDialog()
   async function onSubmit(values: z.infer<typeof formSchema>) {
     console.log("submit");
-    console.log({ values });
+    
 
-    try {
+    // try {
       console.log(`Values - ${JSON.stringify(values)}`);
 
       const response = await fetch("/api/credential/", {
@@ -106,10 +106,10 @@ export default function AddQueryForm({
       const credential = await response.json();
       form.reset();
       toast.success("Credential inserted successfully");
-      // closeDialog()
-    } catch (e) {
-      toast.error(`Error creating credential \n Error: ${e}`);
-    }
+
+    // } catch (e) {
+    //   toast.error(`Error creating credential \n Error: ${e}`);
+    // }
   }
 
   return (
