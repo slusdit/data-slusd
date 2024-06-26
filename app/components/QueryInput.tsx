@@ -11,8 +11,9 @@ const QueryInput = ({
 }: {
   initialValue: any;
   initialResult: IRecordSet<any> | undefined;
-}) => {
-  const [value, setValue] = useState(initialQueryRow.query);
+  }) => {
+
+  const [value, setValue] = useState(initialQueryRow);
   const [error, setError] = useState<string>();
   const [result, setResult] = useState(initialResult);
   const handleQuery = () => runQuery(value).then(setResult).catch(setError);
@@ -33,8 +34,8 @@ const QueryInput = ({
       </div>
 
       <div>
-        Error:
-        <span>{JSON.stringify(error)}</span>
+        {error && <div>Error: {error}</div>}
+       
       </div>
       <div>
         <pre>{JSON.stringify(result, null, 2)}</pre>
