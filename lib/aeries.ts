@@ -100,7 +100,7 @@ export async function runQuery(
       const schoolCode = await getSchoolsFromEmail({ email:email,  pool });
 
       console.log(schoolCode);
-      
+      // TODO: Prepend @@variables to declarations at the top of the query, rather than search and replace?
       // Handle @SC variable
       if (query.includes("@@sc")) {
         if (schoolCode === "0") {
