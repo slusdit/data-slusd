@@ -58,7 +58,7 @@ export const queryFormSchema = z.object({
   createdBy: z.string().email({ message: "Must be a valid email" }),
   description: z.string().min(1, { message: "Description must not be empty" }),
   publicQuery: z.boolean().default(false),
-  categoryId: z.string().optional(),
+  categoryId: z.string(),
 });
 
 export default function AddQueryForm({
@@ -85,7 +85,7 @@ export default function AddQueryForm({
       name: name ?? "",
       description: description ?? "",
       publicQuery: publicQuery ?? false,
-      categoryId: categoryId ?? "",
+      categoryId: categoryId ?? "0",
     },
   });
 
@@ -218,9 +218,7 @@ export default function AddQueryForm({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      <SelectItem key="0" value="0">
-                        None
-                      </SelectItem>
+                      
                       {categories.map((category) => (
                         <SelectItem key={category.id} value={category.id}>
                           {category.label}
