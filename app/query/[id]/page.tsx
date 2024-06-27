@@ -56,7 +56,7 @@ export default async function Page({ params }: { params: { id: string } }) {
               <label htmlFor="query">Query: </label>
               <div className="max-w-[650px]">
             <div id="query" className="border bg-card p-2 ">
-              {format(result.query, { language: "sql" }) || result.query}
+              {result.query}
             </div>
               </div>
 
