@@ -43,7 +43,7 @@ export default async function RootLayout({
             disableTransitionOnChange
           >
           <MainHeader session={session}/>
-            <main className="w-full mb-12 mx-4">
+            <main className="mb-12 mx-4">
               {session ? children :
                 <UnauthorizedButton
                   home
