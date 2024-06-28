@@ -2,7 +2,7 @@
 
 ## Frontend
 
-NextJS 14 server using Prisma ORM is running on [http://localhost:3000](http://localhost:3000)
+NextJS 14 server using Prisma ORM is running on [https://data.slusd.us](https://data.slusd.us)
 
 ### Prisma  setup
 
@@ -43,7 +43,7 @@ npm run dev
 
 :warning: **Forwarding port 3000 if development server is not on non-local server**
 
-Open [http://localhost:3000](http://localhost:3000) or URL with your browser to see the result.
+Open [https://data.slusd.us](https://data.slusd.us) or URL with your browser to see the result.
 
 ## Backend
 
