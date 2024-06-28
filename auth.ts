@@ -18,8 +18,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         console.log('~~~~~~~~~~~~ SIGNING IN WITH GOOGLE ~~~~~~~~~~~~')
         const profileEmail = profile?.email 
         console.log({profileEmail})
-               
-        return profile?.email_verified && profile?.email?.endsWith("@slusd.us"  ) 
+        console.log(profile?.email_verified && profile?.email?.endsWith("@slusd.us"  ) )
+        return profile?.email_verified && profile?.email?.endsWith("@slusd.us") 
       }
 
       return true;

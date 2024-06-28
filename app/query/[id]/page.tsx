@@ -7,6 +7,7 @@ import { PrismaClient } from "@prisma/client";
 import { Plus } from "lucide-react";
 import DynamicTable from "@/app/components/DynamicTable";
 import { format } from "sql-formatter";
+import BackButton from "@/app/components/BackButton";
 
 const prisma = new PrismaClient();
 export default async function Page({ params }: { params: { id: string } }) {
@@ -21,6 +22,7 @@ export default async function Page({ params }: { params: { id: string } }) {
 
     return (
       <div>
+        <BackButton /> 
         <h1 className="text-3xl Underline font-bold">{result.name}</h1>
         {session?.user?.admin && (
           <FormDialog
