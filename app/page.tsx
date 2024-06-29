@@ -9,8 +9,7 @@ const prisma = new PrismaClient();
 export default async function Home() {
   const session = await auth();
   const queries = await prisma.query.findMany();
-  console.log(queries);
-
+ 
   let categories;
   if (session?.user?.admin) {
     categories = await prisma.queryCategory.findMany();

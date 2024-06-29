@@ -1,4 +1,5 @@
 import adminCheck from "@/lib/adminCheck"
+import BackButton from "@/app/components/BackButton"
 
 export default async function AdminPage() {
     const admin = await adminCheck()
@@ -13,6 +14,7 @@ export default async function AdminPage() {
 
     return (
         <div>
+            <BackButton />
             <h1>Admin</h1>
         </div>
     )

@@ -22,7 +22,7 @@ export default async function Page({ params }: { params: { id: string } }) {
 
     return (
       <div>
-        <BackButton /> 
+        <BackButton />
         <h1 className="text-3xl Underline font-bold">{result.name}</h1>
         {session?.user?.admin && (
           <FormDialog
@@ -55,23 +55,17 @@ export default async function Page({ params }: { params: { id: string } }) {
           <QueryInput initialValue={result?.query} initialResult={data} />
         ) : (
           <>
-              <label htmlFor="query">Query: </label>
-              <div className="max-w-[650px]">
-            <div id="query" className="border bg-card p-2 ">
-              {result.query}
+            <label htmlFor="query">Query: </label>
+            <div className="max-w-[650px]">
+              <div id="query" className="border bg-card p-2 ">
+                {result.query}
+              </div>
             </div>
-              </div>
 
-              <h2 className="text-xl underline font-bold mt-2">Data:</h2>
-              <div className="m-4">
-
+            <h2 className="text-xl underline font-bold mt-2">Data:</h2>
+            <div className="m-4">
               <DynamicTable data={data} />
-              </div>
-            <ul>
-              {data?.map((row) => (
-                <li key={result.id}>{JSON.stringify(row, null, 2)}</li>
-              ))}
-            </ul>
+            </div>
           </>
         )}
       </div>

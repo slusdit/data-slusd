@@ -32,6 +32,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           school: true,
         }, // Include roles if needed
       });
+      session.user.admin = dbUser?.admin
       session.user.schools = dbUser?.school.map((school) => school.sc) || [];
       session.user.roles = dbUser?.userRole.map((role) => role.role) || [];
       return session;
