@@ -17,7 +17,14 @@ export default async function Page({ params }: { params: { id: string } }) {
   const result = await prisma.query.findUnique({ where: { id: id } }); //const {id, name, query, description, publicQuery, createdBy }:Query | null = await prisma.query.findUnique({ where: { label: label } })
   console.log(result);
   if (result) {
-    const data = await runQuery(result?.query);
+   if(process.env.NODE_ENV)
+    {
+      const data = format(result.query, { language: "mysql", indent: "  " })
+    } else {
+      const data = await runQuery(result?.query);
+
+    } 
+    
     // console.log(data)
 
     return (
@@ -52,7 +59,8 @@ export default async function Page({ params }: { params: { id: string } }) {
         </p>
         {/* <DataTable columns={columns} data={data} /> */}
         {session?.user?.queryEdit ? (
-          <QueryInput initialValue={result?.query} initialResult={data} />
+          <></>
+          // <QueryInput initialValue={result?.query} initialResult={data} />
         ) : (
           <>
             <label htmlFor="query">Query: </label>
