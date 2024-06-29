@@ -5,15 +5,28 @@ import { SignIn } from "./GoogleSignIn";
 import { SignOut } from "./GoogleSignOut";
 import GoogleAuthButton from "./GoogleAuthButton";
 import { auth } from "@/auth";
-import { PrismaClient, User } from "@prisma/client";
+import { PrismaClient, QueryCategory } from "@prisma/client";
 import type { Session } from "next-auth";
-import QueryBar from "./QueryBar";
+import QueryBar, { QueryWithCategory } from "./QueryBar";
+import { NavigationMenuDemo } from "./NavMenuDemo";
 
 const prisma = new PrismaClient();
 
-export default function MainHeader({ session }: { session: Session | null }) {
+export default async function MainHeader({ session }: { session: Session | null }) {
 
-  
+  const queries: QueryWithCategory[] = await prisma.query.findMany({
+    include: {
+      category: {
+        select: {
+          id: true,
+          label: true,
+          value: true
+        }
+      },
+    }
+  })
+  console.log({ queries })
+
   return (
     <div className="w-full">
       <nav
@@ -22,6 +35,7 @@ export default function MainHeader({ session }: { session: Session | null }) {
             h-[4.5rem]
             items-center
             justify-between
+            
             bg-title
             text-title-foreground
 
@@ -33,8 +47,6 @@ export default function MainHeader({ session }: { session: Session | null }) {
           font-bold
           border-b
           border-title-foreground/60
-          
-          
           `}
       >
         <div>
@@ -47,9 +59,11 @@ export default function MainHeader({ session }: { session: Session | null }) {
           </Button>
         </div>
         {session && (
-        <div className="">
-          <QueryBar />
-        </div>
+          
+            <div className="">
+              <QueryBar queries={queries} />
+            </div>
+          
         )}
         <div
           className="hidden w-full md:flex md:items-center md:w-auto"
@@ -62,8 +76,6 @@ export default function MainHeader({ session }: { session: Session | null }) {
                     md:flex
                     md:pt-0"
           >
-            
-
           </ul>
           <div className="py-3 px-4">
             <LoginButton user={session?.user} />
