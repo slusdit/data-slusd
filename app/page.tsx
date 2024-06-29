@@ -60,7 +60,7 @@ export default async function Home() {
       <ul className="flex flex-col gap-1 w-2/3">
         {queries.map((query) => (
           <li key={query.id}>
-            <Link href={`/query/${query.}/${query.id}`} className="hover:underline">
+            <Link href={`/query/${query.category?.value}/${query.id}`} className="hover:underline">
               {query.name}
             </Link>
           </li>
