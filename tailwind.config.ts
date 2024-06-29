@@ -60,6 +60,10 @@ const config = {
           DEFAULT: "hsl(var(--title))",
           foreground: "hsl(var(--title-foreground))",
         },
+        mainTitle: {
+          DEFAULT: "hsl(var(--mainTitle))",
+          foreground: "hsl(var(--mainTitle-foreground))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
