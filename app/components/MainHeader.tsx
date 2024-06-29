@@ -63,13 +63,7 @@ export default async function MainHeader({ session }: { session: Session | null 
             <Link href="/">Data V2.0</Link>
           </Button>
         </div>
-        {session && (
-          
-            <div className="">
-              <QueryBar queries={queries} />
-            </div>
-          
-        )}
+       
         <div
           className="hidden w-full md:flex md:items-center md:w-auto"
           id="menu"

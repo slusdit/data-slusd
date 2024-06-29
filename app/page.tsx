@@ -4,11 +4,27 @@ import Link from "next/link";
 import AddQueryForm from "./components/forms/AddQueryForm";
 import FormDialog from "./components/forms/FormDialog";
 import { Plus } from "lucide-react";
+import { QueryWithCategory } from "./components/QueryBar";
 
 const prisma = new PrismaClient();
 export default async function Home() {
   const session = await auth();
-  const queries = await prisma.query.findMany();
+  const queries: QueryWithCategory[] = await prisma.query.findMany({
+    select: {
+      
+        id: true,
+        name: true,
+        description: true,
+      
+      category: {
+        select: {
+          id: true,
+          label: true,
+          value: true
+        }
+      },
+    }
+  })
   console.log(queries);
 
   let categories;
@@ -44,7 +60,7 @@ export default async function Home() {
       <ul className="flex flex-col gap-1 w-2/3">
         {queries.map((query) => (
           <li key={query.id}>
-            <Link href={`/query/${query.id}`} className="hover:underline">
+            <Link href={`/query/${query.}/${query.id}`} className="hover:underline">
               {query.name}
             </Link>
           </li>

@@ -36,14 +36,16 @@ const QueryBar = ({ queries }: { queries: QueryWithCategory[] }) => {
           return (
 
             <NavigationMenuItem key={index}>
-              <NavigationMenuTrigger>{category}</NavigationMenuTrigger>
-              <NavigationMenuContent className="w-full">
+              <NavigationMenuTrigger              
+              >{category}</NavigationMenuTrigger>
+              <NavigationMenuContent >
                 <ul className="grid m-auto gap-3 p-6 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
                   {queries
                     .filter((query) => query.category?.label === category)
+                    .sort((a, b) => a.name.localeCompare(b.name))
                     .map((query) => (
                       <ListItem
-                        className="w-full"
+                        className=""
                         key={query.id}
                         title={query.name}
                         href={`/query/${query.id}`}
