@@ -21,10 +21,13 @@
     --secondary-foreground: 222.2 47.4% 11.2%;
 
     --title: 210 61% 28%;
-    --title-foreground: 210 40% 98%;
+    --title-foreground: 210 40% 12%;
+
+    --main-title: 210 40% 98%;
+    --mainTitle-foreground: 210 40% 98%;
     
     --muted: 210 40% 70%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --mutedToreground: 215.4 16.3% 46.9%;
    
     --accent: 210 40% 90%;
     --accent-foreground: 222.2 47.4% 11.2%;
@@ -105,6 +108,9 @@
     
     --title: 217 66% 17%;
     --title-foreground: 210 40% 98%;
+
+    --mainTitle: 217 66% 17%;
+    --mainTitle-foreground: 210 40% 98%;
 
     --muted: 217.2 32.6% 20%;
     --muted-foreground: 215 20.2% 65.1%;
