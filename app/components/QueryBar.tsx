@@ -26,7 +26,9 @@ const QueryBar = ({ queries }: { queries: QueryWithCategory[] }) => {
 
   return (
     <NavigationMenu>
-      <NavigationMenuList className="w-full">
+      <NavigationMenuList
+        className="flex flex-col sm:flex-row gap-1 p-1 m-auto"
+        >
         {queryCategories.map((category, index) => {
           console.log(category)
 
@@ -41,6 +43,7 @@ const QueryBar = ({ queries }: { queries: QueryWithCategory[] }) => {
                     .filter((query) => query.category?.label === category)
                     .map((query) => (
                       <ListItem
+                        className="w-full"
                         key={query.id}
                         title={query.name}
                         href={`/query/${query.id}`}

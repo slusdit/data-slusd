@@ -15,7 +15,12 @@ const prisma = new PrismaClient();
 export default async function MainHeader({ session }: { session: Session | null }) {
 
   const queries: QueryWithCategory[] = await prisma.query.findMany({
-    include: {
+    select: {
+      
+        id: true,
+        name: true,
+        description: true,
+      
       category: {
         select: {
           id: true,
