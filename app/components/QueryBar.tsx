@@ -48,7 +48,7 @@ const QueryBar = ({ queries }: { queries: QueryWithCategory[] }) => {
                         className=""
                         key={query.id}
                         title={query.name}
-                        href={`/query/${query.id}`}
+                        href={`/query/${query.category?.value}/${query.id}`}
                       >
                         {query.description}
                       </ListItem>
