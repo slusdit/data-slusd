@@ -16,16 +16,14 @@ export default async function Page({ params }: { params: { id: string } }) {
   const id = params.id;
   const categories = await prisma.queryCategory.findMany();
   const result = await prisma.query.findUnique({ where: { id: id } }); //const {id, name, query, description, publicQuery, createdBy }:Query | null = await prisma.query.findUnique({ where: { label: label } })
-  console.log(result);
+  
   if (result) {
     let data: any[]
     console.log(process.env.NODE_ENV)
     if (process.env.NODE_ENV === "development") 
     {
       data = [
-        { SC:12, ID: 106454388, GR: 8, FN: 'Person 1', LN: 'LN1' },
-        { SC:12, ID: 95455429, GR: 9, FN: 'Person2', LN: 'LN2' },
-        { SC:1, ID: 954558429, GR: 10, FN: 'Person4', LN: 'LN2' },
+       
 
       ]
     
