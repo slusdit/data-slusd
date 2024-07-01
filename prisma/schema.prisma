@@ -153,6 +153,7 @@ model QueryCategory {
   id      String  @id @default(cuid())
   label   String  @unique
   value   String  @unique
+  sort    Int     @default(0)
   queries Query[] @relation
 }
 

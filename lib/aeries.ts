@@ -73,6 +73,18 @@ export async function getSchoolsFromEmail({
 
   return schoolCode;
 }
+
+function removeCommentsFromQuery(query: string) {
+  let cleanedQuery = query;
+  // Remove single-line comments (--)
+  cleanedQuery = query.replace(/\-\-[^,]*[\n\r]*[^,]*,/gm, '');
+
+  // Remove multi-line comments (/* ... */)
+  cleanedQuery = cleanedQuery.replace(/\/\*[\s\S]*?\*\//gm, '');
+
+  return cleanedQuery;
+}
+
 // Function to execute a query
 export async function runQuery(
   query: string
@@ -86,7 +98,9 @@ export async function runQuery(
     throw Error("Dangerous query");
   }
 
-  const cleanQuery = query?.replace(/\s+/g, " ").trim();
+  let cleanQuery = query?.replace(/\s+/g, " ").trim();
+
+  cleanQuery = removeCommentsFromQuery(cleanQuery);
 
   const pool = await poolPromise;
   try {
@@ -114,7 +128,7 @@ export async function runQuery(
             },
           });
           allSchools = allSchools.map((school) => `${school.sc}`).join(",");
-          console.log("All schools", allSchools);
+         ;
 
           query = query.replace("= @@sc", `in (${allSchools})`);
           console.log("Query", query);
@@ -140,13 +154,14 @@ export async function runQuery(
       // await closePool();
       return result.recordset;
     } catch (error) {
-      closePool();
+      // closePool();
       console.error("SQL error", error);
       throw new Error("SQL error", { cause: error });
       // setError(error)
     }
   } catch (err) {
     console.error("SQL error", err);
+    console.log(query)
     throw new Error("SQL error", { cause: err }); // err;
   }
 }

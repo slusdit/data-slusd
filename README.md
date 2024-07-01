@@ -51,28 +51,18 @@ Open [https://data.slusd.us](https://data.slusd.us) or URL with your browser to 
 
 Built with direct connection to Aeries database using config in `/lib/aeries.ts`
 
-~~Fast API server is running on [http://localhost:8000](http://localhost:8000)
-Using same .env file as frontend~~
+## To Do
 
-~~### FastAPI Getting Started~~
+- [ ] Query output
+  - [ ] Move from `table` to `datatable`
+  - [ ] Add export options
+    - [ ] to csv
+    - [ ] to xlsx
+- [ ] Add Query form
+  - [ ] run query to validate before submit
+  - [ ] find way to remove comments (stored as single line in DB)
+- [ ] Dashboard
+  - [ ] Render using parallel routes?
+  - [ ] Hold dashboard items in user settings
 
-~~First install the dependencies:~~
-
-```bash
-pip install -r requirements.txt
-```
-
-~~Then, run the development server:~~
-
-:warning: **Forwarding port 8000 if development server is not on non-local server**
-
-
-
-```bash
-python main.py
-# or
-python3 main.py
-```
-
-~~Open [http://localhost:8000/docs](http://localhost:8000/docs) or URL with your browser to see the result.~~
 

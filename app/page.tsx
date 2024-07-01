@@ -25,7 +25,7 @@ export default async function Home() {
       },
     }
   })
-  console.log(queries);
+
 
   let categories;
   if (session?.user) {

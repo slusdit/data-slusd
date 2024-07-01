@@ -19,7 +19,7 @@ export type QueryWithCategory = Query & {
 }
 
 const QueryBar = ({ queries }: { queries: QueryWithCategory[] }) => {
-  console.log(queries)
+ 
   const queryCategories = Array.from(
     new Set(queries.map((query) => query.category?.label))
   )
@@ -30,7 +30,7 @@ const QueryBar = ({ queries }: { queries: QueryWithCategory[] }) => {
         className="flex flex-col sm:flex-row gap-1 p-1 m-auto"
         >
         {queryCategories.map((category, index) => {
-          console.log(category)
+          // console.log(category)
 
           // if (!category) return null
           return (
