@@ -53,7 +53,9 @@ function DT<T extends object>({ data }: DataTableProps<T>) {
   })
 
   if (data.length === 0) {
-    return <div>No data available</div>
+    return (<div className='font-bold'>
+      No data available
+      </div>)
   }
 
   return (
