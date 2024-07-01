@@ -6,6 +6,7 @@ import { IRecordSet } from "mssql";
 import { useState } from "react";
 import DynamicTable from "./DynamicTable";
 import { format } from "sql-formatter";
+import DataTable from "@/app/components/DataTable";
 
 const QueryInput = ({
   initialValue: initialQueryRow,
@@ -42,7 +43,7 @@ const QueryInput = ({
         <div className="mt-4 flex items-center justify-center w-full">
           <div className="m-auto">
             
-        <DynamicTable data={result} />
+        <DataTable data={result} />
         </div>
         </div>
         <pre>{JSON.stringify(result, null, 2)}</pre>
