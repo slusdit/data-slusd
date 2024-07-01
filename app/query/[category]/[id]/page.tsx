@@ -17,11 +17,12 @@ export default async function Page({ params }: { params: { id: string } }) {
   const result = await prisma.query.findUnique({ where: { id: id } }); //const {id, name, query, description, publicQuery, createdBy }:Query | null = await prisma.query.findUnique({ where: { label: label } })
   console.log(result);
   if (result) {
-   if(process.env.NODE_ENV)
+    let data
+    if (process.env.NODE_ENV === "local")
     {
-      const data = format(result.query, { language: "mysql", indent: "  " })
+      data = format(result.query, { language: "mysql", indent: "  " })
     } else {
-      const data = await runQuery(result?.query);
+      data = await runQuery(result?.query);
 
     } 
     
