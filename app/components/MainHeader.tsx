@@ -30,7 +30,7 @@ export default async function MainHeader({ session }: { session: Session | null 
       },
     }
   })
-  console.log({ queries })
+
 
   return (
     <div className="w-full">
