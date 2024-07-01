@@ -8,6 +8,7 @@ import { Plus } from "lucide-react";
 import DynamicTable from "@/app/components/DynamicTable";
 import { format } from "sql-formatter";
 import BackButton from "@/app/components/BackButton";
+import DataTable from "@/app/components/DataTable";
 
 const prisma = new PrismaClient();
 export default async function Page({ params }: { params: { id: string } }) {
@@ -15,16 +16,22 @@ export default async function Page({ params }: { params: { id: string } }) {
   const id = params.id;
   const categories = await prisma.queryCategory.findMany();
   const result = await prisma.query.findUnique({ where: { id: id } }); //const {id, name, query, description, publicQuery, createdBy }:Query | null = await prisma.query.findUnique({ where: { label: label } })
-  console.log(result);
+  
   if (result) {
-    let data
-    if (process.env.NODE_ENV === "local")
-    {
-      data = format(result.query, { language: "mysql", indent: "  " })
-    } else {
-      data = await runQuery(result?.query);
+    let data: any[] = await runQuery(result?.query);
 
-    } 
+    console.log(process.env.NODE_ENV)
+  //   if (process.env.NODE_ENV === "development") 
+  //  {
+  //     data = [
+       
+
+  //     ]
+     
+  //   } else {
+  //     data = await runQuery(result?.query);
+
+  //   } 
     
     // console.log(data)
 
@@ -60,8 +67,10 @@ export default async function Page({ params }: { params: { id: string } }) {
         </p>
         {/* <DataTable columns={columns} data={data} /> */}
         {session?.user?.queryEdit ? (
-          <></>
-          // <QueryInput initialValue={result?.query} initialResult={data} />
+          <>
+          <DataTable data={data} />
+          <QueryInput initialValue={result?.query} initialResult={data} />
+          </>
         ) : (
           <>
             <label htmlFor="query">Query: </label>
@@ -73,7 +82,7 @@ export default async function Page({ params }: { params: { id: string } }) {
 
             <h2 className="text-xl underline font-bold mt-2">Data:</h2>
             <div className="m-4">
-              <DynamicTable data={data} />
+              <DataTable data={data} />
             </div>
           </>
         )}
