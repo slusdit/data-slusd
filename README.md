@@ -55,6 +55,9 @@ Built with direct connection to Aeries database using config in `/lib/aeries.ts`
 
 - [ ] Query output
   - [ ] Move from `table` to `datatable`
+    - [x] Add Sorting
+    - [ ] Add Filtering
+    - [ ] Add row selection
   - [ ] Add export options
     - [ ] to csv
     - [ ] to xlsx
