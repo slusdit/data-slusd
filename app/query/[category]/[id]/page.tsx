@@ -67,8 +67,10 @@ export default async function Page({ params }: { params: { id: string } }) {
         </p>
         {/* <DataTable columns={columns} data={data} /> */}
         {session?.user?.queryEdit ? (
-          <><DataTable data={data} /></>
-          // <QueryInput initialValue={result?.query} initialResult={data} />
+          <>
+          <DataTable data={data} />
+          <QueryInput initialValue={result?.query} initialResult={data} />
+          </>
         ) : (
           <>
             <label htmlFor="query">Query: </label>
@@ -81,7 +83,6 @@ export default async function Page({ params }: { params: { id: string } }) {
             <h2 className="text-xl underline font-bold mt-2">Data:</h2>
             <div className="m-4">
               <DataTable data={data} />
-              <DynamicTable data={data} />
             </div>
           </>
         )}
