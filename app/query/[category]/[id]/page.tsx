@@ -18,19 +18,20 @@ export default async function Page({ params }: { params: { id: string } }) {
   const result = await prisma.query.findUnique({ where: { id: id } }); //const {id, name, query, description, publicQuery, createdBy }:Query | null = await prisma.query.findUnique({ where: { label: label } })
   
   if (result) {
-    let data: any[]
+    let data: any[] = await runQuery(result?.query);
+
     console.log(process.env.NODE_ENV)
-    if (process.env.NODE_ENV === "development") 
-    {
-      data = [
+  //   if (process.env.NODE_ENV === "development") 
+  //  {
+  //     data = [
        
 
-      ]
-    
-    } else {
-      data = await runQuery(result?.query);
+  //     ]
+     
+  //   } else {
+  //     data = await runQuery(result?.query);
 
-    } 
+  //   } 
     
     // console.log(data)
 
