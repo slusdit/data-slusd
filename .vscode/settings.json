@@ -3,6 +3,7 @@
         "queryies",
         "slusd",
         "sonner",
-        "tailwindcss"
+        "tailwindcss",
+        "tanstack"
     ]
 }
