@@ -57,10 +57,10 @@ Built with direct connection to Aeries database using config in `/lib/aeries.ts`
   - [ ] Move from `table` to `datatable`
     - [x] Add Sorting
     - [ ] Add Filtering
-    - [ ] Add row selection
-  - [ ] Add export options
-    - [ ] to csv
-    - [ ] to xlsx
+    - [x] Add row selection
+  - [x] Add export options
+    - [x] to csv
+    - [x] to xlsx
 - [ ] Add Query form
   - [ ] run query to validate before submit
   - [ ] find way to remove comments (stored as single line in DB)
