@@ -1,6 +1,6 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea"
+import { Textarea } from "@/components/ui/textarea";
 import { runQuery } from "@/lib/aeries";
 import { IRecordSet } from "mssql";
 import { useState } from "react";
@@ -14,8 +14,7 @@ const QueryInput = ({
 }: {
   initialValue: any;
   initialResult: IRecordSet<any> | undefined;
-  }) => {
-
+}) => {
   const [value, setValue] = useState(initialQueryRow);
   const [error, setError] = useState<string>();
   const [result, setResult] = useState(initialResult);
@@ -35,18 +34,12 @@ const QueryInput = ({
         </Button>
       </div>
 
-      <div>
-        {error && <div>Error: {error}</div>}
-       
-      </div>
-      <div>
-        <div className="mt-4 flex items-center justify-center w-full">
-          <div className="m-auto">
-            
-        <DataTable data={result} />
+      <div>{error && <div>Error: {error}</div>}</div>
+
+      <div className="mt-4 flex items-center justify-center w-full">
+        <div className="m-auto">
+          <DataTable data={result} />
         </div>
-        </div>
-        <pre>{JSON.stringify(result, null, 2)}</pre>
       </div>
     </div>
   );
