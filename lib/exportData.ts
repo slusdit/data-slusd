@@ -1,0 +1,62 @@
+import * as XLSX from "xlsx";
+
+export function exportToExcel({ reactTable }: { reactTable: any }){
+
+  let rowsToExport = reactTable.getSelectedRowModel().rows;
+
+  // If no rows are selected, export all rows
+  if (rowsToExport.length === 0) {
+    rowsToExport = reactTable.getRowModel().rows;
+  }
+
+  const worksheet = XLSX.utils.json_to_sheet(
+    rowsToExport.map((row) => row.original)
+  );
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+
+  // Generate buffer
+  const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+
+  // Save to file
+  const data = new Blob([excelBuffer], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+  const link = document.createElement("a");
+  if (link.download !== undefined) {
+    const url = URL.createObjectURL(data);
+    link.setAttribute("href", url);
+    link.setAttribute("download", "exported_data.xlsx");
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+};
+
+export function exportToCSV({ reactTable }: { reactTable: any }){
+  let rowsToExport = reactTable.getSelectedRowModel().rows;
+
+  // If no rows are selected, export all rows
+  if (rowsToExport.length === 0) {
+    rowsToExport = reactTable.getRowModel().rows;
+  }
+
+  const headers = Object.keys(data[0]).join(",");
+  const csvData = rowsToExport.map((row) =>
+    Object.values(row.original as Record<string, unknown>).join(",")
+  );
+  const csvString = [headers, ...csvData].join("\n");
+
+  const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  if (link.download !== undefined) {
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", "exported_data.csv");
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+};
