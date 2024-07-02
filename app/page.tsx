@@ -70,20 +70,17 @@ export default async function Home() {
           if (category) {
             return (
 
-              <li key={category.id}>
-                <Link
-                  href={`/query/${category.value}`}
-                  className="hover:underline font-bold"
-                >
-                  {category.label}
-                </Link>
+              <li key={category.id} className="">
+               
+                 <span className="text-xl  font-bold">{category.label}</span>
+
                 <ul>
                   {queries
                     .filter((query) => query.category?.value === category.value)
                     .map((query) => (
                       <li
                         key={query.id}
-                        className="ml-4"
+                        className="ml-4 hover:text-primary hover:underline"
                       >
                         <Link
                           href={`/query/${category.value}/${query.id}`}

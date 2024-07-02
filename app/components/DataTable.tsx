@@ -19,6 +19,8 @@ interface DataTableProps<T extends object> {
 function DataTable<T extends object>({ data }: DataTableProps<T>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
+  const [columnVisibility, setColumnVisibility] = useState({})
+ 
 
   const columns = useMemo<ColumnDef<T>[]>(() => {
     if (data.length === 0) return [];
@@ -88,13 +90,13 @@ function DataTable<T extends object>({ data }: DataTableProps<T>) {
       <div className="mb-4 space-x-2">
         <button 
           onClick={() => exportToCSV(reactTable)}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          className="px-4 py-2 bg-primary text-white rounded hover:bg-blue-600"
         >
           Export to CSV
         </button>
         <button 
           onClick={() => exportToExcel(reactTable)}
-          className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-spotlight"
         >
           Export to Excel
         </button>
