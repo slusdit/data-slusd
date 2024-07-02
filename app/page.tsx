@@ -5,6 +5,7 @@ import AddQueryForm from "./components/forms/AddQueryForm";
 import FormDialog from "./components/forms/FormDialog";
 import { Plus } from "lucide-react";
 import { QueryWithCategory } from "./components/QueryBar";
+import { Separator } from "@/components/ui/separator";
 
 const prisma = new PrismaClient();
 export default async function Home() {
@@ -42,7 +43,7 @@ export default async function Home() {
       <h1 className="text-3xl font-weight-800 mb-5">
         Welcome {session?.user?.name}
       </h1>
-      {session?.user?.admin && (
+      {session?.user?.queryEdit && (
         <FormDialog
           triggerMessage="Add Query"
           icon={<Plus className="py-1" />}
@@ -53,7 +54,7 @@ export default async function Home() {
       )}
       {session?.user?.admin && (
         <>
-          <h2 className="font-bold text-2xl mb-4">Pages</h2>
+          {/* <h2 className="font-bold text-2xl mb-4 underline">Pages</h2> */}
           <ul className="flex flex-col gap-1 w-2/3">
             <li>
               <Link href="/admin" className="hover:underline">
@@ -61,10 +62,11 @@ export default async function Home() {
               </Link>
             </li>
           </ul>
+          <Separator className="my-4 w-48"/>
         </>
       )}
 
-      <h2 className="font-bold text-2xl mb-4">Queries</h2>
+      <h2 className="font-bold text-2xl mb-4 underline">Queries</h2>
       <ul className="flex flex-col gap-1 w-2/3">
         {categories && categories.filter((category) => category).map((category) => {
           if (category) {

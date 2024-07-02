@@ -18,29 +18,6 @@ export default async function Page({ params }: { params: { id: string } }) {
   if (result) {
     let data: any[] = await runQuery(result?.query);
 
-    console.log(process.env.NODE_ENV)
-//     if (process.env.NODE_ENV === "development") 
-//    {
-//       data = [
-//   { ID: 106388, FN: 'Caitriona', LN: 'Healy', GR: 8, SC: 1 },
-//   { ID: 95429, FN: 'Emmett', LN: 'Petersen', GR: 9, SC: 1 },
-//   { ID: 99601, FN: 'Matthias', LN: 'Reichelderfer', GR: 10, SC: 1 },
-//   { ID: 109960, FN: 'Jacob Connor', LN: 'Mendoza', GR: -1, SC: 1 },
-//   { ID: 101236, FN: 'Molly', LN: 'Britt', GR: 4, SC: 1 },
-//   { ID: 110114, FN: 'Nya', LN: 'Parker', GR: 3, SC: 1 },
-//   { ID: 104126, FN: 'Juliana', LN: 'Cordova Martinez', GR: 5, SC: 1 },
-//   { ID: 110585, FN: 'Alejandro', LN: 'Fernandez', GR: -1, SC: 1 },
-//   { ID: 104976, FN: 'Terra', LN: 'Turner', GR: 1, SC: 1 },
-//   { ID: 110546, FN: 'Juan', LN: 'Estrada Jacuindes', GR: 9, SC: 1 }
-// ]
-     
-  //   } else {
-  //     data = await runQuery(result?.query);
-
-  //   } 
-    
-    // console.log(data)
-
     return (
       <div>
         <BackButton />
