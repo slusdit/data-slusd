@@ -53,6 +53,7 @@ Built with direct connection to Aeries database using config in `/lib/aeries.ts`
 
 ## To Do
 
+- [ ] Add suspence boundry around datatable
 - [ ] Query output
   - [ ] Move from `table` to `datatable`
     - [x] Add Sorting
