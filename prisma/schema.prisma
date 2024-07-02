@@ -147,6 +147,7 @@ model Query {
   roles       Role[]         @relation
   categoryId  String?
   category    QueryCategory? @relation(fields: [categoryId], references: [id])
+  hiddenCols  String          @default("")
 }
 
 model QueryCategory {
