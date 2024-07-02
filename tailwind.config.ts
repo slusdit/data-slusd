@@ -64,6 +64,11 @@ const config = {
           DEFAULT: "hsl(var(--mainTitle))",
           foreground: "hsl(var(--mainTitle-foreground))",
         },
+        spotlight:{
+          DEFAULT: "hsl(var(--spotlight))",
+          foreground: "hsl(var(--spotlight-foreground))",
+          highlight: "hsl(var(--spotlight-highlight))",
+        }
       },
       borderRadius: {
         lg: "var(--radius)",

@@ -5,8 +5,6 @@ import { auth } from "@/auth";
 import { runQuery } from "@/lib/aeries";
 import { PrismaClient } from "@prisma/client";
 import { Plus } from "lucide-react";
-import DynamicTable from "@/app/components/DynamicTable";
-import { format } from "sql-formatter";
 import BackButton from "@/app/components/BackButton";
 import DataTable from "@/app/components/DataTable";
 
@@ -47,7 +45,7 @@ export default async function Page({ params }: { params: { id: string } }) {
       <div>
         <BackButton />
         <h1 className="text-3xl Underline font-bold">{result.name}</h1>
-        {session?.user?.admin && (
+        {(session?.user?.queryEdit) && (
           <FormDialog
             triggerMessage="Add Query"
             icon={<Plus className="py-1" />}
@@ -81,12 +79,6 @@ export default async function Page({ params }: { params: { id: string } }) {
           </>
         ) : (
           <>
-            <label htmlFor="query">Query: </label>
-            <div className="max-w-[650px]">
-              <div id="query" className="border bg-card p-2 ">
-                {result.query}
-              </div>
-            </div>
 
             <h2 className="text-xl underline font-bold mt-2">Data:</h2>
             <div className="m-4">
