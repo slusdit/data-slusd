@@ -2,7 +2,34 @@
 
 ## Frontend
 
-NextJS 14 server using Prisma ORM is running on [https://data.slusd.us](https://data.slusd.us)
+NextJS 14 server using Prisma ORM is running on [https:#data.slusd.us](https:#data.slusd.us)
+
+Requires `.env` file with the following values
+
+```.env
+# Prisma
+DATABASE_URL="mysql://YOUR_DB_USERNAME:YOUR_DB_BASSWORD@DB_IP:3306/YOUR_DATABASE_SCHEMA_NAME"
+
+# Auth.js setup
+
+
+# Google OAuth for Auth.js
+AUTH_GOOGLE_ID='' # From Google Cloud Console
+AUTH_GOOGLE_SECRET='' # From Google Cloud Console
+
+# Auth.js Setip
+AUTH_SECRET="" # Random string
+NEXTAUTH_SECRET="" # Random string
+NEXTAUTH_URL='http://localhost:3000' # Change to domain if exposed on web
+JWT_SIGNING_PRIVATE_KEY=''# Random string if using JWT auth
+
+# Aeries connection
+DB_USER='' # Aeries Read-only user
+DB_PASSWORD='' # Aeries Read-only password
+DB_SERVER='' # Aeries host name
+DB_DATABASE='' # Target Aeries Database
+
+```
 
 ### Prisma  setup
 
@@ -43,7 +70,7 @@ npm run dev
 
 :warning: **Forwarding port 3000 if development server is not on non-local server**
 
-Open [https://data.slusd.us](https://data.slusd.us) or URL with your browser to see the result.
+Open [https:#data.slusd.us](https:#data.slusd.us) or URL with your browser to see the result.
 
 ## Backend
 
