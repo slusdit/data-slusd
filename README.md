@@ -4,7 +4,7 @@
 
 NextJS 14 server using Prisma ORM is running on [https:#data.slusd.us](https:#data.slusd.us)
 
-Requires `.env` file with the following values
+Requires `.env` file in the root directory with the following values
 
 ```.env
 # Prisma
