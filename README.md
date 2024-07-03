@@ -2,13 +2,13 @@
 
 ## Frontend
 
-NextJS 14 server using Prisma ORM is running on [https:#data.slusd.us](https:#data.slusd.us)
+NextJS 14 server using Prisma ORM is running on [https://data.slusd.us](https://data.slusd.us)
 
 Requires `.env` file in the root directory with the following values
 
 ```.env
 # Prisma
-DATABASE_URL="mysql://YOUR_DB_USERNAME:YOUR_DB_BASSWORD@DB_IP:3306/YOUR_DATABASE_SCHEMA_NAME"
+DATABASE_URL="mysql://YOUR_DB_USERNAME:YOUR_DB_PASSWORD@DB_IP:3306/YOUR_DATABASE_SCHEMA_NAME"
 
 # Google OAuth for Auth.js
 AUTH_GOOGLE_ID='' # From Google Cloud Console
@@ -18,7 +18,7 @@ AUTH_GOOGLE_SECRET='' # From Google Cloud Console
 AUTH_SECRET="" # Random string
 NEXTAUTH_SECRET="" # Random string
 NEXTAUTH_URL='http://localhost:3000' # Change to domain if exposed on web
-JWT_SIGNING_PRIVATE_KEY=''# Random string if using JWT auth
+JWT_SIGNING_PRIVATE_KEY='' # Random string if using JWT auth
 
 # Aeries connection
 DB_USER='' # Aeries Read-only user
