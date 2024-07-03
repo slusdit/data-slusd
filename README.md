@@ -58,13 +58,16 @@ Built with direct connection to Aeries database using config in `/lib/aeries.ts`
   - [ ] Move from `table` to `datatable`
     - [x] Add Sorting
     - [ ] Add Filtering
+      - [ ] Add `filterColumn` to `Query` model and form to explicitly state which filters to build per query.
     - [x] Add row selection
   - [x] Add export options
     - [x] to csv
     - [x] to xlsx
 - [ ] Add Query form
   - [ ] run query to validate before submit
+    - [ ] Disable `Add+` button until after `Validate` button is clicked and successful.
   - [ ] find way to remove comments (stored as single line in DB)
+  - [ ] Add dropdown(?), or text input to name filtered columns. May need to run after query validation
 - [ ] Dashboard
   - [ ] Render using parallel routes?
   - [ ] Hold dashboard items in user settings
