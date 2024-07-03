@@ -4,8 +4,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { runQuery } from "@/lib/aeries";
 import { IRecordSet } from "mssql";
 import { useState } from "react";
-import DynamicTable from "./DynamicTable";
-import { format } from "sql-formatter";
 import DataTable from "@/app/components/DataTable";
 
 const QueryInput = ({

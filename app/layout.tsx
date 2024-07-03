@@ -35,7 +35,7 @@ export default async function RootLayout({
   return (
     <html lang="en" className='bg-background'>
       <body suppressHydrationWarning={true} className={` ${fontSans.className} w-full h-screen`}>
-        {/* <SessionProvider session={session}> */}
+
           <ThemeProvider
             attribute='class'
             defaultTheme='system'
@@ -43,8 +43,8 @@ export default async function RootLayout({
             disableTransitionOnChange
           >
           <MainHeader session={session}/>
-            <main className="w-full h-[calc(100vh-74px)] flex justify-center bg-card/90">
-              <div className="px-4 w-[95%] lg:w-[80%] bg-background h-full ">
+            <main className="w-full h-[calc(100vh-4.5rem)] flex justify-center bg-card/90">
+              <div className="px-4 w-[95%] lg:w-[90%] bg-background h-full ">
 
               {session ? children :
                 <UnauthorizedButton
@@ -53,9 +53,9 @@ export default async function RootLayout({
               <Toaster richColors />
                 </div>
             </main>
-            <MainFooter />
+            {/* <MainFooter /> */}
           </ThemeProvider>
-        {/* </SessionProvider> */}
+
       </body>
     </html>
   );
