@@ -108,8 +108,7 @@ export async function runQuery(
 
     let result;
     try {
-     
-      
+
       // TEST: Remove email to test @@sc overrice
       const schoolCode = await getSchoolsFromEmail({ email:email,  pool });
 
@@ -162,7 +161,7 @@ export async function runQuery(
   } catch (err) {
     console.error("SQL error", err);
     console.log(query)
-    throw new Error("SQL error", { cause: err }); // err;
+    throw new Error("SQL Pool error", { cause: err });
   }
 }
 
