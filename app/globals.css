@@ -147,7 +147,7 @@
   }
 }
 html {
-  overflow-y: scroll;
+  overflow-y: auto;
 }
 .no-scrollbar::-webkit-scrollbar {
   display: none;
