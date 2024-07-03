@@ -79,6 +79,7 @@ Built with direct connection to Aeries database using config in `/lib/aeries.ts`
 
 - [ ] Add suspence boundry around datatable
 - [ ] Query output
+  - [ ] Move data fetch to external async function to try and fix `loading.tsx` from not loading
   - [ ] Move from `table` to `datatable`
     - [x] Add Sorting
     - [ ] Add Filtering
