@@ -10,9 +10,6 @@ Requires `.env` file with the following values
 # Prisma
 DATABASE_URL="mysql://YOUR_DB_USERNAME:YOUR_DB_BASSWORD@DB_IP:3306/YOUR_DATABASE_SCHEMA_NAME"
 
-# Auth.js setup
-
-
 # Google OAuth for Auth.js
 AUTH_GOOGLE_ID='' # From Google Cloud Console
 AUTH_GOOGLE_SECRET='' # From Google Cloud Console
