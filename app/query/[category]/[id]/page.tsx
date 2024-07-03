@@ -57,10 +57,10 @@ export default async function Page({ params }: { params: { id: string } }) {
         ) : (
           <>
 
-            <h2 className="text-xl underline font-bold mt-2">Data:</h2>
-            <div className="m-4">
+            <h2 className="text-xl underline font-bold mt-2 w-full">Data:</h2>
+            
               <DataTable data={data} />
-            </div>
+            
           </>
         )}
       </div>

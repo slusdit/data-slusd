@@ -88,7 +88,7 @@ function DataTable<T extends object>({ data }: DataTableProps<T>) {
   }
 
   return (
-    <div className="w-full flex flex-col">
+    <div className="w-full py-4">
       <div className="mb-4 space-x-2 flex justify-center">
         <button
           onClick={() => exportToCSV(reactTable)}
@@ -103,8 +103,8 @@ function DataTable<T extends object>({ data }: DataTableProps<T>) {
           Export to Excel
         </button>
       </div>
-      <div className="w-full flex justify-center">
-        <ScrollArea className="w-[95%]">
+      <div className="justify-center m-auto flex align-middle">
+        <ScrollArea className="max-w-[95%]">
           <div className="overflow-x-auto">
             <table className="border border-black">
               <thead>

@@ -20,8 +20,8 @@ const QueryInput = ({
   const [result, setResult] = useState(initialResult);
   const handleQuery = () => runQuery(value).then(setResult).catch(setError);
   return (
-    <div>
-      <div className="flex w-full items-center justify-center gap-2">
+    <div className="mt-4">
+      <div className="flex flex-col w-full items-center justify-center gap-2">
         <Textarea
           name="query"
           id="query"
@@ -36,10 +36,10 @@ const QueryInput = ({
 
       <div>{error && <div>Error: {error}</div>}</div>
 
-      <div className="mt-4 flex items-center justify-center w-full">
-        <div className="m-auto">
+      <div className="mt-2 flex  justify-center w-full">
+        
           <DataTable data={result} />
-        </div>
+        
       </div>
     </div>
   );
