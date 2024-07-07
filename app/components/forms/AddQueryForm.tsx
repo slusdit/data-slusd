@@ -53,7 +53,7 @@ interface Props {
 
 export const queryFormSchema = z.object({
   query: z.string().min(1, { message: "Query must not be empty" }),
-  name: z.string().min(1, { message: "Query Titel must not be empty" }),
+  name: z.string().min(1, { message: "Query Title must not be empty" }),
   // label: z.string(),
   createdBy: z.string().email({ message: "Must be a valid email" }),
   description: z.string().min(1, { message: "Description must not be empty" }),

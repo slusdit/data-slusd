@@ -74,7 +74,7 @@ export async function getSchoolsFromEmail({
   return schoolCode;
 }
 
-function removeCommentsFromQuery(query: string) {
+export async function removeCommentsFromQuery(query: string) {
   let cleanedQuery = query;
   // Remove single-line comments (--)
   cleanedQuery = query.replace(/\-\-[^,]*[\n\r]*[^,]*,/gm, '');
@@ -100,7 +100,7 @@ export async function runQuery(
 
   let cleanQuery = query?.replace(/\s+/g, " ").trim();
 
-  cleanQuery = removeCommentsFromQuery(cleanQuery);
+  cleanQuery = await removeCommentsFromQuery(cleanQuery);
 
   const pool = await poolPromise;
   try {
