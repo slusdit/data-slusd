@@ -7,6 +7,7 @@ import { PrismaClient } from "@prisma/client";
 import { Plus } from "lucide-react";
 import BackButton from "@/app/components/BackButton";
 import DataTable from "@/app/components/DataTable";
+import BarChart from "@/app/components/charts/BarChart";
 
 const prisma = new PrismaClient();
 export default async function Page({ params }: { params: { id: string } }) {
@@ -22,6 +23,7 @@ export default async function Page({ params }: { params: { id: string } }) {
       <div>
         <BackButton />
         <h1 className="text-3xl Underline font-bold">{result.name}</h1>
+        
         {(session?.user?.queryEdit) && (
           <FormDialog
             triggerMessage="Add Query"
@@ -48,6 +50,9 @@ export default async function Page({ params }: { params: { id: string } }) {
             {result.createdBy}{" "}
           </a>
         </p>
+        
+
+        
         {/* <DataTable columns={columns} data={data} /> */}
         {session?.user?.queryEdit ? (
           <>
