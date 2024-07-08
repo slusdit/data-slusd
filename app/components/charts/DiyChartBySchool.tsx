@@ -374,10 +374,12 @@ function createConfig(chartData: SchoolByGrade[], key:string = 'School') {
 };
 
 
-export function DiyChartByGrade({
-    chartData = defaultChartData
+export function DiyChartBySchool({
+    chartData = defaultChartData,
+    title = 'DIY Chart By School'
 }: {
     chartData: SchoolByGrade[]
+    title?: string
 }) {
     const chartConfig = createConfig(chartData)
     console.log(chartConfig)
@@ -403,7 +405,7 @@ export function DiyChartByGrade({
     
     return (
         <div>
-            <h1>DIY Chart By Grade</h1>
+            <h1>{title}</h1>
             <ChartContainer className="min-h-[400px]" config={chartConfig} >
                 <BarChart accessibilityLayer data={filteredData} >
                     <CartesianGrid vertical={false} />
@@ -447,7 +449,7 @@ export function DiyChartByGrade({
                     <Bar dataKey="Gr 12" fill="hsl(var(--chart-4))"  stackId={'a'}/>
                     <Bar dataKey="SDC-12" fill="hsl(var(--chart-4))"  stackId={'b'}/> */}
                    
-                   
+                   {}
                     <Bar dataKey="TK" fill="hsl(var(--chart-1))"  stackId={'a'}/>
                     <Bar dataKey="K" fill="hsl(var(--chart-2))"  stackId={'a'}/>
                     <Bar dataKey="Gr 1" fill="hsl(var(--chart-3))"  stackId={'a'}/>

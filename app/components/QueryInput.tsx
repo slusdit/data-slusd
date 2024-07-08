@@ -9,9 +9,13 @@ import DataTable from "@/app/components/DataTable";
 const QueryInput = ({
   initialValue: initialQueryRow,
   initialResult = undefined,
+  showChart = false,
+  chartTitle
 }: {
   initialValue: any;
   initialResult: IRecordSet<any> | undefined;
+  showChart?: boolean;
+  chartTitle?: string;
 }) => {
   const [value, setValue] = useState(initialQueryRow);
   const [error, setError] = useState<string>();
@@ -24,6 +28,8 @@ const QueryInput = ({
     console.log(cleanQuery);
     runQuery(cleanQuery).then(setResult).catch(setError);
   }
+
+  console.log(showChart)
     
   return (
     <div className="mt-4">
@@ -44,7 +50,7 @@ const QueryInput = ({
 
       <div className="mt-2 flex  justify-center w-full">
         
-          <DataTable data={result} />
+          <DataTable data={result} showChart={showChart} chartTitle={chartTitle}/>
         
       </div>
     </div>
