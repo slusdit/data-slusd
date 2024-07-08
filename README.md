@@ -82,16 +82,18 @@ Built with direct connection to Aeries database using config in `/lib/aeries.ts`
   - [ ] Move data fetch to external async function to try and fix `loading.tsx` from not loading
   - [ ] Move from `table` to `datatable`
     - [x] Add Sorting
+    - [X] Add Column Sorting
     - [ ] Add Filtering
       - [ ] Add `filterColumn` to `Query` model and form to explicitly state which filters to build per query.
     - [x] Add row selection
+  - [ ] Include column filtering in exporting
   - [x] Add export options
     - [x] to csv
     - [x] to xlsx
 - [ ] Add Query form
   - [ ] run query to validate before submit
     - [ ] Disable `Add+` button until after `Validate` button is clicked and successful.
-  - [ ] find way to remove comments (stored as single line in DB)
+  - [x] find way to remove comments (stored as single line in DB) `Should be working`
   - [ ] Add dropdown(?), or text input to name filtered columns. May need to run after query validation
 - [ ] Dashboard
   - [ ] Render using parallel routes?

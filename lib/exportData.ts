@@ -3,11 +3,22 @@ import { Table } from '@tanstack/react-table'
 
 export const exportToCSV = (reactTable: Table<any>) => {
   let rowsToExport = reactTable.getSelectedRowModel().rows
-
+  
   // If no rows are selected, export all rows
   if (rowsToExport.length === 0) {
     rowsToExport = reactTable.getRowModel().rows
   }
+  
+  
+  if (reactTable.options.state.columnVisibility?.requested === true) {
+
+    console.log(reactTable.options.state.columnVisibility)
+    
+    // rowsToExport = reactTable.getFilteredRowModel().rows
+  }
+  console.log(reactTable.options.state.columnVisibility)
+  
+  console.log(rowsToExport)
 
   
   const headers = reactTable.options.columns.filter((column => column.id !== 'select')).map((column) => column.id)
@@ -31,11 +42,17 @@ export const exportToCSV = (reactTable: Table<any>) => {
 
 export const exportToExcel = (reactTable:any) => {
   let rowsToExport = reactTable.getSelectedRowModel().rows
+  
 
   // If no rows are selected, export all rows
   if (rowsToExport.length === 0) {
     rowsToExport = reactTable.getRowModel().rows
   }
+  console.log(reactTable.getRowModel())
+  // console.log('Made it here')
+  // if (columnsToExport.length === 0) {
+  //   columnsToExport = reactTable.getColumns().columns
+  // }
 
   const worksheet = XLSX.utils.json_to_sheet(
     rowsToExport.map((row: { original: Record<string, unknown> }) => row.original)

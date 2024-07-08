@@ -2,7 +2,7 @@ import Component from "../components/charts/PieChart";
 import { MultiComponent } from "../components/charts/MultiBar";
 import { ChartConfig } from "@/components/ui/chart";
 import { StackComponent } from "../components/charts/StackedBar";
-import { DiyChartByGrade } from "../components/charts/DiyChartByGrade";
+import { DiyChartBySchool } from "../components/charts/DiyChartBySchool";
 
 
 
@@ -398,9 +398,10 @@ export default async function Page() {
     return (
         <div className="px-12 max-w-5xl">
             <h1 className="text-3xl">Test</h1>
-            {/* <Component />
-            <MultiComponent chartData={chartData} chartConfig={chartConfig} /> */}
-            <DiyChartByGrade />
+            <p>Set "Month" (School Number) to @@sc from User and hide picker</p>
+            <Component />
+            {/* <MultiComponent chartData={chartData} chartConfig={chartConfig} />  */}
+            
             {/* <StackComponent chartData={finalFinalChartData} chartConfig={chartConfig} /> */}
         </div>
     )

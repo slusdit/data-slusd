@@ -8,7 +8,7 @@ import { Plus } from "lucide-react";
 import BackButton from "@/app/components/BackButton";
 import DataTable from "@/app/components/DataTable";
 import BarChart from "@/app/components/charts/BarChart";
-import { DiyChartByGrade } from "@/app/components/charts/DiyChartByGrade";
+import { DiyChartBySchool } from "@/app/components/charts/DiyChartBySchool";
 
 const prisma = new PrismaClient();
 export default async function Page({ params }: { params: { id: string } }) {
@@ -16,10 +16,12 @@ export default async function Page({ params }: { params: { id: string } }) {
   const id = params.id;
   const categories = await prisma.queryCategory.findMany();
   const result = await prisma.query.findUnique({ where: { id: id } }); //const {id, name, query, description, publicQuery, createdBy }:Query | null = await prisma.query.findUnique({ where: { label: label } })
+  const showChart = id === "cly54bp030001hv31khj4zt38" ? true : false;
   
+
   if (result) {
     let data: any[] = await runQuery(result?.query);
-
+    console.log(showChart)
     return (
       <div>
         <BackButton />
@@ -55,21 +57,27 @@ export default async function Page({ params }: { params: { id: string } }) {
 
         
         {/* <DataTable columns={columns} data={data} /> */}
-        {id === "cly54bp030001hv31khj4zt38" &&
-        <DiyChartByGrade chartData={data} />}
+       
+        {/* {id === "cly54bp030001hv31khj4zt38" &&
+        <DiyChartByGrade chartData={data} />} */}
         
         {session?.user?.queryEdit ? (
           <>
           
           
-          <QueryInput initialValue={result?.query} initialResult={data} />
+          <QueryInput 
+            initialValue={result?.query} 
+            initialResult={data} 
+            showChart={showChart} 
+            chartTitle={result?.name}
+            />
           </>
         ) : (
           <>
 
             <h2 className="text-xl underline font-bold mt-2 w-full">Data:</h2>
             
-              <DataTable data={data} />
+              <DataTable data={data} showChart={showChart}/>
             
           </>
         )}
