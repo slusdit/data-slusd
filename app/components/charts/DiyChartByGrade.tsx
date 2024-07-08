@@ -1,9 +1,9 @@
 'use client'
-import { Bar, BarChart } from "recharts"
+import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
  
-import { ChartConfig, ChartContainer } from "@/components/ui/chart"
+import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 
-type SchoolByGrade = {
+export type SchoolByGrade = {
     'Sch#': number,
     School: string,
     TK: number,
@@ -20,7 +20,9 @@ type SchoolByGrade = {
     '10': number,
     '11': number,
     '12': number,
-    Total: number
+    Total: number,
+    el?: number,
+    fre?: number,
 }
 
 type BaseChartConfig = {
@@ -342,7 +344,7 @@ const defaultChartData = [
 
 
 
-function createConfig(chartData: SchoolByGrade[]) {
+function createConfig(chartData: SchoolByGrade[], key:string = 'School') {
     console.log(chartData)
     let config: BaseBySchoolChartConfig = {}
     chartData.forEach(item => {
@@ -355,8 +357,11 @@ function createConfig(chartData: SchoolByGrade[]) {
                 break;
             }
         }
-        config[item.School] = {
-            'label': item.School,
+        // @ts-ignore
+        config[item[key]] = {
+            // @ts-ignore
+            'label': item[key],
+            
             // 'data' : {...item}, 
             'color': 'red'//'var(--primary)'  //'var(--color-sc' + school + ')',
         }
@@ -376,13 +381,107 @@ export function DiyChartByGrade({
 }) {
     const chartConfig = createConfig(chartData)
     console.log(chartConfig)
+    console.log(chartData)
+    
+    
+    function removeZeroValues(data: SchoolByGrade[]) {
+        return data.map(item => {
+            const filteredItem = Object.keys(item).reduce((obj, key) => {
+                if (item[key] !== 0) {
+                    obj[key] = item[key];
+                }
+                return obj;
+            }, {});
+            return filteredItem;
+        });
+    }
+    
+    const filteredData = removeZeroValues(chartData);
+    console.log(filteredData)
+    
+    const customColor = 'green' //'var(--color-sc' + school + ')';
+    
     return (
         <div>
             <h1>DIY Chart By Grade</h1>
             <ChartContainer className="min-h-[400px]" config={chartConfig} >
-                <BarChart accessibilityLayer data={chartData} >
-                    <Bar dataKey="TK" fill="green" />
-                    <Bar dataKey="K" fill="orange" />
+                <BarChart accessibilityLayer data={filteredData} >
+                    <CartesianGrid vertical={false} />
+                    <XAxis
+                        dataKey="School"
+                        tickLine={false}
+                        tickMargin={10}
+                        axisLine={false}
+                        tickFormatter={(value) => value.slice(0, 3)}
+                    />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    {/* <ChartLegend content={<ChartLegendContent nameKey='School' />} /> */}
+                    
+                    {/* SDC and Non-SDC Side by side */}
+                    {/* <Bar dataKey="TK" fill="hsl(var(--chart-1))"  stackId={'a'}/>
+                    <Bar dataKey="SDC-TK" fill="hsl(var(--chart-7))"  stackId={'b'}/>
+                    <Bar dataKey="K" fill="hsl(var(--chart-2))"  stackId={'a'}/>
+                    <Bar dataKey="SDC-K" fill="hsl(var(--chart-8))"  stackId={'b'}/>
+                    <Bar dataKey="Gr 1" fill="hsl(var(--chart-3))"  stackId={'a'}/>
+                    <Bar dataKey="SDC-1" fill="hsl(var(--chart-9))"  stackId={'b'}/>
+                    <Bar dataKey="Gr 2" fill="hsl(var(--chart-4))"  stackId={'a'}/>
+                    <Bar dataKey="SDC-2" fill="hsl(var(--chart-10))"  stackId={'b'}/>
+                    <Bar dataKey="Gr 3" fill="hsl(var(--chart-5))"  stackId={'a'}/>
+                    <Bar dataKey="SDC-3" fill="hsl(var(--primary))"  stackId={'b'}/>
+                    <Bar dataKey="Gr 4" fill="hsl(var(--chart-6))"  stackId={'a'}/>
+                    <Bar dataKey="SDC-4" fill="hsl(var(--chart-6))"  stackId={'b'}/>
+                    <Bar dataKey="Gr 5" fill="hsl(var(--chart-7))"  stackId={'a'}/>
+                    <Bar dataKey="SDC-5" fill="hsl(var(--chart-7))"  stackId={'b'}/>
+                    <Bar dataKey="Gr 6" fill="hsl(var(--chart-8))"  stackId={'a'}/>
+                    <Bar dataKey="SDC-6" fill="hsl(var(--chart-8))"  stackId={'b'}/>
+                    <Bar dataKey="Gr 7" fill="hsl(var(--chart-9))"  stackId={'a'}/>
+                    <Bar dataKey="SDC-7" fill="hsl(var(--chart-9))"  stackId={'b'}/>
+                    <Bar dataKey="Gr 8" fill="hsl(var(--chart-10))"  stackId={'a'}/>
+                    <Bar dataKey="SDC-8" fill="hsl(var(--chart-10))"  stackId={'b'}/>
+                    <Bar dataKey="Gr 9" fill="hsl(var(--chart-1))"  stackId={'a'}/>
+                    <Bar dataKey="SDC-9" fill="hsl(var(--chart-1))"  stackId={'b'}/>
+                    <Bar dataKey="Gr 10" fill="hsl(var(--chart-2))"  stackId={'a'}/>
+                    <Bar dataKey="SDC-10" fill="hsl(var(--chart-2))"  stackId={'b'}/>
+                    <Bar dataKey="Gr 11" fill="hsl(var(--chart-3))"  stackId={'a'}/>
+                    <Bar dataKey="SDC-11" fill="hsl(var(--chart-3))"  stackId={'b'}/>
+                    <Bar dataKey="Gr 12" fill="hsl(var(--chart-4))"  stackId={'a'}/>
+                    <Bar dataKey="SDC-12" fill="hsl(var(--chart-4))"  stackId={'b'}/> */}
+                   
+                   
+                    <Bar dataKey="TK" fill="hsl(var(--chart-1))"  stackId={'a'}/>
+                    <Bar dataKey="K" fill="hsl(var(--chart-2))"  stackId={'a'}/>
+                    <Bar dataKey="Gr 1" fill="hsl(var(--chart-3))"  stackId={'a'}/>
+                    <Bar dataKey="Gr 2" fill="hsl(var(--chart-4))"  stackId={'a'}/>
+                    <Bar dataKey="Gr 3" fill="hsl(var(--chart-5))"  stackId={'a'}/>
+                    <Bar dataKey="Gr 4" fill="hsl(var(--chart-6))"  stackId={'a'}/>
+                    <Bar dataKey="Gr 5" fill="hsl(var(--chart-7))"  stackId={'a'}/>
+                    <Bar dataKey="Gr 6" fill="hsl(var(--chart-8))"  stackId={'a'}/>
+                    <Bar dataKey="Gr 7" fill="hsl(var(--chart-9))"  stackId={'a'}/>
+                    <Bar dataKey="Gr 8" fill="hsl(var(--chart-10))"  stackId={'a'}/>
+                    <Bar dataKey="Gr 9" fill="hsl(var(--chart-1))"  stackId={'a'}/>
+                    <Bar dataKey="Gr 10" fill="hsl(var(--chart-2))"  stackId={'a'}/>
+                    <Bar dataKey="Gr 11" fill="hsl(var(--chart-3))"  stackId={'a'}/>
+                    <Bar dataKey="Gr 12" fill="hsl(var(--chart-4))"  stackId={'a'}/>
+
+                    <Bar dataKey="SDC-TK" fill="hsl(var(--spotlight))"  stackId={'a'}/>
+                    <Bar dataKey="SDC-K" fill="hsl(var(--spotlight))"  stackId={'a'}/>
+                    <Bar dataKey="SDC-1" fill="hsl(var(--spotlight))"  stackId={'a'}/>
+                    <Bar dataKey="SDC-2" fill="hsl(var(--spotlight))"  stackId={'a'}/>
+                    <Bar dataKey="SDC-3" fill="hsl(var(--spotlight))"  stackId={'a'}/>
+                    <Bar dataKey="SDC-4" fill="hsl(var(--spotlight))"  stackId={'a'}/>
+                    <Bar dataKey="SDC-5" fill="hsl(var(--spotlight))"  stackId={'a'}/>
+                    <Bar dataKey="SDC-6" fill="hsl(var(--spotlight))"  stackId={'a'}/>
+                    <Bar dataKey="SDC-7" fill="hsl(var(--spotlight))"  stackId={'a'}/>
+                    <Bar dataKey="SDC-8" fill="hsl(var(--spotlight))"  stackId={'a'}/>
+                    <Bar dataKey="SDC-9" fill="hsl(var(--spotlight))"  stackId={'a'}/>
+                    <Bar dataKey="SDC-10" fill="hsl(var(--spotlight))"  stackId={'a'}/>
+                    <Bar dataKey="SDC-11" fill="hsl(var(--spotlight))"  stackId={'a'}/>
+                    <Bar dataKey="SDC-12" fill="hsl(var(--spotlight))"  stackId={'a'}/>
+
+                    <Bar dataKey="Total-NoSDC" fill="hsl(var(--chart-6))"  stackId={'c'}/>
+                    <Bar dataKey="Total-SDC" fill="hsl(var(--spotlight))"  stackId={'c'}/>
+                    {/* <Bar dataKey="Total-NoSDC" fill="hsl(var(--chart-6))"  stackId={'d'}/> */}
+                    {/* <Bar dataKey="Total" fill="purple" radius={4} /> */}
                 </BarChart>
             </ChartContainer>
         </div>

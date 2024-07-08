@@ -8,6 +8,7 @@ import { Plus } from "lucide-react";
 import BackButton from "@/app/components/BackButton";
 import DataTable from "@/app/components/DataTable";
 import BarChart from "@/app/components/charts/BarChart";
+import { DiyChartByGrade } from "@/app/components/charts/DiyChartByGrade";
 
 const prisma = new PrismaClient();
 export default async function Page({ params }: { params: { id: string } }) {
@@ -54,8 +55,12 @@ export default async function Page({ params }: { params: { id: string } }) {
 
         
         {/* <DataTable columns={columns} data={data} /> */}
+        {id === "cly54bp030001hv31khj4zt38" &&
+        <DiyChartByGrade chartData={data} />}
+        
         {session?.user?.queryEdit ? (
           <>
+          
           
           <QueryInput initialValue={result?.query} initialResult={data} />
           </>
