@@ -33,7 +33,7 @@ export default async function MainHeader({ session }: { session: Session | null 
 
 
   return (
-    <div className="w-full">
+    <header className="w-full">
       <nav
         className={`
             flex
@@ -47,7 +47,7 @@ export default async function MainHeader({ session }: { session: Session | null 
           mx-auto
           md:py-0
           
-          mb-6
+
           text-xl
           font-bold
           border-b
@@ -81,6 +81,6 @@ export default async function MainHeader({ session }: { session: Session | null 
           </div>
         </div>
       </nav>
-    </div>
+    </header>
   );
 }

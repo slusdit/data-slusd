@@ -1,33 +1,44 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea"
-import { runQuery } from "@/lib/aeries";
+import { Textarea } from "@/components/ui/textarea";
+import { removeCommentsFromQuery, runQuery } from "@/lib/aeries";
 import { IRecordSet } from "mssql";
 import { useState } from "react";
-import DynamicTable from "./DynamicTable";
-import { format } from "sql-formatter";
 import DataTable from "@/app/components/DataTable";
 
 const QueryInput = ({
   initialValue: initialQueryRow,
   initialResult = undefined,
+  showChart = false,
+  chartTitle
 }: {
   initialValue: any;
   initialResult: IRecordSet<any> | undefined;
-  }) => {
-
+  showChart?: boolean;
+  chartTitle?: string;
+}) => {
   const [value, setValue] = useState(initialQueryRow);
   const [error, setError] = useState<string>();
   const [result, setResult] = useState(initialResult);
-  const handleQuery = () => runQuery(value).then(setResult).catch(setError);
+  const handleQuery = async () =>{
+    console.log(value);
+    
+    const cleanQuery = await removeCommentsFromQuery(value);
+
+    console.log(cleanQuery);
+    runQuery(cleanQuery).then(setResult).catch(setError);
+  }
+
+  console.log(showChart)
+    
   return (
-    <div>
-      <div className="flex w-full items-center justify-center gap-2">
+    <div className="mt-4">
+      <div className="flex flex-col w-full items-center justify-center gap-2">
         <Textarea
           name="query"
           id="query"
           value={value}
-          className="w-1/2 place-content-start"
+          className="w-1/2 place-content-start whitespace-pre-wrap"
           onChange={(e) => setValue(e.target.value)}
         />
         <Button variant="outline" onClick={handleQuery}>
@@ -35,18 +46,12 @@ const QueryInput = ({
         </Button>
       </div>
 
-      <div>
-        {error && <div>Error: {error}</div>}
-       
-      </div>
-      <div>
-        <div className="mt-4 flex items-center justify-center w-full">
-          <div className="m-auto">
-            
-        <DataTable data={result} />
-        </div>
-        </div>
-        <pre>{JSON.stringify(result, null, 2)}</pre>
+      <div>{error && <div>Error: {error}</div>}</div>
+
+      <div className="mt-2 flex  justify-center w-full">
+        
+          <DataTable data={result} showChart={showChart} chartTitle={chartTitle}/>
+        
       </div>
     </div>
   );

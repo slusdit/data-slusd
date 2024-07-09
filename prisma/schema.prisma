@@ -142,11 +142,13 @@ model Query {
   name        String
   label       String         @unique
   createdBy   String
+  chart       Boolean        @default(false)
   description String
   publicQuery Boolean        @default(false)
   roles       Role[]         @relation
   categoryId  String?
   category    QueryCategory? @relation(fields: [categoryId], references: [id])
+  hiddenCols  String          @default("")
 }
 
 model QueryCategory {
