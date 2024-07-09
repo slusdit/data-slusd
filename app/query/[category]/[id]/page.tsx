@@ -5,10 +5,10 @@ import { auth } from "@/auth";
 import { runQuery } from "@/lib/aeries";
 import { PrismaClient } from "@prisma/client";
 import { Plus } from "lucide-react";
-import DynamicTable from "@/app/components/DynamicTable";
-import { format } from "sql-formatter";
 import BackButton from "@/app/components/BackButton";
 import DataTable from "@/app/components/DataTable";
+import BarChart from "@/app/components/charts/BarChart";
+import { DiyChartBySchool } from "@/app/components/charts/DiyChartBySchool";
 
 const prisma = new PrismaClient();
 export default async function Page({ params }: { params: { id: string } }) {
@@ -16,30 +16,18 @@ export default async function Page({ params }: { params: { id: string } }) {
   const id = params.id;
   const categories = await prisma.queryCategory.findMany();
   const result = await prisma.query.findUnique({ where: { id: id } }); //const {id, name, query, description, publicQuery, createdBy }:Query | null = await prisma.query.findUnique({ where: { label: label } })
+
   
+
   if (result) {
     let data: any[] = await runQuery(result?.query);
-
-    console.log(process.env.NODE_ENV)
-  //   if (process.env.NODE_ENV === "development") 
-  //  {
-  //     data = [
-       
-
-  //     ]
-     
-  //   } else {
-  //     data = await runQuery(result?.query);
-
-  //   } 
-    
-    // console.log(data)
 
     return (
       <div>
         <BackButton />
         <h1 className="text-3xl Underline font-bold">{result.name}</h1>
-        {session?.user?.admin && (
+        
+        {(session?.user?.queryEdit) && (
           <FormDialog
             triggerMessage="Add Query"
             icon={<Plus className="py-1" />}
@@ -65,25 +53,32 @@ export default async function Page({ params }: { params: { id: string } }) {
             {result.createdBy}{" "}
           </a>
         </p>
+        
+
+        
         {/* <DataTable columns={columns} data={data} /> */}
+       
+        {/* {id === "cly54bp030001hv31khj4zt38" &&
+        <DiyChartByGrade chartData={data} />} */}
+        
         {session?.user?.queryEdit ? (
           <>
-          <DataTable data={data} />
-          <QueryInput initialValue={result?.query} initialResult={data} />
+          
+          
+          <QueryInput 
+            initialValue={result?.query} 
+            initialResult={data} 
+            showChart={result.chart} 
+            chartTitle={result?.name}
+            />
           </>
         ) : (
           <>
-            <label htmlFor="query">Query: </label>
-            <div className="max-w-[650px]">
-              <div id="query" className="border bg-card p-2 ">
-                {result.query}
-              </div>
-            </div>
 
-            <h2 className="text-xl underline font-bold mt-2">Data:</h2>
-            <div className="m-4">
-              <DataTable data={data} />
-            </div>
+            <h2 className="text-xl underline font-bold mt-2 w-full">Data:</h2>
+            
+              <DataTable data={data} showChart={result.chart}/>
+            
           </>
         )}
       </div>

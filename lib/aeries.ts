@@ -74,7 +74,7 @@ export async function getSchoolsFromEmail({
   return schoolCode;
 }
 
-function removeCommentsFromQuery(query: string) {
+export async function removeCommentsFromQuery(query: string) {
   let cleanedQuery = query;
   // Remove single-line comments (--)
   cleanedQuery = query.replace(/\-\-[^,]*[\n\r]*[^,]*,/gm, '');
@@ -100,7 +100,7 @@ export async function runQuery(
 
   let cleanQuery = query?.replace(/\s+/g, " ").trim();
 
-  cleanQuery = removeCommentsFromQuery(cleanQuery);
+  cleanQuery = await removeCommentsFromQuery(cleanQuery);
 
   const pool = await poolPromise;
   try {
@@ -108,8 +108,7 @@ export async function runQuery(
 
     let result;
     try {
-     
-      
+
       // TEST: Remove email to test @@sc overrice
       const schoolCode = await getSchoolsFromEmail({ email:email,  pool });
 
@@ -162,7 +161,7 @@ export async function runQuery(
   } catch (err) {
     console.error("SQL error", err);
     console.log(query)
-    throw new Error("SQL error", { cause: err }); // err;
+    throw new Error("SQL Pool error", { cause: err });
   }
 }
 
