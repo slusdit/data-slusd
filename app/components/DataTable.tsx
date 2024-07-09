@@ -113,8 +113,10 @@ function DataTable<T extends object>({ data, showChart, chartTitle }: DataTableP
       
 
     <div className="w-full flex justify-center">
+    {showChart &&
 
-    <DiyChartBySchool chartData={reactTable.options.data} title={chartTitle} />
+    <DiyChartBySchool table={reactTable} title={chartTitle} />
+    }
     </div>  
 
       }
