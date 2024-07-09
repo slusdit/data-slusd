@@ -16,12 +16,12 @@ export default async function Page({ params }: { params: { id: string } }) {
   const id = params.id;
   const categories = await prisma.queryCategory.findMany();
   const result = await prisma.query.findUnique({ where: { id: id } }); //const {id, name, query, description, publicQuery, createdBy }:Query | null = await prisma.query.findUnique({ where: { label: label } })
-  const showChart = id === "cly54bp030001hv31khj4zt38" ? true : false;
+
   
 
   if (result) {
     let data: any[] = await runQuery(result?.query);
-    console.log(showChart)
+
     return (
       <div>
         <BackButton />
@@ -68,7 +68,7 @@ export default async function Page({ params }: { params: { id: string } }) {
           <QueryInput 
             initialValue={result?.query} 
             initialResult={data} 
-            showChart={showChart} 
+            showChart={result.chart} 
             chartTitle={result?.name}
             />
           </>
@@ -77,7 +77,7 @@ export default async function Page({ params }: { params: { id: string } }) {
 
             <h2 className="text-xl underline font-bold mt-2 w-full">Data:</h2>
             
-              <DataTable data={data} showChart={showChart}/>
+              <DataTable data={data} showChart={result.chart}/>
             
           </>
         )}

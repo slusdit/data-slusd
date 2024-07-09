@@ -142,6 +142,7 @@ model Query {
   name        String
   label       String         @unique
   createdBy   String
+  chart       Boolean        @default(false)
   description String
   publicQuery Boolean        @default(false)
   roles       Role[]         @relation
