@@ -98,9 +98,10 @@ export async function runQuery(
     throw Error("Dangerous query");
   }
 
-  let cleanQuery = query?.replace(/\s+/g, " ").trim();
+  // let cleanQuery = query?.replace(/\s+/g, " ").trim();
 
-  cleanQuery = await removeCommentsFromQuery(cleanQuery);
+  // cleanQuery = await removeCommentsFromQuery(cleanQuery);
+  let cleanQuery = await removeCommentsFromQuery(query);
 
   const pool = await poolPromise;
   try {
