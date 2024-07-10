@@ -188,21 +188,26 @@ function DataTable<T extends object>({ data, showChart, chartTitle }: DataTableP
                   ))}
                 </thead>
                 <tbody>
-                  {reactTable.getRowModel().rows.map((row) => (
+                  {reactTable.getRowModel().rows.map((row) => {
+                    // console.log(row)
+                    return(
                     <tr key={row.id}>
-                      {row.getVisibleCells().map((cell) => (
+                      {row.getVisibleCells().map((cell) => {
+                        console.log(cell.row.original)
+                        return (
                         <td
-                          key={cell.id}
-                          className="p-1 text-xs border bg-card text-center"
+                        key={cell.id}
+                        className='p-1 text-xs border bg-card text-center '
                         >
                           {flexRender(
                             cell.column.columnDef.cell,
                             cell.getContext()
                           )}
                         </td>
-                      ))}
-                    </tr>
-                  ))}
+                      )}
+                      )}
+                    </tr>)
+                  })}
                 </tbody>
               </table>
             </div>
