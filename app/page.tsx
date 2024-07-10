@@ -67,7 +67,7 @@ export default async function Home() {
         </>
       )}
 
-      <QuerySheet categories={categories} queries={queries} />
+
 
       <h2 className="font-bold text-2xl mb-4 underline">Queries</h2>
       <ul className="flex flex-col gap-1 w-2/3">
