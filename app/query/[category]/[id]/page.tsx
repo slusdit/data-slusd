@@ -9,15 +9,43 @@ import BackButton from "@/app/components/BackButton";
 import DataTable from "@/app/components/DataTable";
 import BarChart from "@/app/components/charts/BarChart";
 import { DiyChartBySchool } from "@/app/components/charts/DiyChartBySchool";
+import { QueryWithCategory } from "@/app/components/QueryBar";
+import { QuerySheet } from "@/app/components/QueiesSheet";
 
 const prisma = new PrismaClient();
 export default async function Page({ params }: { params: { id: string } }) {
   const session = await auth();
   const id = params.id;
-  const categories = await prisma.queryCategory.findMany();
+  // const categories = await prisma.queryCategory.findMany();
   const result = await prisma.query.findUnique({ where: { id: id } }); //const {id, name, query, description, publicQuery, createdBy }:Query | null = await prisma.query.findUnique({ where: { label: label } })
-
-  
+  let queries: QueryWithCategory[]
+  let categories
+  if (session?.user) {
+    categories = await prisma.queryCategory.findMany(
+      {
+        include: {
+          queries: true,
+        },
+      },
+    );
+    
+    queries = await prisma.query.findMany({
+      select: {
+        
+        id: true,
+        name: true,
+        description: true,
+        
+        category: {
+          select: {
+            id: true,
+            label: true,
+            value: true
+          }
+        },
+      }
+    })
+  }
 
   if (result) {
     let data: any[] = await runQuery(result?.query);
@@ -41,6 +69,10 @@ export default async function Page({ params }: { params: { id: string } }) {
           </FormDialog>
         )}
         <br></br>
+        <div className="my-2">
+
+        <QuerySheet categories={categories} queries={queries}/>
+        </div>
         <label htmlFor="description">Description:</label>
         <div id="description">{result.description}</div>
         <p>Public/Private: {result.publicQuery ? "Public" : "Private"}</p>

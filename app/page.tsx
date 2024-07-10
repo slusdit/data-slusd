@@ -6,6 +6,7 @@ import FormDialog from "./components/forms/FormDialog";
 import { Plus } from "lucide-react";
 import { QueryWithCategory } from "./components/QueryBar";
 import { Separator } from "@/components/ui/separator";
+import { QuerySheet } from "./components/QueiesSheet";
 
 const prisma = new PrismaClient();
 export default async function Home() {
@@ -65,6 +66,8 @@ export default async function Home() {
           <Separator className="my-4 w-48"/>
         </>
       )}
+
+      <QuerySheet categories={categories} queries={queries} />
 
       <h2 className="font-bold text-2xl mb-4 underline">Queries</h2>
       <ul className="flex flex-col gap-1 w-2/3">
