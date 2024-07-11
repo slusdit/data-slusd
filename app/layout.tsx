@@ -34,7 +34,7 @@ export default async function RootLayout({
   
   return (
     <html lang="en" className='bg-background'>
-      <body suppressHydrationWarning={true} className={` ${fontSans.className} w-full h-screen`}>
+      <body suppressHydrationWarning={true} className={` ${fontSans.className} w-full h-screen bg-card/90`}>
 
           <ThemeProvider
             attribute='class'
@@ -43,7 +43,7 @@ export default async function RootLayout({
             disableTransitionOnChange
           >
           <MainHeader session={session}/>
-            <main className="w-full h-[calc(100vh-4.5rem)] flex justify-center bg-card/90">
+            <main className="w-full h-[calc(100vh-4.5rem)] flex justify-center ">
               <div className="px-4 w-[95%] lg:w-[90%] bg-background h-full ">
 
               {session ? children :
