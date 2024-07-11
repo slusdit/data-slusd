@@ -20,15 +20,21 @@ import { Menu } from "lucide-react"
 export function QuerySheet({
 
     categories,
-    queries 
+    queries,
+    database, 
 
   }:{
 
     categories: QueryCategory[],
     queries: any[]
+    database: string
     
 }) {
-
+  // const database = process.env.DB_DATABASE as string
+  console.log(database)
+  const dbYear = `20${database.slice(3, 5)} - 20${Number(database.slice(3, 5))+1}`
+  console.log(dbYear)
+  
   console.log(queries, categories)
   return (
     <Sheet>
@@ -39,7 +45,7 @@ export function QuerySheet({
         <SheetHeader>
           <SheetTitle>Queries</SheetTitle>
           <SheetDescription>
-            Please pick from the list below
+            {dbYear} School Year
           </SheetDescription>
         </SheetHeader>
         <ul className="flex flex-col gap-1 w-2/3">
