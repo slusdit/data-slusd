@@ -1,10 +1,6 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import { PrismaClient, ROLE } from "@prisma/client";
-import {
-  GetServerSidePropsContext,
-  NextApiRequest,
-  NextApiResponse,
-} from "next";
+import { PrismaClient, User, ROLE } from "@prisma/client";
+
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 
