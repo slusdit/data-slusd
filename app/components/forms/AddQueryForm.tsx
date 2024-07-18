@@ -28,11 +28,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useEffect } from "react";
-import { PrismaClient } from "@prisma/client";
 import { addQuery } from "@/lib/formActions";
 
-const prisma = new PrismaClient();
 type PageValues = {
   id: string;
   query: string;

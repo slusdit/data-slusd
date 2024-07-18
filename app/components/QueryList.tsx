@@ -58,51 +58,42 @@ const QueryList = ({
               
               
               if (
-                categoryRoles &&
-                categoryRoles.length < 0 &&
-                !categoryRoles.some((categoryRole) => userRoles.includes(categoryRole))
+                (
+                  categoryRoles &&
+                  userRoles.some(role => categoryRoles.includes(role))
+                )
+                || userRoles.includes("SUPERADMIN")
+                || categoryRoles?.length === 0
+            
               ) {
-                return null;
-              }
               
-              
-              // if (categoryRoles &&
-              //   // categoryRoles.length > 0 && 
-              //   categoryRoles.some((categoryRole) => {
 
-              //     userRoles.includes(categoryRole)
-              //   }
-              // )
-              // ) {
-              //   console.log("~~~~~~~ Disallowed Category ~~~~~~~")
-              //   return null;
-              // }
+                return (
+                  <li key={category.id} className="">
+                    <span className="text-xl  font-bold">{category.label}</span>
 
-              return (
-                <li key={category.id} className="">
-                  <span className="text-xl  font-bold">{category.label}</span>
-
-                  <ul>
-                    {queries
-                      .filter(
-                        (query) => query.category?.value === category.value
-                      )
-                      .map((query) => (
-                        <li
-                          key={query.id}
-                          className="ml-4 hover:text-primary hover:underline"
-                        >
-                          <Link
-                            href={`/query/${category.value}/${query.id}`}
-                            className="hover:underline"
+                    <ul>
+                      {queries
+                        .filter(
+                          (query) => query.category?.value === category.value
+                        )
+                        .map((query) => (
+                          <li
+                            key={query.id}
+                            className="ml-4 hover:text-primary hover:underline"
                           >
-                            {query.name}
-                          </Link>
-                        </li>
-                      ))}
-                  </ul>
-                </li>
-              );
+                            <Link
+                              href={`/query/${category.value}/${query.id}`}
+                              className="hover:underline"
+                            >
+                              {query.name}
+                            </Link>
+                          </li>
+                        ))}
+                    </ul>
+                  </li>
+                );
+              }
             })}
       </ul>
     </ScrollArea>

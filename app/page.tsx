@@ -8,8 +8,9 @@ import { QueryWithCategory } from "./components/QueryBar";
 import { Separator } from "@/components/ui/separator";
 import { QuerySheet } from "./components/QueiesSheet";
 import { Card } from "@/components/ui/card";
+import prisma from "@/lib/db";
 
-const prisma = new PrismaClient();
+// const prisma = new PrismaClient();
 export default async function Home() {
   const session = await auth();
   const queries: QueryWithCategory[] = await prisma.query.findMany({
