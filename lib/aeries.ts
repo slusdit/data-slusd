@@ -92,7 +92,7 @@ export async function runQuery(
 ) {
   const session = await auth();
   const email = session?.user?.email;
-  const queryBlockList = ["drop", "update", "insert", "delete"];
+  const queryBlockList = ["drop", "update", "insert", "delete","modify","alter","create"];
   const queryLower = query?.toLowerCase();
   if (queryBlockList.some((term) => queryLower?.includes(term))) {
     throw Error("Dangerous query");
