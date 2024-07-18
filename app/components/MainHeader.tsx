@@ -9,8 +9,9 @@ import { PrismaClient, QueryCategory } from "@prisma/client";
 import type { Session } from "next-auth";
 import QueryBar, { QueryWithCategory } from "./QueryBar";
 import { NavigationMenuDemo } from "./NavMenuDemo";
+import prisma from "@/lib/db";
 
-const prisma = new PrismaClient();
+// const prisma = new PrismaClient();
 
 export default async function MainHeader({ session }: { session: Session | null }) {
 

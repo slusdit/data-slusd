@@ -3,7 +3,6 @@ import AddQueryForm from "@/app/components/forms/AddQueryForm";
 import FormDialog from "@/app/components/forms/FormDialog";
 import { auth } from "@/auth";
 import { runQuery } from "@/lib/aeries";
-import { PrismaClient } from "@prisma/client";
 import { Plus } from "lucide-react";
 import BackButton from "@/app/components/BackButton";
 import DataTable from "@/app/components/DataTable";
@@ -11,8 +10,9 @@ import BarChart from "@/app/components/charts/BarChart";
 import { DiyChartBySchool } from "@/app/components/charts/DiyChartBySchool";
 import { QueryWithCategory } from "@/app/components/QueryBar";
 import { QuerySheet } from "@/app/components/QueiesSheet";
+import prisma from "@/lib/db";
 
-const prisma = new PrismaClient();
+// const prisma = new PrismaClient();
 export default async function Page({ params }: { params: { id: string } }) {
   const session = await auth();
   const id = params.id;

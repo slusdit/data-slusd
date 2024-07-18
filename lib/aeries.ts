@@ -1,12 +1,10 @@
 "use server";
 
 import { auth } from "@/auth";
-import { PrismaClient } from "@prisma/client";
 import sql from "mssql";
-import { Result } from "postcss";
-import { Dispatch, SetStateAction } from "react";
+import prisma from "./db";
 
-const prisma = new PrismaClient();
+// const prisma = new PrismaClient();
 
 // Define the configuration for your SQL Server
 const config = {
