@@ -1,5 +1,5 @@
 import { auth } from "@/auth";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, QueryCategory } from "@prisma/client";
 import Link from "next/link";
 import AddQueryForm from "./components/forms/AddQueryForm";
 import FormDialog from "./components/forms/FormDialog";
@@ -28,11 +28,12 @@ export default async function Home() {
     },
   });
 
-  let categories;
+  let categories
   if (session?.user) {
     categories = await prisma.queryCategory.findMany({
       include: {
         queries: true,
+        roles: true, 
       },
     });
   }
@@ -40,27 +41,27 @@ export default async function Home() {
     <div className="m-auto mt-10 self-center flex rounded-lg bg-success-200 hover:bg-success-100">
       
       {/* Sidebar */}
-      <div className="w-48 mr-4">
-        <h2 className="font-bold text-center text-lg">Menu</h2>
+      <div className="w-48 mr-4 p-2 flex flex-col items-center justify-center">
+        <h2 className="font-bold text-center text-lg underline">Menu</h2>
+        <Separator className="my-4 w-full" />
         
-        {session?.user?.admin && (
-          <>
-            {/* <h2 className="font-bold text-2xl mb-4 underline">Pages</h2> */}
+        {/* {session?.user?.admin && (
+          
             <ul className="flex flex-col gap-1 w-2/3">
-              <li>
-                <Link href="/admin" className="hover:underline">
+              <li className="hover:underline text-center">
+                <Link href="/admin">
                   Admin
                 </Link>
               </li>
             </ul>
-            <Separator className="my-4 w-full" />
-          </>
-        )}
+        
+        )} */}
 
         <QuerySheet
           categories={categories}
           queries={queries}
           database={process.env.DB_DATABASE as string}
+          roles={session?.user?.roles}
         />
 
       </div>
