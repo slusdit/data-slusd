@@ -25,6 +25,7 @@ export default async function Page({ params }: { params: { id: string } }) {
       {
         include: {
           queries: true,
+          roles: true,
         },
       },
     );
@@ -40,7 +41,8 @@ export default async function Page({ params }: { params: { id: string } }) {
           select: {
             id: true,
             label: true,
-            value: true
+            value: true,
+
           }
         },
       }
@@ -71,7 +73,12 @@ export default async function Page({ params }: { params: { id: string } }) {
         <br></br>
         <div className="my-2">
 
-        <QuerySheet categories={categories} queries={queries} database={process.env.DB_DATABASE as string}/>
+          <QuerySheet
+            categories={categories}
+            queries={queries}
+            database={process.env.DB_DATABASE as string}
+            roles={session?.user?.roles}
+          />
         </div>
         <label htmlFor="description">Description:</label>
         <div id="description">{result.description}</div>
