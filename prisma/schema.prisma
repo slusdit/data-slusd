@@ -106,6 +106,8 @@ model Role {
   UserRole UserRole[]
   Query    Query?     @relation(fields: [queryId], references: [id])
   queryId  String?
+
+  QueryCategory QueryCategory[]
 }
 
 model SchoolInfo {
@@ -157,6 +159,7 @@ model QueryCategory {
   value   String  @unique
   sort    Int     @default(0)
   queries Query[] @relation
+  roles   Role[]  @relation
 }
 
 enum ROLE {
