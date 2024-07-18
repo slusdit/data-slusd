@@ -71,7 +71,7 @@ export default async function Page({ params }: { params: { id: string } }) {
         <br></br>
         <div className="my-2">
 
-        <QuerySheet categories={categories} queries={queries}/>
+        <QuerySheet categories={categories} queries={queries} database={process.env.DB_DATABASE as string}/>
         </div>
         <label htmlFor="description">Description:</label>
         <div id="description">{result.description}</div>
