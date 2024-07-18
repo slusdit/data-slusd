@@ -35,12 +35,12 @@ export function QuerySheet({
       <SheetTrigger asChild>
         <Button variant={"outline"}>
           <Menu className="mr-2 h-4 w-4" />
-          Queries
+          Reports
         </Button>
       </SheetTrigger>
       <SheetContent side={"left"}>
         <SheetHeader>
-          <SheetTitle>Queries</SheetTitle>
+          <SheetTitle>Reports</SheetTitle>
           <SheetDescription>{dbSchoolYear} School Year</SheetDescription>
         </SheetHeader>
         <QueryList

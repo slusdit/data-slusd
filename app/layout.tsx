@@ -43,8 +43,8 @@ export default async function RootLayout({
             disableTransitionOnChange
           >
           <MainHeader session={session}/>
-            <main className="w-full h-[calc(100vh-4.5rem)] flex justify-center ">
-              <div className="px-4 w-[95%] lg:w-[90%] bg-background h-full ">
+            <main className="w-full h-full min-h-5xl flex justify-center ">
+              <div className="px-4 w-[95%] lg:w-[90%] bg-background h-screen ">
 
               {session ? children :
                 <UnauthorizedButton
