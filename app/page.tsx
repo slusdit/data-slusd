@@ -39,10 +39,10 @@ export default async function Home() {
     });
   }
   return (
-    <div className="m-auto mt-10 self-center flex rounded-lg bg-success-200 hover:bg-success-100">
+    <div className="m-auto mt-10 self-center flex rounded-lg ">
       
       {/* Sidebar */}
-      <div className="w-48 mr-4 p-2 flex flex-col items-center justify-center">
+      <div className="w-48 mr-4 p-2 flex flex-col justify-center">
         <h2 className="font-bold text-center text-lg underline">Menu</h2>
         <Separator className="my-4 w-full" />
         
@@ -68,7 +68,7 @@ export default async function Home() {
       </div>
 
       {/* Main Landing Page */}
-      <Card className="w-full p-2 justify-center flex flex-col ">
+      <Card className="w-full p-2 justify-center flex flex-col h-full">
       <h1 className="text-3xl font-weight-800 mb-5 text-center">
         Welcome {session?.user?.name}
         </h1>
