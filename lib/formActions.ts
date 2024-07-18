@@ -11,7 +11,7 @@ const prisma = new PrismaClient()
 
 
 export async function addQuery(values: z.infer<typeof queryFormSchema>) {
-    values.query = values.query.split("\n").map((line) => "\"" + line + "\"").join("\n");
+    // values.query = values.query.split("\n").map((line) => "\"" + line + "\"").join("\n");
     console.log("addQuery", values)
   try {
     const result = await prisma.query.upsert({
