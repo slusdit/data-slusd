@@ -65,7 +65,7 @@ export default async function MainHeader({ session }: { session: Session | null 
         </div>
        
         <div
-          className="hidden w-full md:flex md:items-center md:w-auto"
+          className="w-full justify-end md:flex md:items-center md:w-auto"
           id="menu"
         >
           <ul
@@ -76,7 +76,7 @@ export default async function MainHeader({ session }: { session: Session | null 
                     md:pt-0"
           >
           </ul>
-          <div className="py-3 px-4">
+          <div className="py-3 px-4 ">
             <LoginButton user={session?.user} />
           </div>
         </div>

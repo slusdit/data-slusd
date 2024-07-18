@@ -68,7 +68,7 @@ export default async function Home() {
       )}
 
 
-
+      <QuerySheet categories={categories} queries={queries} database={process.env.DB_DATABASE as string} />
       <h2 className="font-bold text-2xl mb-4 underline">Queries</h2>
       <ul className="flex flex-col gap-1 w-2/3">
         {categories && categories.filter((category) => category).map((category) => {

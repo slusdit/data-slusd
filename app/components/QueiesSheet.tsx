@@ -32,8 +32,8 @@ export function QuerySheet({
 }) {
   // const database = process.env.DB_DATABASE as string
   console.log(database)
-  const dbYear = `20${database.slice(3, 5)} - 20${Number(database.slice(3, 5))+1}`
-  console.log(dbYear)
+  const dbSchoolYear = `20${database.slice(3, 5)} - 20${Number(database.slice(3, 5))+1}`
+  console.log(dbSchoolYear)
   
   console.log(queries, categories)
   return (
@@ -45,7 +45,7 @@ export function QuerySheet({
         <SheetHeader>
           <SheetTitle>Queries</SheetTitle>
           <SheetDescription>
-            {dbYear} School Year
+            {dbSchoolYear} School Year
           </SheetDescription>
         </SheetHeader>
         <ul className="flex flex-col gap-1 w-2/3">
