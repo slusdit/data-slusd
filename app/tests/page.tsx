@@ -5,20 +5,20 @@ import prisma from "@/lib/db";
 import { revalidatePath } from "next/cache";
 
 
-export function isMatched(obj1: any, array2: any[], key1: string, key2: string) {
-    const objKey = obj1[key1]
-    // console.log({ obj1, array2, key1, key2, objKey });
-    return array2.some(obj2 => {
-        // console.log(obj1[key1] === obj2[key1] && obj1[key2] === obj2[key2])
-        return obj1[key1] === obj2[key1] && obj1[key2] === obj2[key2]
-    });
-}
-
 export default async function Page() {
+
+    function isMatched(obj1: any, array2: any[], key1: string, key2: string) {
+        const objKey = obj1[key1]
+        // console.log({ obj1, array2, key1, key2, objKey });
+        return array2.some(obj2 => {
+            // console.log(obj1[key1] === obj2[key1] && obj1[key2] === obj2[key2])
+            return obj1[key1] === obj2[key1] && obj1[key2] === obj2[key2]
+        });
+    }
 
     const session = await auth()
 
-    let aeriesPermissions: AeriesSimpleStaff | AeriesSimpleTeacher | null = await getAeriesStaff({ endpoint: "/api/v5/staff" });
+    let aeriesPermissions: AeriesSimpleStaff | AeriesSimpleTeacher | null = await getAeriesStaff({ endpoint: "/api/v5/staff", email: session?.user?.email as string });
     let aeriesClasses: AeriesSimpleTeacher[] | undefined
     if (!aeriesPermissions) {
         return null
@@ -143,6 +143,8 @@ export default async function Page() {
             <pre>{JSON.stringify(aeriesClasses, null, 2)}</pre>
             <div className="font-bold underline mt-8">currentClasses</div>
             <pre>{JSON.stringify(currentClasses, null, 2)}</pre>
+            <div className="font-bold underline mt-8">Session.User</div>
+            <pre>{JSON.stringify(session?.user, null, 2)}</pre>
 
         </div>
     );
