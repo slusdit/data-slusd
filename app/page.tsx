@@ -42,7 +42,7 @@ export default async function Home() {
     <div className="m-auto mt-10 self-center flex rounded-lg ">
       
       {/* Sidebar */}
-      <div className="w-48 mr-4 p-2 flex flex-col justify-center">
+      <div className="w-48 mr-4 p-2 flex flex-col justify-top">
         <h2 className="font-bold text-center text-lg underline">Menu</h2>
         <Separator className="my-4 w-full" />
         
@@ -72,6 +72,7 @@ export default async function Home() {
       <h1 className="text-3xl font-weight-800 mb-5 text-center">
         Welcome {session?.user?.name}
         </h1>
+        <pre>{JSON.stringify(session?.user, null, 2)}</pre>
         {session?.user?.queryEdit && (
           <div className="w-1/12">
 

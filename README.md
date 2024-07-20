@@ -77,7 +77,11 @@ Built with direct connection to Aeries database using config in `/lib/aeries.ts`
 
 ## To Do
 
-- [ ] Add suspence boundry around datatable
+- [ ] Admin dashboard
+  - [ ] Add queries
+  - [ ] Add categories
+  - [ ] Add roles
+  - [ ] Impersonate user view
 - [ ] Query output
   - [ ] Move data fetch to external async function to try and fix `loading.tsx` from not loading
   - [ ] Move from `table` to `datatable`
@@ -98,5 +102,10 @@ Built with direct connection to Aeries database using config in `/lib/aeries.ts`
 - [ ] Dashboard
   - [ ] Render using parallel routes?
   - [ ] Hold dashboard items in user settings
-
-
+- [ ] Teacher active class middleware with Aeries at signin
+  - [x] Develop middleware
+    - [x] Add missing classes to local storage
+    - [x] Delete out of sync classes from local storage
+  - [x] Run middleware function every time user signs in
+  - [x] Add classes to session.user.classes
+  - [ ] Run sign in tests for middleware

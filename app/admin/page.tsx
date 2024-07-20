@@ -2,6 +2,7 @@ import adminCheck from "@/lib/adminCheck"
 import BackButton from "@/app/components/BackButton"
 import QueryBar, { QueryWithCategory } from "../components/QueryBar"
 import { PrismaClient } from "@prisma/client"
+import AddClassToUserButton from "../components/AddClassToUserButton"
 
 const prisma = new PrismaClient()
 export default async function AdminPage() {
@@ -37,6 +38,7 @@ export default async function AdminPage() {
             <BackButton />
             <h1>Admin</h1>
             <QueryBar queries={queries}/>
+            <AddClassToUserButton />
         </div>
     )
 }

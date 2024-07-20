@@ -343,13 +343,16 @@ export async function isMatched(obj1: any, array2: any[], key1: string, key2: st
  * - title: The title of the staff member.
  */
 export async function getAeriesStaff({
+  email,
   endpoint = "/api/v5/staff"
 }: {
+  email: string
   endpoint?: string
 }) {
-  const session = await auth()
+
   const cert = process.env.AERIES_API_KEY as string
 
+  console.log({ endpoint, email })
 
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_AERIES_URL}${endpoint}`,
@@ -367,12 +370,13 @@ export async function getAeriesStaff({
   }
   const data: PersonInfo[] = await response.json()
   // console.log(data)
-
-  let person = data.filter(p => p.EmailAddress === session?.user?.email)[0]
+  console.log(email)
+  let person = data.filter(p => p.EmailAddress === email)[0]
   // person = data.filter(p => p.EmailAddress === "mabadia@slusd.us")[0]
   // person = data.filter(p => p.EmailAddress === "acorona@slusd.us")[0]
   // person = data.filter(p => p.EmailAddress === "xbugarin@slusd.us")[0]
   // person = data.filter(p => p.EmailAddress === "jfox@slusd.us")[0]
+  console.log(person)
   return {
     "id": person.ID,
     "email": person.EmailAddress,
