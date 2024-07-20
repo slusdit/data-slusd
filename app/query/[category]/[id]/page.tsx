@@ -3,7 +3,7 @@ import AddQueryForm from "@/app/components/forms/AddQueryForm";
 import FormDialog from "@/app/components/forms/FormDialog";
 import { auth } from "@/auth";
 import { runQuery } from "@/lib/aeries";
-import { Plus } from "lucide-react";
+import { ArrowLeft, Home, Plus } from "lucide-react";
 import BackButton from "@/app/components/BackButton";
 import DataTable from "@/app/components/DataTable";
 import BarChart from "@/app/components/charts/BarChart";
@@ -11,6 +11,8 @@ import { DiyChartBySchool } from "@/app/components/charts/DiyChartBySchool";
 import { QueryWithCategory } from "@/app/components/QueryBar";
 import { QuerySheet } from "@/app/components/QueiesSheet";
 import prisma from "@/lib/db";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 // const prisma = new PrismaClient();
 export default async function Page({ params }: { params: { id: string } }) {
@@ -54,7 +56,15 @@ export default async function Page({ params }: { params: { id: string } }) {
 
     return (
       <div>
-        <BackButton />
+        {/* <BackButton /> */}
+        <Button
+          variant={"link"}>
+            <Link 
+              href="/"
+              className="hover:underline text-primary flex"
+            ><ArrowLeft className="h-4 w-4 mr-2 text-primary " />Home</Link>
+          
+        </Button>
         <h1 className="text-3xl Underline font-bold">{result.name}</h1>
         
         {(session?.user?.queryEdit) && (
