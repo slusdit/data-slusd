@@ -44,7 +44,7 @@ export default async function RootLayout({
           >
           <MainHeader session={session}/>
             <main className="w-full h-full min-h-5xl flex justify-center ">
-              <div className="px-4 w-[95%] lg:w-[90%] bg-background h-fit min-h-screen">
+              <div className="  px-4 w-[95%] lg:w-[90%] bg-background h-fit min-h-screen">
 
               {session ? children :
                 <UnauthorizedButton

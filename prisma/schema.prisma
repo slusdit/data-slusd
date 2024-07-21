@@ -23,6 +23,8 @@ model User {
   email String @unique
   image String?
   psl   Int?    @unique
+  manualSchool  Int?
+  primarySchool Int?
   school        SchoolInfo[]    @relation("UserSchool")
   emailVerified DateTime?
   queryEdit     Boolean         @default(false)
