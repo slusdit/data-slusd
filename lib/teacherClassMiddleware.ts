@@ -18,13 +18,12 @@ export default async function syncTeacherClasses(profileId: string, profileEmail
     if (!aeriesPermissions) {
         return null
     }
-    // console.log(aeriesPermissions)
+    console.log(aeriesPermissions)
 
     if (aeriesPermissions.title.toLowerCase() === 'teacher') {
         aeriesClasses = await getTeacherSchoolCredentials({ id: aeriesPermissions.id, schools: aeriesPermissions.schoolPermissions, })
 
     }
-    // console.log(aeriesPermissions)
     // console.log(aeriesClasses)
 
     // Check DB for current Teacher info with matching PSL == id
@@ -135,6 +134,33 @@ export default async function syncTeacherClasses(profileId: string, profileEmail
         }
 
     }
+
+    const schools = await prisma.user.findUnique({
+        where: {
+            id: profileId
+        },
+        select: {
+            school: true
+        }
+    })
+
+    console.log({ schools })
+
+    // Update Schools
+    const primarySchoolUpdate = await prisma.user.update({
+        where: {
+            id: profileId
+        },
+        data: {
+            school: {
+                set: {
+                    sc: aeriesPermissions.primarySchool.toString()               
+                 }
+            }
+        }
+    })
+
+    console.log({ primarySchoolUpdate })
 
     return ({
         displayResult,
