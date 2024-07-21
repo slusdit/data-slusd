@@ -46,7 +46,7 @@ export default async function MainHeader({ session }: { session: Session | null 
             text-title-foreground
 
           mx-auto
-          md:py-0
+          
           
 
           text-xl
