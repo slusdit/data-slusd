@@ -8,6 +8,9 @@ export async function getQuery(queryId:string){
     const ret = await prisma.query.findUnique({
       where: {
         id: queryId
+      },
+      include: {
+        category: true
       }
     })
     
@@ -18,6 +21,9 @@ export async function getQueryData(queryId:string){
     const query = await getQuery(queryId)
     console.log(query)
     if (!query) return
-    const response = await runQuery(query.query)
-    return response
+    const data = await runQuery(query.query)
+    return {
+      data:data,
+      query:query
+    }
 }
