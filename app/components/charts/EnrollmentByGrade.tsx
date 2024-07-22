@@ -52,7 +52,7 @@ export function EnrollmentByGradeChart<T>({
 }:EnrollmentByGradeChartProps<T>) {
   return (
     <Card
-        className="border border-muted-foreground m-2"
+        className="border  m-2"
     >
       <CardHeader>
         <CardTitle>School Enrollment</CardTitle>
