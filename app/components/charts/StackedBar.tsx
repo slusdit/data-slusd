@@ -47,7 +47,7 @@ type StackComponentProps<D extends ChartData, C extends ChartConfig> = {
     description?: string
 }
 
-export function StackComponent<D extends ChartData, C extends ChartConfig>({
+export function StackedBarChart<D extends ChartData, C extends ChartConfig>({
     chartData,
     chartConfig,
     title = "Title - Stacked Bar Chart",

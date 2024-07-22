@@ -220,7 +220,7 @@ export async function runQuery(
     try {
 
       // TEST: Remove email to test @@sc overrice
-      const schoolCode = await getSchoolsFromEmail({ email: email, pool });
+      const schoolCode = session?.user?.schools
 
       // console.log(schoolCode);
       // TODO: Prepend @@variables to declarations at the top of the query, rather than search and replace?
