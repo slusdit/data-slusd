@@ -67,29 +67,23 @@ export default async function Page({ params }: { params: { id: string } }) {
         </Button>
         <h1 className="text-3xl Underline font-bold">{result.name}</h1>
         
-        {(session?.user?.queryEdit) && (
-          <FormDialog
-            triggerMessage="Add Query"
-            icon={<Plus className="py-1" />}
-            title="Add Query"
-          >
-            <AddQueryForm
-              session={session}
-              pageValues={result}
-              categories={categories}
-            />
-          </FormDialog>
-        )}
+        
         <br></br>
-        <div className="my-2">
-
+        <ul className="my-2">
+          <li className="text-lg">
           <QuerySheet
             categories={categories}
             queries={queries}
             database={process.env.DB_DATABASE as string}
             roles={session?.user?.roles}
           />
-        </div>
+          </li>
+          <li>
+            <AddQueryForm
+              session={session}
+              />
+          </li>
+        </ul>
         <label htmlFor="description">Description:</label>
         <div id="description">{result.description}</div>
         <p>Public/Private: {result.publicQuery ? "Public" : "Private"}</p>

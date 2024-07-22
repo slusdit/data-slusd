@@ -3,7 +3,7 @@ import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import prisma from "./lib/db";
 import syncTeacherClasses from "./lib/teacherClassMiddleware";
-import { Class, SchoolInfo } from "@prisma/client";
+import { Class, ROLE, SchoolInfo, User } from "@prisma/client";
 import { AeriesSimpleTeacher } from "./lib/aeries";
 
 async function getSchools({
@@ -77,28 +77,35 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       let schools:string[] = []
       if (dbUser) {
-        console.log(dbUser)
+        
         const dbUserSchools = dbUser.UserSchool.map((userSchool) => userSchool.school)
         const dbUserClasses = dbUser.UserClass.map((userClass) => userClass.class)
-        console.log(dbUserSchools)
+        
         
         schools = await getSchools(
           { schools: dbUserSchools, manualSchool: dbUser.manualSchool , classes: dbUserClasses },
         );
-        console.log(schools);
+        
 
       }
-      console.log(dbUser)
+      // console.log(dbUser)
       // @ts-ignore
-      session.user.admin = dbUser?.admin
-      // @ts-ignore
-      console.log(session)
-      session.user.schools = schools
+      type SessionUser = {
+        admin?: boolean;
+        schools?: string[];
+        roles?: ROLE[];
+        classes?: Class[];
+      } & User;
 
-      // @ts-ignore
-      session.user.roles = dbUser?.userRole.map((role) => role.role) || [];
-      // @ts-ignore
-      session.user.classes = dbUser?.UserClass.map((userClass) => userClass.class) || [];
+      session.user = {
+        ...session.user,
+        ...(dbUser as SessionUser),
+        // @ts-ignore
+        schools,
+        roles: dbUser?.userRole.map((role) => role.role) || [],
+        classes: dbUser?.UserClass.map((userClass) => userClass.class) || [],
+      };
+      // console.log(session)
       return session;
     },
   },

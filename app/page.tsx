@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { QuerySheet } from "./components/QueiesSheet";
 import { Card } from "@/components/ui/card";
 import prisma from "@/lib/db";
+import SchoolEnroolmentGraph from "./components/SchoolEnrollmentGraph";
 
 // const prisma = new PrismaClient();
 export default async function Home() {
@@ -42,8 +43,21 @@ export default async function Home() {
     <div className="m-auto mt-10 self-center flex rounded-lg ">
       
       {/* Sidebar */}
-      <div className="w-48 mr-4 p-2 flex flex-col justify-top">
+      <div className="w-48 mr-4 p-2 flex flex-col gap-2 justify-top">
         <h2 className="font-bold text-center text-lg underline">Menu</h2>
+        {session?.user?.queryEdit && (
+          <div className="w-1/12">
+
+          <FormDialog
+            triggerMessage="Add Query"
+            icon={<Plus className="py-1" />}
+            title="Add Query"
+            
+            >
+            <AddQueryForm session={session} categories={categories} />
+          </FormDialog>
+            </div>
+        )}
         <Separator className="my-4 w-full" />
         
         {/* {session?.user?.admin && (
@@ -68,24 +82,17 @@ export default async function Home() {
       </div>
 
       {/* Main Landing Page */}
-      <Card className="w-full p-2 justify-center flex flex-col h-full">
+      <Card className="w-full p-2 mr-4 justify-center flex flex-col h-full">
       <h1 className="text-3xl font-weight-800 mb-5 text-center">
         Welcome {session?.user?.name}
         </h1>
-        <pre>{JSON.stringify(session?.user, null, 2)}</pre>
-        {session?.user?.queryEdit && (
-          <div className="w-1/12">
-
-          <FormDialog
-            triggerMessage="Add Query"
-            icon={<Plus className="py-1" />}
-            title="Add Query"
-            
-            >
-            <AddQueryForm session={session} categories={categories} />
-          </FormDialog>
-            </div>
-        )}
+        {/* <pre>{JSON.stringify(session?.user, null, 2)}</pre> */}
+        <SchoolEnroolmentGraph 
+          schools={session?.user?.schools}
+          queryId="clyva7j4s0005qwsuwm3qol0n"
+          
+        />  
+        
       </Card>
       
     </div>
