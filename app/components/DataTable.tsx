@@ -16,14 +16,23 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { DiyChartBySchool } from "./charts/DiyChartBySchool";
+import { BarChartCustomGraph } from "./charts/BarChartCustom";
 
 interface DataTableProps<T extends object> {
   data: T[];
   showChart?: boolean 
   chartTitle?: string
+  chartValueKey?: string | null
+  chartColumnKey?: string | null
 }
 
-function DataTable<T extends object>({ data, showChart, chartTitle }: DataTableProps<T>) {
+function DataTable<T extends object>({ 
+  data, 
+  showChart,
+  chartTitle,
+  chartValueKey,
+  chartColumnKey 
+  }: DataTableProps<T>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [columnVisibility, setColumnVisibility] = useState({});
@@ -107,6 +116,8 @@ function DataTable<T extends object>({ data, showChart, chartTitle }: DataTableP
  
   console.log(showChart)
   console.log(chartTitle)
+  console.log(chartColumnKey)
+  console.log(chartValueKey)
   return (
     <div className="w-full flex flex-col justify-center">
       {showChart &&
@@ -114,9 +125,17 @@ function DataTable<T extends object>({ data, showChart, chartTitle }: DataTableP
 
     <div className="w-full flex justify-center">
     {showChart &&
+    <BarChartCustomGraph
+    table={reactTable}
+    title={chartTitle}
+    chartKey={chartColumnKey}
+    chartDataKey={chartValueKey}
+    />
 
-    <DiyChartBySchool table={reactTable} title={chartTitle} />
-    }
+  }
+  {/* <DiyChartBySchool table={reactTable} title={chartTitle} /> */}
+
+  
     </div>  
 
       }

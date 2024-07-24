@@ -2,7 +2,11 @@
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
 
 import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-import { ColumnVisibility, Table } from "@tanstack/react-table"
+import { ColumnDef, ColumnVisibility, Table, useReactTable } from "@tanstack/react-table"
+import { runQuery } from "@/lib/aeries"
+import { useMemo, useState } from "react"
+import prisma from "@/lib/db"
+import { DataKey } from "recharts/types/util/types"
 
 export type SchoolByGrade = {
     'Sch#': number,
@@ -24,6 +28,11 @@ export type SchoolByGrade = {
     Total: number,
     el?: number,
     fre?: number,
+}
+
+type ChartConfig = {
+    label: string,
+    color: string
 }
 
 type SDCEnrollmentPercentByGrade = {
@@ -62,10 +71,12 @@ type SDCEnrollmentPercentByGrade = {
 
 }
 
-type BaseChartConfig = {
-    label: string,
-    data?: { [key: string | number]: number | string },
-    color: string,
+type BaseChartConfig<T> = {
+    T: {
+        label: string,
+        color?: string
+    }
+
 }
 type BaseBySchoolChartConfig = {
     [key: string]: BaseChartConfig
@@ -381,24 +392,18 @@ const defaultChartData = [
 
 
 
-function createConfig(chartData: SDCEnrollmentPercentByGrade[], key: string = 'School') {
+function createConfig<T>(chartKey: string, chartData: T[], chartDataKey: string) {
     console.log(chartData)
-    let config: BaseBySchoolChartConfig = {}
+    let config: BaseChartConfig<T>[] = {}
 
     chartData.forEach(item => {
         console.log(item)
         let school;
-        for (const key in item) {
-            if (key.toLowerCase() === 'school' || key.toLowerCase() === 'sch#' || key.toLowerCase() === 'sc') {
-                // @ts-ignore
-                school = item[key];
-                break;
-            }
-        }
+
         // @ts-ignore
-        config[item[key]] = {
+        config[item[chartKey]] = {
             // @ts-ignore
-            'label': item[key],
+            'label': item[chartKey],
 
             // 'data' : {...item}, 
             'color': 'red'//'var(--primary)'  //'var(--color-sc' + school + ')',
@@ -416,26 +421,26 @@ function getSelectedData(table: Table<any>) {
     const { rowSelection, columnFilters, columnVisibility } = table.options.state
     // console.log(exportAll)
 
-    let filteredData= table.getRowModel().rows.map((row:Row<any>) => row.original)
+    let filteredData = table.getRowModel().rows.map((row: Row<any>) => row.original)
 
     // if (!exportAll) {
 
-        if (columnFilters && columnFilters.length > 0) {
-            filteredData = table.getFilteredRowModel()
-                .rows.map((row) => row.original)
+    if (columnFilters && columnFilters.length > 0) {
+        filteredData = table.getFilteredRowModel()
+            .rows.map((row) => row.original)
 
-            console.log({ filteredData })
+        console.log({ filteredData })
 
-        }
-        console.log(table.getSelectedRowModel().rows.length)
-        if (rowSelection && table.getSelectedRowModel().rows.length > 0) {
-            console.log(rowSelection)
-            filteredData = table.getSelectedRowModel()
-                .rows.map((row) => row.original)
-            }
-            // }
-            
-            console.log({ filteredData })
+    }
+    console.log(table.getSelectedRowModel().rows.length)
+    if (rowSelection && table.getSelectedRowModel().rows.length > 0) {
+        console.log(rowSelection)
+        filteredData = table.getSelectedRowModel()
+            .rows.map((row) => row.original)
+    }
+    // }
+
+    console.log({ filteredData })
 
 }
 export function removeZeroValues<T>(data: T[]) {
@@ -450,57 +455,157 @@ export function removeZeroValues<T>(data: T[]) {
     });
 }
 
-export function DiyChartBySchool({
+export async function BarChartCustomGraph({
+    queryId,
     chartData,
-    
     title = 'DIY Chart By School',
     table,
+    chartConfig,
+    chartKey,
+    chartDataKey,
 }: {
+    queryId?: string
     chartData?: SDCEnrollmentPercentByGrade[]
-    title?: string
-    table: Table<SDCEnrollmentPercentByGrade>
+    title: string
+    table?: Table<SDCEnrollmentPercentByGrade>
+    chartConfig?: ChartConfig
+    chartKey?: string
+    chartDataKey?: string
 }) {
-    console.log(table.options)
-    const { data } = table.options
-    const { rowSelection, columnFilters, columnVisibility } = table.options.state
-    // console.log(exportAll)
+    if (!table) {
+        return null
+    }
+    // const [data, setData] = useState<any>(table?.options)
+    // if (table) {
 
-    let filteredDataBySchool = table.getRowModel().rows.map((row:Row<any>) => row.original)
+        let { data } = table.options
+        const { rowSelection, columnFilters, columnVisibility } = table.options.state
+        // console.log(exportAll)
+
+        let filteredDataBySchool = table.getRowModel().rows.map((row: Row<any>) => row.original)
+    // }
+
+    // if (queryId) {
+    //     const columns = useMemo<ColumnDef<T>[]>(() => {
+    //         if (data.length === 0) return [];
+    //         return [
+    //             {
+    //                 id: "select",
+    //                 header: ({ table }) => (
+    //                     <input
+    //                         type="checkbox"
+    //                         checked={table.getIsAllRowsSelected()}
+    //                         onChange={table.getToggleAllRowsSelectedHandler()}
+    //                     />
+    //                 ),
+    //                 cell: ({ row }) => (
+    //                     <input
+    //                         type="checkbox"
+    //                         checked={row.getIsSelected()}
+    //                         onChange={row.getToggleSelectedHandler()}
+    //                     />
+    //                 ),
+    //             },
+    //             ...Object.keys(data[0]).map((key) => ({
+    //                 id: key,
+    //                 header: ({ column }: { column: any }) => {
+    //                     return (null
+    //                         // <div className="flex items-center justify-center">
+    //                         //   <button
+    //                         //     className="flex items-center gap-1"
+    //                         //     onClick={() =>
+    //                         //       column.toggleSorting(column.getIsSorted() === "asc")
+    //                         //     }
+    //                         //   >
+    //                         //     <span>{key}</span>
+    //                         //     {{
+    //                         //       asc: <ArrowUp opacity={0.9} className="h-4 w-4 ml-1 " />,
+    //                         //       desc: <ArrowDown opacity={0.9} className="h-4 w-4 ml-1" />,
+    //                         //     }[column.getIsSorted() as string] ?? (
+    //                         //         <ArrowUpDown opacity={0.5} className="h-4 w-4 ml-1" />
+    //                         //       )}
+    //                         //   </button>
+    //                         // </div>
+    //                     );
+    //                 },
+    //                 accessorKey: key,
+    //             })),
+    //         ];
+    //     }, []);
+    //         async function getchData() {
+    //             const query = await prisma.query.findUnique({
+    //                 where: {
+    //                     id: queryId
+    //                 },
+    //                 include: {
+    //                     category: true
+    //                 }
+    //             })
+    //             let data = await runQuery(query?.query as string)
+    //             return data
+    //         }
+    //         const newData = await getchData()
+    //         setData(newData)
+        
+
+
+    //     reactTable = useReactTable({
+    //         data,
+    //         columns,
+           
+    //         onSortingChange: setSorting,
+    //         onRowSelectionChange: setRowSelection,
+    //         getCoreRowModel: getCoreRowModel(),
+    //         getSortedRowModel: getSortedRowModel(),
+    //         onColumnVisibilityChange: setColumnVisibility,
+    //         onColumnFiltersChange: setColumnFilters,
+    //         enableRowSelection: true,
+    //         enableColumnFilters: true,
+    //     })
+    //     const { data } = table.options
+    // }
 
     // if (!exportAll) {
-    console.log(rowSelection)
-    console.log(columnFilters)
+    // console.log(rowSelection)
+    // console.log(columnFilters)
 
-        if (columnFilters && columnFilters.length > 0) {
-            filteredDataBySchool = table.getFilteredRowModel()
-                .rows.map((row) => row.original)
+    if (columnFilters && columnFilters.length > 0) {
+        filteredDataBySchool = table.getFilteredRowModel()
+            .rows.map((row) => row.original)
 
-            console.log({ filteredData: filteredDataBySchool })
+        // console.log({ filteredData: filteredDataBySchool })
 
-        }
-       
-
-        if (rowSelection && table.getSelectedRowModel().rows.length > 0) {
-            console.log(rowSelection)
-            filteredDataBySchool = table.getSelectedRowModel()
-                .rows.map((row) => row.original)
-            }
-            // }
-            
-            console.log({ filteredData: filteredDataBySchool })
-    console.log(chartData)        
-
-    const chartConfig = createConfig(filteredDataBySchool as SDCEnrollmentPercentByGrade[])
+    }
 
 
-    
+    if (rowSelection && table.getSelectedRowModel().rows.length > 0) {
+        // console.log(rowSelection)
+        filteredDataBySchool = table.getSelectedRowModel()
+            .rows.map((row) => row.original)
+    }
+    // }
+
+    // console.log({ filteredData: filteredDataBySchool })
+    // console.log(chartData)        
+    if (!chartConfig && chartKey) {
+        chartConfig = createConfig(
+            chartKey = chartKey,
+            chartData = filteredDataBySchool,
+            chartDataKey = chartDataKey
+        )
+    }
+
+
+
+    console.log(data)
+
 
     const filteredData = removeZeroValues(filteredDataBySchool);
-    // const filteredData = filteredDataBySchool
     // console.log(filteredData)
 
     const customColor = 'green' //'var(--color-sc' + school + ')';
-
+    const chartValueKeys = chartDataKey?.split(',')?.map(key => key.trim()) ?? [chartDataKey];
+    console.log(chartValueKeys)
     return (
         <div>
             <h1>{title}</h1>
@@ -516,70 +621,22 @@ export function DiyChartBySchool({
                     />
                     <ChartTooltip content={<ChartTooltipContent />} />
                     {/* <ChartLegend content={<ChartLegendContent nameKey='School' />} /> */}
+                    
+                    {/* {chartValueKeys.map((item, index) => (
+                        <Bar
+                            dataKey={item as DataKey<any>}
+                            fill={customColor}
+                            stackId={'a'}
+                        />
+                    ))} */}
+                    <Bar dataKey="6 " fill="hsl(var(--chart-1))" stackId={'a'} />
+                    <Bar dataKey="7 " fill="hsl(var(--chart-2))" stackId={'a'} />
+                    <Bar dataKey="8 " fill="hsl(var(--chart-3))" stackId={'a'} />
+                    <Bar dataKey="9 " fill="hsl(var(--chart-4))" stackId={'a'} />
+                    <Bar dataKey="10 " fill="hsl(var(--chart-5))" stackId={'a'} />
+                    <Bar dataKey="11 " fill="hsl(var(--chart-6))" stackId={'a'} />
+                    <Bar dataKey="12 " fill="hsl(var(--chart-7))" stackId={'a'} />
 
-                    {/* SDC and Non-SDC Side by side */}
-                    {/* <Bar dataKey="TK" fill="hsl(var(--chart-1))"  stackId={'a'}/>
-                    <Bar dataKey="SDC-TK" fill="hsl(var(--chart-7))"  stackId={'b'}/>
-                    <Bar dataKey="K" fill="hsl(var(--chart-2))"  stackId={'a'}/>
-                    <Bar dataKey="SDC-K" fill="hsl(var(--chart-8))"  stackId={'b'}/>
-                    <Bar dataKey="Gr 1" fill="hsl(var(--chart-3))"  stackId={'a'}/>
-                    <Bar dataKey="SDC-1" fill="hsl(var(--chart-9))"  stackId={'b'}/>
-                    <Bar dataKey="Gr 2" fill="hsl(var(--chart-4))"  stackId={'a'}/>
-                    <Bar dataKey="SDC-2" fill="hsl(var(--chart-10))"  stackId={'b'}/>
-                    <Bar dataKey="Gr 3" fill="hsl(var(--chart-5))"  stackId={'a'}/>
-                    <Bar dataKey="SDC-3" fill="hsl(var(--primary))"  stackId={'b'}/>
-                    <Bar dataKey="Gr 4" fill="hsl(var(--chart-6))"  stackId={'a'}/>
-                    <Bar dataKey="SDC-4" fill="hsl(var(--chart-6))"  stackId={'b'}/>
-                    <Bar dataKey="Gr 5" fill="hsl(var(--chart-7))"  stackId={'a'}/>
-                    <Bar dataKey="SDC-5" fill="hsl(var(--chart-7))"  stackId={'b'}/>
-                    <Bar dataKey="Gr 6" fill="hsl(var(--chart-8))"  stackId={'a'}/>
-                    <Bar dataKey="SDC-6" fill="hsl(var(--chart-8))"  stackId={'b'}/>
-                    <Bar dataKey="Gr 7" fill="hsl(var(--chart-9))"  stackId={'a'}/>
-                    <Bar dataKey="SDC-7" fill="hsl(var(--chart-9))"  stackId={'b'}/>
-                    <Bar dataKey="Gr 8" fill="hsl(var(--chart-10))"  stackId={'a'}/>
-                    <Bar dataKey="SDC-8" fill="hsl(var(--chart-10))"  stackId={'b'}/>
-                    <Bar dataKey="Gr 9" fill="hsl(var(--chart-1))"  stackId={'a'}/>
-                    <Bar dataKey="SDC-9" fill="hsl(var(--chart-1))"  stackId={'b'}/>
-                    <Bar dataKey="Gr 10" fill="hsl(var(--chart-2))"  stackId={'a'}/>
-                    <Bar dataKey="SDC-10" fill="hsl(var(--chart-2))"  stackId={'b'}/>
-                    <Bar dataKey="Gr 11" fill="hsl(var(--chart-3))"  stackId={'a'}/>
-                    <Bar dataKey="SDC-11" fill="hsl(var(--chart-3))"  stackId={'b'}/>
-                    <Bar dataKey="Gr 12" fill="hsl(var(--chart-4))"  stackId={'a'}/>
-                    <Bar dataKey="SDC-12" fill="hsl(var(--chart-4))"  stackId={'b'}/> */}
-
-                    { }
-                    <Bar dataKey="TK" fill="hsl(var(--chart-1))" stackId={'a'} />
-                    <Bar dataKey="K" fill="hsl(var(--chart-2))" stackId={'a'} />
-                    <Bar dataKey="Gr 1" fill="hsl(var(--chart-3))" stackId={'a'} />
-                    <Bar dataKey="Gr 2" fill="hsl(var(--chart-4))" stackId={'a'} />
-                    <Bar dataKey="Gr 3" fill="hsl(var(--chart-5))" stackId={'a'} />
-                    <Bar dataKey="Gr 4" fill="hsl(var(--chart-6))" stackId={'a'} />
-                    <Bar dataKey="Gr 5" fill="hsl(var(--chart-7))" stackId={'a'} />
-                    <Bar dataKey="Gr 6" fill="hsl(var(--chart-8))" stackId={'a'} />
-                    <Bar dataKey="Gr 7" fill="hsl(var(--chart-9))" stackId={'a'} />
-                    <Bar dataKey="Gr 8" fill="hsl(var(--chart-10))" stackId={'a'} />
-                    <Bar dataKey="Gr 9" fill="hsl(var(--chart-1))" stackId={'a'} />
-                    <Bar dataKey="Gr 10" fill="hsl(var(--chart-2))" stackId={'a'} />
-                    <Bar dataKey="Gr 11" fill="hsl(var(--chart-3))" stackId={'a'} />
-                    <Bar dataKey="Gr 12" fill="hsl(var(--chart-4))" stackId={'a'} />
-
-                    <Bar dataKey="SDC-TK" fill="hsl(var(--spotlight))" stackId={'a'} />
-                    <Bar dataKey="SDC-K" fill="hsl(var(--spotlight))" stackId={'a'} />
-                    <Bar dataKey="SDC-1" fill="hsl(var(--spotlight))" stackId={'a'} />
-                    <Bar dataKey="SDC-2" fill="hsl(var(--spotlight))" stackId={'a'} />
-                    <Bar dataKey="SDC-3" fill="hsl(var(--spotlight))" stackId={'a'} />
-                    <Bar dataKey="SDC-4" fill="hsl(var(--spotlight))" stackId={'a'} />
-                    <Bar dataKey="SDC-5" fill="hsl(var(--spotlight))" stackId={'a'} />
-                    <Bar dataKey="SDC-6" fill="hsl(var(--spotlight))" stackId={'a'} />
-                    <Bar dataKey="SDC-7" fill="hsl(var(--spotlight))" stackId={'a'} />
-                    <Bar dataKey="SDC-8" fill="hsl(var(--spotlight))" stackId={'a'} />
-                    <Bar dataKey="SDC-9" fill="hsl(var(--spotlight))" stackId={'a'} />
-                    <Bar dataKey="SDC-10" fill="hsl(var(--spotlight))" stackId={'a'} />
-                    <Bar dataKey="SDC-11" fill="hsl(var(--spotlight))" stackId={'a'} />
-                    <Bar dataKey="SDC-12" fill="hsl(var(--spotlight))" stackId={'a'} />
-
-                    <Bar dataKey="Total-NoSDC" fill="hsl(var(--chart-6))" stackId={'c'} />
-                    <Bar dataKey="Total-SDC" fill="hsl(var(--spotlight))" stackId={'c'} />
                     {/* <Bar dataKey="Total-NoSDC" fill="hsl(var(--chart-6))"  stackId={'d'}/> */}
                     {/* <Bar dataKey="Total" fill="purple" radius={4} /> */}
                 </BarChart>

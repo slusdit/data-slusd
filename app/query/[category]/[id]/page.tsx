@@ -51,6 +51,10 @@ export default async function Page({ params }: { params: { id: string } }) {
     })
   }
 
+  // const renderChart = (table) => {
+  //   return <DiyChartBySchool table={table} />;
+  // };
+
   if (result) {
     let data: any[] = await runQuery(result?.query);
 
@@ -77,7 +81,7 @@ export default async function Page({ params }: { params: { id: string } }) {
             database={process.env.DB_DATABASE as string}
             roles={session?.user?.roles}
           />
-         
+         {session?.user?.queryEdit ?? (
          <FormDialog
             triggerMessage="Add Query"
             icon={<Plus className="py-1" />}
@@ -86,6 +90,7 @@ export default async function Page({ params }: { params: { id: string } }) {
             >
             <AddQueryForm session={session} categories={categories} pageValues={result} />
           </FormDialog>
+         )}
 
         </div>
         <label htmlFor="description">Description:</label>
@@ -124,7 +129,13 @@ export default async function Page({ params }: { params: { id: string } }) {
 
             <h2 className="text-xl underline font-bold mt-2 w-full">Data:</h2>
             
-              <DataTable data={data} showChart={result.chart}/>
+              <DataTable 
+                data={data} 
+                showChart={result.chart} 
+                chartTitle={result?.name}
+                chartValueKey={result?.chartValueKey}
+                chartColumnKey={result?.chartColumnKey}
+              />
             
           </>
         )}
