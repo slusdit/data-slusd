@@ -1,4 +1,4 @@
-import Component from "../../components/charts/PieChart";
+import PieChartCard from "../../components/charts/PieChart";
 import { MultiComponent } from "../../components/charts/MultiBar";
 import { ChartConfig } from "@/components/ui/chart";
 import { StackComponent } from "../../components/charts/StackedBar";

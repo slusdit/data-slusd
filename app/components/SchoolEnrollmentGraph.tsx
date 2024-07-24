@@ -9,11 +9,12 @@ import DataTable from "./DataTable"
 import { EnrollmentByGradeChart } from "./charts/EnrollmentByGrade"
 import Link from "next/link"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Button } from "@/components/ui/button"
 
-const SchoolEnroolmentGraph = ({
+const SchoolEnrollmentGraph = ({
     schools,
     queryId,
-    containerStyle = 'w-full flex flex-col justify-center items-center'
+    containerStyle = ' flex flex-col  items-center'
 }: {
     schools: number[]
     queryId: string
@@ -52,24 +53,22 @@ const SchoolEnroolmentGraph = ({
     if (loading) {
         return (
             <div className={containerStyle}>
-            <Skeleton className={"h-60 w-60 mb-2"} />
-            <Skeleton className={"h-10 w-48"} />
+                <Skeleton className={"h-60 w-60 mb-2"} />
+                {/* <Skeleton className={"h-10 w-48"} /> */}
             </div>
         )
     }
+    const url = `/query/${category}/${queryId}`
     return (
         <>
             {data &&
-
                 <div className={containerStyle}>
-                    <EnrollmentByGradeChart data={data}  />
-                    {category &&
-                        <Link href={`/query/${category}/${queryId}`}>Go </Link>
-                    }
+                    <EnrollmentByGradeChart data={data} url={url} />
+                    
                 </div>
             }
         </>
     )
 }
 
-export default SchoolEnroolmentGraph
+export default SchoolEnrollmentGraph
