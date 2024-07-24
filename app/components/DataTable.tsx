@@ -20,6 +20,7 @@ import { BarChartCustomGraph } from "./charts/BarChartCustom";
 
 interface DataTableProps<T extends object> {
   data: T[];
+  id?: string
   showChart?: boolean 
   chartTitle?: string
   chartValueKey?: string | null
@@ -28,11 +29,12 @@ interface DataTableProps<T extends object> {
 
 function DataTable<T extends object>({ 
   data, 
+  id,
   showChart,
   chartTitle,
   chartValueKey,
   chartColumnKey 
-  }: DataTableProps<T>) {
+  }: DataTableProps<any>){
   const [sorting, setSorting] = useState<SortingState>([]);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [columnVisibility, setColumnVisibility] = useState({});
@@ -116,26 +118,24 @@ function DataTable<T extends object>({
  
   console.log(showChart)
   console.log(chartTitle)
-  console.log(chartColumnKey)
-  console.log(chartValueKey)
   return (
     <div className="w-full flex flex-col justify-center">
       {showChart &&
       
 
     <div className="w-full flex justify-center">
-    {showChart &&
+    {(showChart && id == 'cly54bp030001hv31khj4zt38') &&
+
+    <DiyChartBySchool table={reactTable} title={chartTitle} />
+    }
+    {(showChart && id == 'clyva7j4s0005qwsuwm3qol0n')  &&
     <BarChartCustomGraph
     table={reactTable}
     title={chartTitle}
     chartKey={chartColumnKey}
     chartDataKey={chartValueKey}
     />
-
-  }
-  {/* <DiyChartBySchool table={reactTable} title={chartTitle} /> */}
-
-  
+    }
     </div>  
 
       }
