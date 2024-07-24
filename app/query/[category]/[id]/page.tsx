@@ -131,6 +131,7 @@ export default async function Page({ params }: { params: { id: string } }) {
             
               <DataTable 
                 data={data} 
+                id={id}
                 showChart={result.chart} 
                 chartTitle={result?.name}
                 chartValueKey={result?.chartValueKey}

@@ -591,7 +591,7 @@ export async function BarChartCustomGraph({
         chartConfig = createConfig(
             chartKey = chartKey,
             chartData = filteredDataBySchool,
-            chartDataKey = chartDataKey
+            chartDataKey = 'Total'
         )
     }
 
