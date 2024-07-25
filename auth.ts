@@ -38,7 +38,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (account?.provider === "google") {
         console.log('~~~~~~~~~~~~ SIGNING IN WITH GOOGLE ~~~~~~~~~~~~')
         let profileEmail = profile?.email
-        // profileEmail =  'jfox@slusd.us'//xbugarin@slusd.us' // !! Override for testing
+        profileEmail =  'jfox@slusd.us'//xbugarin@slusd.us' // !! Override for testing
         const profileId = user?.id
         console.log({ profileEmail })
         console.log({ profileId })

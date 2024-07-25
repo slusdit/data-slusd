@@ -41,6 +41,5 @@ export async function addQuery(values: z.infer<typeof queryFormSchema>) {
   } catch (error) {
     console.error("Error upserting query:", error)
     return error
-    throw new Error("Unable to upsert query")
   }
 }
