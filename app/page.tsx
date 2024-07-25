@@ -84,7 +84,7 @@ export default async function Home() {
         <div className="grid grid-cols-1 h-lg w-md">
         <AreaChartComponent />
         </div>
-        <div className="grid grid-cols-3 grid-flow-row auto-rows-max gap-4 justify-center items-center">
+        <div className="grid grid-cols-2 grid-flow-row auto-rows-max gap-4 justify-center items-center">
           <div className="grid gird-cols-1">
 
           <PieChartCard />
@@ -95,13 +95,7 @@ export default async function Home() {
             queryId="clyva7j4s0005qwsuwm3qol0n"
             // containerStyle="w-full"
           />
-          
-          <SchoolEnrollmentGraph
-            schools={session?.user?.schools}
-            queryId="clyva7j4s0005qwsuwm3qol0n"
-            // containerStyle="w-full"
-          />
-  
+            
         </div>
 
       </Card>
