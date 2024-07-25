@@ -14,10 +14,12 @@ import { Button } from "@/components/ui/button"
 const SchoolEnrollmentGraph = ({
     schools,
     queryId,
+    queryLabel,
     containerStyle = ' flex flex-col  items-center'
 }: {
     schools: number[]
-    queryId: string
+    queryId?: string
+    queryLabel?: string
     containerStyle?: string
 }) => {
     const [data, setData] = useState<any>({})
@@ -32,7 +34,8 @@ const SchoolEnrollmentGraph = ({
 
     useEffect(() => {
         const fetchData = async () => {
-            const { data, query } = await getQueryData(queryId)
+            // const { data, query } = await getQueryData(queryId)
+            const { data, query } = await getQueryData({ queryLabel })
             console.log(data)
             console.log(query)
             if (!data) return

@@ -92,7 +92,8 @@ export default async function Home() {
 
           <SchoolEnrollmentGraph
             schools={session?.user?.schools}
-            queryId="clyva7j4s0005qwsuwm3qol0n"
+              // queryId="clz1jjsi1000314k7qv0xvxv3"
+              queryLabel='school-enrollment-summary'
             // containerStyle="w-full"
           />
             
