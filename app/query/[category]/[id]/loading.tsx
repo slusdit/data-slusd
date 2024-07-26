@@ -1,11 +1,21 @@
 'use client'
 import BackButton from "@/app/components/BackButton";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ArrowLeft } from "lucide-react";
+
 
 export default function Loading() {
     return (
         <div>
-          <BackButton /> {/* BackButton */}
+          <Button
+          variant={"link"}>
+            <div 
+              
+              className="hover:underline text-primary flex"
+            ><ArrowLeft className="h-4 w-4 mr-2 text-primary " />Home</div>
+          
+        </Button>
           <Skeleton className="h-10 w-48 mb-4" /> {/* Title */}
           
                     

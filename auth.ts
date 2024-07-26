@@ -38,19 +38,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (account?.provider === "google") {
         console.log('~~~~~~~~~~~~ SIGNING IN WITH GOOGLE ~~~~~~~~~~~~')
         let profileEmail = profile?.email
-        profileEmail =  'jfox@slusd.us'//xbugarin@slusd.us' // !! Override for testing
+        // profileEmail =  'jfox@slusd.us' // 'xbugarin@slusd.us' // !! Override for testing
         const profileId = user?.id
-        console.log({ profileEmail })
-        console.log({ profileId })
+        // console.log({ profileEmail })
+        // console.log({ profileId })
         if (profileId && profileEmail) {
           const result = await syncTeacherClasses(profileId, profileEmail)
           console.log({ result })
         }
 
-        console.log(user)
+        // console.log(user)
 
-        console.log({ profileEmail })
-        console.log(profile?.email_verified && profile?.email?.endsWith("@slusd.us"))
+        // console.log({ profileEmail })
+        // console.log(profile?.email_verified && profile?.email?.endsWith("@slusd.us"))
         return profile?.email_verified && profile?.email?.endsWith("@slusd.us")
       }
 

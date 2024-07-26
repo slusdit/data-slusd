@@ -54,7 +54,7 @@ export default async function Page({ params }: { params: { id: string } }) {
   // const renderChart = (table) => {
   //   return <DiyChartBySchool table={table} />;
   // };
-
+  console.log(id)
   if (result) {
     let data: any[] = await runQuery(result?.query);
 
