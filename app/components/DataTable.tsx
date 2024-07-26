@@ -39,7 +39,7 @@ function DataTable<T extends object>({
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [columnVisibility, setColumnVisibility] = useState({});
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-
+  console.log(id)
 
   useEffect(() => {
     setColumnVisibility({ requested: true })
@@ -118,6 +118,7 @@ function DataTable<T extends object>({
  
   console.log(showChart)
   console.log(chartTitle)
+  console.log(id)
   return (
     <div className="w-full flex flex-col justify-center">
       {showChart &&

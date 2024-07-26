@@ -11,26 +11,43 @@ import Link from "next/link"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 
+type Category = {
+    id: string;
+    label: string;
+    value: string;
+    sort: number;
+  }
+  
+  type SchoolEnrollmentSummary = {
+    id: string;
+    query: string;
+    name: string;
+    label: string;
+    createdBy: string;
+    chart: boolean;
+    chartColumnKey: string | null;
+    chartValueKey: string | null;
+    description: string;
+    publicQuery: boolean;
+    categoryId: string;
+    hiddenCols: string;
+    category: Category;
+  }
 const SchoolEnrollmentGraph = ({
     schools,
-    queryId,
+    initialQueryId,
     queryLabel,
     containerStyle = ' flex flex-col  items-center'
 }: {
     schools: number[]
-    queryId?: string
+    itinalQueryId?: string
     queryLabel?: string
     containerStyle?: string
 }) => {
     const [data, setData] = useState<any>({})
     const [category, setCategory] = useState('')
     const [loading, setLoading] = useState(true)
-
-    function formatData(data: any) {
-
-
-        return formattedData
-    }
+    const [queryId, setQueryId] = useState(initialQueryId)
 
     useEffect(() => {
         const fetchData = async () => {
@@ -43,6 +60,7 @@ const SchoolEnrollmentGraph = ({
             setData(data)
             setCategory(query.category?.label)
             setLoading(false)
+            setQueryId(query.id)
             const category = query.category?.label
         }
 
