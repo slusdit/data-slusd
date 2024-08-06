@@ -82,9 +82,9 @@ export default async function Home() {
         <h1 className="text-3xl font-weight-800 mb-5 text-center">
           Welcome {session?.user?.name}
         </h1>
-        <div className="grid grid-cols-1 h-lg w-md">
-            <AreaChartComponent />
-            <AttendanceOverTimeChart />
+        <div className="grid grid-cols-1 h-lg w-md items-center">
+            {/* <AreaChartComponent /> */}
+            <AttendanceOverTimeChart session={session}/>
         </div>
         <div className="grid grid-cols-2 grid-flow-row auto-rows-max gap-4 justify-center items-center">
           <div className="grid gird-cols-1">

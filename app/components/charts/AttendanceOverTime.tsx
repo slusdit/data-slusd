@@ -29,7 +29,8 @@ import { useEffect, useState } from "react";
 import { runQuery } from "@/lib/aeries";
 import { getQueryData } from "@/lib/getQuery";
 import { Skeleton } from "@/components/ui/skeleton";
-
+import Link from "next/link";
+import { Session } from "next-auth";
 
 interface SchoolAttendanceData {
   SCH: number;
@@ -87,12 +88,15 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export function AttendanceOverTimeChart({
+  session,
   itinalChartData,
   chartTitle = "School Attendance",
 }: {
+  session: Session;
   itinalChartData?: SchoolAttendanceData[];
   chartTitle?: string;
-}) {
+  }) {
+  console.log(session)
   const [chartData, setChartData] = useState<
     SchoolAttendanceData[] | undefined
   >(itinalChartData || []);
@@ -102,6 +106,9 @@ export function AttendanceOverTimeChart({
   // console.log(itinalChartData)
 
   useEffect(() => {
+    if (itinalChartData) {
+      setLoading(false);
+    }
     if (!itinalChartData) {
       setLoading(true);
 
@@ -112,16 +119,12 @@ export function AttendanceOverTimeChart({
         // console.log(query)
         if (!data) return;
         setChartData(data);
+        setLoading(false);
       };
 
       fetchData();
-      setLoading(false);
     }
   }, []);
-
-  if (loading || !chartData) {
-    return <Skeleton className="h-10 w-48 mb-4" />;
-  }
 
   const [timeRange, setTimeRange] = useState("90d");
 
@@ -138,11 +141,22 @@ export function AttendanceOverTimeChart({
     return date >= now;
   });
 
+  if (loading || !chartData) {
+    return (
+      <Skeleton className="h-[400px] w-full pb-2">
+        <div className="h-full w-full animate-pulse rounded-xl bg-muted/20" />
+      </Skeleton>
+    );
+  }
   return (
-    <Card className="h-[400px] w-4/5">
+    <Card className="h-[400px] w-full pb-2">
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
         <div className="grid flex-1 gap-1 text-center sm:text-left">
-          <CardTitle>{chartTitle}</CardTitle>
+          <CardTitle>
+            <Link href="/query/school/clziv5kbm00018un4swvvb5a7">
+              {chartTitle}
+            </Link>
+          </CardTitle>
           <CardDescription>School attendance</CardDescription>
         </div>
         <Select value={timeRange} onValueChange={setTimeRange}>
