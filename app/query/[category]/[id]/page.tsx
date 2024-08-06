@@ -121,7 +121,8 @@ export default async function Page({ params }: { params: { id: string } }) {
             initialValue={result?.query} 
             initialResult={data} 
             showChart={result.chart} 
-            chartTitle={result?.name}
+              chartTitle={result?.name}
+              id={id}
             />
           </>
         ) : (
