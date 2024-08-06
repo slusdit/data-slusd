@@ -15,6 +15,7 @@ import PieChart from "./charts/page";
 import PieChartCard from "./components/charts/PieChart";
 import { AreaChartComponent } from "./components/charts/AreaChart";
 import { BarChartCustomGraph } from "./components/charts/BarChartCustom";
+import { AttendanceOverTimeChart } from "./components/charts/AttendanceOverTime";
 
 // const prisma = new PrismaClient();
 export default async function Home() {
@@ -82,7 +83,8 @@ export default async function Home() {
           Welcome {session?.user?.name}
         </h1>
         <div className="grid grid-cols-1 h-lg w-md">
-        <AreaChartComponent />
+            <AreaChartComponent />
+            <AttendanceOverTimeChart />
         </div>
         <div className="grid grid-cols-2 grid-flow-row auto-rows-max gap-4 justify-center items-center">
           <div className="grid gird-cols-1">

@@ -17,6 +17,7 @@ import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMe
 import { Button } from "@/components/ui/button";
 import { DiyChartBySchool } from "./charts/DiyChartBySchool";
 import { BarChartCustomGraph } from "./charts/BarChartCustom";
+import { AttendanceOverTimeChart } from "./charts/AttendanceOverTime";
 
 interface DataTableProps<T extends object> {
   data: T[];
@@ -136,7 +137,13 @@ function DataTable<T extends object>({
     chartKey={chartColumnKey}
     chartDataKey={chartValueKey}
     />
-    }
+          }
+          {(showChart && id == 'clziv5kbm00018un4swvvb5a7') &&
+            <AttendanceOverTimeChart
+              itinalChartData={data}
+              chartTitle={chartTitle}  
+          />
+          }
     </div>  
 
       }
