@@ -255,6 +255,11 @@ export async function runQuery(
         }
       }
 
+      if (query.includes("@@psc")){
+        query = query.replace("@@psc", "'"+ session?.user?.primarySchool + "'");
+
+      }
+
       // Handle @TN variable
       if (query.includes("@tn")) {
         // TODO: get from session, feed in from auth() call or Aeries query

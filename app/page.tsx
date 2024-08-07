@@ -16,6 +16,7 @@ import PieChartCard from "./components/charts/PieChart";
 import { AreaChartComponent } from "./components/charts/AreaChart";
 import { BarChartCustomGraph } from "./components/charts/BarChartCustom";
 import { AttendanceOverTimeChart } from "./components/charts/AttendanceOverTime";
+import { Button } from "@/components/ui/button";
 
 // const prisma = new PrismaClient();
 export default async function Home() {
@@ -74,6 +75,9 @@ export default async function Home() {
           database={process.env.DB_DATABASE as string}
           roles={session?.user?.roles}
         />
+        <Button variant="link" className="w-full" asChild>
+          <Link href="/attendance">Attendance</Link>
+        </Button>
 
       </div>
 
