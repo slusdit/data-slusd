@@ -6,13 +6,10 @@ export default async function syncTeacherClasses(profileId: string, profileEmail
 
     function isMatched(obj1: any, array2: any[], key1: string, key2: string) {
         const objKey = obj1[key1]
-        // // console.log({ obj1, array2, key1, key2, objKey });
         return array2.some(obj2 => {
-            // // console.log(obj1[key1] === obj2[key1] && obj1[key2] === obj2[key2])
             return obj1[key1] === obj2[key1] && obj1[key2] === obj2[key2]
         });
     }
-    // console.log(profileEmail)
     let aeriesPermissions: AeriesSimpleStaff | AeriesSimpleTeacher | null = await getAeriesStaff({ email: profileEmail, endpoint: "/api/v5/staff" });
     let aeriesClasses: AeriesSimpleTeacher[] | undefined
     if (!aeriesPermissions) {
@@ -24,7 +21,6 @@ export default async function syncTeacherClasses(profileId: string, profileEmail
         aeriesClasses = await getTeacherSchoolCredentials({ id: aeriesPermissions.id, schools: aeriesPermissions.schoolPermissions, })
 
     }
-    // console.log(aeriesClasses)
 
     // Check DB for current Teacher info with matching PSL == id
 
@@ -40,17 +36,11 @@ export default async function syncTeacherClasses(profileId: string, profileEmail
     let newAeriesClasses: AeriesSimpleTeacher[] = []
     // If teachers have current classes in Aeries and current classes in DB
     if (aeriesClasses && aeriesClasses.length > 0) {
-        // console.log(currentClasses)
-        // console.log(aeriesClasses)
         if (currentClasses.length > 0) {
-
-            // console.log(aeriesClasses.length)
-
             // Filter out classes that are not in already in the DB
             newAeriesClasses = aeriesClasses.filter(
                 aeriesClass => {
                     const test = !isMatched(aeriesClass, currentClasses, 'sc', 'tn')
-                    // console.log({ test })
                     return test
                 }
             );
@@ -59,17 +49,14 @@ export default async function syncTeacherClasses(profileId: string, profileEmail
             const oldCurrentClasses = currentClasses.filter(
                 currentClass => {
                     const test = !isMatched(currentClass, aeriesClasses, 'sc', 'tn')
-                    // console.log({ test })
+
                     return test
                 }
             );
 
-            // console.log(oldCurrentClasses)
-            // console.log(newAeriesClasses)
 
             if (newAeriesClasses.length > 0) {
                 // Add new classes to DB
-                // console.log(newAeriesClasses)
                 newAeriesClasses.map(async (aeriesClass) => {
                     const newClass = await prisma.class.create({ data: aeriesClass })
                     const result = await prisma.userClass.create({
@@ -78,7 +65,6 @@ export default async function syncTeacherClasses(profileId: string, profileEmail
                             userId: profileId,
                         }
                     })
-                    // console.log(result)
                 })
 
                 displayResult = `Some New Classes Added`
