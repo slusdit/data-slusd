@@ -1,3 +1,4 @@
+
 import { auth } from "@/auth";
 import { PrismaClient, QueryCategory } from "@prisma/client";
 import Link from "next/link";
@@ -9,7 +10,13 @@ import { Separator } from "@/components/ui/separator";
 import { QuerySheet } from "./components/QueiesSheet";
 import { Card } from "@/components/ui/card";
 import prisma from "@/lib/db";
-import SchoolEnroolmentGraph from "./components/SchoolEnrollmentGraph";
+import SchoolEnrollmentGraph from "./components/SchoolEnrollmentGraph";
+import PieChart from "./charts/page";
+import PieChartCard from "./components/charts/PieChart";
+import { AreaChartComponent } from "./components/charts/AreaChart";
+import { BarChartCustomGraph } from "./components/charts/BarChartCustom";
+import { AttendanceOverTimeChart } from "./components/charts/AttendanceOverTime";
+import { Button } from "@/components/ui/button";
 
 // const prisma = new PrismaClient();
 export default async function Home() {
@@ -68,6 +75,9 @@ export default async function Home() {
           database={process.env.DB_DATABASE as string}
           roles={session?.user?.roles}
         />
+        <Button variant="link" className="w-full" asChild>
+          <Link href="/attendance">Attendance</Link>
+        </Button>
 
       </div>
 
@@ -76,18 +86,23 @@ export default async function Home() {
         <h1 className="text-3xl font-weight-800 mb-5 text-center">
           Welcome {session?.user?.name}
         </h1>
+        <div className="grid grid-cols-1 h-lg w-md items-center">
+            {/* <AreaChartComponent /> */}
+            <AttendanceOverTimeChart session={session}/>
+        </div>
         <div className="grid grid-cols-2 grid-flow-row auto-rows-max gap-4 justify-center items-center">
+          <div className="grid gird-cols-1">
 
-          <SchoolEnroolmentGraph
+          <PieChartCard />
+          </div>
+
+          <SchoolEnrollmentGraph
             schools={session?.user?.schools}
-            queryId="clyva7j4s0005qwsuwm3qol0n"
+              // queryId="clz1jjsi1000314k7qv0xvxv3"
+              queryLabel='school-enrollment-summary'
             // containerStyle="w-full"
           />
-          <SchoolEnroolmentGraph
-            schools={session?.user?.schools}
-            queryId="clyva7j4s0005qwsuwm3qol0n"
-            // containerStyle="w-full"
-          />
+            
         </div>
 
       </Card>

@@ -213,34 +213,37 @@ export async function runQuery(
   let cleanQuery = await removeCommentsFromQuery(query);
 
   const pool = await poolPromise;
+  console.log(query)
+  const request = pool.request();
   try {
-    const request = pool.request();
-
-    let result;
+    
     try {
-
+      let result;
+      
       // TEST: Remove email to test @@sc overrice
       const schoolCode = session?.user?.schools
-
+      console.log(session?.user?.schools)
+      console.log(session?.user)
+      
       // console.log(schoolCode);
       // TODO: Prepend @@variables to declarations at the top of the query, rather than search and replace?
       // Handle @SC variable
       if (query.includes("@@sc")) {
         if (schoolCode === "0") {
           let allSchools:
-            | {
-              sc: string;
-            }[]
-            | string = await prisma.schoolInfo.findMany({
-              select: {
-                sc: true,
-              },
-            });
+          | {
+            sc: string;
+          }[]
+          | string = await prisma.schoolInfo.findMany({
+            select: {
+              sc: true,
+            },
+          });
           allSchools = allSchools.map((school) => `${school.sc}`).join(",");
           ;
-
+          
           query = query.replace("= @@sc", `in (${allSchools})`);
-          // console.log("Query", query);
+          console.log("Query", query);
         } else {
           if (typeof schoolCode === "string") {
             query = query.replace("@@sc", schoolCode);
@@ -252,11 +255,17 @@ export async function runQuery(
         }
       }
 
+      if (query.includes("@@psc")){
+        query = query.replace("@@psc", "'"+ session?.user?.primarySchool + "'");
+
+      }
+
       // Handle @TN variable
       if (query.includes("@tn")) {
         // TODO: get from session, feed in from auth() call or Aeries query
       }
 
+      console.log("Query", query);
       result = await request.query(query);
 
       // console.log("SQL result", result.recordset);

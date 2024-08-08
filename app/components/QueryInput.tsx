@@ -3,42 +3,67 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { removeCommentsFromQuery, runQuery } from "@/lib/aeries";
 import { IRecordSet } from "mssql";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DataTable from "@/app/components/DataTable";
+import { format } from "sql-formatter";
+import { LoaderCircle } from "lucide-react";
 
 const QueryInput = ({
+  id,
   initialValue: initialQueryRow,
   initialResult = undefined,
   showChart = false,
-  chartTitle
+  chartTitle,
 }: {
+  id: string;
   initialValue: any;
   initialResult: IRecordSet<any> | undefined;
   showChart?: boolean;
   chartTitle?: string;
 }) => {
-  const [value, setValue] = useState(initialQueryRow);
+  const [value, setValue] = useState("");
+
   const [error, setError] = useState<string>();
   const [result, setResult] = useState(initialResult);
-  const handleQuery = async () =>{
-    console.log(value);
-    
-    const cleanQuery = await removeCommentsFromQuery(value);
+  const [loading, setLoading] = useState(false);
+  function formatAndSetValue(value: string) {
+    const formattedValue = format(value, { language: "tsql" }) || value;
+    console.log(formattedValue);
 
-    console.log(cleanQuery);
-    runQuery(cleanQuery).then(setResult).catch(setError);
+    setValue(formattedValue);
+    return null;
   }
 
-  console.log(showChart)
-    
+  useEffect(() => {
+    formatAndSetValue(initialQueryRow);
+  }, []);
+
+  const handleQuery = async () => {
+    setLoading(true);
+    // console.log(value);
+
+    const cleanQuery = await removeCommentsFromQuery(value);
+
+    // console.log(cleanQuery);
+    runQuery(cleanQuery)
+      .then(setResult)
+      .then()
+      .catch(setError)
+      .finally(() => setLoading(false));
+    // setLoading(false);
+  };
+
+  console.log(showChart);
+
   return (
     <div className="mt-4">
       <div className="flex flex-col w-full items-center justify-center gap-2">
         <Textarea
           name="query"
           id="query"
+          typeof="code"
           value={value}
-          className="w-1/2 place-content-start whitespace-pre-wrap"
+          className="w-1/2 place-content-start whitespace-pre-wrap min-h-40"
           onChange={(e) => setValue(e.target.value)}
         />
         <Button variant="outline" onClick={handleQuery}>
@@ -48,10 +73,22 @@ const QueryInput = ({
 
       <div>{error && <div>Error: {error}</div>}</div>
 
-      <div className="mt-2 flex  justify-center w-full">
-        
-          <DataTable data={result} showChart={showChart} chartTitle={chartTitle}/>
-        
+      <div>
+        {loading ? (
+          <div className="mt-2 flex  justify-center w-full">
+            Loading...
+            <LoaderCircle className="h-5 w-5 animate-spin" />
+          </div>
+        ) : (
+          <div className="mt-2 flex  justify-center w-full">
+            <DataTable
+              data={result}
+              showChart={showChart}
+              chartTitle={chartTitle}
+              id={id}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

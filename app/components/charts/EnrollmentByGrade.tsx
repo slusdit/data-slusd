@@ -17,6 +17,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
+import Link from "next/link"
 
 const defaultChartData = [
   { grade: "K", count: 186 },
@@ -35,27 +36,34 @@ const defaultChartConfig = {
 } satisfies ChartConfig
 
 type ChartDataType = {
-    grade: string
-    count: number
+  grade: string
+  count: number
 }
 
 interface EnrollmentByGradeChartProps<T> {
   chartConfig?: ChartConfig
   chartData?: ChartDataType[]
   school?: string
+  url?: string
 }
 
 export function EnrollmentByGradeChart<T>({
   chartConfig = defaultChartConfig,
   chartData = defaultChartData as T[],
   school = "Placeholder School",
-}:EnrollmentByGradeChartProps<T>) {
+  url
+}: EnrollmentByGradeChartProps<T>) {
   return (
     <Card
-        className="border  m-2"
+      className="border  m-2"
     >
       <CardHeader>
-        <CardTitle>School Enrollment</CardTitle>
+        {url ?
+          <Link href={url}>
+            <CardTitle>School Enrollment</CardTitle>
+          </Link> :
+          <CardTitle>School Enrollment</CardTitle>
+        }
         <CardDescription>{school} School</CardDescription>
       </CardHeader>
       <CardContent>
@@ -91,7 +99,7 @@ export function EnrollmentByGradeChart<T>({
         </ChartContainer>
       </CardContent>
       <CardFooter className="flex-col items-start gap-2 text-sm">
-        
+
       </CardFooter>
     </Card>
   )
