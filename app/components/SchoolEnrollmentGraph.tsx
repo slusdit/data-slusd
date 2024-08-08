@@ -9,29 +9,50 @@ import DataTable from "./DataTable"
 import { EnrollmentByGradeChart } from "./charts/EnrollmentByGrade"
 import Link from "next/link"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Button } from "@/components/ui/button"
 
-const SchoolEnroolmentGraph = ({
+type Category = {
+    id: string;
+    label: string;
+    value: string;
+    sort: number;
+  }
+  
+  type SchoolEnrollmentSummary = {
+    id: string;
+    query: string;
+    name: string;
+    label: string;
+    createdBy: string;
+    chart: boolean;
+    chartColumnKey: string | null;
+    chartValueKey: string | null;
+    description: string;
+    publicQuery: boolean;
+    categoryId: string;
+    hiddenCols: string;
+    category: Category;
+  }
+const SchoolEnrollmentGraph = ({
     schools,
-    queryId,
-    containerStyle = 'w-full flex flex-col justify-center items-center'
+    initialQueryId,
+    queryLabel,
+    containerStyle = ' flex flex-col  items-center'
 }: {
     schools: number[]
-    queryId: string
+    itinalQueryId?: string
+    queryLabel?: string
     containerStyle?: string
 }) => {
     const [data, setData] = useState<any>({})
     const [category, setCategory] = useState('')
     const [loading, setLoading] = useState(true)
-
-    function formatData(data: any) {
-
-
-        return formattedData
-    }
+    const [queryId, setQueryId] = useState(initialQueryId)
 
     useEffect(() => {
         const fetchData = async () => {
-            const { data, query } = await getQueryData(queryId)
+            // const { data, query } = await getQueryData(queryId)
+            const { data, query } = await getQueryData({ queryLabel })
             console.log(data)
             console.log(query)
             if (!data) return
@@ -39,6 +60,7 @@ const SchoolEnroolmentGraph = ({
             setData(data)
             setCategory(query.category?.label)
             setLoading(false)
+            setQueryId(query.id)
             const category = query.category?.label
         }
 
@@ -52,24 +74,22 @@ const SchoolEnroolmentGraph = ({
     if (loading) {
         return (
             <div className={containerStyle}>
-            <Skeleton className={"h-60 w-60 mb-2"} />
-            <Skeleton className={"h-10 w-48"} />
+                <Skeleton className={"h-60 w-60 mb-2"} />
+                {/* <Skeleton className={"h-10 w-48"} /> */}
             </div>
         )
     }
+    const url = `/query/${category}/${queryId}`
     return (
         <>
             {data &&
-
                 <div className={containerStyle}>
-                    <EnrollmentByGradeChart data={data}  />
-                    {category &&
-                        <Link href={`/query/${category}/${queryId}`}>Go </Link>
-                    }
+                    <EnrollmentByGradeChart data={data} url={url} />
+                    
                 </div>
             }
         </>
     )
 }
 
-export default SchoolEnroolmentGraph
+export default SchoolEnrollmentGraph

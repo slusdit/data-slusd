@@ -77,6 +77,8 @@ Built with direct connection to Aeries database using config in `/lib/aeries.ts`
 
 ## To Do
 
+- [ ] [Ideas from Thom](https://docs.google.com/spreadsheets/d/1sciIq4W_Z122uuzMvqx6YvsvNEHl2CpDHn_FQvHyh6g/edit?usp=sharing) - Site Admin "Home Dashboard"
+
 - [ ] Admin dashboard
   - [ ] Add queries
   - [ ] Add categories
@@ -108,4 +110,9 @@ Built with direct connection to Aeries database using config in `/lib/aeries.ts`
     - [x] Delete out of sync classes from local storage
   - [x] Run middleware function every time user signs in
   - [x] Add classes to session.user.classes
-  - [ ] Run sign in tests for middleware
+  - [x] Run sign in tests for middleware
+  
+## Additional Features
+
+- [ ] [Ticket #341596](https://osticket.slusd.us/scp/tickets.php?id=22460)
+  - Is there a way to set alerts for focal students? ie: If a particular student is absent in the first period it will automatically send an email to a particular staff?

@@ -165,18 +165,22 @@ model Class {
 // Backend and Query tables
 
 model Query {
-  id          String         @id @default(cuid())
-  query       String         @db.Text()
-  name        String
-  label       String         @unique
-  createdBy   String
-  chart       Boolean        @default(false)
-  description String
-  publicQuery Boolean        @default(false)
-  roles       Role[]         @relation
-  categoryId  String?
-  category    QueryCategory? @relation(fields: [categoryId], references: [id])
-  hiddenCols  String          @default("")
+  id              String         @id @default(cuid())
+  query           String         @db.Text()
+  name            String
+  label           String         @unique
+  createdBy       String
+  chart           Boolean        @default(false)
+  chartColumnKey  String?         
+  chartValueKey   String?
+  description     String
+  publicQuery     Boolean        @default(false)
+  roles           Role[]         @relation
+  categoryId      String?
+  category        QueryCategory? @relation(fields: [categoryId], references: [id])
+  hiddenCols      String          @default("")
+
+  Chart Chart[]
 }
 
 model QueryCategory {
@@ -196,4 +200,24 @@ enum ROLE {
   TEACHER
   SITEADMIN
   STAFF
+}
+
+enum CHARTTYPE {
+  BAR
+  STACKEDBAR
+  LINE
+  AREA
+  PIE
+  OTHER
+
+}
+
+model Chart {
+  id            String      @id @default(cuid())
+  type          CHARTTYPE
+  title         String
+  chartConfig   Json
+  queryId       String
+  query         Query      @relation(fields: [queryId], references: [id])
+
 }

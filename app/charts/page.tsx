@@ -1,8 +1,6 @@
-import Component from "../components/charts/PieChart";
-import { MultiComponent } from "../components/charts/MultiBar";
+import PieChartCard from "../components/charts/PieChart";
 import { ChartConfig } from "@/components/ui/chart";
-import { StackComponent } from "../components/charts/StackedBar";
-import { DiyChartBySchool } from "../components/charts/DiyChartBySchool";
+
 
 
 
@@ -399,7 +397,7 @@ export default async function Page() {
         <div className="px-12 max-w-5xl">
             <h1 className="text-3xl">Test</h1>
             <p>Set "Month" (School Number) to @@sc from User and hide picker</p>
-            <Component />
+            <PieChartCard />
             {/* <MultiComponent chartData={chartData} chartConfig={chartConfig} />  */}
             
             {/* <StackComponent chartData={finalFinalChartData} chartConfig={chartConfig} /> */}

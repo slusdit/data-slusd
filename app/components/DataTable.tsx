@@ -16,19 +16,31 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { DiyChartBySchool } from "./charts/DiyChartBySchool";
+import { BarChartCustomGraph } from "./charts/BarChartCustom";
+import { AttendanceOverTimeChart } from "./charts/AttendanceOverTime";
 
 interface DataTableProps<T extends object> {
   data: T[];
+  id?: string
   showChart?: boolean 
   chartTitle?: string
+  chartValueKey?: string | null
+  chartColumnKey?: string | null
 }
 
-function DataTable<T extends object>({ data, showChart, chartTitle }: DataTableProps<T>) {
+function DataTable<T extends object>({ 
+  data, 
+  id,
+  showChart,
+  chartTitle,
+  chartValueKey,
+  chartColumnKey 
+  }: DataTableProps<any>){
   const [sorting, setSorting] = useState<SortingState>([]);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [columnVisibility, setColumnVisibility] = useState({});
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-
+  console.log(id)
 
   useEffect(() => {
     setColumnVisibility({ requested: true })
@@ -107,16 +119,31 @@ function DataTable<T extends object>({ data, showChart, chartTitle }: DataTableP
  
   console.log(showChart)
   console.log(chartTitle)
+  console.log(id)
   return (
     <div className="w-full flex flex-col justify-center">
       {showChart &&
       
 
     <div className="w-full flex justify-center">
-    {showChart &&
+    {(showChart && id == 'cly54bp030001hv31khj4zt38') &&
 
     <DiyChartBySchool table={reactTable} title={chartTitle} />
     }
+    {(showChart && id == 'clyva7j4s0005qwsuwm3qol0n')  &&
+    <BarChartCustomGraph
+    table={reactTable}
+    title={chartTitle}
+    chartKey={chartColumnKey}
+    chartDataKey={chartValueKey}
+    />
+          }
+          {(showChart && id == 'clziv5kbm00018un4swvvb5a7') &&
+            <AttendanceOverTimeChart
+              itinalChartData={data}
+              chartTitle={chartTitle}  
+          />
+          }
     </div>  
 
       }

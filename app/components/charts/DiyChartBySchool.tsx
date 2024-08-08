@@ -451,8 +451,8 @@ export function removeZeroValues<T>(data: T[]) {
 }
 
 export function DiyChartBySchool({
-    chartData
-    ,
+    chartData,
+    
     title = 'DIY Chart By School',
     table,
 }: {
@@ -496,6 +496,7 @@ export function DiyChartBySchool({
     
 
     const filteredData = removeZeroValues(filteredDataBySchool);
+    // const filteredData = filteredDataBySchool
     // console.log(filteredData)
 
     const customColor = 'green' //'var(--color-sc' + school + ')';
