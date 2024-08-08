@@ -1,8 +1,100 @@
 'use server'
-import { AeriesSimpleStaff, AeriesSimpleTeacher, getAeriesStaff, getTeacherSchoolCredentials } from "./aeries";
+import { Profile } from "next-auth";
+import { AeriesSimpleStaff, AeriesSimpleTeacher, getAeriesStaff, getTeacherSchoolCredentials, runQuery } from "./aeries";
 import prisma from "./db";
 
-export default async function syncTeacherClasses(profileId: string, profileEmail: string) {
+type GetAllSchoolsReturn = {
+    primarySchool: number
+    psl: number
+    allSchools: number[]
+}
+
+
+
+export async function updateSchools(profileEmail: string, allQueriedSchools?: GetAllSchoolsReturn) {
+    if (!allQueriedSchools) {
+        allQueriedSchools = await getAllSchools(profileEmail)
+    }
+    const { psl, primarySchool, allSchools } = allQueriedSchools
+    const schools = await prisma.schoolInfo.findMany({
+        select: {
+            sc: true
+        }
+    })
+    
+    await prisma.user.update({
+        where: {
+            email: profileEmail
+        },
+        data: {
+            primarySchool,
+            psl
+        }
+    })
+
+    // Not working properly
+    // if (allSchools.length > 0) {
+    //     const schoolCodes = schools.map((school) => school.sc)
+    //     console.log(schools)
+    //     const allSchoolCodes = allSchools.filter((school) => schoolCodes.includes(school.toString()))
+
+    //     for (const school of allSchoolCodes ){
+    //         if (!schoolCodes.includes(school.toString())) {
+    //             const addSchool = await prisma.user.update({
+    //                 where: {
+    //                     email: profileEmail
+    //                 },
+    //                 data: {
+    //                     school: {
+    //                         set: {
+    //                             sc: school.toString()
+    //                         }
+    //                     }
+    //                 }
+    //             })
+    //         }
+    //     }
+    // }
+   
+    return null
+}
+
+export async function getAllSchools(profileEmail: string) {
+    
+    const results = await setPrimarySchool(profileEmail)
+    const profileName = profileEmail.split('@')[0]
+    const allSchoolsQuery = `SELECT SCH FROM USR where NM like '${profileName}%' and DEL = 0`
+    const allSchoolsResults = await runQuery(allSchoolsQuery)
+    console.log({ allSchoolsResults })
+    results['allSchools'] = allSchoolsResults.map((school) => school.SCH)
+    console.log({ results })
+    const user = await prisma.user.findUnique({
+        where: {
+            email: profileEmail
+        },
+        
+    })
+    console.log({ user })
+    if (!user?.primarySchool) {
+        console.log(profileEmail)
+        const ret = await updateSchools(profileEmail, results)
+        console.log(ret)
+    }
+    return results
+    
+}
+
+
+
+export async function setPrimarySchool(profileEmail: string):Promise<GetAllSchoolsReturn> {
+    
+    const primarySchoolQuery = `SELECT PSC 'primarySchool', ID 'psl' FROM STF WHERE EM = '${profileEmail}'`
+    console.log(primarySchoolQuery)
+    const primarySchoolResults = await runQuery(primarySchoolQuery)
+    return primarySchoolResults[0]
+   
+}
+export async function syncTeacherClasses(profileId: string, profileEmail: string) {
 
     function isMatched(obj1: any, array2: any[], key1: string, key2: string) {
         const objKey = obj1[key1]

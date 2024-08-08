@@ -75,9 +75,9 @@ export default async function Home() {
           database={process.env.DB_DATABASE as string}
           roles={session?.user?.roles}
         />
-        <Button variant="link" className="w-full" asChild>
+        {/* <Button variant="link" className="w-full" asChild>
           <Link href="/attendance">Attendance</Link>
-        </Button>
+        </Button> */}
 
       </div>
 

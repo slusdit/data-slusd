@@ -255,8 +255,14 @@ export async function runQuery(
         }
       }
 
-      if (query.includes("@@psc")){
-        query = query.replace("@@psc", "'"+ session?.user?.primarySchool + "'");
+      if (query.includes("@@psc")) {
+        if (session?.user?.manualSchool) {
+          
+          query = query.replace("@@psc", "'"+ session?.user?.manualSchool + "'");
+        } else {
+
+          query = query.replace("@@psc", "'"+ session?.user?.primarySchool + "'");
+        }
 
       }
 
