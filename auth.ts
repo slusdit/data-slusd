@@ -2,7 +2,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import prisma from "./lib/db";
-import syncTeacherClasses from "./lib/teacherClassMiddleware";
+import { getAllSchools, setPrimarySchool, syncTeacherClasses } from "./lib/signinMiddleware";
 import { Class, ROLE, SchoolInfo, User } from "@prisma/client";
 import { AeriesSimpleTeacher } from "./lib/aeries";
 
@@ -44,7 +44,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // console.log({ profileId })
         if (profileId && profileEmail) {
           const result = await syncTeacherClasses(profileId, profileEmail)
-          console.log({ result })
+          console.log({user}, {account}, {profile}, {profileEmail}, {profileId}, {result})
+          const allSchools = await getAllSchools(profileEmail)
+          // console.log({ result })
         }
 
         // console.log(user)
