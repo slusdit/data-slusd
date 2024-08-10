@@ -17,6 +17,7 @@ import { AreaChartComponent } from "./components/charts/AreaChart";
 import { BarChartCustomGraph } from "./components/charts/BarChartCustom";
 import { AttendanceOverTimeChart } from "./components/charts/AttendanceOverTime";
 import { Button } from "@/components/ui/button";
+import { getQueryData } from "@/lib/getQuery";
 
 // const prisma = new PrismaClient();
 export default async function Home() {
@@ -46,6 +47,9 @@ export default async function Home() {
       },
     });
   }
+
+  const attendanceData = await getQueryData({ queryLabel: "daily-attendance-school" })
+  console.log({ attendanceData })
   return (
     <>
     <div className="m-auto mt-10 self-center flex flex-row rounded-lg ">
@@ -75,9 +79,9 @@ export default async function Home() {
           database={process.env.DB_DATABASE as string}
           roles={session?.user?.roles}
         />
-        {/* <Button variant="link" className="w-full" asChild>
+        <Button variant="link" className="w-full" asChild>
           <Link href="/attendance">Attendance</Link>
-        </Button> */}
+        </Button>
 
       </div>
 
@@ -88,7 +92,7 @@ export default async function Home() {
         </h1>
         <div className="grid grid-cols-1 h-lg w-md items-center">
             {/* <AreaChartComponent /> */}
-            <AttendanceOverTimeChart session={session}/>
+            <AttendanceOverTimeChart session={session} itinalChartData={attendanceData?.data}/>
         </div>
         <div className="grid grid-cols-2 grid-flow-row auto-rows-max gap-4 justify-center items-center">
           <div className="grid gird-cols-1">

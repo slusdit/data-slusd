@@ -33,28 +33,31 @@ export async function updateSchools(profileEmail: string, allQueriedSchools?: Ge
     })
 
     // Not working properly
-    // if (allSchools.length > 0) {
-    //     const schoolCodes = schools.map((school) => school.sc)
-    //     console.log(schools)
-    //     const allSchoolCodes = allSchools.filter((school) => schoolCodes.includes(school.toString()))
+    if (allSchools.length > 0) {
+        const schoolCodes = schools.map((school) => school.sc)
+        console.log(schools)
+        const allSchoolCodes = allSchools.filter((school) => schoolCodes.includes(school.toString()))
 
-    //     for (const school of allSchoolCodes ){
-    //         if (!schoolCodes.includes(school.toString())) {
-    //             const addSchool = await prisma.user.update({
-    //                 where: {
-    //                     email: profileEmail
-    //                 },
-    //                 data: {
-    //                     school: {
-    //                         set: {
-    //                             sc: school.toString()
-    //                         }
-    //                     }
-    //                 }
-    //             })
-    //         }
-    //     }
-    // }
+        for (const school of allSchoolCodes ){
+            console.log(school)
+            console.log(schoolCodes)
+            if (schoolCodes.includes(school.toString())) {
+                console.log(school)
+                // const addSchool = await prisma.user.update({
+                //     where: {
+                //         email: profileEmail
+                //     },
+                //     data: {
+                //         school: {
+                //             set: {
+                //                 sc: school.toString()
+                //             }
+                //         }
+                //     }
+                // })
+            }
+        }
+    }
    
     return null
 }
@@ -75,6 +78,7 @@ export async function getAllSchools(profileEmail: string) {
         
     })
     console.log({ user })
+    console.log({ results})
     if (!user?.primarySchool) {
         console.log(profileEmail)
         const ret = await updateSchools(profileEmail, results)
