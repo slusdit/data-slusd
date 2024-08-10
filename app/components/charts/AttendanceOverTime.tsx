@@ -93,41 +93,45 @@ export function AttendanceOverTimeChart({
   chartTitle = "School Attendance",
 }: {
   session: Session;
-  itinalChartData?: SchoolAttendanceData[];
+  itinalChartData: SchoolAttendanceData[];
   chartTitle?: string;
   }) {
-  console.log(session)
-  console.log(`School Attendance ${session.user.manualSchool}`)
+  
+  // console.log(`School Attendance ${ session.user && session.user?.manualSchool}`)
   const [chartData, setChartData] = useState<
     SchoolAttendanceData[] | undefined
-  >(itinalChartData || []);
+  >(itinalChartData || []); 
   const [loading, setLoading] = useState(false);
 
-  // console.log(chartData)
-  // console.log(itinalChartData)
+  console.log(chartData)
+  console.log(itinalChartData)
 
-  useEffect(() => {
-    if (itinalChartData) {
-      setLoading(false);
-    }
-    if (!itinalChartData) {
-      setLoading(true);
+  // useEffect(() => {
+  //   if (itinalChartData) {
+  //     setLoading(false);
+  //   }
+  //   if (!itinalChartData) {
+  //     setLoading(true);
 
-      const fetchData = async () => {
-        const queryLabel = "daily-attendance-school";
-        const { data, query } = await getQueryData({ queryLabel });
-        // console.log(data)
-        // console.log(query)
-        if (!data) return;
-        setChartData(data);
-        setLoading(false);
-      };
+  //     // const fetchData = async () => {
+  //     //   const queryLabel = "daily-attendance-school";
+  //     //   const { data, query } = await getQueryData({ queryLabel });
+  //     //   // console.log(data)
+  //     //   // console.log(query)
+  //     //   if (!data) return;
+  //     //   setChartData(data);
+  //     //   setLoading(false);
+  //     // };
 
-      fetchData();
-    }
-  }, []);
+  //     // fetchData();
+  //   }
+  // }, [chartData]);
 
   const [timeRange, setTimeRange] = useState("90d");
+
+  if (!chartData) {
+    return null;
+  }
 
   const filteredData = chartData.filter((item) => {
     const date = new Date(item.dt);

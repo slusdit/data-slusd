@@ -53,8 +53,7 @@ const SchoolEnrollmentGraph = ({
         const fetchData = async () => {
             // const { data, query } = await getQueryData(queryId)
             const { data, query } = await getQueryData({ queryLabel })
-            console.log(data)
-            console.log(query)
+           
             if (!data) return
 
             setData(data)

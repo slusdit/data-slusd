@@ -58,6 +58,7 @@ export async function getQueryData({
   console.log(query);
   if (!query) return;
   const data = await runQuery(query.query);
+  console.log(data)
   return {
     data: data,
     query: query,

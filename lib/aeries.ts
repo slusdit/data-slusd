@@ -274,7 +274,7 @@ export async function runQuery(
       console.log("Query", query);
       result = await request.query(query);
 
-      // console.log("SQL result", result.recordset);
+      console.log("SQL result", result.recordset);
       // await closePool();
       return result.recordset;
     } catch (error) {
@@ -285,8 +285,10 @@ export async function runQuery(
     }
   } catch (err) {
     console.error("SQL error", err);
-    // console.log(query)
-    throw new Error("SQL Pool error", { cause: err });
+    console.log(query)
+    console.log({err})
+    
+    throw  Error("SQL Pool error", { cause: err });
   }
 }
 
