@@ -49,7 +49,7 @@ export default async function Home() {
   }
 
   const attendanceData = await getQueryData({ queryLabel: "daily-attendance-school" })
-  console.log({ attendanceData })
+ 
   return (
     <>
     <div className="m-auto mt-10 self-center flex flex-row rounded-lg ">

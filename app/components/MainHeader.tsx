@@ -10,6 +10,7 @@ import type { Session } from "next-auth";
 import QueryBar, { QueryWithCategory } from "./QueryBar";
 import { NavigationMenuDemo } from "./NavMenuDemo";
 import prisma from "@/lib/db";
+import SchoolPicker from "./SchoolPicker";
 
 // const prisma = new PrismaClient();
 
@@ -21,6 +22,7 @@ export default async function MainHeader({ session }: { session: Session | null 
         id: true,
         name: true,
         description: true,
+        
       
       category: {
         select: {
@@ -32,7 +34,7 @@ export default async function MainHeader({ session }: { session: Session | null 
     }
   })
 
-
+  // console.log(session.user)
   return (
     <header className="w-full">
       <nav
@@ -56,6 +58,7 @@ export default async function MainHeader({ session }: { session: Session | null 
           `}
       >
         <div>
+
           <Button
             asChild
             variant="link"
@@ -64,6 +67,9 @@ export default async function MainHeader({ session }: { session: Session | null 
             <Link href="/">Data V2.0</Link>
           </Button>
         </div>
+        {session?.user && 
+        <SchoolPicker schools={session?.user?.UserSchool} initialSchool={session?.user?.activeSchool}/>
+        }
        
         <div
           className="w-full justify-end md:flex md:items-center md:w-auto"

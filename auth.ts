@@ -2,7 +2,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import prisma from "./lib/db";
-import { getAllSchools, setPrimarySchool, syncTeacherClasses } from "./lib/signinMiddleware";
+import { getAllSchools, getPrimarySchool, syncTeacherClasses } from "./lib/signinMiddleware";
 import { Class, ROLE, SchoolInfo, User } from "@prisma/client";
 import { AeriesSimpleTeacher } from "./lib/aeries";
 
@@ -63,12 +63,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         where: { id: user.id },
         include: {
           userRole: true,
+
           UserSchool: {
             include: {
               school: true,
             },
           },
           school: true,
+          
           UserClass: {
             include: {
               class: true,
@@ -78,6 +80,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       });
 
       let schools:string[] = []
+      console.log(dbUser)
       if (dbUser) {
         
         const dbUserSchools = dbUser.UserSchool.map((userSchool) => userSchool.school)
@@ -97,12 +100,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         schools?: string[];
         roles?: ROLE[];
         classes?: Class[];
+        primaryRole: string;
+        primarySchool?: number;
+        activeSchool?: number;
+        psl: number;
       } & User;
 
       session.user = {
         ...session.user,
         ...(dbUser as SessionUser),
         // @ts-ignore
+        
         schools,
         roles: dbUser?.userRole.map((role) => role.role) || [],
         classes: dbUser?.UserClass.map((userClass) => userClass.class) || [],

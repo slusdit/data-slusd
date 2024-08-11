@@ -1,26 +1,5 @@
-const SchoolPicker = () => {
-    return (
-        <div>
-            School Picker
-        </div>
-    )
-}
-
-export default SchoolPicker
-
 "use client"
-
 import * as React from "react"
-import {
-  ArrowUpCircle,
-  CheckCircle2,
-  Circle,
-  HelpCircle,
-  LucideIcon,
-  XCircle,
-} from "lucide-react"
-
-import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
   Command,
@@ -35,94 +14,72 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { SchoolInfo } from "@prisma/client"
+import { useState, useEffect } from "react"
+import { updateActiveSchool } from "@/lib/signinMiddleware"
 
-type Status = {
-  value: string
-  label: string
-  icon: LucideIcon
+type UserSchoolWithDetails = {
+  userId: string;
+  schoolSc: string;
+  school: SchoolInfo
 }
 
-const statuses: Status[] = [
-  {
-    value: "backlog",
-    label: "Backlog",
-    icon: HelpCircle,
-  },
-  {
-    value: "todo",
-    label: "Todo",
-    icon: Circle,
-  },
-  {
-    value: "in progress",
-    label: "In Progress",
-    icon: ArrowUpCircle,
-  },
-  {
-    value: "done",
-    label: "Done",
-    icon: CheckCircle2,
-  },
-  {
-    value: "canceled",
-    label: "Canceled",
-    icon: XCircle,
-  },
-]
+const SchoolPicker = ({
+  schools,
+  initialSchool = null
+}:{
+  schools: UserSchoolWithDetails[]
+  initialSchool?: string | null
+}) => {
+  const [open, setOpen] = useState(false)
+  const [selectedSchool, setSelectedSchool] = useState<SchoolInfo | null>(null)
 
-export function ComboboxPopover() {
-  const [open, setOpen] = React.useState(false)
-  const [selectedStatus, setSelectedStatus] = React.useState<Status | null>(
-    null
-  )
+  useEffect(() => {
+    if (initialSchool) {
+      const initialSelectedSchool = schools.find(s => s.school.sc === initialSchool.toString())?.school || null
+      console.log(initialSchool)
+      console.log(initialSelectedSchool)
+      setSelectedSchool(initialSelectedSchool)
+    }
+  }, [initialSchool, schools])
 
   return (
     <div className="flex items-center space-x-4">
-      <p className="text-sm text-muted-foreground">Status</p>
+      <label className="text-sm text-white">School: </label>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
             size="sm"
-            className="w-[150px] justify-start"
+            className="w-48 justify-start"
           >
-            {selectedStatus ? (
-              <>
-                <selectedStatus.icon className="mr-2 h-4 w-4 shrink-0" />
-                {selectedStatus.label}
-              </>
+            {selectedSchool ? (
+              <>{selectedSchool.name}</>
             ) : (
-              <>+ Set status</>
+              <>School Picker</>
             )}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="p-0" side="right" align="start">
           <Command>
-            <CommandInput placeholder="Change status..." />
+            <CommandInput placeholder="Change school..." />
             <CommandList>
               <CommandEmpty>No results found.</CommandEmpty>
               <CommandGroup>
-                {statuses.map((status) => (
+                {schools.map((userSchool) => (
                   <CommandItem
-                    key={status.value}
-                    value={status.value}
+                    key={userSchool.school.sc}
+                    value={userSchool.school.sc}
                     onSelect={(value) => {
-                      setSelectedStatus(
-                        statuses.find((priority) => priority.value === value) ||
-                          null
-                      )
+                      const newSelectedSchool = schools.find((s) => s.school.sc === value)?.school || null
+                      setSelectedSchool(newSelectedSchool)
+                      if (newSelectedSchool) {
+                        updateActiveSchool(userSchool.userId, Number(newSelectedSchool.sc))
+                      }
                       setOpen(false)
                     }}
                   >
-                    <status.icon
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        status.value === selectedStatus?.value
-                          ? "opacity-100"
-                          : "opacity-40"
-                      )}
-                    />
-                    <span>{status.label}</span>
+                    <span>{userSchool.school.name}</span>
                   </CommandItem>
                 ))}
               </CommandGroup>
@@ -133,3 +90,5 @@ export function ComboboxPopover() {
     </div>
   )
 }
+
+export default SchoolPicker

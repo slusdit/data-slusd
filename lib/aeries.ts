@@ -266,6 +266,17 @@ export async function runQuery(
 
       }
 
+      if (query.includes("@@asc")) {
+        if (session?.user?.activeSchool) {
+          
+          query = query.replace("@@asc", "'"+ session?.user?.activeSchool + "'");
+        } else {
+
+          query = query.replace("@@asc", "'"+ session?.user?.primarySchool + "'");
+        }
+
+      }
+
       // Handle @TN variable
       if (query.includes("@tn")) {
         // TODO: get from session, feed in from auth() call or Aeries query
