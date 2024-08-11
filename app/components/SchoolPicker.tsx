@@ -34,11 +34,12 @@ const SchoolPicker = ({
   const [open, setOpen] = useState(false)
   const [selectedSchool, setSelectedSchool] = useState<SchoolInfo | null>(null)
 
+  console.log(initialSchool)
   useEffect(() => {
     if (initialSchool) {
       const initialSelectedSchool = schools.find(s => s.school.sc === initialSchool.toString())?.school || null
-      console.log(initialSchool)
-      console.log(initialSelectedSchool)
+      // console.log(initialSchool)
+      // console.log(initialSelectedSchool)
       setSelectedSchool(initialSelectedSchool)
     }
   }, [initialSchool, schools])
@@ -75,6 +76,7 @@ const SchoolPicker = ({
                       setSelectedSchool(newSelectedSchool)
                       if (newSelectedSchool) {
                         updateActiveSchool(userSchool.userId, Number(newSelectedSchool.sc))
+                        
                       }
                       setOpen(false)
                     }}

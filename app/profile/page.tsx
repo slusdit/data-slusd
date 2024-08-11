@@ -3,6 +3,7 @@ import GoogleAuthButton from "@/app/components/GoogleAuthButton";
 import { Button } from "@/components/ui/button";
 import { Link } from "next/link";
 import RenewSchools from "../components/RenewSchools";
+import SchoolPicker from "../components/SchoolPicker";
 
 export default async function Profile() {
 
@@ -12,13 +13,14 @@ export default async function Profile() {
     return (
         <div>
             <h1>Profile</h1>
-            <RenewSchools email={session?.user?.email} />
+            <SchoolPicker schools={session?.user?.UserSchool} initialSchool={session?.user?.activeSchool} />
+            {/* <RenewSchools email={session?.user?.email} /> */}
             
                 {/* <Link href="/">Query List</Link> */}
 
-            {session?.user?.admin  &&
+            {/* {session?.user?.admin  &&
             <pre>{JSON.stringify(session, null, 2)}</pre>
-            }
+            } */}
         </div>
     );
 }

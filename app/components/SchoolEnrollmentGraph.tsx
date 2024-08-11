@@ -10,15 +10,16 @@ import { EnrollmentByGradeChart } from "./charts/EnrollmentByGrade"
 import Link from "next/link"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
+import { SchoolInfo } from "@prisma/client"
 
 type Category = {
     id: string;
     label: string;
     value: string;
     sort: number;
-  }
-  
-  type SchoolEnrollmentSummary = {
+}
+
+type SchoolEnrollmentSummary = {
     id: string;
     query: string;
     name: string;
@@ -32,14 +33,16 @@ type Category = {
     categoryId: string;
     hiddenCols: string;
     category: Category;
-  }
+}
 const SchoolEnrollmentGraph = ({
     schools,
+    activeSchool,
     initialQueryId,
     queryLabel,
     containerStyle = ' flex flex-col  items-center'
 }: {
     schools: number[]
+    activeSchool: SchoolInfo
     itinalQueryId?: string
     queryLabel?: string
     containerStyle?: string
@@ -53,10 +56,35 @@ const SchoolEnrollmentGraph = ({
         const fetchData = async () => {
             // const { data, query } = await getQueryData(queryId)
             const { data, query } = await getQueryData({ queryLabel })
-           
-            if (!data) return
 
-            setData(data)
+            if (!data) return
+            const gradeMap = {
+                TK: 'TK',
+                K: 'K',
+                '1 ': '1',
+                '2 ': '2',
+                '3 ': '3',
+                '4 ': '4',
+                '5 ': '5',
+                '6 ': '6',
+                '7 ': '7',
+                '8 ': '8',
+                '9 ': '9',
+                '10 ': '10',
+                '11 ': '11',
+                '12 ': '12'
+            };
+
+            console.log(data)
+            const processedData = Object.entries(data[0])
+                .filter(([key, value]) => gradeMap.hasOwnProperty(key) && value !== 0)
+                .map(([key, value]) => ({
+                    grade: gradeMap[key].trim(),
+                    count: value
+                }));
+            console.log(processedData)
+
+            setData(processedData)
             setCategory(query.category?.label)
             setLoading(false)
             setQueryId(query.id)
@@ -79,15 +107,11 @@ const SchoolEnrollmentGraph = ({
         )
     }
     const url = `/query/${category}/${queryId}`
+    console.log(activeSchool)
     return (
-        <>
-            {data &&
-                <div className={containerStyle}>
-                    <EnrollmentByGradeChart data={data} url={url} />
-                    
-                </div>
-            }
-        </>
+        <div className={containerStyle}>
+            <EnrollmentByGradeChart chartData={data} url={url} school={activeSchool} />
+        </div>
     )
 }
 

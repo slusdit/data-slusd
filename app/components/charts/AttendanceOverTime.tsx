@@ -87,6 +87,13 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
+type SchoolInfo = {
+  id: string;
+  sc: string;
+  name: string;
+  logo: string;
+}
+
 export function AttendanceOverTimeChart({
   session,
   itinalChartData,
@@ -95,6 +102,7 @@ export function AttendanceOverTimeChart({
   session: Session;
   itinalChartData: SchoolAttendanceData[];
   chartTitle?: string;
+  school?: SchoolInfo
   }) {
   
   // console.log(`School Attendance ${ session.user && session.user?.manualSchool}`)
@@ -103,8 +111,8 @@ export function AttendanceOverTimeChart({
   >(itinalChartData || []); 
   const [loading, setLoading] = useState(false);
 
-  console.log(chartData)
-  console.log(itinalChartData)
+  // console.log(chartData)
+  // console.log(itinalChartData)
 
   // useEffect(() => {
   //   if (itinalChartData) {
@@ -154,7 +162,7 @@ export function AttendanceOverTimeChart({
     );
   }
   const activeSchoolName = session?.user?.schools?.find((school) => parseInt(school) === session?.user?.activeSchool)?.toString() || "Unknown School"
-  console.log(activeSchoolName);
+  // console.log(activeSchoolName);
   console.log(session)
   return (
     <Card className="h-[400px] w-full pb-2">
@@ -175,9 +183,6 @@ export function AttendanceOverTimeChart({
             <SelectValue placeholder="Last 3 months" />
           </SelectTrigger>
           <SelectContent className="rounded-xl">
-            <SelectItem value="365d" className="rounded-lg">
-              Last 12 months
-            </SelectItem>
             <SelectItem value="180d" className="rounded-lg">
               Last 6 months
             </SelectItem>
