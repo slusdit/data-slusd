@@ -11,6 +11,7 @@ import QueryBar, { QueryWithCategory } from "./QueryBar";
 import { NavigationMenuDemo } from "./NavMenuDemo";
 import prisma from "@/lib/db";
 import SchoolPicker from "./SchoolPicker";
+import ActiveSchool from "./ActiveSchool";
 
 // const prisma = new PrismaClient();
 
@@ -31,6 +32,12 @@ export default async function MainHeader({ session }: { session: Session | null 
           value: true
         }
       },
+    }
+  })
+
+  const schoolInfo = await prisma.schoolInfo.findUnique({
+    where: {
+      sc: session?.user?.activeSchool.toString()
     }
   })
 
@@ -67,8 +74,9 @@ export default async function MainHeader({ session }: { session: Session | null 
             <Link href="/">Data V2.0</Link>
           </Button>
         </div>
-        {session?.user && 
-        <SchoolPicker schools={session?.user?.UserSchool} initialSchool={session?.user?.activeSchool}/>
+        {schoolInfo && 
+        <ActiveSchool activeSchool={schoolInfo} /> 
+        // <SchoolPicker schools={session?.user?.UserSchool} initialSchool={session?.user?.activeSchool}/>
         }
        
         <div

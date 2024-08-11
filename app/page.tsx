@@ -48,6 +48,12 @@ export default async function Home() {
     });
   }
 
+  const activeSchool = await prisma.schoolInfo.findUnique({
+    where: {
+      sc: session?.user?.activeSchool.toString()
+    }
+  })
+
   const attendanceData = await getQueryData({ queryLabel: "daily-attendance-school" })
  
   return (
@@ -92,7 +98,7 @@ export default async function Home() {
         </h1>
         <div className="grid grid-cols-1 h-lg w-md items-center">
             {/* <AreaChartComponent /> */}
-            <AttendanceOverTimeChart session={session} itinalChartData={attendanceData?.data}/>
+            <AttendanceOverTimeChart session={session} itinalChartData={attendanceData?.data} />
         </div>
         <div className="grid grid-cols-2 grid-flow-row auto-rows-max gap-4 justify-center items-center">
           <div className="grid gird-cols-1">
@@ -102,6 +108,7 @@ export default async function Home() {
 
           <SchoolEnrollmentGraph
             schools={session?.user?.schools}
+            activeSchool={activeSchool}
               // queryId="clz1jjsi1000314k7qv0xvxv3"
               queryLabel='school-enrollment-summary'
             // containerStyle="w-full"

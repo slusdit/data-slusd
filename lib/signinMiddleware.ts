@@ -3,6 +3,9 @@ import { Profile } from "next-auth";
 import { AeriesSimpleStaff, AeriesSimpleTeacher, getAeriesStaff, getTeacherSchoolCredentials, runQuery } from "./aeries";
 import prisma from "./db";
 import { revalidatePath } from "next/cache";
+import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
+import { auth } from "@/auth";
 
 type GetAllSchoolsReturn = {
     primarySchool: number
@@ -136,7 +139,7 @@ export async function getAllSchools(profileEmail: string) {
 
 
 export async function updateActiveSchool(userId: string, activeSchool: number) {
-    await prisma.user.update({
+    const update =await prisma.user.update({
         where: {
             id: userId
         },
@@ -144,11 +147,19 @@ export async function updateActiveSchool(userId: string, activeSchool: number) {
             activeSchool
         }
     })
-
+    console.log(update)
+    const headersList = headers()
+    console.log(headersList)
+    const currentPath = headers().get('referer') || '/'
+    console.log(currentPath)
+    console.log(headersList.get('x-invoke-path'))
+    // const currentPath = new URL(request.url).pathname
+    // redirect(currentPath)
+    redirect('/')
 
     // revalidatePath('/')
 
-    return null
+    return await auth()
 }
 
 export async function getPrimarySchool(profileEmail: string):Promise<GetAllSchoolsReturn> {

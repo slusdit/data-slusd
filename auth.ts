@@ -11,24 +11,34 @@ async function getSchools({
   manualSchool,
   classes,
 }: {
-  schools:SchoolInfo[]
+  schools: SchoolInfo[]
   manualSchool?: number | null
   classes?: Class[] | null
 }) {
-  
-  let schoolsSc:string[] = schools.length > 0 ? schools.map((school) => school.sc) : []
-  
+
+  let schoolsSc: string[] = schools.length > 0 ? schools.map((school) => school.sc) : []
+
   if (manualSchool) {
-    schoolsSc = Array.from(new Set([...schoolsSc, manualSchool.toString()])) 
+    schoolsSc = Array.from(new Set([...schoolsSc, manualSchool.toString()]))
   }
-  
+
   if (classes) {
     const assignedClassesSc = classes.map((classObj) => classObj.sc.toString())
-    schoolsSc = Array.from(new Set([...schoolsSc, ...assignedClassesSc])) 
+    schoolsSc = Array.from(new Set([...schoolsSc, ...assignedClassesSc]))
   }
 
   return schoolsSc
 }
+type SessionUser = {
+  admin?: boolean;
+  schools?: string[];
+  roles?: ROLE[];
+  classes?: Class[];
+  primaryRole: string;
+  primarySchool?: number;
+  activeSchool?: number; 
+  psl: number;
+} & User;
 // const prisma = new PrismaClient();
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -44,7 +54,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // console.log({ profileId })
         if (profileId && profileEmail) {
           const result = await syncTeacherClasses(profileId, profileEmail)
-          console.log({user}, {account}, {profile}, {profileEmail}, {profileId}, {result})
+          console.log({ user }, { account }, { profile }, { profileEmail }, { profileId }, { result })
           const allSchools = await getAllSchools(profileEmail)
           // console.log({ result })
         }
@@ -58,7 +68,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       return true;
     },
-    async session({ session, user }) {
+    
+    async session({ session, user }:
+      {
+        session: SessionUser
+        user: any
+      }
+    ) {
       const dbUser = await prisma.user.findUnique({
         where: { id: user.id },
         include: {
@@ -70,7 +86,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             },
           },
           school: true,
-          
+
           UserClass: {
             include: {
               class: true,
@@ -79,38 +95,30 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }, // Include roles if needed
       });
 
-      let schools:string[] = []
+      let schools: string[] = []
       console.log(dbUser)
       if (dbUser) {
-        
+
         const dbUserSchools = dbUser.UserSchool.map((userSchool) => userSchool.school)
         const dbUserClasses = dbUser.UserClass.map((userClass) => userClass.class)
-        
-        
+
+
         schools = await getSchools(
-          { schools: dbUserSchools, manualSchool: dbUser.manualSchool , classes: dbUserClasses },
+          { schools: dbUserSchools, manualSchool: dbUser.manualSchool, classes: dbUserClasses },
         );
-        
+
 
       }
       // console.log(dbUser)
       // @ts-ignore
-      type SessionUser = {
-        admin?: boolean;
-        schools?: string[];
-        roles?: ROLE[];
-        classes?: Class[];
-        primaryRole: string;
-        primarySchool?: number;
-        activeSchool?: number;
-        psl: number;
-      } & User;
+      // auth.ts
+
 
       session.user = {
         ...session.user,
         ...(dbUser as SessionUser),
         // @ts-ignore
-        
+
         schools,
         roles: dbUser?.userRole.map((role) => role.role) || [],
         classes: dbUser?.UserClass.map((userClass) => userClass.class) || [],

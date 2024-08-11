@@ -18,6 +18,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart"
 import Link from "next/link"
+import { SchoolInfo } from "@prisma/client"
 
 const defaultChartData = [
   { grade: "K", count: 186 },
@@ -40,19 +41,27 @@ type ChartDataType = {
   count: number
 }
 
-interface EnrollmentByGradeChartProps<T> {
+interface EnrollmentByGradeChartProps {
   chartConfig?: ChartConfig
   chartData?: ChartDataType[]
-  school?: string
+  school?: SchoolInfo
   url?: string
 }
 
-export function EnrollmentByGradeChart<T>({
+const placeholderSchool = {
+  id: "placeholder",
+  sc: "placeholder",
+  name: "Placeholder School",
+  logo: ""
+}
+
+export function EnrollmentByGradeChart({
   chartConfig = defaultChartConfig,
-  chartData = defaultChartData as T[],
-  school = "Placeholder School",
+  chartData = defaultChartData ,
+  school = placeholderSchool,
   url
-}: EnrollmentByGradeChartProps<T>) {
+}: EnrollmentByGradeChartProps) {
+  
   return (
     <Card
       className="border  m-2"
@@ -60,11 +69,11 @@ export function EnrollmentByGradeChart<T>({
       <CardHeader>
         {url ?
           <Link href={url}>
-            <CardTitle>School Enrollment</CardTitle>
+            <CardTitle>{school.name.split(" ")[0]} Enrollment</CardTitle>
           </Link> :
           <CardTitle>School Enrollment</CardTitle>
         }
-        <CardDescription>{school} School</CardDescription>
+        <CardDescription>Total: {chartData.reduce((a, b) => a + b.count, 0)}</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig}>
