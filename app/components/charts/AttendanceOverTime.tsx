@@ -153,6 +153,9 @@ export function AttendanceOverTimeChart({
       </Skeleton>
     );
   }
+  const activeSchoolName = session?.user?.schools?.find((school) => parseInt(school) === session?.user?.activeSchool)?.toString() || "Unknown School"
+  console.log(activeSchoolName);
+  console.log(session)
   return (
     <Card className="h-[400px] w-full pb-2">
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">

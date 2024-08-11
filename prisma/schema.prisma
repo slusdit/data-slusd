@@ -23,7 +23,7 @@ model User {
   email String @unique
   image String?
   psl   Int?    @unique
-  manualSchool  Int?
+  activeSchool  Int?
   primarySchool Int?
   school        SchoolInfo[]    @relation("UserSchool")
   emailVerified DateTime?
@@ -118,6 +118,7 @@ model SchoolInfo {
   id         String       @id @default(cuid())
   sc         String       @unique
   name       String
+  logo       String?
   users      User[]       @relation("UserSchool")
   UserSchool UserSchool[]
 }

@@ -2,6 +2,7 @@
 import { Profile } from "next-auth";
 import { AeriesSimpleStaff, AeriesSimpleTeacher, getAeriesStaff, getTeacherSchoolCredentials, runQuery } from "./aeries";
 import prisma from "./db";
+import { revalidatePath } from "next/cache";
 
 type GetAllSchoolsReturn = {
     primarySchool: number
@@ -16,13 +17,9 @@ export async function updateSchools(profileEmail: string, allQueriedSchools?: Ge
         allQueriedSchools = await getAllSchools(profileEmail)
     }
     const { psl, primarySchool, allSchools } = allQueriedSchools
-    const schools = await prisma.schoolInfo.findMany({
-        select: {
-            sc: true
-        }
-    })
     
-    await prisma.user.update({
+    // Update primary school and PSL
+    const user = await prisma.user.update({
         where: {
             email: profileEmail
         },
@@ -32,31 +29,80 @@ export async function updateSchools(profileEmail: string, allQueriedSchools?: Ge
         }
     })
 
-    // Not working properly
+    // Handle school associations
     if (allSchools.length > 0) {
-        const schoolCodes = schools.map((school) => school.sc)
-        console.log(schools)
-        const allSchoolCodes = allSchools.filter((school) => schoolCodes.includes(school.toString()))
-
-        for (const school of allSchoolCodes ){
-            console.log(school)
-            console.log(schoolCodes)
-            if (schoolCodes.includes(school.toString())) {
-                console.log(school)
-                // const addSchool = await prisma.user.update({
-                //     where: {
-                //         email: profileEmail
-                //     },
-                //     data: {
-                //         school: {
-                //             set: {
-                //                 sc: school.toString()
-                //             }
-                //         }
-                //     }
-                // })
+        const existingSchools = await prisma.schoolInfo.findMany({
+            where: {
+                sc: {
+                    in: allSchools.map(school => school.toString())
+                }
+            },
+            select: {
+                sc: true
             }
-        }
+        })
+
+        const existingSchoolCodes = existingSchools.map(school => school.sc)
+        console.log(existingSchoolCodes)
+
+        // First, remove all existing school associations
+        await prisma.userSchool.deleteMany({
+            where: { userId: user.id }
+        });
+
+        // Then, create new associations
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+            UserSchool: {
+                create: existingSchoolCodes.map(sc => ({
+                school: {
+                    connect: { sc: sc }
+                }
+                }))
+            }
+            }
+        });
+
+        // const updateUser = await prisma.user.update({
+        //     where: {
+        //         email: profileEmail
+        //     },
+        //     data: {
+        //         UserSchool: {
+        //             deleteMany: {}, // Remove all existing associations
+        //             createMany: {
+        //                 data: existingSchoolCodes.map(sc => ({ schoolSc: sc.toString() })),
+        //                 skipDuplicates: true
+        //             }
+        //         }
+        //     }
+        // })
+        // const user = await prisma.user.update({
+        //     where: {
+        //         email: profileEmail
+        //     },
+        //     data: {
+        //         primarySchool,
+        //         psl
+        //     }
+        // })
+
+        // for (const sc of existingSchoolCodes) {
+        //     try {
+        //         await prisma.userSchool.create({
+        //             data: {
+        //                 userId: user.id,
+        //                 schoolSc: sc
+        //             }
+        //         })
+        //         console.log(`Created association for school: ${sc}`);
+        //     } catch (error) {
+        //         console.error(`Error creating association for school ${sc}:`, error);
+        //     }
+        // }
+
+        // console.log({ updateUser })
     }
    
     return null
@@ -64,7 +110,7 @@ export async function updateSchools(profileEmail: string, allQueriedSchools?: Ge
 
 export async function getAllSchools(profileEmail: string) {
     
-    const results = await setPrimarySchool(profileEmail)
+    const results = await getPrimarySchool(profileEmail)
     const profileName = profileEmail.split('@')[0]
     const allSchoolsQuery = `SELECT SCH FROM USR where NM like '${profileName}%' and DEL = 0`
     const allSchoolsResults = await runQuery(allSchoolsQuery)
@@ -77,7 +123,7 @@ export async function getAllSchools(profileEmail: string) {
         },
         
     })
-    console.log({ user })
+    console.log({ user }) 
     console.log({ results})
     if (!user?.primarySchool) {
         console.log(profileEmail)
@@ -89,8 +135,23 @@ export async function getAllSchools(profileEmail: string) {
 }
 
 
+export async function updateActiveSchool(userId: string, activeSchool: number) {
+    await prisma.user.update({
+        where: {
+            id: userId
+        },
+        data: {
+            activeSchool
+        }
+    })
 
-export async function setPrimarySchool(profileEmail: string):Promise<GetAllSchoolsReturn> {
+
+    // revalidatePath('/')
+
+    return null
+}
+
+export async function getPrimarySchool(profileEmail: string):Promise<GetAllSchoolsReturn> {
     
     const primarySchoolQuery = `SELECT PSC 'primarySchool', ID 'psl' FROM STF WHERE EM = '${profileEmail}'`
     console.log(primarySchoolQuery)
@@ -98,6 +159,7 @@ export async function setPrimarySchool(profileEmail: string):Promise<GetAllSchoo
     return primarySchoolResults[0]
    
 }
+
 export async function syncTeacherClasses(profileId: string, profileEmail: string) {
 
     function isMatched(obj1: any, array2: any[], key1: string, key2: string) {
@@ -228,21 +290,21 @@ export async function syncTeacherClasses(profileId: string, profileEmail: string
 
     console.log({ schools })
 
-    // Update Schools
-    const primarySchoolUpdate = await prisma.user.update({
-        where: {
-            id: profileId
-        },
-        data: {
-            school: {
-                set: {
-                    sc: aeriesPermissions.primarySchool.toString()               
-                 }
-            }
-        }
-    })
+    // // Update Schools
+    // const primarySchoolUpdate = await prisma.user.update({
+    //     where: {
+    //         id: profileId
+    //     },
+    //     data: {
+    //         school: {
+    //             set: {
+    //                 sc: aeriesPermissions.primarySchool.toString()               
+    //              }
+    //         }
+    //     }
+    // })
 
-    console.log({ primarySchoolUpdate })
+    // console.log({ primarySchoolUpdate })
 
     return ({
         displayResult,
