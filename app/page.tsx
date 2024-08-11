@@ -85,9 +85,9 @@ export default async function Home() {
           database={process.env.DB_DATABASE as string}
           roles={session?.user?.roles}
         />
-        <Button variant="link" className="w-full" asChild>
+        {/* <Button variant="link" className="w-full" asChild>
           <Link href="/attendance">Attendance</Link>
-        </Button>
+        </Button> */}
 
       </div>
 
@@ -101,10 +101,10 @@ export default async function Home() {
             <AttendanceOverTimeChart session={session} itinalChartData={attendanceData?.data} />
         </div>
         <div className="grid grid-cols-2 grid-flow-row auto-rows-max gap-4 justify-center items-center">
-          <div className="grid gird-cols-1">
+          {/* <div className="grid gird-cols-1">
 
           <PieChartCard />
-          </div>
+          </div> */}
 
           <SchoolEnrollmentGraph
             schools={session?.user?.schools}
