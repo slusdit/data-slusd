@@ -36,7 +36,7 @@ export default async function MainHeader({ session }: { session: Session | null 
   })
   let schoolInfo;
   if (session?.user) {
-  const schoolInfo = await prisma.schoolInfo.findUnique({
+  schoolInfo = await prisma.schoolInfo.findUnique({
     where: {
       sc: session?.user?.activeSchool.toString()
     }
