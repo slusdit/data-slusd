@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,54 +7,48 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// //
-//  Authentication models 
-// //
-
 model User {
-  id    String  @id @default(cuid())
-  name  String
-  email String @unique
-  image String?
-  psl   Int?    @unique
-  activeSchool  Int?
-  primarySchool Int?
-  school        SchoolInfo[]    @relation("UserSchool")
-  emailVerified DateTime?
-  queryEdit     Boolean         @default(false)
+  id            String          @id @default(cuid())
+  name          String
+  email         String          @unique
+  image         String?
   admin         Boolean         @default(false)
-  userRole      Role[]          @relation("UserRole")
-  primaryRole   ROLE            @default(USER)
-  Session       Session[]
-  Account       Account?
-  // Optional for WebAuthn support
-  Authenticator Authenticator[]
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
+  queryEdit     Boolean         @default(false)
+  primaryRole   ROLE            @default(USER)
+  emailVerified DateTime?
+  primarySchool Int?
+  psl           Int?            @unique
+  activeSchool  Int             @default(0)
+  manualSchool  Int?         
+  Account       Account?
+  Authenticator Authenticator[]
+  Session       Session[]
+  UserClass     UserClass[]
   UserRole      UserRole[]
   UserSchool    UserSchool[]
-
-  UserClass UserClass[]
+  userRole      Role[]          @relation("UserRole")
+  school        SchoolInfo[]    @relation("UserSchool")
 }
 
 model Account {
-  id                       String  @id @default(cuid())
-  userId                   String  @unique
+  id                       String   @id @default(cuid())
+  userId                   String   @unique
   type                     String
   provider                 String
   providerAccountId        String
-  refresh_token            String? @db.Text
-  access_token             String? @db.Text
+  refresh_token            String?  @db.Text
+  access_token             String?  @db.Text
   expires_at               Int?
   token_type               String?
   scope                    String?
-  id_token                 String? @db.Text
+  id_token                 String?  @db.Text
   session_state            String?
+  createdAt                DateTime @default(now())
   refresh_token_expires_in Int?
-  user                     User?   @relation(fields: [userId], references: [id])
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt                DateTime @updatedAt
+  user                     User     @relation(fields: [userId], references: [id])
 
   @@unique([provider, providerAccountId])
   @@index([userId])
@@ -71,10 +59,9 @@ model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
   user         User     @relation(fields: [userId], references: [id])
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
   @@index([userId])
 }
@@ -87,7 +74,6 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// Optional for WebAuthn support
 model Authenticator {
   credentialID         String  @unique
   userId               String
@@ -97,21 +83,21 @@ model Authenticator {
   credentialDeviceType String
   credentialBackedUp   Boolean
   transports           String?
-
-  user User @relation(fields: [userId], references: [id])
+  user                 User    @relation(fields: [userId], references: [id])
 
   @@id([userId, credentialID])
 }
 
 model Role {
-  id       String     @id @default(cuid())
-  role     ROLE
-  users    User[]     @relation("UserRole")
-  UserRole UserRole[]
-  Query    Query?     @relation(fields: [queryId], references: [id])
-  queryId  String?
+  id            String          @id @default(cuid())
+  role          ROLE
+  queryId       String?
+  Query         Query?          @relation(fields: [queryId], references: [id])
+  UserRole      UserRole[]
+  QueryCategory QueryCategory[] @relation("QueryCategoryToRole")
+  users         User[]          @relation("UserRole")
 
-  QueryCategory QueryCategory[]
+  @@index([queryId], map: "Role_queryId_fkey")
 }
 
 model SchoolInfo {
@@ -119,69 +105,70 @@ model SchoolInfo {
   sc         String       @unique
   name       String
   logo       String?
-  users      User[]       @relation("UserSchool")
   UserSchool UserSchool[]
+  users      User[]       @relation("UserSchool")
 }
 
 model UserSchool {
   userId   String
   schoolSc String
-  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   school   SchoolInfo @relation(fields: [schoolSc], references: [id])
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([userId, schoolSc])
+  @@index([schoolSc], map: "UserSchool_schoolSc_fkey")
 }
 
 model UserRole {
   userId String
   roleId String
-  user   User   @relation(fields: [userId], references: [id])
   role   Role   @relation(fields: [roleId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
 
   @@id([userId, roleId])
+  @@index([roleId], map: "UserRole_roleId_fkey")
 }
 
 model UserClass {
-
   classId String
-  userId    String
-  user      User    @relation(fields: [userId], references: [id])
-  class   Class @relation(fields: [classId], references: [id], onDelete: Cascade)
+  userId  String
+  class   Class  @relation(fields: [classId], references: [id], onDelete: Cascade)
+  user    User   @relation(fields: [userId], references: [id])
+
   @@id([userId, classId])
+  @@index([classId], map: "UserClass_classId_fkey")
 }
 
 model Class {
-  id              String       @id @default(cuid())
-  sc              Int
-  tn              Int
-  psl             Int
-  email           String?
-  StaffID2        Int?
-  StaffID3        Int?
-  activeOverride  Boolean       @default(false)
-  UserClass       UserClass[]
-  
+  id             String      @id @default(cuid())
+  sc             Int
+  tn             Int
+  psl            Int
+  email          String?
+  StaffID2       Int?
+  StaffID3       Int?
+  activeOverride Boolean     @default(false)
+  UserClass      UserClass[]
 }
 
-// Backend and Query tables
-
 model Query {
-  id              String         @id @default(cuid())
-  query           String         @db.Text()
-  name            String
-  label           String         @unique
-  createdBy       String
-  chart           Boolean        @default(false)
-  chartColumnKey  String?         
-  chartValueKey   String?
-  description     String
-  publicQuery     Boolean        @default(false)
-  roles           Role[]         @relation
-  categoryId      String?
-  category        QueryCategory? @relation(fields: [categoryId], references: [id])
-  hiddenCols      String          @default("")
+  id             String         @id @default(cuid())
+  query          String         @db.Text
+  name           String
+  label          String         @unique
+  createdBy      String
+  description    String
+  publicQuery    Boolean        @default(false)
+  categoryId     String?
+  hiddenCols     String         @default("")
+  chart          Boolean        @default(false)
+  chartColumnKey String?
+  chartValueKey  String?
+  Chart          Chart[]
+  category       QueryCategory? @relation(fields: [categoryId], references: [id])
+  roles          Role[]
 
-  Chart Chart[]
+  @@index([categoryId], map: "Query_categoryId_fkey")
 }
 
 model QueryCategory {
@@ -189,8 +176,19 @@ model QueryCategory {
   label   String  @unique
   value   String  @unique
   sort    Int     @default(0)
-  queries Query[] @relation
-  roles   Role[]  @relation
+  queries Query[]
+  roles   Role[]  @relation("QueryCategoryToRole")
+}
+
+model Chart {
+  id          String    @id @default(cuid())
+  type        CHARTTYPE
+  title       String
+  chartConfig Json
+  queryId     String
+  query       Query     @relation(fields: [queryId], references: [id])
+
+  @@index([queryId], map: "Chart_queryId_fkey")
 }
 
 enum ROLE {
@@ -210,15 +208,4 @@ enum CHARTTYPE {
   AREA
   PIE
   OTHER
-
-}
-
-model Chart {
-  id            String      @id @default(cuid())
-  type          CHARTTYPE
-  title         String
-  chartConfig   Json
-  queryId       String
-  query         Query      @relation(fields: [queryId], references: [id])
-
 }
