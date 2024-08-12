@@ -32,6 +32,20 @@ export async function updateSchools(profileEmail: string, allQueriedSchools?: Ge
         }
     })
 
+
+    console.log(user)
+    if(!user.activeSchool){
+        console.log(user.activeSchool)
+        await prisma.user.update({
+            where: {
+                id: user.id
+            },
+            data: {
+                activeSchool: primarySchool
+            }
+        })
+
+    }
     // Handle school associations
     if (allSchools.length > 0) {
         const existingSchools = await prisma.schoolInfo.findMany({
@@ -133,12 +147,28 @@ export async function getAllSchools(profileEmail: string) {
         const ret = await updateSchools(profileEmail, results)
         console.log(ret)
     }
+    if (user?.activeSchool === null){
+        console.log('no active school')
+        await prisma.user.update({
+            where: {
+                id: user.id
+            },
+            data: {
+                activeSchool: user.primarySchool
+            }
+        })
+    }
     return results
     
 }
 
 
 export async function updateActiveSchool(userId: string, activeSchool: number) {
+    const currentUser = await prisma.user.findUnique({
+        where: {
+            id: userId
+        }
+    })
     const update =await prisma.user.update({
         where: {
             id: userId
@@ -147,6 +177,8 @@ export async function updateActiveSchool(userId: string, activeSchool: number) {
             activeSchool
         }
     })
+    
+    
     console.log(update)
     const headersList = headers()
     console.log(headersList)

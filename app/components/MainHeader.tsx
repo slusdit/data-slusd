@@ -34,12 +34,15 @@ export default async function MainHeader({ session }: { session: Session | null 
       },
     }
   })
-
-  const schoolInfo = await prisma.schoolInfo.findUnique({
+  let schoolInfo;
+  if (session?.user) {
+    const activeSchool = session?.user.activeSchool ? session?.user?.activeSchool.toString() : ''
+  schoolInfo = await prisma.schoolInfo.findUnique({
     where: {
-      sc: session?.user?.activeSchool.toString()
+      sc: activeSchool
     }
   })
+} 
 
   // console.log(session.user)
   return (

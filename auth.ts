@@ -54,7 +54,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // console.log({ profileId })
         if (profileId && profileEmail) {
           const result = await syncTeacherClasses(profileId, profileEmail)
-          console.log({ user }, { account }, { profile }, { profileEmail }, { profileId }, { result })
+          // console.log({ user }, { account }, { profile }, { profileEmail }, { profileId }, { result })
           const allSchools = await getAllSchools(profileEmail)
           // console.log({ result })
         }
