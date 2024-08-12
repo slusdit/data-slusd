@@ -105,7 +105,7 @@ export function AttendanceOverTimeChart({
   school?: SchoolInfo
   }) {
   
-  // console.log(`School Attendance ${ session.user && session.user?.manualSchool}`)
+ 
   const [chartData, setChartData] = useState<
     SchoolAttendanceData[] | undefined
   >(itinalChartData || []); 
