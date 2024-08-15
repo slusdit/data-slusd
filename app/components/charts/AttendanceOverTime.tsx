@@ -24,10 +24,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import prisma from "@/lib/db";
-import { useEffect, useState } from "react";
-import { runQuery } from "@/lib/aeries";
-import { getQueryData } from "@/lib/getQuery";
+import { useState } from "react";
+
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { Session } from "next-auth";
@@ -114,26 +112,26 @@ export function AttendanceOverTimeChart({
   // console.log(chartData)
   // console.log(itinalChartData)
 
-  // useEffect(() => {
-  //   if (itinalChartData) {
-  //     setLoading(false);
-  //   }
-  //   if (!itinalChartData) {
-  //     setLoading(true);
+  useEffect(() => {
+    if (itinalChartData) {
+      setLoading(false);
+    }
+    if (!itinalChartData) {
+      setLoading(true);
 
-  //     // const fetchData = async () => {
-  //     //   const queryLabel = "daily-attendance-school";
-  //     //   const { data, query } = await getQueryData({ queryLabel });
-  //     //   // console.log(data)
-  //     //   // console.log(query)
-  //     //   if (!data) return;
-  //     //   setChartData(data);
-  //     //   setLoading(false);
-  //     // };
+      // const fetchData = async () => {
+      //   const queryLabel = "daily-attendance-school";
+      //   const { data, query } = await getQueryData({ queryLabel });
+      //   // console.log(data)
+      //   // console.log(query)
+      //   if (!data) return;
+      //   setChartData(data);
+      //   setLoading(false);
+      // };
 
-  //     // fetchData();
-  //   }
-  // }, [chartData]);
+      // fetchData();
+    }
+  }, [chartData]);
 
   const [timeRange, setTimeRange] = useState("90d");
 
