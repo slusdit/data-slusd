@@ -243,7 +243,7 @@ export async function runQuery(
           ;
           
           query = query.replace("= @@sc", `in (${allSchools})`);
-          console.log("Query", query);
+          
         } else {
           if (typeof schoolCode === "string") {
             query = query.replace("@@sc", schoolCode);
@@ -265,17 +265,38 @@ export async function runQuery(
         // }
 
       }
+      console.log(session && session.user && session?.user?.activeSchool)
+      console.log(query.includes("@@asc"))
 
       if (query.includes("@@asc")) {
-        if (session?.user?.activeSchool) {
+        if (!session && session.user && session?.user?.activeSchool) {
+          console.log("Active School", session?.user?.activeSchool)
+          console.log("Active School", session?.user?.activeSchool === 0)
           
-          query = query.replace("@@asc", "'"+ session?.user?.activeSchool + "'");
         } else {
+          if (session?.user?.activeSchool === 0) {
+            const schools = await prisma.schoolInfo.findMany({
+              select: {
+                sc: true,
+              },
+            })
+            console.log(schools)
+            const allSchoolSc = "'" + schools.map((school) => `${school.sc}`).join("', '") + "'";
+            console.log('Schools', schools, allSchoolSc)
+
+            query = query.replace("= @@asc", `in (${allSchoolSc})`);
+           
+          // } else {
+          
+            query = query.replace("@@asc", "'" + session?.user?.activeSchool + "'");
+          }
 
           query = query.replace("@@asc", "'"+ session?.user?.primarySchool + "'");
         }
 
       }
+      console.log("Query", query);
+      console.log("Query", query);
 
       // Handle @TN variable
       if (query.includes("@tn")) {

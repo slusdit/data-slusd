@@ -76,6 +76,7 @@ const SchoolEnrollmentGraph = ({
             };
 
             console.log(data)
+            if (data.length === 0) return 
             const processedData = Object.entries(data[0])
                 .filter(([key, value]) => gradeMap.hasOwnProperty(key) && value !== 0)
                 .map(([key, value]) => ({
