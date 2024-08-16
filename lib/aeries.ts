@@ -3,6 +3,7 @@
 import { auth } from "@/auth";
 import sql from "mssql";
 import prisma from "./db";
+import { number } from "zod";
 
 export type SchooolCredentials = {
   id: number;
@@ -265,15 +266,15 @@ export async function runQuery(
         // }
 
       }
-      console.log(session && session.user && session?.user?.activeSchool)
+      console.log( session?.user?.activeSchool)
       console.log(query.includes("@@asc"))
-
       if (query.includes("@@asc")) {
-        if (!session && session.user && session?.user?.activeSchool) {
+        console.log(query.includes("@@asc"))
+        if (typeof session?.user?.activeSchool === "number") {
           console.log("Active School", session?.user?.activeSchool)
           console.log("Active School", session?.user?.activeSchool === 0)
           
-        } else {
+        // } else {
           if (session?.user?.activeSchool === 0) {
             const schools = await prisma.schoolInfo.findMany({
               select: {
@@ -286,7 +287,7 @@ export async function runQuery(
 
             query = query.replace("= @@asc", `in (${allSchoolSc})`);
            
-          // } else {
+          } else {
           
             query = query.replace("@@asc", "'" + session?.user?.activeSchool + "'");
           }
@@ -296,7 +297,7 @@ export async function runQuery(
 
       }
       console.log("Query", query);
-      console.log("Query", query);
+      
 
       // Handle @TN variable
       if (query.includes("@tn")) {
@@ -320,7 +321,7 @@ export async function runQuery(
     console.log(query)
     console.log({err})
     
-    throw  Error("SQL Pool error", { cause: err });
+    // throw  Error("SQL Pool error", { cause: err });
   }
 }
 

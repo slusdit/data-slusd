@@ -24,11 +24,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { Session } from "next-auth";
+import { getQueryData } from "@/lib/getQuery";
 
 interface SchoolAttendanceData {
   SCH: number;
@@ -119,17 +120,17 @@ export function AttendanceOverTimeChart({
     if (!itinalChartData) {
       setLoading(true);
 
-      // const fetchData = async () => {
-      //   const queryLabel = "daily-attendance-school";
-      //   const { data, query } = await getQueryData({ queryLabel });
-      //   // console.log(data)
-      //   // console.log(query)
-      //   if (!data) return;
-      //   setChartData(data);
-      //   setLoading(false);
-      // };
+      const fetchData = async () => {
+        const queryLabel = "daily-attendance-school";
+        const { data, query } = await getQueryData({ queryLabel });
+        // console.log(data)
+        // console.log(query)
+        if (!data) return;
+        setChartData(data);
+        setLoading(false);
+      };
 
-      // fetchData();
+      fetchData();
     }
   }, [chartData]);
 
@@ -161,7 +162,6 @@ export function AttendanceOverTimeChart({
   }
   const activeSchoolName = session?.user?.schools?.find((school) => parseInt(school) === session?.user?.activeSchool)?.toString() || "Unknown School"
   // console.log(activeSchoolName);
-  console.log(session)
   return (
     <Card className="h-[400px] w-full pb-2">
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
@@ -313,3 +313,5 @@ export function AttendanceOverTimeChart({
     </Card>
   );
 }
+
+
