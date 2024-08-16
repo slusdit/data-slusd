@@ -28,9 +28,11 @@ type UserSchoolWithDetails = {
 const SchoolPicker = ({
   schools,
   initialSchool = null,
+  label = null
 }: {
   schools: UserSchoolWithDetails[];
-  initialSchool?: string | null;
+    initialSchool?: string | null;
+    label?: string | null;
 }) => {
   const [open, setOpen] = useState(false);
   const [selectedSchool, setSelectedSchool] = useState<SchoolInfo | null>(null);
@@ -48,8 +50,11 @@ const SchoolPicker = ({
   }, [initialSchool, schools]);
 
   return (
-    <div className="flex items-center space-x-4">
-      <label className="text-sm text-white">School: </label>
+    <div className="flex items-center space-x-4 w-full max-w-36">
+      {label &&
+      
+      <label className="font-bold text-card-foreground">{label} </label>
+      }
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button variant="outline" size="sm" className="w-48 justify-start">
