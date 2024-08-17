@@ -25,7 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import prisma from "@/lib/db";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { runQuery } from "@/lib/aeries";
 import { getQueryData } from "@/lib/getQuery";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -50,9 +50,9 @@ interface SchoolAttendanceData {
   HomeHosptCount: number;
 }
 const chartConfig = {
-  visitors: {
-    label: "Visitors",
-  },
+  // visitors: {
+  //   label: "Visitors",
+  // },
   TotalEnrollment: {
     label: "Enrollment",
     color: "hsl(var(--chart-1))",
@@ -110,38 +110,32 @@ export function AttendanceOverTimeChart({
     SchoolAttendanceData[] | undefined
   >(itinalChartData || []); 
   const [loading, setLoading] = useState(false);
+  const [timeRange, setTimeRange] = useState("90d");
 
-  // console.log(chartData)
-  // console.log(itinalChartData)
 
   // useEffect(() => {
-  //   if (itinalChartData) {
-  //     setLoading(false);
-  //   }
-  //   if (!itinalChartData) {
+  //   const fetchData = async () => {
   //     setLoading(true);
+  //     const queryLabel = "daily-attendance-school";
+  //     const { data, query } = await getQueryData({ queryLabel, timeRange });
+  //     console.log(data);
+  //     console.log(query);
+  //     if (data) {
+  //       setChartData(data);
+  //     }
+  //     setLoading(false);
+  //   };
+  
+  //   fetchData();
+  // }, []);
 
-  //     // const fetchData = async () => {
-  //     //   const queryLabel = "daily-attendance-school";
-  //     //   const { data, query } = await getQueryData({ queryLabel });
-  //     //   // console.log(data)
-  //     //   // console.log(query)
-  //     //   if (!data) return;
-  //     //   setChartData(data);
-  //     //   setLoading(false);
-  //     // };
-
-  //     // fetchData();
-  //   }
-  // }, [chartData]);
-
-  const [timeRange, setTimeRange] = useState("90d");
 
   if (!chartData) {
     return null;
   }
 
-  const filteredData = chartData.filter((item) => {
+const filteredData = useMemo(() => {
+  return chartData.filter((item) => {
     const date = new Date(item.dt);
     const now = new Date();
     let daysToSubtract = 90;
@@ -149,10 +143,14 @@ export function AttendanceOverTimeChart({
       daysToSubtract = 30;
     } else if (timeRange === "7d") {
       daysToSubtract = 7;
+    } else if (timeRange === "180d") {
+      daysToSubtract = 180;
     }
     now.setDate(now.getDate() - daysToSubtract);
+   
     return date >= now;
   });
+}, [chartData, timeRange]);
 
   if (loading || !chartData) {
     return (
@@ -163,7 +161,7 @@ export function AttendanceOverTimeChart({
   }
   const activeSchoolName = session?.user?.schools?.find((school) => parseInt(school) === session?.user?.activeSchool)?.toString() || "Unknown School"
   // console.log(activeSchoolName);
-  console.log(session)
+ 
   return (
     <Card className="h-[400px] w-full pb-2">
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
@@ -234,7 +232,7 @@ export function AttendanceOverTimeChart({
             <XAxis
               dataKey="dt"
               tickLine={false}
-              axisLine={false}
+              axisLine={true}
               tickMargin={8}
               minTickGap={32}
               tickFormatter={(value) => {
@@ -315,3 +313,4 @@ export function AttendanceOverTimeChart({
     </Card>
   );
 }
+
