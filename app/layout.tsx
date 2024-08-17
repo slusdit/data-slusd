@@ -12,6 +12,7 @@ import MainHeader from "./components/MainHeader";
 import SessionProvider from "@/app/components/providers/SessionProvider";
 import { useSession } from "next-auth/react";
 import { auth } from "@/auth";
+import { ScrollArea } from "@radix-ui/react-scroll-area";
 
 const fontSans = FontSans({ 
   subsets: ["latin"],
@@ -34,7 +35,7 @@ export default async function RootLayout({
   
   return (
     <html lang="en" className='bg-card/90 h-full'>
-      <body suppressHydrationWarning={true} className={` ${fontSans.className} w-full h-full bg-card/90`}>
+      <body suppressHydrationWarning={true} className={` ${fontSans.className} w-full h-full bg-card/90 `}>
 
           <ThemeProvider
             attribute='class'
@@ -42,6 +43,8 @@ export default async function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
+
+
           <MainHeader session={session}/>
             <main className="w-full h-full min-h-5xl flex justify-center ">
               <div className="  px-4 w-[95%] lg:w-[90%] bg-background h-fit min-h-screen">
@@ -54,6 +57,7 @@ export default async function RootLayout({
                 </div>
             </main>
             {/* <MainFooter /> */}
+
           </ThemeProvider>
 
       </body>
