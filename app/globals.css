@@ -5,6 +5,9 @@
 
 @layer base {
   :root {
+
+    /* Globals */
+    --scrollbar-width: 0px;
     
     /* TODO: ADD SCHOOL PRIMARY & SECONDARY COLORS */
 

@@ -18,6 +18,9 @@ const config = {
       },
     },
     extend: {
+      scrollbarGutter:{
+        stable: "stable",
+      },
       maxWidth: {
         "8xl": "88rem",
         "9xl": "96rem",
@@ -95,7 +98,16 @@ const config = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    function({ addUtilities }) {
+      addUtilities({
+        '.scrollbar-gutter-stable': {
+          'scrollbar-gutter': 'stable',
+        },
+      })
+    }
+  ],
 } satisfies Config
 
 export default config

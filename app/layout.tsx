@@ -34,8 +34,8 @@ export default async function RootLayout({
   const session = await auth()
   
   return (
-    <html lang="en" className='bg-card/90 h-full'>
-      <body suppressHydrationWarning={true} className={` ${fontSans.className} w-full h-full bg-card/90 `}>
+    <html lang="en" className='bg-card/90 '>
+      <body suppressHydrationWarning={true} className={` ${fontSans.className} w-full  bg-card/90 `}>
 
           <ThemeProvider
             attribute='class'
@@ -46,8 +46,8 @@ export default async function RootLayout({
 
 
           <MainHeader session={session}/>
-            <main className="w-full h-full min-h-5xl flex justify-center ">
-              <div className="  px-4 w-[95%] lg:w-[90%] bg-background h-fit min-h-screen">
+            <main className="w-full min-h-5xl flex justify-center scrollbar-gutter-stable ">
+              <div className="  px-4 w-[95%] lg:w-[90%] bg-background min-h-screen">
 
               {session ? children :
                 <UnauthorizedButton
