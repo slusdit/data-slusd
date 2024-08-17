@@ -24,10 +24,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import prisma from "@/lib/db";
-import { useEffect, useState, useMemo } from "react";
-import { runQuery } from "@/lib/aeries";
-import { getQueryData } from "@/lib/getQuery";
+
+import {  useState, useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { Session } from "next-auth";
