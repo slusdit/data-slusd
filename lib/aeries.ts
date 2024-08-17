@@ -3,6 +3,7 @@
 import { auth } from "@/auth";
 import sql from "mssql";
 import prisma from "./db";
+import { number } from "zod";
 
 export type SchooolCredentials = {
   id: number;
@@ -243,7 +244,7 @@ export async function runQuery(
           ;
           
           query = query.replace("= @@sc", `in (${allSchools})`);
-          console.log("Query", query);
+          
         } else {
           if (typeof schoolCode === "string") {
             query = query.replace("@@sc", schoolCode);
@@ -256,26 +257,47 @@ export async function runQuery(
       }
 
       if (query.includes("@@psc")) {
-        if (session?.user?.manualSchool) {
+        // if (session?.user?.manualSchool) {
           
-          query = query.replace("@@psc", "'"+ session?.user?.manualSchool + "'");
-        } else {
+        //   query = query.replace("@@psc", "'"+ session?.user?.manualSchool + "'");
+        // } else {
 
           query = query.replace("@@psc", "'"+ session?.user?.primarySchool + "'");
-        }
+        // }
 
       }
-
+      console.log( session?.user?.activeSchool)
+      console.log(query.includes("@@asc"))
       if (query.includes("@@asc")) {
-        if (session?.user?.activeSchool) {
+        console.log(query.includes("@@asc"))
+        if (typeof session?.user?.activeSchool === "number") {
+          console.log("Active School", session?.user?.activeSchool)
+          console.log("Active School", session?.user?.activeSchool === 0)
           
-          query = query.replace("@@asc", "'"+ session?.user?.activeSchool + "'");
-        } else {
+        // } else {
+          if (session?.user?.activeSchool === 0) {
+            const schools = await prisma.schoolInfo.findMany({
+              select: {
+                sc: true,
+              },
+            })
+            console.log(schools)
+            const allSchoolSc = "'" + schools.map((school) => `${school.sc}`).join("', '") + "'";
+            console.log('Schools', schools, allSchoolSc)
+
+            query = query.replace("= @@asc", `in (${allSchoolSc})`);
+           
+          } else {
+          
+            query = query.replace("@@asc", "'" + session?.user?.activeSchool + "'");
+          }
 
           query = query.replace("@@asc", "'"+ session?.user?.primarySchool + "'");
         }
 
       }
+      console.log("Query", query);
+      
 
       // Handle @TN variable
       if (query.includes("@tn")) {
@@ -299,7 +321,7 @@ export async function runQuery(
     console.log(query)
     console.log({err})
     
-    throw  Error("SQL Pool error", { cause: err });
+    // throw  Error("SQL Pool error", { cause: err });
   }
 }
 

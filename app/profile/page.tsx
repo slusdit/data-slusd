@@ -13,7 +13,11 @@ export default async function Profile() {
     return (
         <div>
             <h1>Profile</h1>
-            <SchoolPicker schools={session?.user?.UserSchool} initialSchool={session?.user?.activeSchool} />
+            <SchoolPicker
+                schools={session?.user?.UserSchool}
+                initialSchool={session?.user?.activeSchool}
+                label={"Select School"}
+            />
             {/* <RenewSchools email={session?.user?.email} /> */}
             
                 {/* <Link href="/">Query List</Link> */}
