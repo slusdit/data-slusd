@@ -31,6 +31,7 @@ import { getQueryData } from "@/lib/getQuery";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { Session } from "next-auth";
+import { getQueryData } from "@/lib/getQuery";
 
 interface SchoolAttendanceData {
   SCH: number;
@@ -105,7 +106,7 @@ export function AttendanceOverTimeChart({
   school?: SchoolInfo
   }) {
   
-  // console.log(`School Attendance ${ session.user && session.user?.manualSchool}`)
+ 
   const [chartData, setChartData] = useState<
     SchoolAttendanceData[] | undefined
   >(itinalChartData || []); 
