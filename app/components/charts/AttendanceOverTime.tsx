@@ -138,7 +138,11 @@ const filteredData = useMemo(() => {
     const date = new Date(item.dt);
     const now = new Date();
     let daysToSubtract = 90;
-    if (timeRange === "30d") {
+    if (timeRange === "3d") {
+      daysToSubtract = 3;
+    } else if (timeRange === "90d") {
+      daysToSubtract = 90;
+    } else if (timeRange === "30d") {
       daysToSubtract = 30;
     } else if (timeRange === "7d") {
       daysToSubtract = 7;
@@ -192,6 +196,9 @@ const filteredData = useMemo(() => {
             <SelectItem value="7d" className="rounded-lg">
               Last 7 days
             </SelectItem>
+            {/* <SelectItem value="3d" className="rounded-lg">
+              Last 3 days
+            </SelectItem> */}
           </SelectContent>
         </Select>
       </CardHeader>
