@@ -67,7 +67,7 @@ const QueryInput = ({
           onChange={(e) => setValue(e.target.value)}
         />
         <Button variant="outline" onClick={handleQuery}>
-          Query
+          Run Query
         </Button>
       </div>
 
