@@ -1,20 +1,26 @@
 "use client";
-import { QueryCategory, Session } from "@prisma/client";
+import { QueryCategory, Session, User } from "@prisma/client";
 import Link from "next/link";
 import { QueryWithCategory } from "./QueryBar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CounterClockwiseClockIcon } from "@radix-ui/react-icons";
 
+
 const QueryList = ({
   roles: userRoles,
   queries,
   categories,
+  email,
+  user
 }: {
   roles: string[];
   queries: QueryWithCategory[];
   categories: QueryWithCategory[];
+  email: string;
+  user: User;
 }) => {
   let categoryRoles;
+
   return (
     <ScrollArea className="w-full h-full">
       <ul className="flex flex-col gap-1 w-2/3 mb-8">
@@ -24,7 +30,13 @@ const QueryList = ({
             .map((category) => {
               // Don't render the category if there are no queries in that category
               const categoryQueries = queries.filter(
-                (query) => query.category?.value === category.value
+                (query) => {
+                  console.log(query?.publicQuery === true || query.createdBy === user.email)
+                  return (
+                    query.category?.value === category.value
+                    // && (query.publicQuery === true || query.createdBy === user.email)
+                  )
+                }
               );
               if (categoryQueries.length === 0) {
                 return null;
@@ -36,37 +48,37 @@ const QueryList = ({
               console.log("userRoles", userRoles);
               console.log("categoryRoles", categoryRoles);
               console.log('SuperAdmin', userRoles.includes("SUPERADMIN"));
-   
+
               console.log("Entry",
                 (categoryRoles &&
                   categoryRoles.length > 0 &&
-                  categoryRoles.some((categoryRole) => userRoles.includes(categoryRole))
+                  categoryRoles.some((categoryRole) => user.roles.includes(categoryRole))
                 )
-                
+
                 &&
-                  !userRoles.includes("SUPERADMIN")
+                !user.roles.includes("SUPERADMIN")
               );
 
               // Don't render the category if the user doesn't have any of the roles in that category
               if (
-               categoryRoles &&
-               categoryRoles?.length < 0                 
+                categoryRoles &&
+                categoryRoles?.length < 0
               ) {
                 console.log("~~~~~~~ Empty Category ~~~~~~~")
                 return null;
               }
-              
-              
+
+              console.log(user.roles)
               if (
                 (
                   categoryRoles &&
-                  userRoles.some(role => categoryRoles.includes(role))
+                  user.roles.some(role => categoryRoles.includes(role))
                 )
-                || userRoles.includes("SUPERADMIN")
+                || user.roles.includes("SUPERADMIN")
                 || categoryRoles?.length === 0
-            
+
               ) {
-              
+
 
                 return (
                   <li key={category.id} className="">

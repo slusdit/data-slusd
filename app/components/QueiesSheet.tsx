@@ -11,7 +11,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 
-import { QueryCategory, Session } from "@prisma/client";
+import { QueryCategory, Session, User } from "@prisma/client";
 import { Menu } from "lucide-react";
 import QueryList from "./QueryList";
 
@@ -20,15 +20,17 @@ export function QuerySheet({
   queries,
   database,
   roles,
+  user,
 }: {
   categories: QueryCategory[];
   queries: any[];
   database: string;
   roles: string[];
+  user: User;
 }) {
-  // const database = process.env.DB_DATABASE as string
  
   const dbSchoolYear = `20${database.slice(3, 5)} - 20${Number(database.slice(3, 5)) + 1}`;
+  console.log(user)
 
   return (
     <Sheet>
@@ -47,6 +49,8 @@ export function QuerySheet({
           queries={queries}
           categories={categories}
           roles={roles}
+          email={user?.email}
+          user={user}
         />
         <SheetFooter>
           <SheetClose asChild>
