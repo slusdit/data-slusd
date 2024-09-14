@@ -80,6 +80,7 @@ export default async function Page({ params }: { params: { id: string } }) {
             queries={queries}
             database={process.env.DB_DATABASE as string}
             roles={session?.user?.roles}
+            user={session?.user}
           />
          {session?.user?.queryEdit ?? (
          <FormDialog

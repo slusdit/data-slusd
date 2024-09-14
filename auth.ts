@@ -78,7 +78,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       const dbUser = await prisma.user.findUnique({
         where: { id: user.id },
         include: {
-          userRole: true,
+          userRole: {
+            include: {
+              // role: true,
+              QueryCategory: true,
+            },
+          },
 
           UserSchool: {
             include: {
@@ -122,6 +127,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         schools,
         roles: dbUser?.userRole.map((role) => role.role) || [],
         classes: dbUser?.UserClass.map((userClass) => userClass.class) || [],
+        // queryCategories: dbUser?.queryCategories || [],
       };
       // console.log(session)
       return session;
