@@ -201,6 +201,7 @@ enum ROLE {
   STAFF
   BUSINESS
   IT
+  DISCIPLINE
   
 }
 
