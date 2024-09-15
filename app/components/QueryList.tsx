@@ -5,6 +5,7 @@ import { QueryWithCategory } from "./QueryBar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CounterClockwiseClockIcon } from "@radix-ui/react-icons";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 
 const QueryList = ({
@@ -33,7 +34,7 @@ const QueryList = ({
                 // Don't render the category if there are no queries in that category
                 const queriesWithCategories = queries.filter(
                   (query) => {
-             
+
                     return (
                       query.category?.value === category.value
                       // && (query.publicQuery === true || query.createdBy === user.email)
@@ -81,9 +82,9 @@ const QueryList = ({
                       <AccordionTrigger className="text-xl font-bold">
                         <div className="flex-grow text-left ml-4">
 
-                        {category.label}
+                          {category.label}
                         </div>
-                        </AccordionTrigger>
+                      </AccordionTrigger>
                       <AccordionContent>
                         <ul>
                           {queries
@@ -93,17 +94,24 @@ const QueryList = ({
                               )
                             )
                             .map((query) => (
+                              <Tooltip>
+
                               <li
                                 key={query.id}
                                 className="ml-4 p-2 rounded-br-lg even:bg-card hover:text-primary  hover:underline"
-                              >
-                                <Link
-                                  href={`/query/${category.value}/${query.id}`}
-                                  className=""
                                 >
-                                  {query.name}
-                                </Link>
+                                <TooltipTrigger asChild>
+                                  <Link
+                                    href={`/query/${category.value}/${query.id}`}
+                                    className=""
+                                    >
+                                    {query.name}
+                                  </Link>
+                                </TooltipTrigger>
+                                <TooltipContent>{query.description}</TooltipContent>
                               </li>
+                                    </Tooltip>
+
                             ))}
                         </ul>
                       </AccordionContent>
@@ -188,17 +196,24 @@ const QueryList = ({
                           )
                         )
                         .map((query) => (
-                          <li
-                            key={query.id}
-                            className="ml-4 hover:text-primary hover:underline"
-                          >
-                            <Link
-                              href={`/query/${category.value}/${query.id}`}
-                              className="hover:underline"
-                            >
-                              {query.name}
-                            </Link>
-                          </li>
+                          <Tooltip>
+
+                              <li
+                                key={query.id}
+                                className="ml-4 p-2 rounded-br-lg even:bg-card hover:text-primary  hover:underline"
+                                >
+                                <TooltipTrigger asChild>
+                                  <Link
+                                    href={`/query/${category.value}/${query.id}`}
+                                    className=""
+                                    >
+                                    {query.name}
+                                  </Link>
+                                </TooltipTrigger>
+                                <TooltipContent>{query.description}</TooltipContent>
+                              </li>
+                                    </Tooltip>
+
                         ))}
                     </ul>
                   </li>

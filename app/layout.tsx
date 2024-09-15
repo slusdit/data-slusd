@@ -13,7 +13,11 @@ import SessionProvider from "@/app/components/providers/SessionProvider";
 import { useSession } from "next-auth/react";
 import { auth } from "@/auth";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
+import {
 
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 const fontSans = FontSans({
   subsets: ["latin"],
   variable: "--font-sans",
@@ -41,7 +45,11 @@ export default async function RootLayout({
           defaultTheme='system'
           enableSystem
           disableTransitionOnChange
-        >
+          >
+          <TooltipProvider
+            delayDuration={1200}
+
+          >
           <div className="sticky top-0 z-50">
             <MainHeader session={session}/>
           </div>
@@ -54,6 +62,8 @@ export default async function RootLayout({
               }
             </div>
           </main>
+
+          </TooltipProvider>
           <Toaster richColors />
         </ThemeProvider>
       </body>
