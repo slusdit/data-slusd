@@ -35,7 +35,7 @@ export default async function RootLayout({
   
   return (
     <html lang="en" className='bg-card/90 '>
-      <body suppressHydrationWarning={true} className={` ${fontSans.className} w-full  bg-card/90 `}>
+      <body suppressHydrationWarning={true} className={` ${fontSans.className} w-full  bg-card/90 h-full  `}>
 
           <ThemeProvider
             attribute='class'

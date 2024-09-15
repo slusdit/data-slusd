@@ -90,22 +90,19 @@ Built with direct connection to Aeries database using config in `/lib/aeries.ts`
   - [ ] Move from `table` to `datatable`
     - [x] Add Sorting
     - [X] Add Column Sorting
-    - [ ] Add Filtering
-      - [ ] Add `filterColumn` to `Query` model and form to explicitly state which filters to build per query.
     - [x] Add row selection
-  - [ ] Include column filtering in exporting
   - [x] Add export options
     - [x] to csv
     - [x] to xlsx
 - [ ] Add Query form
+  - [ ] Add edit mode
   - [ ] run query to validate before submit
     - [ ] Disable `Add+` button until after `Validate` button is clicked and successful.
   - [x] find way to remove comments (stored as single line in DB) `Should be working`
-  - [ ] Add dropdown(?), or text input to name filtered columns. May need to run after query validation
 - [ ] Dashboard
   - [ ] Render using parallel routes?
-  - [ ] Hold dashboard items in user settings
-- [ ] Teacher active class middleware with Aeries at signin
+  - [ ] Hold dashboard items in user settings?
+- [x] Teacher active class middleware with Aeries at signin
   - [x] Develop middleware
     - [x] Add missing classes to local storage
     - [x] Delete out of sync classes from local storage
