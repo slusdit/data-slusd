@@ -47,7 +47,7 @@ export default async function RootLayout({
           disableTransitionOnChange
           >
           <TooltipProvider
-            delayDuration={1200}
+            delayDuration={1800}
 
           >
           <div className="sticky top-0 z-50">
