@@ -78,18 +78,20 @@ const QueryList = ({
                 ) {
 
 
+                  const defaultExpandedStyle = (defaultExpandedAccordion && defaultExpandedAccordion === category.value) ? "bg-primary/80 text-primary-foreground" : "even:bg-secondary/10 "
+                  console.log(defaultExpandedStyle)
                   return (
 
-                    <AccordionItem key={category.id} className="even:bg-secondary/10 " value={category.value} >
+                    <AccordionItem key={category.id} className='' value={category.value} >
 
-                      <AccordionTrigger className="text-xl font-bold">
+                      <AccordionTrigger className={`${defaultExpandedStyle} text-xl font-bold pr-4`}>
                         <div className="flex-grow text-left ml-4">
 
                           {category.label}
                         </div>
                       </AccordionTrigger>
                       <AccordionContent>
-                        <ul>
+                        <ul className='mr-0 pr-0'>
                           {queries
                             .filter(
                               (query) => (query.category?.value === category.value
@@ -101,7 +103,7 @@ const QueryList = ({
 
                               <li
                                 key={query.id}
-                                className="ml-4 p-2 rounded-br-lg even:bg-card hover:text-primary  hover:underline"
+                                className="ml-4 p-2 pr-0 mr-0  text-foreground even:bg-card odd:bg-background hover:text-primary  hover:underline"
                                 >
                                 <TooltipTrigger asChild>
                                   <Link

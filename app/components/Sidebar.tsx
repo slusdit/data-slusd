@@ -24,7 +24,7 @@ const Sidebar = ({
     return (
     
     <div className="min-w-60 w-1/6 mr-4 p-2 flex flex-col gap-2 justify-top">
-        <h2 className="font-bold text-center text-lg underline">Menu</h2>
+        <h2 className="font-bold text-center text-lg underline">Reports</h2>
         {session?.user?.queryEdit && (
             <div className="w-1/12">
 
