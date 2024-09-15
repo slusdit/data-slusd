@@ -24,8 +24,8 @@ const QueryList = ({
 }) => {
   if (accordion) {
     return (
-      <ScrollArea className="w-full max-h-1/2 h-screen">
-        <Accordion type="multiple" collapsible className="flex flex-col gap-1 w-2/3 mb-8">
+      <ScrollArea className="w-full max-h-1/2 ">
+        <Accordion type="multiple" collapsible className="flex flex-col gap-1 w-full mb-8 ">
           {categories &&
             categories
               .filter((category) => category)
@@ -33,15 +33,7 @@ const QueryList = ({
                 // Don't render the category if there are no queries in that category
                 const queriesWithCategories = queries.filter(
                   (query) => {
-                    console.log(query?.publicQuery === true || query.createdBy === user.email)
-                    console.log(query.category?.value === category.value
-                      // && (query.publicQuery === true || query.createdBy === user.email)
-                      || query.publicQuery === true
-                      || query.createdBy === user.email, query.name)
-                    // && (query.publicQuery === true || query.createdBy === user.email)
-                    // || query.publicQuery === true 
-                    // || query.createdBy === user.email
-                    console.log(query)
+             
                     return (
                       query.category?.value === category.value
                       // && (query.publicQuery === true || query.createdBy === user.email)
@@ -84,9 +76,14 @@ const QueryList = ({
 
                   return (
 
-                    <AccordionItem key={category.id} className="" value={category.id}>
+                    <AccordionItem key={category.id} className="even:bg-secondary/10 " value={category.id}>
 
-                      <AccordionTrigger className="text-xl  font-bold">{category.label}</AccordionTrigger>
+                      <AccordionTrigger className="text-xl font-bold">
+                        <div className="flex-grow text-left ml-4">
+
+                        {category.label}
+                        </div>
+                        </AccordionTrigger>
                       <AccordionContent>
                         <ul>
                           {queries
@@ -98,11 +95,11 @@ const QueryList = ({
                             .map((query) => (
                               <li
                                 key={query.id}
-                                className="ml-4 hover:text-primary hover:underline"
+                                className="ml-4 p-2 rounded-br-lg even:bg-card hover:text-primary  hover:underline"
                               >
                                 <Link
                                   href={`/query/${category.value}/${query.id}`}
-                                  className="hover:underline"
+                                  className=""
                                 >
                                   {query.name}
                                 </Link>
