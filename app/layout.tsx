@@ -14,10 +14,10 @@ import { useSession } from "next-auth/react";
 import { auth } from "@/auth";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 
-const fontSans = FontSans({ 
+const fontSans = FontSans({
   subsets: ["latin"],
   variable: "--font-sans",
- });
+});
 
 
 export const metadata: Metadata = {
@@ -32,34 +32,30 @@ export default async function RootLayout({
 }>) {
   // const session = await serverAuth()
   const session = await auth()
-  
+
   return (
-    <html lang="en" className='bg-card/90 '>
-      <body suppressHydrationWarning={true} className={` ${fontSans.className} w-full  bg-card/90 h-full  `}>
-
-          <ThemeProvider
-            attribute='class'
-            defaultTheme='system'
-            enableSystem
-            disableTransitionOnChange
-          >
-
-
-          <MainHeader session={session}/>
-            <main className="w-full min-h-5xl flex justify-center scrollbar-gutter-stable ">
-              <div className="  px-4 w-[95%] lg:w-[90%] bg-background min-h-screen">
-
+<html lang="en" className="bg-card/90">
+      <body suppressHydrationWarning={true} className={`${fontSans.className} w-full bg-card/90 flex flex-col min-h-screen`}>
+        <ThemeProvider
+          attribute='class'
+          defaultTheme='system'
+          enableSystem
+          disableTransitionOnChange
+        >
+          <div className="sticky top-0 z-50">
+            <MainHeader session={session}/>
+          </div>
+          <main className="flex-grow flex justify-center overflow-y-auto">
+            <div className="px-4 w-[95%] lg:w-[90%] bg-background">
               {session ? children :
                 <UnauthorizedButton
-                home
-                />}
-              <Toaster richColors />
-                </div>
-            </main>
-            {/* <MainFooter /> */}
-
-          </ThemeProvider>
-
+                  home
+                />
+              }
+            </div>
+          </main>
+          <Toaster richColors />
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -45,7 +45,7 @@ export default async function MainHeader({ session }: { session: Session | null 
 
   // console.log(session.user)
   return (
-    <header className="w-full">
+    <header className="w-full sticky top-0 z-50">
       <nav
         className={`
             flex
