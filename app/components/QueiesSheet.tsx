@@ -51,6 +51,7 @@ export function QuerySheet({
           roles={roles}
           email={user?.email}
           user={user}
+          // accordion
         />
         <SheetFooter>
           <SheetClose asChild>

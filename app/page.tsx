@@ -18,6 +18,7 @@ import { BarChartCustomGraph } from "./components/charts/BarChartCustom";
 import { AttendanceOverTimeChart } from "./components/charts/AttendanceOverTime";
 import { Button } from "@/components/ui/button";
 import { getQueryData } from "@/lib/getQuery";
+import QueryList from "./components/QueryList";
 
 // const prisma = new PrismaClient();
 export default async function Home() {
@@ -27,6 +28,8 @@ export default async function Home() {
       id: true,
       name: true,
       description: true,
+      publicQuery: true,
+      createdBy: true,
 
       category: {
         select: {
@@ -58,10 +61,10 @@ export default async function Home() {
  
   return (
     <>
-    <div className="m-auto mt-10 self-center flex flex-row rounded-lg ">
+    <div className="m-auto mt-10 self-center flex flex-row rounded-lg max-h-[70vh] ">
 
       {/* Sidebar */}
-      <div className="w-48 mr-4 p-2 flex flex-col gap-2 justify-top">
+      <div className="min-w-60 w-1/6 mr-4 p-2 flex flex-col gap-2 justify-top">
         <h2 className="font-bold text-center text-lg underline">Menu</h2>
         {session?.user?.queryEdit && (
           <div className="w-1/12">
@@ -86,6 +89,14 @@ export default async function Home() {
           roles={session?.user?.roles}
           user={session?.user}
         />
+        <QueryList
+          queries={queries}
+          categories={categories}
+          roles={session?.user?.roles}
+          email={session?.user?.email}
+          user={session?.user}
+          accordion
+          />
         {/* <Button variant="link" className="w-full" asChild>
           <Link href="/attendance">Attendance</Link>
         </Button> */}
