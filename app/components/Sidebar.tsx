@@ -12,12 +12,17 @@ import { QueryWithCategory } from "./QueryBar";
 const Sidebar = ({
     session,
     categories,
-    queries
+    queries,
+    accordion = false
 }: {
     session: Session | null,
     categories: QueryCategory[],
     queries: QueryWithCategory[]
-}) => (
+    accordion?: boolean
+}) => {
+    console.log(accordion)
+    return (
+    
     <div className="min-w-60 w-1/6 mr-4 p-2 flex flex-col gap-2 justify-top">
         <h2 className="font-bold text-center text-lg underline">Menu</h2>
         {session?.user?.queryEdit && (
@@ -36,13 +41,14 @@ const Sidebar = ({
         <Separator className="my-4 w-full" />
 
 
-        <QuerySheet
+        {/* <QuerySheet
             categories={categories}
             queries={queries}
             database={process.env.DB_DATABASE as string}
             roles={session?.user?.roles}
             user={session?.user}
-        />
+            accordion
+        /> */}
         <QueryList
             queries={queries}
             categories={categories}
@@ -57,5 +63,6 @@ const Sidebar = ({
 
     </div>
     )
+}
 
 export default Sidebar

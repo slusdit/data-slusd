@@ -14,6 +14,7 @@ const QueryList = ({
   categories,
   email,
   user,
+  defaultExpandedAccordion,
   accordion = false
 }: {
   roles: string[];
@@ -21,12 +22,13 @@ const QueryList = ({
   categories: QueryWithCategory[];
   email: string;
   user: User;
+  defaultExpandedAccordion?: string;
   accordion?: boolean
 }) => {
   if (accordion) {
     return (
       <ScrollArea className="w-full max-h-1/2 ">
-        <Accordion type="multiple" collapsible className="flex flex-col gap-1 w-full mb-8 ">
+        <Accordion type="multiple" collapseable className="flex flex-col gap-1 w-full mb-8 " defaultValue={defaultExpandedAccordion}>
           {categories &&
             categories
               .filter((category) => category)
@@ -49,6 +51,7 @@ const QueryList = ({
                 const categoryRoles: string[] | undefined = category.roles.map(
                   (role) => role.role
                 );
+                console.log(defaultExpandedAccordion)
                 console.log("category", category.label);
                 console.log("userRoles", userRoles);
                 console.log("categoryRoles", categoryRoles);
@@ -77,7 +80,7 @@ const QueryList = ({
 
                   return (
 
-                    <AccordionItem key={category.id} className="even:bg-secondary/10 " value={category.id}>
+                    <AccordionItem key={category.id} className="even:bg-secondary/10 " value={category.value} >
 
                       <AccordionTrigger className="text-xl font-bold">
                         <div className="flex-grow text-left ml-4">
