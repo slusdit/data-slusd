@@ -124,7 +124,7 @@ export default async function Page({ params }: { params: { id: string, category:
         <DiyChartByGrade chartData={data} />} */}
 
           {session?.user?.queryEdit ? (
-            <>
+            <div className="w-full">
 
 
               <QueryInput
@@ -134,7 +134,7 @@ export default async function Page({ params }: { params: { id: string, category:
                 chartTitle={result?.name}
                 id={id}
               />
-            </>
+            </div>
           ) : (
             <>
 

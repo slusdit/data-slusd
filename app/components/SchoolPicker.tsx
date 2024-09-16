@@ -15,9 +15,10 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { SchoolInfo } from "@prisma/client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { updateActiveSchool } from "@/lib/signinMiddleware";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 type UserSchoolWithDetails = {
   userId: string;
@@ -36,35 +37,53 @@ const SchoolPicker = ({
 }) => {
   const [open, setOpen] = useState(false);
   const [selectedSchool, setSelectedSchool] = useState<SchoolInfo | null>(null);
+  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
-  console.log(initialSchool);
   useEffect(() => {
-    if (initialSchool) {
-      const initialSelectedSchool =
-        schools.find((s) => s.school.sc === initialSchool.toString())?.school ||
-        null;
-      // console.log(initialSchool)
-      // console.log(initialSelectedSchool)
+    if (initialSchool && schools.find((s) => s.school.sc === initialSchool.toString())) {
+      const initialSelectedSchool = schools.find((s) => s.school.sc === initialSchool.toString())?.school || null;
       setSelectedSchool(initialSelectedSchool);
     }
   }, [initialSchool, schools]);
 
+  const handleSchoolChange = (value: string) => {
+    const newSelectedSchool = schools.find((s) => s.school.sc === value)?.school || null;
+    if (newSelectedSchool) {
+      setSelectedSchool(newSelectedSchool);
+      startTransition(async () => {
+        try {
+          await updateActiveSchool(schools[0].userId, Number(newSelectedSchool.sc));
+          router.refresh();
+        } catch (error) {
+          console.error('Error updating active school:', error);
+          // Handle error (e.g., show an error message to the user)
+        }
+      });
+    }
+    setOpen(false);
+  };
+
   return (
-    <div className="flex items-center space-x-4 w-full max-w-36">
-      {label &&
-      
-      <label className="font-bold text-card-foreground">{label} </label>
-      }
+    <div className="flex items-center space-x-4 w-full">
+      {label && <label className="font-bold text-card-foreground">{label}</label>}
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button variant="outline" size="sm" className="w-48 justify-start">
-            {selectedSchool ? <><Image
-                        src={selectedSchool.logo ?? "/logos/slusd-logo.png"}
-                        width={20}
-                        height={20}
-                        alt={selectedSchool.name}
-                        className="mr-2"
-                      />{selectedSchool.name}</> : <>School Picker</>}
+          <Button variant="outline" size="sm" className="w-full justify-start" disabled={isPending}>
+            {selectedSchool ? (
+              <>
+                <Image
+                  src={selectedSchool.logo ?? "/logos/slusd-logo.png"}
+                  width={20}
+                  height={20}
+                  alt={selectedSchool.name}
+                  className="mr-2"
+                />
+                {selectedSchool.name}
+              </>
+            ) : (
+              <>School Picker</>
+            )}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="p-0" side="right" align="start">
@@ -77,19 +96,7 @@ const SchoolPicker = ({
                   <CommandItem
                     key={userSchool.school.sc}
                     value={userSchool.school.sc}
-                    onSelect={(value) => {
-                      const newSelectedSchool =
-                        schools.find((s) => s.school.sc === value)?.school ||
-                        null;
-                      setSelectedSchool(newSelectedSchool);
-                      if (newSelectedSchool) {
-                        updateActiveSchool(
-                          userSchool.userId,
-                          Number(newSelectedSchool.sc)
-                        );
-                      }
-                      setOpen(false);
-                    }}
+                    onSelect={handleSchoolChange}
                   >
                     <span>
                       <Image
@@ -111,5 +118,6 @@ const SchoolPicker = ({
     </div>
   );
 };
+
 
 export default SchoolPicker;

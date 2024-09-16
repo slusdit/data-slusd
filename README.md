@@ -76,8 +76,6 @@ Open [https:#data.slusd.us](https:#data.slusd.us) or URL with your browser to se
 Built with direct connection to Aeries database using config in `/lib/aeries.ts`
 
 ## To Do
-- [ ] Query List
-  - [ ] Add accordian to query list categories 
 - [ ] [Ideas from Thom](https://docs.google.com/spreadsheets/d/1sciIq4W_Z122uuzMvqx6YvsvNEHl2CpDHn_FQvHyh6g/edit?usp=sharing) - Site Admin "Home Dashboard"
 
 - [ ] Admin dashboard
@@ -110,6 +108,8 @@ Built with direct connection to Aeries database using config in `/lib/aeries.ts`
   - [x] Add classes to session.user.classes
   - [x] Run sign in tests for middleware
 - [x] Query security by user role
+- [x] Query List
+  - [x] Add accordian option to query list categories 
 
   
 ## Additional Features
