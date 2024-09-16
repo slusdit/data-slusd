@@ -20,7 +20,7 @@ export async function updateSchools(profileEmail: string, allQueriedSchools?: Ge
         allQueriedSchools = await getAllSchools(profileEmail)
     }
     const { psl, primarySchool, allSchools } = allQueriedSchools
-    
+
     // Update primary school and PSL
     const user = await prisma.user.update({
         where: {
@@ -57,13 +57,13 @@ export async function updateSchools(profileEmail: string, allQueriedSchools?: Ge
         await prisma.user.update({
             where: { id: user.id },
             data: {
-            UserSchool: {
-                create: existingSchoolCodes.map(sc => ({
-                school: {
-                    connect: { sc: sc }
+                UserSchool: {
+                    create: existingSchoolCodes.map(sc => ({
+                        school: {
+                            connect: { sc: sc }
+                        }
+                    }))
                 }
-                }))
-            }
             }
         });
 
@@ -107,12 +107,12 @@ export async function updateSchools(profileEmail: string, allQueriedSchools?: Ge
 
         // console.log({ updateUser })
     }
-   
+
     return null
 }
 
 export async function getAllSchools(profileEmail: string) {
-    
+
     const results = await getPrimarySchool(profileEmail)
     const profileName = profileEmail.split('@')[0]
     const allSchoolsQuery = `SELECT SCH FROM USR where NM like '${profileName}%' and DEL = 0`
@@ -124,22 +124,22 @@ export async function getAllSchools(profileEmail: string) {
         where: {
             email: profileEmail
         },
-        
+
     })
-    console.log({ user }) 
-    console.log({ results})
+    console.log({ user })
+    console.log({ results })
     if (!user?.primarySchool) {
         console.log(profileEmail)
         const ret = await updateSchools(profileEmail, results)
         console.log(ret)
     }
     return results
-    
+
 }
 
 
 export async function updateActiveSchool(userId: string, activeSchool: number) {
-    const update =await prisma.user.update({
+    const update = await prisma.user.update({
         where: {
             id: userId
         },
@@ -147,28 +147,24 @@ export async function updateActiveSchool(userId: string, activeSchool: number) {
             activeSchool
         }
     })
-    console.log(update)
     const headersList = headers()
-    console.log(headersList)
-    const currentPath = headers().get('referer') || '/'
-    console.log(currentPath)
-    console.log(headersList.get('x-invoke-path'))
-    // const currentPath = new URL(request.url).pathname
-    // redirect(currentPath)
+    const referer = headersList.get('referer')
+    const currentPath = referer ? new URL(referer).pathname : '/'
+    console.log('Redirecting to:', currentPath)
     redirect('/')
+    redirect(currentPath)
 
-    // revalidatePath('/')
 
-    return await auth()
+
 }
 
-export async function getPrimarySchool(profileEmail: string):Promise<GetAllSchoolsReturn> {
-    
+export async function getPrimarySchool(profileEmail: string): Promise<GetAllSchoolsReturn> {
+
     const primarySchoolQuery = `SELECT PSC 'primarySchool', ID 'psl' FROM STF WHERE EM = '${profileEmail}'`
     console.log(primarySchoolQuery)
     const primarySchoolResults = await runQuery(primarySchoolQuery)
     return primarySchoolResults[0]
-   
+
 }
 
 export async function syncTeacherClasses(profileId: string, profileEmail: string) {
@@ -269,7 +265,7 @@ export async function syncTeacherClasses(profileId: string, profileEmail: string
                 })
                 // console.log(result)
             })
-            
+
 
             displayResult = ` classes added - All Classes Added`
 
@@ -322,5 +318,5 @@ export async function syncTeacherClasses(profileId: string, profileEmail: string
         newAeriesClasses,
         aeriesClasses,
         currentClasses
-    } );
+    });
 }

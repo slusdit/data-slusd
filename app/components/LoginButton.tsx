@@ -15,6 +15,7 @@ import { ModeToggle } from "./ModeToggle";
 import { useRouter } from "next/router";
 import { User } from "@prisma/client";
 import { useEffect, useState } from "react";
+import SchoolPicker from "./SchoolPicker";
 
 const HandleSignOut = async () => {
     await SignOutGoogle()
@@ -63,7 +64,10 @@ export default function LoginButton({
                     <PopoverContent className="flex flex-col items-center justify-items-center w-80 bg-popover sm:mr-10 sm:mt-2">
                         <p>Welcome, {user.name}</p>
                         <p className="text-card-foreground/750 font-thin text-sm">{user.email}</p>
-                        <div className="">
+                        <div >
+                            <div className="w-full">
+                            <SchoolPicker schools={user.UserSchool} initialSchool={user.activeSchool} />
+                            </div>
 
                             <div className="flex gap-1 w-2/3">
 
