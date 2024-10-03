@@ -206,10 +206,10 @@ export default function AddQueryForm({
           control={form.control}
           name="categoryId"
           render={({ field }) => (
-            <FormItem className="m-1">
+            <FormItem className="m-1 w-48">
               <FormLabel>Query Category</FormLabel>
-              <FormControl>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <FormControl className="w-full">
+                <Select onValueChange={field.onChange} defaultValue={field.value} className="w-full">
                   <SelectTrigger className="w-1/2">
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
