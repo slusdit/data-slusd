@@ -14,13 +14,14 @@ import prisma from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Sidebar from "@/app/components/Sidebar";
+import AggridTest from "../components/AggridTest";
 
 // const prisma = new PrismaClient();
 export default async function Page() {
   const session = await auth();
 //   const id = params.id;
-  const id = 'School'
-  const urlCategory = 'clz1kpqxh0001rfsfktjnspn8';
+  const urlCategory = 'School'
+  const id = 'clz1kpqxh0001rfsfktjnspn8';
   // const categories = await prisma.queryCategory.findMany();
   const result = await prisma.query.findUnique({ where: { id: id } }); //const {id, name, query, description, publicQuery, createdBy }:Query | null = await prisma.query.findUnique({ where: { label: label } })
   let queries: QueryWithCategory[]
@@ -107,25 +108,12 @@ export default async function Page() {
             <label htmlFor="description">Description:</label>
             <div id="description">{result.description}</div>
           </div>
-          {/* <p>Public/Private: {result.publicQuery ? "Public" : "Private"}</p>
-        <p>
-          Created By:{" "}
-          <a
-            className="hover:underline text-primary"
-            href={`mailto:${result.createdBy}`}
-          >
-            {result.createdBy}{" "}
-          </a>
-        </p> */}
+          <div className="w-full">
 
+          <AggridTest data={data} />
+          </div>
 
-
-          {/* <DataTable columns={columns} data={data} /> */}
-
-          {/* {id === "cly54bp030001hv31khj4zt38" &&
-        <DiyChartByGrade chartData={data} />} */}
-
-          {session?.user?.queryEdit ? (
+          {/* {session?.user?.queryEdit ? (
             <div className="w-full">
 
 
@@ -152,7 +140,7 @@ export default async function Page() {
               />
 
             </>
-          )}
+          )} */}
         </div>
       </div>
     );
