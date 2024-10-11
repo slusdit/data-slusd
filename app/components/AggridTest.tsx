@@ -55,7 +55,7 @@ const AggridTest = ({ data: dataIn }: { data: any[] }) => {
       console.log('Selected rows:', selectedRows);
     }
   }, []);
-
+  console.log(data)
   return (
     <div
       className="ag-theme-quartz"

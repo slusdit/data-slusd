@@ -17,23 +17,23 @@ import ActiveSchool from "./ActiveSchool";
 
 export default async function MainHeader({ session }: { session: Session | null }) {
 
-  const queries: QueryWithCategory[] = await prisma.query.findMany({
-    select: {
+  // const queries: QueryWithCategory[] = await prisma.query.findMany({
+  //   select: {
       
-        id: true,
-        name: true,
-        description: true,
+  //       id: true,
+  //       name: true,
+  //       description: true,
         
       
-      category: {
-        select: {
-          id: true,
-          label: true,
-          value: true
-        }
-      },
-    }
-  })
+  //     category: {
+  //       select: {
+  //         id: true,
+  //         label: true,
+  //         value: true
+  //       }
+  //     },
+  //   }
+  // })
   let schoolInfo;
   if (session?.user) {
   schoolInfo = await prisma.schoolInfo.findUnique({
