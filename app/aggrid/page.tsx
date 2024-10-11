@@ -26,7 +26,7 @@ export default async function Page() {
   const result = await prisma.query.findUnique({ where: { id: id } }); //const {id, name, query, description, publicQuery, createdBy }:Query | null = await prisma.query.findUnique({ where: { label: label } })
   let queries: QueryWithCategory[]
     let categories
-    console.log(result)
+
   if (session?.user) {
     categories = await prisma.queryCategory.findMany(
       {
@@ -59,7 +59,7 @@ export default async function Page() {
   // const renderChart = (table) => {
   //   return <DiyChartBySchool table={table} />;
   // };
-  console.log(urlCategory)
+
   if (result) {
     let data: any[] = await runQuery(result?.query);
     const category = result

@@ -1,49 +1,81 @@
 'use client'
-import { AgGridReact } from 'ag-grid-react'; // React Data Grid Component
-import "ag-grid-community/styles/ag-grid.css"; // Mandatory CSS required by the Data Grid
-import "ag-grid-community/styles/ag-theme-quartz.css"; // Optional Theme applied to the Data Grid
-import { useState } from 'react';
+import React, { useRef, useEffect, useMemo, useCallback } from 'react';
+import { AgGridReact } from 'ag-grid-react';
+import "ag-grid-community/styles/ag-grid.css";
+import "ag-grid-community/styles/ag-theme-quartz.css";
+import AggridChart from './AggridChart';
 
-const AggridTest = ({
-    data
-}: {
-    data: any
-    }) => {
-    
-    
-    
-        console.log(data)
-        // Row Data: The data to be displayed.
-        const [rowData, setRowData] = useState([
-            { make: "Tesla", model: "Model Y", price: 64950, electric: true },
-            { make: "Ford", model: "F-Series", price: 33850, electric: false },
-            { make: "Toyota", model: "Corolla", price: 29600, electric: false },
-        ]);
-    
-            
-            // Column Definitions: Defines the columns to be displayed.
-            const [colDefs, setColDefs] = useState([
-              { field: "make" },
-              { field: "model" },
-              { field: "price" },
-              { field: "electric" }
-            ]);
+const AggridTest = ({ data: dataIn }: { data: any[] }) => {
+  const gridRef = useRef<AgGridReact>(null);
 
-    return (
-                <>
-                // wrapping container with theme & size
-                <pre>{JSON.stringify(data, null, 2)}</pre>
-                <div
-                className="ag-theme-quartz" // applying the Data Grid theme
-                style={{ height: 500 }} // the Data Grid will fill the size of the parent container
-                >
-                  <AgGridReact
-                      rowData={rowData}
-                      columnDefs={colDefs}
-                      />
-                </div>
-                      </>
-               )
+  const createAgGridData = useMemo(() => (data: any[]) => {
+    if (!data.length) return { data: [], colDefs: [] };
+
+    const keys = Object.keys(data[0]);
+    const colDefs = keys.map(key => ({ 
+      field: key.trim(),
+      resizable: true,
+      sortable: true,
+      filter: true,
+      autoSize: true,
+      minWidth: 100,
+      cellStyle: { whiteSpace: 'normal' },
+    }));
+    
+    const formattedData = data.map(row => 
+      keys.reduce((acc, key) => {
+        acc[key.trim()] = row[key] ?? '';
+        return acc;
+      }, {})
+    );
+
+    return { data: formattedData, colDefs };
+  }, []);
+
+  const { data, colDefs } = useMemo(() => createAgGridData(dataIn), [dataIn, createAgGridData]);
+
+  const autoSizeStrategy = () => {
+    if (gridRef.current && gridRef.current.api) {
+      gridRef.current.api.autoSizeAllColumns(false, ['setColumnWidth']);
+      gridRef.current.api.sizeColumnsToFit();
+    }
+  };
+
+  useEffect(() => {
+    autoSizeStrategy();
+  }, [data]);
+
+  const onGridReady = () => {
+    autoSizeStrategy();
+  };
+
+  const onSelectionChanged = useCallback(() => {
+    if (gridRef.current) {
+      const selectedRows = gridRef.current.api.getSelectedRows();
+      console.log('Selected rows:', selectedRows);
+    }
+  }, []);
+
+  return (
+    <div
+      className="ag-theme-quartz"
+      style={{ height: '100%', width: '100%' }}
+    >
+      <AggridChart data={data} />
+      <AgGridReact
+        ref={gridRef}
+        rowData={data}
+        columnDefs={colDefs}
+        domLayout='autoHeight'
+        pagination={false}
+        onGridReady={onGridReady}
+        rowSelection="multiple"
+        onSelectionChanged={onSelectionChanged}
+        suppressRowClickSelection={true}
+        checkboxSelection={true}
+      />
+    </div>
+  );
 };
 
-export default AggridTest
+export default AggridTest;
