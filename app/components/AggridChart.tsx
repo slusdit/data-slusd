@@ -67,7 +67,7 @@ const StackedBarChartComponent = ({
   const chartData = useMemo(() => {
     if (selectedFields.length === 0) return [];
     return data.map(item => {
-      console.log(item)
+
       return ({
       name: item.School, //item[dataKey], // Assuming the first field is the label
       ...selectedFields.reduce((acc, field) => {
@@ -129,10 +129,7 @@ const StackedBarChartComponent = ({
             <ChartTooltip content={<ChartTooltipContent indicator="dashed" hideLabel/>} />
             <ChartLegend content={<ChartLegendContent />} />
             {selectedFields.map((field, index) => (
-              console.log(chartConfig[field]),
-              console.log(field, index),
-              console.log(data[index]),
-              console.log(chartData[index]),
+
               <Bar
                 dataKey={chartConfig[field].label.toString()}
                 stackId="a"
