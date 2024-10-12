@@ -7,7 +7,10 @@ import AggridChart from "./AggridChart";
 import { Button } from "@/components/ui/button";
 import { GridApi } from "ag-grid-community";
 
-const AggridTest = ({ data: dataIn }: { data: any[] }) => {
+interface AggridTestProps<T> {
+  data: T[];
+}
+const AggridTest = <T,>({ data: dataIn }: AggridTestProps<T>) => {
   const gridRef = useRef<AgGridReact>(null);
 
   const createAgGridData = useMemo(

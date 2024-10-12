@@ -112,7 +112,7 @@ export default async function Page() {
           </div>
           <div className="w-full">
 
-          <AggridTest data={data} />
+            <AggridTest data={data} />
           </div>
 
           {/* {session?.user?.queryEdit ? (
