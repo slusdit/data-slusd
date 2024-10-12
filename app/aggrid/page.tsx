@@ -22,6 +22,8 @@ export default async function Page() {
 //   const id = params.id;
   const urlCategory = 'School'
   const id = 'clz1kpqxh0001rfsfktjnspn8';
+  // const urlCategory = 'test'
+  // const id = 'clxxjgpyt0001rkp1kek3h8qu';
   // const categories = await prisma.queryCategory.findMany();
   const result = await prisma.query.findUnique({ where: { id: id } }); //const {id, name, query, description, publicQuery, createdBy }:Query | null = await prisma.query.findUnique({ where: { label: label } })
   let queries: QueryWithCategory[]
