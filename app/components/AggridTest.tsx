@@ -111,6 +111,4 @@ const AggridTest = <T,>({ data: dataIn }: AggridTestProps<T>) => {
 
 export default AggridTest;
 
-function createGrid(): GridApi<any> {
-  throw new Error("Function not implemented.");
-}
+
