@@ -33,7 +33,24 @@ const AggridTest = ({
             if (!data || !data.length) return { data: [], colDefs: [] };
 
             const keys = Object.keys(data[0]);
-            let colDefs = keys.map((key, index) => ({
+            let colDefs = keys.map((key, index) => {
+                if (['publicQuery', 'chart'].includes(key)) {
+                    return {
+                        field: key.trim(),
+                        resizable: true,
+                        sortable: true,
+                        filter: true,
+                        floatingFilter: true,
+                        editable: true,
+                        cellDataType: 'boolean',
+        
+                        autoSize: true,
+                        // minWidth: 100,
+                        // checkboxSelection: index === 0 ? true : false,
+                        cellStyle: { whiteSpace: "normal" },
+                    }
+                } else
+                return {
                 field: key.trim(),
                 resizable: true,
                 sortable: true,
@@ -45,7 +62,7 @@ const AggridTest = ({
                 // minWidth: 100,
                 // checkboxSelection: index === 0 ? true : false,
                 cellStyle: { whiteSpace: "normal" },
-            }));
+            }});
             
             colDefs = colDefs.map(c => c.field === 'category' ? { ...c, valueFormatter: (params) => params.value?.label } : c);
 
