@@ -4,6 +4,7 @@ import { PrismaClient } from "@prisma/client"
 import { z } from "zod"
 
 import { queryFormSchema } from "@/app/components/forms/AddQueryForm"
+import { toast } from "sonner"
 
 const prisma = new PrismaClient()
 
@@ -43,3 +44,22 @@ export async function addQuery(values: z.infer<typeof queryFormSchema>) {
     return error
   }
 }
+
+export async function updateQuery(data, field) {
+  const { id, ...updateData} = data
+
+  console.log("updateQuery", data)
+  console.log({[field]: updateData[field as keyof typeof updateData]})
+  try {
+    const result = await prisma.query.update({
+      where: {
+        id: id
+      },
+      data: {[field]: updateData[field as keyof typeof updateData]} 
+    })
+    return result
+  } catch (error) {
+    console.error("Error updating query:", error)
+    return error
+  }
+};

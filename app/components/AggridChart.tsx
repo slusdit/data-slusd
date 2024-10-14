@@ -13,23 +13,6 @@ import {
 } from "@/components/ui/chart"
 import { Car } from 'lucide-react';
 
-const CustomTooltip = ({ active, payload, label, chartConfig }) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-white p-2 border border-gray-200 rounded shadow-md">
-        <p className="font-semibold mb-1">{label}</p>
-        {payload.map((entry, index) => (
-          <div key={index} className="flex justify-between items-center">
-            <span className="mr-2" style={{ color: entry.color }}>{chartConfig[entry.dataKey].label}:</span>
-            <span className="font-medium">{entry.value}</span>
-          </div>
-        ))}
-      </div>
-    );
-  }
-  return null;
-};
-
 const StackedBarChartComponent = ({
   data,
   dataKey = 'Sch#' ,
