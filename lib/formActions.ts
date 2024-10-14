@@ -45,7 +45,7 @@ export async function addQuery(values: z.infer<typeof queryFormSchema>) {
   }
 }
 
-export async function updateQuery(data, field) {
+export async function updateQuery(data:any, field:string) {
   const { id, ...updateData} = data
 
   console.log("updateQuery", data)
@@ -55,7 +55,7 @@ export async function updateQuery(data, field) {
       where: {
         id: id
       },
-      data: {[field]: updateData[field as keyof typeof updateData]} 
+      data: {[field]: updateData[field as keyof typeof updateData]}
     })
     return result
   } catch (error) {
@@ -63,3 +63,19 @@ export async function updateQuery(data, field) {
     return error
   }
 };
+
+export async function updateUser(data:any, field: string) {
+  const { id, ...updateData } = data
+  try {
+    const result = await prisma.user.update({
+      where: {
+        id: id
+      },
+      data: {[field]: updateData[field as keyof typeof updateData]}
+    })
+    return result
+  } catch (error) {
+    console.error("Error updating user", error)
+    return error
+  }
+}
