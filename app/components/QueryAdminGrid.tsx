@@ -51,7 +51,7 @@ const AggridTest = ({
     return (
       <div className="cursor-pointer text-blue-500 underline">
         <Link
-          href={`/query/${params.data.category.label}/${params.data.id}`}
+          href={`/query/${params.data.category.label.toLowerCase()}/${params.data.id}`}
           target="_blank"
         >
           {params.data.name}
