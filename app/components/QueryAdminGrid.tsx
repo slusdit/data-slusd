@@ -10,171 +10,265 @@ import { GridApi } from "ag-grid-community";
 import { QueryWithCategory } from "./QueryBar";
 import { toast } from "sonner";
 import { updateQuery } from "@/lib/formActions";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Session } from "@prisma/client";
 import { useTheme } from "next-themes";
-
+import { format } from "sql-formatter";
+import { deleteQuery } from "@/lib/deleteQuery";
+import AddQueryForm from "./forms/AddQueryForm";
+import FormDialog from "./forms/FormDialog";
+import { Plus } from "lucide-react";
 
 const AggridTest = ({
-    dataIn,
-    // onCellValueChange
-}: {
-    dataIn: QueryWithCategory[]
-    // onCellValueChange: (event: any) => void 
+  dataIn,
+  session,
+  categories,
+}: // onCellValueChange
+{
+  dataIn: QueryWithCategory[];
+  session: Session | null;
+  categories: any[];
+  // onCellValueChange: (event: any) => void
 }) => {
-    const { theme } = useTheme();
-    const agGridTheme = theme === 'dark' ? 'ag-theme-alpine-dark' : 'ag-theme-alpine';
-    const gridRef = useRef<AgGridReact>(null);
-    console.log({ dataIn })
+  const { theme } = useTheme();
+  const agGridTheme =
+    theme === "dark" ? "ag-theme-alpine-dark" : "ag-theme-alpine";
+  const gridRef = useRef<AgGridReact>(null);
+  // console.log({ dataIn })
 
-    const createAgGridData = useMemo(
-        () => (data: any[]) => {
+  const queryRenderer = (params: { data: { query: any } }) => {
+    console.log(params.data.query);
+    const query = params.data.query;
+    const formattedQuery = format(query, {
+      language: "tsql",
+      keywordCase: "upper",
+    });
+    console.log(formattedQuery);
+    return <div>{formattedQuery}</div>;
+  };
+  const createAgGridData = useMemo(
+    () => (data: any[]) => {
+      // console.log({ data })
+      if (!data || !data.length) return { data: [], colDefs: [] };
 
-            console.log({ data })
-            if (!data || !data.length) return { data: [], colDefs: [] };
+      const keys = Object.keys(data[0]);
+      let colDefs = keys.map((key, index) => {
+        if (["publicQuery", "chart"].includes(key)) {
+          return {
+            field: key.trim(),
+            resizable: true,
+            sortable: true,
+            filter: true,
+            floatingFilter: true,
+            editable: true,
+            cellDataType: "boolean",
 
-            const keys = Object.keys(data[0]);
-            let colDefs = keys.map((key, index) => {
-                if (['publicQuery', 'chart'].includes(key)) {
-                    return {
-                        field: key.trim(),
-                        resizable: true,
-                        sortable: true,
-                        filter: true,
-                        floatingFilter: true,
-                        editable: true,
-                        cellDataType: 'boolean',
-        
-                        autoSize: true,
-                        // minWidth: 100,
-                        // checkboxSelection: index === 0 ? true : false,
-                        cellStyle: { whiteSpace: "normal" },
-                    }
-                } else
-                return {
-                field: key.trim(),
-                resizable: true,
-                sortable: true,
-                filter: true,
-                floatingFilter: true,
-                editable: true,
+            autoSize: true,
+            // minWidth: 100,
+            // checkboxSelection: index === 0 ? true : false,
+            cellStyle: { whiteSpace: "normal" },
+          };
+        } else if ("categoryId" === key) {
+          return {
+            field: key.trim(),
+            resizable: true,
+            sortable: true,
+            filter: true,
+            floatingFilter: true,
+            editable: true,
+            valueFormatter: (params: { value: { label: any } }) =>
+              params.value?.label,
+            autoSize: true,
+            // minWidth: 100,
+            // checkboxSelection: index === 0 ? true : false,
+            cellStyle: { whiteSpace: "normal" },
+          };
+        } else if ("query" === key) {
+          return {
+            field: key.trim(),
+            resizable: true,
+            sortable: true,
+            filter: true,
+            floatingFilter: true,
+            editable: true,
+            autoHeight: true,
+            cellEditor: "agLargeTextCellEditor",
+            cellEditorPopup: true,
+            valueFormatter: (params: { data: { query: string } }) =>
+              format(params.data?.query, {
+                language: "tsql",
+                keywordCase: "upper",
+              }),
+            cellEditorParams: {
+              useFormatter: true,
+              maxLength: 1000,
+            },
+            cellRenderer: queryRenderer,
+            autoSize: true,
+            minWidth: 600,
+            // checkboxSelection: index === 0 ? true : false,
+            cellStyle: { whiteSpace: "normal" },
+          };
+        } else
+          return {
+            field: key.trim(),
+            resizable: true,
+            sortable: true,
+            filter: true,
+            floatingFilter: true,
+            editable: true,
 
-                autoSize: true,
-                // minWidth: 100,
-                // checkboxSelection: index === 0 ? true : false,
-                cellStyle: { whiteSpace: "normal" },
-            }});
-            
-            colDefs = colDefs.map(c => c.field === 'category' ? { ...c, valueFormatter: (params) => params.value?.label } : c);
+            autoSize: true,
+            minWidth: 25,
+            // checkboxSelection: index === 0 ? true : false,
+            cellStyle: { whiteSpace: "normal" },
+          };
+      });
 
-            let formattedData = data.map((row) =>
-                keys.reduce((acc, key) => {
-                    if (!row[key]) return acc;
-                    acc[key.trim()] = row[key] ?? "";
-                    // acc = {
-                    //   ...acc,
-                    //   checkboxSelection: true,
-                    // };
-                    // console.log({ acc });
-                    return acc;
-                }, {})
-            );
-
-
-            return { data: formattedData, colDefs };
-        },
-        [dataIn]
-    );
-
-    const { data, colDefs } = useMemo(
-
-        () => createAgGridData(dataIn),
-        [dataIn, createAgGridData]
-    );
-
-    const autoSizeStrategy = () => {
-        if (gridRef.current && gridRef.current.api) {
-            gridRef.current.api.autoSizeAllColumns(false, ["setColumnWidth"]);
-            gridRef.current.api.sizeColumnsToFit();
-        }
-    };
-
-    useEffect(() => {
-        autoSizeStrategy();
-    }, [data]);
-
-    const onSelectionChanged = useCallback(() => {
-        if (gridRef.current) {
-            const selectedRows = gridRef.current.api.getSelectedRows();
-            console.log("Selected rows:", selectedRows);
-        }
-    }, []);
-    const onExportToCsv = () => {
+      // colDefs = colDefs.map(c => c.field === 'category' ? { ...c, valueFormatter: (params) => params.value?.label } : c);
+      colDefs = [
+        ...colDefs,
         {
-            console.log("CLICK");
-            gridApi.exportDataAsCsv();
-        }
+          field: "delete",
+          resizable: true,
+          sortable: true,
+          filter: true,
+          floatingFilter: true,
+          editable: true,
+          autoSize: true,
+          autoHeight: true, // add this
+
+          valueFormatter: (params) => params.value, // add this
+          cellEditorParams: {}, // add this
+          minWidth: 25,
+          cellStyle: { whiteSpace: "normal" },
+
+          cellRenderer: (params: { data: any }) => (
+            <Button
+              className="bg-destructive text-white hover:bg-red-600"
+              size="sm"
+              onClick={() => {
+                if (gridRef.current) {
+                  try {
+                    gridRef.current.api.applyTransaction({
+                      remove: [params.data],
+                    });
+                    deleteQuery({ id: params.data.id });
+                    toast.success(
+                      `Query ${params.data.name} deleted successfully`
+                    );
+                  } catch (e) {
+                    console.error(e);
+                    toast.error(`Error deleting query  ${params.data.name}`);
+                  }
+                }
+              }}
+            >
+              Delete
+            </Button>
+          ),
+        },
+      ];
+      let formattedData = data.map((row) =>
+        keys.reduce((acc, key) => {
+          if (!row[key]) return acc;
+          acc[key.trim()] = row[key] ?? "";
+          // acc = {
+          //   ...acc,
+          //   checkboxSelection: true,
+          // };
+          // console.log({ acc });
+          return acc;
+        }, {})
+      );
+
+      return { data: formattedData, colDefs };
+    },
+    [dataIn]
+  );
+
+  const { data, colDefs } = useMemo(
+    () => createAgGridData(dataIn),
+    [dataIn, createAgGridData]
+  );
+
+  const autoSizeStrategy = () => {
+    if (gridRef.current && gridRef.current.api) {
+      gridRef.current.api.autoSizeAllColumns(false, ["setColumnWidth"]);
+      gridRef.current.api.sizeColumnsToFit();
     }
+  };
+
+  useEffect(() => {
+    autoSizeStrategy();
+  }, [data]);
+
+  const onSelectionChanged = useCallback(() => {
+    if (gridRef.current) {
+      const selectedRows = gridRef.current.api.getSelectedRows();
+      console.log("Selected rows:", selectedRows);
+    }
+  }, []);
+  const onExportToCsv = () => {
+    {
+      console.log("CLICK");
+      gridApi.exportDataAsCsv();
+    }
+  };
+  // console.log(data);
+  let gridApi: GridApi;
+  const onGridReady = (params: { api: GridApi<any> }) => {
+    gridApi = params.api;
+    autoSizeStrategy();
+  };
+
+  const onCellValueChanged = async (event: { colDef?: any; data?: any }) => {
+    console.log({ event });
+    const field = event.colDef.field;
+
+    console.log({ field });
+    const { data } = event;
     console.log(data);
-    let gridApi: GridApi;
-    const onGridReady = (params) => {
-        gridApi = params.api;
-        autoSizeStrategy();
-    };
-
-
-
-
-    const onCellValueChanged = async (event) => {
-
-        console.log({ event });
-        const field = event.colDef.field;
-
-        console.log({ field });
-        const { data } = event;
-        console.log(data);
-        try {
-            const response = await updateQuery(data, field);
-            console.log({ response });
-            toast.success("Query updated successfully");
-        } catch (error) {
-            console.error("Error updating query:", error);
-            toast.error("Error updating query");
-            return error;
-
-        }
-
+    try {
+      const response = await updateQuery(data, field);
+      console.log({ response });
+      toast.success("Query updated successfully");
+    } catch (error) {
+      console.error("Error updating query:", error);
+      toast.error("Error updating query");
+      return error;
     }
+  };
 
-    return (
-        <div className={agGridTheme} style={{ height: "100%", width: "100%" }}>
-
-            <div className="mt-2">
-                <div className="text-xl text-foreground">Queries</div>
-                <Button
-                    onClick={onExportToCsv}
-                    className="my-2 text-foreground"
-                    variant="outline"
-
-                >
-                    Export to CSV
-                </Button>
-
-                <AgGridReact
-                    ref={gridRef}
-                    rowData={data}
-                    columnDefs={colDefs}
-                    domLayout="autoHeight"
-                    pagination={true}
-                    onGridReady={onGridReady}
-                    rowSelection="multiple"
-                    onSelectionChanged={onSelectionChanged}
-                    onCellValueChanged={onCellValueChanged}
-                />
-            </div>
-        </div>
-    );
+  return (
+    <div className={agGridTheme} style={{ height: "100%", width: "100%" }}>
+      <div className="mt-2">
+        <div className="text-3xl text-foreground">Queries</div>
+        <Button
+          onClick={onExportToCsv}
+          className="my-2 text-foreground"
+          variant="outline"
+        >
+          Export to CSV
+        </Button>
+        <FormDialog triggerMessage="Add Query" icon={<Plus className="py-1" />}>
+          <AddQueryForm session={session} categories={categories} />
+        </FormDialog>
+      </div>
+      <div className="h-full w-full">
+        <AgGridReact
+          ref={gridRef}
+          rowData={data}
+          columnDefs={colDefs}
+          domLayout="autoHeight"
+          pagination={true}
+          onGridReady={onGridReady}
+          rowSelection="multiple"
+          onSelectionChanged={onSelectionChanged}
+          onCellValueChanged={onCellValueChanged}
+        />
+      </div>
+    </div>
+  );
 };
 
 export default AggridTest;
-
-

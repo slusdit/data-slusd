@@ -46,9 +46,9 @@ function DataTable<T extends object>({
     setColumnVisibility({ requested: true })
     setColumnFilters([{ id: "requested", value: true }])
   }, [])
-
+  console.log({data})
   const columns = useMemo<ColumnDef<T>[]>(() => {
-    if (data.length === 0) return [];
+    if (!data || !data.length || data.length === 0) return [];
     return [
       {
         id: "select",
@@ -113,7 +113,7 @@ function DataTable<T extends object>({
     enableColumnFilters: true,
   });
 
-  if (data.length === 0) {
+  if (!data || !data.length || data.length === 0) {
     return <div>No data available</div>;
   }
  
