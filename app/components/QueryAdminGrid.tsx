@@ -88,7 +88,7 @@ const AggridTest = ({
             sortable: true,
             filter: true,
             floatingFilter: true,
-            editable: true,
+            editable: false,
             valueFormatter: (params: { value: { label: any } }) => {
               console.log(params.value);
               return params.value?.label;
@@ -105,7 +105,7 @@ const AggridTest = ({
             sortable: true,
             filter: true,
             floatingFilter: true,
-            editable: true,
+            editable: false,
             valueFormatter: (params: { value: { label: any } }) => {
               console.log(params.value);
               return params.value?.label;
@@ -156,6 +156,20 @@ const AggridTest = ({
             // checkboxSelection: index === 0 ? true : false,
             cellStyle: { whiteSpace: "normal" },
           };
+        } else if ("category_id" === key) {
+          return {
+            field: key.trim(),
+            resizable: true,
+            sortable: true,
+            filter: true,
+            floatingFilter: true,
+            editable: false,
+
+            autoSize: true,
+            minWidth: 25,
+            // checkboxSelection: index === 0 ? true : false,
+            cellStyle: { whiteSpace: "normal" },
+          };
         } else
           return {
             field: key.trim(),
@@ -178,10 +192,10 @@ const AggridTest = ({
         {
           field: "delete",
           resizable: true,
-          sortable: true,
-          filter: true,
-          floatingFilter: true,
-          editable: true,
+          sortable: false,
+          filter: false,
+          floatingFilter: false,
+          editable: false,
           autoSize: true,
           autoHeight: true, // add this
 

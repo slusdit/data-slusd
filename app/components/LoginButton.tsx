@@ -69,7 +69,7 @@ export default function LoginButton({
                             <SchoolPicker schools={user.UserSchool} initialSchool={user.activeSchool} />
                             </div>
 
-                            <div className="flex gap-1 w-2/3">
+                            <div className="flex w-full justify-center my-1 ">
 
                                 {user.admin &&
                                     <Button asChild variant="link" >
