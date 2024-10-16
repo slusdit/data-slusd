@@ -214,7 +214,7 @@ export async function runQuery(
   let cleanQuery = await removeCommentsFromQuery(query);
 
   const pool = await poolPromise;
-  console.log(query)
+  // console.log(query)
   const request = pool.request();
   try {
     
@@ -223,8 +223,8 @@ export async function runQuery(
       
       // TEST: Remove email to test @@sc overrice
       const schoolCode = session?.user?.schools
-      console.log(session?.user?.schools)
-      console.log(session?.user)
+      // console.log(session?.user?.schools)
+      // console.log(session?.user)
       
       // console.log(schoolCode);
       // TODO: Prepend @@variables to declarations at the top of the query, rather than search and replace?
@@ -266,13 +266,13 @@ export async function runQuery(
         // }
 
       }
-      console.log( session?.user?.activeSchool)
-      console.log(query.includes("@@asc"))
+      // console.log( session?.user?.activeSchool)
+      // console.log(query.includes("@@asc"))
       if (query.includes("@@asc")) {
-        console.log(query.includes("@@asc"))
+        // console.log(query.includes("@@asc"))
         if (typeof session?.user?.activeSchool === "number") {
-          console.log("Active School", session?.user?.activeSchool)
-          console.log("Active School", session?.user?.activeSchool === 0)
+          // console.log("Active School", session?.user?.activeSchool)
+          // console.log("Active School", session?.user?.activeSchool === 0)
           
         // } else {
           if (session?.user?.activeSchool === 0) {
@@ -281,9 +281,9 @@ export async function runQuery(
                 sc: true,
               },
             })
-            console.log(schools)
+            // console.log(schools)
             const allSchoolSc = "'" + schools.map((school) => `${school.sc}`).join("', '") + "'";
-            console.log('Schools', schools, allSchoolSc)
+            // console.log('Schools', schools, allSchoolSc)
 
             query = query.replace("= @@asc", `in (${allSchoolSc})`);
            
@@ -296,7 +296,7 @@ export async function runQuery(
         }
 
       }
-      console.log("Query", query);
+      // console.log("Query", query);
       
 
       // Handle @TN variable
@@ -304,10 +304,10 @@ export async function runQuery(
         // TODO: get from session, feed in from auth() call or Aeries query
       }
 
-      console.log("Query", query);
+      // console.log("Query", query);
       result = await request.query(query);
 
-      console.log("SQL result", result.recordset);
+      // console.log("SQL result", result.recordset);
       // await closePool();
       return result.recordset;
     } catch (error) {
@@ -318,8 +318,8 @@ export async function runQuery(
     }
   } catch (err) {
     console.error("SQL error", err);
-    console.log(query)
-    console.log({err})
+    // console.log(query)
+    // console.log({err})
     
     // throw  Error("SQL Pool error", { cause: err });
   }
@@ -402,7 +402,7 @@ export async function getAeriesStaff({
 
   const cert = process.env.AERIES_API_KEY as string
 
-  console.log({ endpoint, email })
+  // console.log({ endpoint, email })
 
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_AERIES_URL}${endpoint}`,
@@ -420,13 +420,13 @@ export async function getAeriesStaff({
   }
   const data: PersonInfo[] = await response.json()
   // console.log(data)
-  console.log(email)
+  // console.log(email)
   let person = data.filter(p => p.EmailAddress === email)[0]
   // person = data.filter(p => p.EmailAddress === "mabadia@slusd.us")[0]
   // person = data.filter(p => p.EmailAddress === "acorona@slusd.us")[0]
   // person = data.filter(p => p.EmailAddress === "xbugarin@slusd.us")[0]
   // person = data.filter(p => p.EmailAddress === "jfox@slusd.us")[0]
-  console.log(person)
+  // console.log(person)
   return {
     "id": person.ID,
     "email": person.EmailAddress,
@@ -502,7 +502,7 @@ async function getAeriesSchoolTeacher({
   }
   const teachers: SchoolTeacher[] = await response.json()
   // console.log(teachers)
-  // // console.log('data', data)
+  // console.log('data', data)
   const person: SchoolTeacher = teachers.filter(tch => tch.StaffID1 === id)[0]
   // console.log(person)
   if (!person) {

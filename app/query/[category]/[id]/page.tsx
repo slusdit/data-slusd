@@ -14,6 +14,7 @@ import prisma from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Sidebar from "@/app/components/Sidebar";
+import ReportGrid from "@/app/components/ReportGrid";
 
 // const prisma = new PrismaClient();
 export default async function Page({ params }: { params: { id: string, category: string } }) {
@@ -56,7 +57,7 @@ export default async function Page({ params }: { params: { id: string, category:
   // const renderChart = (table) => {
   //   return <DiyChartBySchool table={table} />;
   // };
-  console.log(urlCategory)
+  // console.log(urlCategory)
   if (result) {
     let data: any[] = await runQuery(result?.query);
     const category = result
@@ -137,8 +138,8 @@ export default async function Page({ params }: { params: { id: string, category:
             </div>
           ) : (
             <>
-
               <h2 className="text-xl underline font-bold mt-2 w-full">Data:</h2>
+              {/* <ReportGrid data={data} id={id}/> */}
 
               <DataTable
                 data={data}
