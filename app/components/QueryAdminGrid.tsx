@@ -290,7 +290,7 @@ const AggridTest = ({
   return (
     <div className={agGridTheme} style={{ height: "100%", width: "100%" }}>
       <div className="mt-2">
-        <div className="text-3xl text-foreground">Queries</div>
+        <div className="text-3xl text-foreground font-semibold">Queries</div>
         <Button
           onClick={onExportToCsv}
           className="my-2 text-foreground"
