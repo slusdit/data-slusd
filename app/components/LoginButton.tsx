@@ -71,14 +71,6 @@ export default function LoginButton({
 
                             <div className="flex gap-1 w-2/3">
 
-                                <Button asChild variant="link" >
-                                    <Link href="/profile" className="text-popover-foreground">User Profile</Link>
-                                </Button>
-
-                                {/* <Button asChild variant="link" >
-                            <Link href="/watchlist" className="text-popover-foreground">Watchlist</Link>
-                        </Button> */}
-
                                 {user.admin &&
                                     <Button asChild variant="link" >
                                         <Link href="/admin" className="text-popover-foreground">Admin</Link>
