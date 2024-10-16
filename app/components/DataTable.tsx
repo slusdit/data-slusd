@@ -40,13 +40,13 @@ function DataTable<T extends object>({
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [columnVisibility, setColumnVisibility] = useState({});
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-  console.log(id)
+  // console.log(id)
 
   useEffect(() => {
     setColumnVisibility({ requested: true })
     setColumnFilters([{ id: "requested", value: true }])
   }, [])
-  console.log({data})
+  // console.log({data})
   const columns = useMemo<ColumnDef<T>[]>(() => {
     if (!data || !data.length || data.length === 0) return [];
     return [
@@ -117,9 +117,9 @@ function DataTable<T extends object>({
     return <div>No data available</div>;
   }
  
-  console.log(showChart)
-  console.log(chartTitle)
-  console.log(id)
+  // console.log(showChart)
+  // console.log(chartTitle)
+  // console.log(id)
   return (
     <div className="w-full flex flex-col justify-center">
       {showChart &&
@@ -174,7 +174,7 @@ function DataTable<T extends object>({
                   (column) => column.getCanHide()
                 )
                 .map((column) => {
-                  console.log(column)
+                  // console.log(column)
                   return (
                     <DropdownMenuCheckboxItem
                       key={column.id}
@@ -220,7 +220,7 @@ function DataTable<T extends object>({
                     return(
                     <tr key={row.id}>
                       {row.getVisibleCells().map((cell) => {
-                        console.log(cell.row.original)
+                        // console.log(cell.row.original)
                         return (
                         <td
                         key={cell.id}

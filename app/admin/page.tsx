@@ -90,8 +90,6 @@ export default async function AdminPage() {
 
   const session = await auth();
   const categories = await prisma.queryCategory.findMany();
-  console.log({ categories });
-  console.log({ session });
 
   if (!admin) {
     return <div className="">Not an Admin</div>;

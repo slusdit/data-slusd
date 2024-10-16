@@ -196,6 +196,10 @@ const AggridTest = ({
               size="sm"
               onClick={() => {
                 if (gridRef.current) {
+                  const confirmDelete = window.confirm(
+                    `Are you sure you want to delete ${params.data.name}`
+                  )
+                  if (!confirmDelete) return;
                   try {
                     gridRef.current.api.applyTransaction({
                       remove: [params.data],
