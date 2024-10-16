@@ -101,7 +101,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       });
 
       let schools: string[] = []
-      console.log(dbUser)
+      // console.log(dbUser)
       if (dbUser) {
 
         const dbUserSchools = dbUser.UserSchool.map((userSchool) => userSchool.school)
