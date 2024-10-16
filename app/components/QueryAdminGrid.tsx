@@ -75,8 +75,29 @@ const AggridTest = ({
             filter: true,
             floatingFilter: true,
             editable: true,
-            valueFormatter: (params: { value: { label: any } }) =>
-              params.value?.label,
+            valueFormatter: (params: { value: { label: any } }) => {
+              console.log(params.value);
+              return params.value?.label
+            }
+            ,
+            autoSize: true,
+            // minWidth: 100,
+            // checkboxSelection: index === 0 ? true : false,
+            cellStyle: { whiteSpace: "normal" },
+          };
+        } else if ("category" === key) {
+          return {
+            field: key.trim(),
+            resizable: true,
+            sortable: true,
+            filter: true,
+            floatingFilter: true,
+            editable: true,
+            valueFormatter: (params: { value: { label: any } }) => {
+              console.log(params.value);
+              return params.value?.label
+            }
+            ,
             autoSize: true,
             // minWidth: 100,
             // checkboxSelection: index === 0 ? true : false,
