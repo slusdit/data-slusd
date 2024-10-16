@@ -17,6 +17,7 @@ import { deleteQuery } from "@/lib/deleteQuery";
 import AddQueryForm from "./forms/AddQueryForm";
 import FormDialog from "./forms/FormDialog";
 import { Plus } from "lucide-react";
+import Link from "next/link";
 
 const AggridTest = ({
   dataIn,
@@ -36,14 +37,27 @@ const AggridTest = ({
   // console.log({ dataIn })
 
   const queryRenderer = (params: { data: { query: any } }) => {
-    console.log(params.data.query);
     const query = params.data.query;
     const formattedQuery = format(query, {
       language: "tsql",
       keywordCase: "upper",
     });
-    console.log(formattedQuery);
+
     return <div>{formattedQuery}</div>;
+  };
+
+  const nameRenderer = (params: { data: { name: string, id: string, category: { label: string }  } }) => {
+    console.log(params.data.category);
+    return (
+      <div className="cursor-pointer text-blue-500 underline">
+        <Link
+          href={`/query/${params.data.category.label}/${params.data.id}`}
+          target="_blank"
+        >
+          {params.data.name}
+        </Link>
+      </div>
+    );
   };
   const createAgGridData = useMemo(
     () => (data: any[]) => {
@@ -77,9 +91,8 @@ const AggridTest = ({
             editable: true,
             valueFormatter: (params: { value: { label: any } }) => {
               console.log(params.value);
-              return params.value?.label
-            }
-            ,
+              return params.value?.label;
+            },
             autoSize: true,
             // minWidth: 100,
             // checkboxSelection: index === 0 ? true : false,
@@ -95,9 +108,8 @@ const AggridTest = ({
             editable: true,
             valueFormatter: (params: { value: { label: any } }) => {
               console.log(params.value);
-              return params.value?.label
-            }
-            ,
+              return params.value?.label;
+            },
             autoSize: true,
             // minWidth: 100,
             // checkboxSelection: index === 0 ? true : false,
@@ -126,6 +138,21 @@ const AggridTest = ({
             cellRenderer: queryRenderer,
             autoSize: true,
             minWidth: 600,
+            // checkboxSelection: index === 0 ? true : false,
+            cellStyle: { whiteSpace: "normal" },
+          };
+        } else if ("name" === key) {
+          return {
+            field: key.trim(),
+            resizable: true,
+            sortable: true,
+            filter: true,
+            floatingFilter: true,
+            editable: true,
+
+            cellRenderer: nameRenderer,
+            autoSize: true,
+            minWidth: 25,
             // checkboxSelection: index === 0 ? true : false,
             cellStyle: { whiteSpace: "normal" },
           };
