@@ -101,7 +101,7 @@ export default async function AdminPage() {
   return (
     <div>
       <BackButton />
-      <h1>Admin</h1>
+      <div className="text-3xl font-bold">Admin</div>
       {/* <QueryBar queries={queries}/>
             <AddClassToUserButton /> */}
       {/* <pre>{JSON.stringify(queries, null, 2)}</pre> */}
