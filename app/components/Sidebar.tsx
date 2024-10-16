@@ -26,7 +26,7 @@ const Sidebar = ({
     <div className="min-w-60 w-1/6 mr-4 p-2 flex flex-col gap-2 justify-top">
         <h2 className="font-bold text-center text-lg underline">Reports</h2>
         {session?.user?.queryEdit && (
-            <div className="w-1/12">
+            <div className="flex justify-center">
 
                 <FormDialog
                     triggerMessage="Add Query"

@@ -123,7 +123,7 @@ export default async function Page({ params }: { params: { id: string, category:
 
           {/* {id === "cly54bp030001hv31khj4zt38" &&
         <DiyChartByGrade chartData={data} />} */}
-
+{/* 
           {session?.user?.queryEdit ? (
             <div className="w-full">
 
@@ -136,7 +136,7 @@ export default async function Page({ params }: { params: { id: string, category:
                 id={id}
               />
             </div>
-          ) : (
+          ) : ( */}
             <>
               <h2 className="text-xl underline font-bold mt-2 w-full">Data:</h2>
               {/* <ReportGrid data={data} id={id}/> */}
@@ -151,7 +151,7 @@ export default async function Page({ params }: { params: { id: string, category:
               />
 
             </>
-          )}
+          {/* )} */}
         </div>
       </div>
     );
