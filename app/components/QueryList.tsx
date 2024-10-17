@@ -51,18 +51,18 @@ const QueryList = ({
                 const categoryRoles: string[] | undefined = category.roles.map(
                   (role) => role.role
                 );
-                console.log(defaultExpandedAccordion)
-                console.log("category", category.label);
-                console.log("userRoles", userRoles);
-                console.log("categoryRoles", categoryRoles);
-                console.log('SuperAdmin', userRoles.includes("SUPERADMIN"));
+                // console.log(defaultExpandedAccordion)
+                // console.log("category", category.label);
+                // console.log("userRoles", userRoles);
+                // console.log("categoryRoles", categoryRoles);
+                // console.log('SuperAdmin', userRoles.includes("SUPERADMIN"));
 
                 // Don't render the category if the user doesn't have any of the roles in that category
                 if (
                   categoryRoles &&
                   categoryRoles?.length < 0
                 ) {
-                  console.log("~~~~~~~ Empty Category ~~~~~~~")
+                  // console.log("~~~~~~~ Empty Category ~~~~~~~")
                   return null;
                 }
 
@@ -161,10 +161,10 @@ const QueryList = ({
               const categoryRoles: string[] | undefined = category.roles.map(
                 (role) => role.role
               );
-              console.log("category", category.label);
-              console.log("userRoles", userRoles);
-              console.log("categoryRoles", categoryRoles);
-              console.log('SuperAdmin', userRoles.includes("SUPERADMIN"));
+              // console.log("category", category.label);
+              // console.log("userRoles", userRoles);
+              // console.log("categoryRoles", categoryRoles);
+              // console.log('SuperAdmin', userRoles.includes("SUPERADMIN"));
 
               // Don't render the category if the user doesn't have any of the roles in that category
               if (

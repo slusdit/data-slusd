@@ -14,7 +14,7 @@ function ReportGrid<T>({
 }: ReportGridType<T>) {
     const {columns, ...data} = data
     
-    console.log({data})
+    // console.log({data})
     return (
         <>
             <div>

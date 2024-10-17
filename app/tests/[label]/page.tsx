@@ -4,7 +4,7 @@ import { ComponentType, Suspense } from "react";
 
 export default async function DynamicTest({ params }: { params: { label: string } }) {
   const { label } = params;
-  console.log(label);
+  // console.log(label);
 
   let Chart: ComponentType<{}> | JSX.Element = () => { return <div>Loading...</div> };
 
@@ -29,7 +29,7 @@ export default async function DynamicTest({ params }: { params: { label: string 
       break;
   }
 
-  console.log(Chart);
+  // console.log(Chart);
 
   return (
     <div>

@@ -87,13 +87,13 @@ export default function AddQueryForm({
   });
 
   function onError(errors: any) {
-    console.log("Form validation failed", errors);
+    // console.log("Form validation failed", errors);
   }
 
   // const { closeDialog } = useDialog()
   async function onSubmit(values: z.infer<typeof queryFormSchema>) {
-    console.log("submit");
-    console.log('values', {values})
+    // console.log("submit");
+    // console.log('values', {values})
     try {
       // TODO: validate SQL, try running it?
 
@@ -103,9 +103,9 @@ export default function AddQueryForm({
     }
 
     try {
-      console.log(`Values - ${JSON.stringify(values)}`);
+      // console.log(`Values - ${JSON.stringify(values)}`);
       const response = await addQuery(values);
-      console.log({response})
+      // console.log({response})
       // const query = await response.json();
       form.reset();
       toast.success("Query inserted successfully");

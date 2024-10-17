@@ -6,7 +6,7 @@ import { auth } from "@/auth";
 export default async function MainFooter(){
     
     const session = await auth()
-    console.log(session?.user?.admin)
+    // console.log(session?.user?.admin)
     return (
 
     <footer className="bottom-0 left-0  w-full fixed ">

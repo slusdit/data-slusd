@@ -133,11 +133,11 @@ const AggridTest = ({
               const selectedCategory = categories.find(
                 (category) => category.label === params.newValue
               );
-              console.log(selectedCategory);
+              // console.log(selectedCategory);
               if (selectedCategory) {
                 params.data.categoryId = selectedCategory.id;
                 params.data.category = selectedCategory;
-                console.log(params.data.category);
+                // console.log(params.data.category);
                 return true;
               }
               return false;
@@ -175,7 +175,7 @@ const AggridTest = ({
               }),
             cellEditorParams: {
               useFormatter: true,
-              maxLength: 1000,
+              maxLength: 999999,
             },
             cellRenderer: queryRenderer,
             autoSize: true,
@@ -326,8 +326,8 @@ const AggridTest = ({
 
     // console.log({ field });
     const { data } = event;
-    console.log({event})
-    console.log(data);
+    // console.log({event})
+    // console.log(data);
     try {
       const response = await updateQuery(data, field);
       // console.log({ response });

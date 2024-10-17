@@ -3,7 +3,7 @@ import { runQuery } from "./aeries";
 import prisma from "./db";
 
 export async function getQuery(queryId: string) {
-  console.log(queryId);
+  // console.log(queryId);
   const ret = await prisma.query.findUnique({
     where: {
       id: queryId,
@@ -23,7 +23,7 @@ export async function getQueryData({
   queryId?: string;
   queryLabel?: string;
 }) {
-  console.log({ queryId, queryLabel });
+  // console.log({ queryId, queryLabel });
   async function fetchQuery({
     queryId,
     queryLabel,
@@ -55,10 +55,10 @@ export async function getQueryData({
 
   const query = await fetchQuery({ queryId, queryLabel });
 
-  console.log(query);
+  // console.log(query);
   if (!query) return;
   const data = await runQuery(query.query);
-  console.log(data)
+  // console.log(data)
   return {
     data: data,
     query: query,

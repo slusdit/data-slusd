@@ -75,7 +75,7 @@ const UserAdminGrid = ({
             cellDataType: "dropdown",
             autoSize: true,
             valueFormatter: (params) => {
-              console.log("params: ", params.data.UserSchool);
+              // console.log("params: ", params.data.UserSchool);
               const schoolList = params.data.UserSchool.map(
                 (school) => school.school.name
               );
@@ -94,14 +94,14 @@ const UserAdminGrid = ({
             floatingFilter: false,
             editable: false,
             autoHeight: true,
-            cellDataType: "dropdown",
+            // cellDataType: "dropdown",
             autoSize: true,
             valueFormatter: (params) => {
-              console.log("params: ", params.data.userRole);
+              // console.log("params: ", params.data.userRole);
               const userRoleList = params.data.userRole.map(
                 (role) => role.role
               );
-              console.log(userRoleList);
+              // console.log(userRoleList);
               return userRoleList.join(", ");
             },
             // minWidth: 100,
@@ -161,12 +161,12 @@ const UserAdminGrid = ({
   const onSelectionChanged = useCallback(() => {
     if (gridRef.current) {
       const selectedRows = gridRef.current.api.getSelectedRows();
-      console.log("Selected rows:", selectedRows);
+      // console.log("Selected rows:", selectedRows);
     }
   }, []);
   const onExportToCsv = () => {
     {
-      console.log("CLICK");
+      // console.log("CLICK");
       gridApi.exportDataAsCsv();
     }
   };

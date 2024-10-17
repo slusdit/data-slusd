@@ -393,11 +393,11 @@ const defaultChartData = [
 
 
 function createConfig<T>(chartKey: string, chartData: T[], chartDataKey: string) {
-    console.log(chartData)
+    // console.log(chartData)
     let config: BaseChartConfig<T>[] = {}
 
     chartData.forEach(item => {
-        console.log(item)
+        // console.log(item)
         let school;
 
         // @ts-ignore
@@ -412,7 +412,7 @@ function createConfig<T>(chartKey: string, chartData: T[], chartDataKey: string)
 
 
     })
-    console.log(config)
+    // console.log(config)
     return config
 };
 
@@ -429,18 +429,18 @@ function getSelectedData(table: Table<any>) {
         filteredData = table.getFilteredRowModel()
             .rows.map((row) => row.original)
 
-        console.log({ filteredData })
+        // console.log({ filteredData })
 
     }
-    console.log(table.getSelectedRowModel().rows.length)
+    // console.log(table.getSelectedRowModel().rows.length)
     if (rowSelection && table.getSelectedRowModel().rows.length > 0) {
-        console.log(rowSelection)
+        // console.log(rowSelection)
         filteredData = table.getSelectedRowModel()
             .rows.map((row) => row.original)
     }
     // }
 
-    console.log({ filteredData })
+    // console.log({ filteredData })
 
 }
 export function removeZeroValues<T>(data: T[]) {
@@ -597,7 +597,7 @@ export async function BarChartCustomGraph({
 
 
 
-    console.log(data)
+    // console.log(data)
 
 
     const filteredData = removeZeroValues(filteredDataBySchool);
@@ -605,7 +605,7 @@ export async function BarChartCustomGraph({
 
     const customColor = 'green' //'var(--color-sc' + school + ')';
     const chartValueKeys = chartDataKey?.split(',')?.map(key => key.trim()) ?? [chartDataKey];
-    console.log(chartValueKeys)
+    // console.log(chartValueKeys)
     return (
         <div>
             <h1>{title}</h1>

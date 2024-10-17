@@ -69,16 +69,16 @@ const AggridTest = <T,>({ data: dataIn }: AggridTestProps<T>) => {
   const onSelectionChanged = useCallback(() => {
     if (gridRef.current) {
       const selectedRows = gridRef.current.api.getSelectedRows();
-      console.log("Selected rows:", selectedRows);
+      // console.log("Selected rows:", selectedRows);
     }
   }, []);
   const onExportToCsv = () => {
     {
-      console.log("CLICK");
+      // console.log("CLICK");
       gridApi.exportDataAsCsv();
     }
   }
-  console.log(data);
+  // console.log(data);
   let gridApi: GridApi;
   const onGridReady = (params) => {
     gridApi = params.api;
