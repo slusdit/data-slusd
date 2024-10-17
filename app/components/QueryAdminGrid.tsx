@@ -1,5 +1,5 @@
 "use client";
-import React, { useRef, useEffect, useMemo, useCallback } from "react";
+import { useRef, useEffect, useMemo, useCallback } from "react";
 import { AgGridReact } from "ag-grid-react";
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-balham.css";
@@ -26,7 +26,7 @@ const AggridTest = ({
 }: // onCellValueChange
 {
   dataIn: QueryWithCategory[];
-  session: Session | null;
+  session: Session ;
   categories: any[];
   // onCellValueChange: (event: any) => void
 }) => {
@@ -34,7 +34,10 @@ const AggridTest = ({
   const agGridTheme =
     theme === "dark" ? "ag-theme-alpine-dark" : "ag-theme-alpine";
   const gridRef = useRef<AgGridReact>(null);
-  // console.log({ dataIn })
+ 
+  const categoryNameArray = useMemo(() => {
+    return categories.map((category) => category.label).sort();
+  }, [categories]);
 
   const queryRenderer = (params: { data: { query: any } }) => {
     const query = params.data.query;
@@ -46,10 +49,18 @@ const AggridTest = ({
     return <div>{formattedQuery}</div>;
   };
 
+  const categoryValueFormatter = (params: { value: string }) => {
+    const selectedCategory = categoryNameArray.find(
+      (category) => category.label === params.value
+    );
+    // console.log('selectedCategory', selectedCategory );
+    return selectedCategory?.id;
+  };
+
   const nameRenderer = (params: {
     data: { name: string; id: string; category: { label: string } };
   }) => {
-    console.log(params.data.category);
+    // console.log(params.data.category);
     return (
       <div className="cursor-pointer text-blue-500 underline">
         <Link
@@ -63,13 +74,27 @@ const AggridTest = ({
       </div>
     );
   };
-  const createAgGridData = useMemo(
-    () => (data: any[]) => {
+  const createAgGridData =  (data: any[]) => {
       // console.log({ data })
       if (!data || !data.length) return { data: [], colDefs: [] };
 
       const keys = Object.keys(data[0]);
-      let colDefs = keys.map((key, index) => {
+    let colDefs = keys.map((key, index) => {
+      if (["id", "category", 'createdBy', 'publicQuery'].includes(key)) {
+        return {
+          field: key.trim(),
+          resizable: true,
+          sortable: true,
+          filter: true,
+          floatingFilter: true,
+          editable: true,
+          autoSize: true,
+          minWidth: 25,
+          hide: true,
+          cellStyle: { whiteSpace: "normal" },
+        };
+            
+      } else
         if (["publicQuery", "chart"].includes(key)) {
           return {
             field: key.trim(),
@@ -92,27 +117,40 @@ const AggridTest = ({
             sortable: true,
             filter: true,
             floatingFilter: true,
-            editable: false,
-            valueFormatter: (params: { value: { label: any } }) => {
-              console.log(params.value);
-              return params.value?.label;
+            editable: true,
+            cellEditor: "agSelectCellEditor",
+            cellEditorParams: {
+              values: categoryNameArray,
+              valueFormatter: categoryValueFormatter,
             },
-            autoSize: true,
-            // minWidth: 100,
-            // checkboxSelection: index === 0 ? true : false,
-            cellStyle: { whiteSpace: "normal" },
-          };
-        } else if ("category" === key) {
-          return {
-            field: key.trim(),
-            resizable: true,
-            sortable: true,
-            filter: true,
-            floatingFilter: true,
-            editable: false,
+            valueGetter: (params: { data: { category: { label: string } } }) => {
+              return params.data?.category?.label;
+            },
+            valueSetter: (params: { 
+              newValue: string,
+              data: { categoryId: string, category: { label: string } }
+            }) => {
+              const selectedCategory = categories.find(
+                (category) => category.label === params.newValue
+              );
+              console.log(selectedCategory);
+              if (selectedCategory) {
+                params.data.categoryId = selectedCategory.id;
+                params.data.category = selectedCategory;
+                console.log(params.data.category);
+                return true;
+              }
+              return false;
+            },
+            
+            
             valueFormatter: (params: { value: { label: any } }) => {
-              console.log(params.value);
-              return params.value?.label;
+              // console.log(params.value);
+              // console.log(categories[0]);
+              const selectedCategory = categories.filter((category) => category.label === params.value);
+              // console.log(selectedCategory)
+              return selectedCategory[0]?.label;
+             
             },
             autoSize: true,
             // minWidth: 100,
@@ -127,7 +165,7 @@ const AggridTest = ({
             filter: true,
             floatingFilter: true,
             editable: true,
-            autoHeight: true,
+            autoHeight: false,
             cellEditor: "agLargeTextCellEditor",
             cellEditorPopup: true,
             valueFormatter: (params: { data: { query: string } }) =>
@@ -156,25 +194,11 @@ const AggridTest = ({
 
             cellRenderer: nameRenderer,
             autoSize: true,
-            minWidth: 25,
+            minWidth: 300,
             // checkboxSelection: index === 0 ? true : false,
             cellStyle: { whiteSpace: "normal" },
           };
-        } else if ("category_id" === key) {
-          return {
-            field: key.trim(),
-            resizable: true,
-            sortable: true,
-            filter: true,
-            floatingFilter: true,
-            editable: false,
-
-            autoSize: true,
-            minWidth: 25,
-            // checkboxSelection: index === 0 ? true : false,
-            cellStyle: { whiteSpace: "normal" },
-          };
-        } else
+         } else
           return {
             field: key.trim(),
             resizable: true,
@@ -189,6 +213,9 @@ const AggridTest = ({
             cellStyle: { whiteSpace: "normal" },
           };
       });
+    
+    // colDefs = colDefs.filter(colDef => (colDef.field !== 'id') );
+    // colDefs = colDefs.filter(colDef => (colDef.field !== 'id') );
 
       // colDefs = colDefs.map(c => c.field === 'category' ? { ...c, valueFormatter: (params) => params.value?.label } : c);
       colDefs = [
@@ -201,10 +228,10 @@ const AggridTest = ({
           floatingFilter: false,
           editable: false,
           autoSize: true,
-          autoHeight: true, // add this
+          autoHeight: true, 
 
-          valueFormatter: (params) => params.value, // add this
-          cellEditorParams: {}, // add this
+          valueFormatter: (params) => params.value, 
+          cellEditorParams: {}, 
           minWidth: 25,
           cellStyle: { whiteSpace: "normal" },
 
@@ -252,9 +279,8 @@ const AggridTest = ({
       );
 
       return { data: formattedData, colDefs };
-    },
-    [dataIn]
-  );
+    }
+    
 
   const { data, colDefs } = useMemo(
     () => createAgGridData(dataIn),
@@ -275,12 +301,12 @@ const AggridTest = ({
   const onSelectionChanged = useCallback(() => {
     if (gridRef.current) {
       const selectedRows = gridRef.current.api.getSelectedRows();
-      console.log("Selected rows:", selectedRows);
+      // console.log("Selected rows:", selectedRows);
     }
   }, []);
   const onExportToCsv = () => {
     {
-      console.log("CLICK");
+      // console.log("CLICK");
       gridApi.exportDataAsCsv();
     }
   };
@@ -292,15 +318,19 @@ const AggridTest = ({
   };
 
   const onCellValueChanged = async (event: { colDef?: any; data?: any }) => {
-    console.log({ event });
+    if (event.colDef?.field === "categoryId") {
+      console.log(event)
+    }
+    // console.log({ event });
     const field = event.colDef.field;
 
-    console.log({ field });
+    // console.log({ field });
     const { data } = event;
+    console.log({event})
     console.log(data);
     try {
       const response = await updateQuery(data, field);
-      console.log({ response });
+      // console.log({ response });
       toast.success("Query updated successfully");
     } catch (error) {
       console.error("Error updating query:", error);
