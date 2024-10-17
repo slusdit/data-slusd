@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import UserAdminGrid from "../components/UserAdminGrid";
 import { Separator } from "@/components/ui/separator";
 import { auth } from "@/auth";
+import prisma from "@/lib/db";
 
 type UserRole = {
   id: string;
@@ -33,7 +34,7 @@ export type AdminPageUser = {
   UserSchool: UserSchool[];
 }
 
-const prisma = new PrismaClient();
+
 export default async function AdminPage() {
   const admin = await adminCheck();
 

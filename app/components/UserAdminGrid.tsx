@@ -218,9 +218,9 @@ const UserAdminGrid = ({
         <Accordion type="single" collapsible>
           <AccordionItem value="Users">
             <AccordionTrigger className="text-3xl text-foreground">Users
+
               </AccordionTrigger>
               <AccordionContent>
-
             <Button
               onClick={onExportToCsv}
               className="my-2 text-foreground"
