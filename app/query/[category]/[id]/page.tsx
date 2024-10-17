@@ -20,7 +20,7 @@ import ReportGrid from "@/app/components/ReportGrid";
 export default async function Page({ params }: { params: { id: string, category: string } }) {
   const session = await auth();
   const id = params.id;
-  const urlCategory = params.category;
+  let urlCategory = params.category.split('%20')[0];
   // const categories = await prisma.queryCategory.findMany();
   const result = await prisma.query.findUnique({ where: { id: id } }); //const {id, name, query, description, publicQuery, createdBy }:Query | null = await prisma.query.findUnique({ where: { label: label } })
   let queries: QueryWithCategory[]
@@ -57,7 +57,8 @@ export default async function Page({ params }: { params: { id: string, category:
   // const renderChart = (table) => {
   //   return <DiyChartBySchool table={table} />;
   // };
-  // console.log(urlCategory)
+
+  console.log(urlCategory)
   if (result) {
     let data: any[] = await runQuery(result?.query);
     const category = result
