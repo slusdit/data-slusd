@@ -28,7 +28,7 @@ const QueryInput = ({
   const [loading, setLoading] = useState(false);
   function formatAndSetValue(value: string) {
     const formattedValue = format(value, { language: "tsql" }) || value;
-    console.log(formattedValue);
+    // console.log(formattedValue);
 
     setValue(formattedValue);
     return null;
@@ -53,7 +53,7 @@ const QueryInput = ({
     // setLoading(false);
   };
 
-  console.log(showChart);
+  // console.log(showChart);
 
   return (
     <div className="mt-4">

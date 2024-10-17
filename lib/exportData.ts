@@ -12,13 +12,13 @@ export const exportToCSV = (reactTable: Table<any>) => {
   
   if (reactTable.options.state.columnVisibility?.requested === true) {
 
-    console.log(reactTable.options.state.columnVisibility)
+    // console.log(reactTable.options.state.columnVisibility)
     
     // rowsToExport = reactTable.getFilteredRowModel().rows
   }
-  console.log(reactTable.options.state.columnVisibility)
+  // console.log(reactTable.options.state.columnVisibility)
   
-  console.log(rowsToExport)
+  // console.log(rowsToExport)
 
   
   const headers = reactTable.options.columns.filter((column => column.id !== 'select')).map((column) => column.id)
@@ -48,7 +48,7 @@ export const exportToExcel = (reactTable:any) => {
   if (rowsToExport.length === 0) {
     rowsToExport = reactTable.getRowModel().rows
   }
-  console.log(reactTable.getRowModel())
+  // console.log(reactTable.getRowModel())
   // console.log('Made it here')
   // if (columnsToExport.length === 0) {
   //   columnsToExport = reactTable.getColumns().columns

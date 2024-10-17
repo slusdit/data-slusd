@@ -35,8 +35,8 @@ export function QuerySheet({
 }) {
  
   const dbSchoolYear = `20${database.slice(3, 5)} - 20${Number(database.slice(3, 5)) + 1}`;
-  console.log(user)
-  console.log(defaultExpandedAccordion)
+  // console.log(user)
+  // console.log(defaultExpandedAccordion)
   return (
     <Sheet>
       <SheetTrigger asChild>

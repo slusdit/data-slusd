@@ -20,7 +20,7 @@ const DynamicTable = ({
     if(!data || data.length === 0) return(<></>)
 
     const header = Object.keys(data[0])
-    console.log(header)
+    // console.log(header)
     return (
         <Table className="w-3/4 bg-card border">
             {caption && <TableCaption>{caption}</TableCaption>}

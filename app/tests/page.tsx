@@ -28,8 +28,8 @@ export default async function Page() {
         aeriesClasses = await getTeacherSchoolCredentials({ id: aeriesPermissions.id, schools: aeriesPermissions.schoolPermissions, })
 
     }
-    console.log(aeriesPermissions)
-    console.log(aeriesClasses)
+    // console.log(aeriesPermissions)
+    // console.log(aeriesClasses)
 
     // Check DB for current Teacher info with matching PSL == id
 
@@ -45,13 +45,13 @@ export default async function Page() {
     if (aeriesClasses && aeriesClasses.length > 0) {
         if (currentClasses.length > 0) {
 
-            console.log(aeriesClasses.length)
+            // console.log(aeriesClasses.length)
 
             // Filter out classes that are not in already in the DB
             newAeriesClasses = aeriesClasses.filter(
                 aeriesClass => {
                     const test = !isMatched(aeriesClass, currentClasses, 'sc', 'tn')
-                    console.log({ test })
+                    // console.log({ test })
                     return test
                 }
             );
@@ -60,14 +60,14 @@ export default async function Page() {
             const oldCurrentClasses = currentClasses.filter(
                 currentClass => {
                     const test = !isMatched(currentClass, aeriesClasses, 'sc', 'tn')
-                    console.log({ test })
+                    // console.log({ test })
                     return test
                 }
             );
 
             if (newAeriesClasses.length > 0) {
                 // Add new classes to DB
-                console.log(newAeriesClasses)
+                // console.log(newAeriesClasses)
                 newAeriesClasses.map(async (aeriesClass) => {
                     const newClass = await prisma.class.create({ data: aeriesClass })
                     const result = await prisma.userClass.create({ 
@@ -76,7 +76,7 @@ export default async function Page() {
                             userId: session?.user?.id as string,
                         } 
                     })
-                    console.log(result)
+                    // console.log(result)
                 })
             
                 displayResult = `Some New Classes Added`
@@ -84,7 +84,7 @@ export default async function Page() {
 
             if (oldCurrentClasses.length > 0) {
                 // Delete old classes from DB
-                console.log(oldCurrentClasses)
+                // console.log(oldCurrentClasses)
                 await Promise.all(oldCurrentClasses.map(async (oldClass) => {
                     if (oldClass.activeOverride) return null
                     const result = await prisma.class.delete({
@@ -94,14 +94,14 @@ export default async function Page() {
                         }
 
                     })
-                    console.log(result)
+                    // console.log(result)
                 })
                 )
                 displayResult = 'Out of date classes exists, Old Classes Deleted'
             }
         } else {
             // Add all classes to DB
-            console.log(aeriesClasses)
+            // console.log(aeriesClasses)
             aeriesClasses.map(async (aeriesClass) => {
                 const newClass = await prisma.class.create({ data: aeriesClass })
                 const result = await prisma.userClass.create({ 
@@ -110,7 +110,7 @@ export default async function Page() {
                         userId: session?.user?.id as string,
                     } 
                 })
-                console.log(result)
+                // console.log(result)
             })
             
             displayResult = ` classes added - All Classes Added`
@@ -126,7 +126,7 @@ export default async function Page() {
                     
                 }
             })
-            console.log(results)
+            // console.log(results)
             displayResult = `${results.count} - All Classes Deleted`
         } 
 

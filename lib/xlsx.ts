@@ -19,18 +19,18 @@ export function downloadToExcel(
             filteredData = table.getFilteredRowModel()
                 .rows.map((row) => row.original)
 
-            console.log({ filteredData })
+            // console.log({ filteredData })
 
         }
-        console.log(table.getSelectedRowModel().rows.length)
+        // console.log(table.getSelectedRowModel().rows.length)
         if (rowSelection && table.getSelectedRowModel().rows.length > 0) {
-            console.log(rowSelection)
+            // console.log(rowSelection)
             filteredData = table.getSelectedRowModel()
                 .rows.map((row) => row.original)
             }
             // }
             
-            console.log({ filteredData })
+            // console.log({ filteredData })
 
     let columns: IJsonSheet[] = [
         {

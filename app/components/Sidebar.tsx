@@ -20,7 +20,7 @@ const Sidebar = ({
     queries: QueryWithCategory[]
     accordion?: boolean
 }) => {
-    console.log(accordion)
+    // console.log(accordion)
     return (
     
     <div className="min-w-60 w-1/6 mr-4 p-2 flex flex-col gap-2 justify-top">

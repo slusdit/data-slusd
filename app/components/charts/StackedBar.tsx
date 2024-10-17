@@ -54,8 +54,8 @@ export function StackedBarChart<D extends ChartData, C extends ChartConfig>({
     description = "Chart Description",
 }: StackComponentProps<D, C>) {
 
-    console.log(chartData)
-    console.log(chartConfig)
+    // console.log(chartData)
+    // console.log(chartConfig)
     return (
         <Card>
             <CardHeader>

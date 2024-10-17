@@ -75,7 +75,7 @@ const SchoolEnrollmentGraph = ({
                 '12 ': '12'
             };
 
-            console.log(data)
+            // console.log(data)
             if (data.length === 0) return 
             const processedData = Object.entries(data[0])
                 .filter(([key, value]) => gradeMap.hasOwnProperty(key) && value !== 0)
@@ -83,7 +83,7 @@ const SchoolEnrollmentGraph = ({
                     grade: gradeMap[key].trim(),
                     count: value
                 }));
-            console.log(processedData)
+            // console.log(processedData)
 
             setData(processedData)
             setCategory(query.category?.label)
@@ -108,7 +108,7 @@ const SchoolEnrollmentGraph = ({
         )
     }
     const url = `/query/${category}/${queryId}`
-    console.log(activeSchool)
+    // console.log(activeSchool)
     return (
         <div className={containerStyle}>
             <EnrollmentByGradeChart chartData={data} url={url} school={activeSchool} />

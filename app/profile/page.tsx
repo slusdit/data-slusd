@@ -8,7 +8,6 @@ import SchoolPicker from "../components/SchoolPicker";
 export default async function Profile() {
 
     const session = await auth()
-    console.log({session})
 
     return (
         <div>

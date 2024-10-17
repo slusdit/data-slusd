@@ -117,21 +117,21 @@ export async function getAllSchools(profileEmail: string) {
     const profileName = profileEmail.split('@')[0]
     const allSchoolsQuery = `SELECT SCH FROM USR where NM like '${profileName}%' and DEL = 0`
     const allSchoolsResults = await runQuery(allSchoolsQuery)
-    console.log({ allSchoolsResults })
+    // console.log({ allSchoolsResults })
     results['allSchools'] = allSchoolsResults.map((school) => school.SCH)
-    console.log({ results })
+    // console.log({ results })
     const user = await prisma.user.findUnique({
         where: {
             email: profileEmail
         },
 
     })
-    console.log({ user })
-    console.log({ results })
+    // console.log({ user })
+    // console.log({ results })
     if (!user?.primarySchool) {
-        console.log(profileEmail)
+        // console.log(profileEmail)
         const ret = await updateSchools(profileEmail, results)
-        console.log(ret)
+        // console.log(ret)
     }
     return results
 
@@ -150,7 +150,7 @@ export async function updateActiveSchool(userId: string, activeSchool: number) {
     const headersList = headers()
     const referer = headersList.get('referer')
     const currentPath = referer ? new URL(referer).pathname : '/'
-    console.log('Redirecting to:', currentPath)
+    // console.log('Redirecting to:', currentPath)
     redirect('/')
     redirect(currentPath)
 
@@ -161,7 +161,7 @@ export async function updateActiveSchool(userId: string, activeSchool: number) {
 export async function getPrimarySchool(profileEmail: string): Promise<GetAllSchoolsReturn> {
 
     const primarySchoolQuery = `SELECT PSC 'primarySchool', ID 'psl' FROM STF WHERE EM = '${profileEmail}'`
-    console.log(primarySchoolQuery)
+    // console.log(primarySchoolQuery)
     const primarySchoolResults = await runQuery(primarySchoolQuery)
     return primarySchoolResults[0]
 
@@ -180,7 +180,7 @@ export async function syncTeacherClasses(profileId: string, profileEmail: string
     if (!aeriesPermissions) {
         return null
     }
-    console.log(aeriesPermissions)
+    // console.log(aeriesPermissions)
 
     if (aeriesPermissions.title.toLowerCase() === 'teacher') {
         aeriesClasses = await getTeacherSchoolCredentials({ id: aeriesPermissions.id, schools: aeriesPermissions.schoolPermissions, })
@@ -295,7 +295,7 @@ export async function syncTeacherClasses(profileId: string, profileEmail: string
         }
     })
 
-    console.log({ schools })
+    // console.log({ schools })
 
     // // Update Schools
     // const primarySchoolUpdate = await prisma.user.update({

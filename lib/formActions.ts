@@ -7,7 +7,7 @@ import { PrismaClient } from "@prisma/client"
 const prisma = new PrismaClient()
 export async function addQuery(values: z.infer<typeof queryFormSchema>) {
     // values.query = values.query.split("\n").map((line) => "\"" + line + "\"").join("\n");
-    console.log("addQuery", values)
+
   // try {
     const result = await prisma.query.upsert({
       where: {
@@ -31,7 +31,7 @@ export async function addQuery(values: z.infer<typeof queryFormSchema>) {
         categoryId: values.categoryId,
       },
     })
-    console.log({result})
+    // console.log({result})
       
     return true
   // } catch (error) {
@@ -43,8 +43,8 @@ export async function addQuery(values: z.infer<typeof queryFormSchema>) {
 export async function updateQuery(data:any, field:string) {
   const { id, ...updateData} = data
 
-  console.log("updateQuery", data)
-  console.log({[field]: updateData[field as keyof typeof updateData]})
+  // console.log("updateQuery", data)
+  // console.log({[field]: updateData[field as keyof typeof updateData]})
   // try {
     const result = await prisma.query.update({
       where: {

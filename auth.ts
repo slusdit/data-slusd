@@ -46,7 +46,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async signIn({ user, account, profile, email, credentials }) {
       if (account?.provider === "google") {
-        console.log('~~~~~~~~~~~~ SIGNING IN WITH GOOGLE ~~~~~~~~~~~~')
+        // console.log('~~~~~~~~~~~~ SIGNING IN WITH GOOGLE ~~~~~~~~~~~~')
         let profileEmail = profile?.email
         // profileEmail =  'jfox@slusd.us' // 'xbugarin@slusd.us' // !! Override for testing
         const profileId = user?.id
@@ -54,7 +54,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // console.log({ profileId })
         if (profileId && profileEmail) {
           const result = await syncTeacherClasses(profileId, profileEmail)
-          console.log({ user }, { account }, { profile }, { profileEmail }, { profileId }, { result })
+          // console.log({ user }, { account }, { profile }, { profileEmail }, { profileId }, { result })
           const allSchools = await getAllSchools(profileEmail)
           // console.log({ result })
         }

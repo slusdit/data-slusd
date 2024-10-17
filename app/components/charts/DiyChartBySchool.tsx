@@ -382,7 +382,7 @@ const defaultChartData = [
 
 
 function createConfig(chartData: SDCEnrollmentPercentByGrade[], key: string = 'School') {
-    console.log(chartData)
+    // console.log(chartData)
     let config: BaseBySchoolChartConfig = {}
 
     chartData.forEach(item => {
@@ -407,7 +407,7 @@ function createConfig(chartData: SDCEnrollmentPercentByGrade[], key: string = 'S
 
 
     })
-    console.log(config)
+    // console.log(config)
     return config
 };
 
@@ -424,18 +424,18 @@ function getSelectedData(table: Table<any>) {
             filteredData = table.getFilteredRowModel()
                 .rows.map((row) => row.original)
 
-            console.log({ filteredData })
+            // console.log({ filteredData })
 
         }
-        console.log(table.getSelectedRowModel().rows.length)
+        // console.log(table.getSelectedRowModel().rows.length)
         if (rowSelection && table.getSelectedRowModel().rows.length > 0) {
-            console.log(rowSelection)
+            // console.log(rowSelection)
             filteredData = table.getSelectedRowModel()
                 .rows.map((row) => row.original)
             }
             // }
             
-            console.log({ filteredData })
+            // console.log({ filteredData })
 
 }
 export function removeZeroValues<T>(data: T[]) {
@@ -460,7 +460,7 @@ export function DiyChartBySchool({
     title?: string
     table: Table<SDCEnrollmentPercentByGrade>
 }) {
-    console.log(table.options)
+    // console.log(table.options)
     const { data } = table.options
     const { rowSelection, columnFilters, columnVisibility } = table.options.state
     // console.log(exportAll)
@@ -468,27 +468,27 @@ export function DiyChartBySchool({
     let filteredDataBySchool = table.getRowModel().rows.map((row:Row<any>) => row.original)
 
     // if (!exportAll) {
-    console.log(rowSelection)
-    console.log(columnFilters)
+    // console.log(rowSelection)
+    // console.log(columnFilters)
 
         if (columnFilters && columnFilters.length > 0) {
             filteredDataBySchool = table.getFilteredRowModel()
                 .rows.map((row) => row.original)
 
-            console.log({ filteredData: filteredDataBySchool })
+            // console.log({ filteredData: filteredDataBySchool })
 
         }
        
 
         if (rowSelection && table.getSelectedRowModel().rows.length > 0) {
-            console.log(rowSelection)
+            // console.log(rowSelection)
             filteredDataBySchool = table.getSelectedRowModel()
                 .rows.map((row) => row.original)
             }
             // }
             
-            console.log({ filteredData: filteredDataBySchool })
-    console.log(chartData)        
+            // console.log({ filteredData: filteredDataBySchool })
+    // console.log(chartData)        
 
     const chartConfig = createConfig(filteredDataBySchool as SDCEnrollmentPercentByGrade[])
 
