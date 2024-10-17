@@ -46,12 +46,16 @@ const AggridTest = ({
     return <div>{formattedQuery}</div>;
   };
 
-  const nameRenderer = (params: { data: { name: string, id: string, category: { label: string }  } }) => {
+  const nameRenderer = (params: {
+    data: { name: string; id: string; category: { label: string } };
+  }) => {
     console.log(params.data.category);
     return (
       <div className="cursor-pointer text-blue-500 underline">
         <Link
-          href={`/query/${params.data.category.label.toLowerCase()}/${params.data.id}`}
+          href={`/query/${params.data.category.label.toLowerCase()}/${
+            params.data.id
+          }`}
           target="_blank"
         >
           {params.data.name}
@@ -212,7 +216,7 @@ const AggridTest = ({
                 if (gridRef.current) {
                   const confirmDelete = window.confirm(
                     `Are you sure you want to delete ${params.data.name}`
-                  )
+                  );
                   if (!confirmDelete) return;
                   try {
                     gridRef.current.api.applyTransaction({
@@ -307,18 +311,21 @@ const AggridTest = ({
 
   return (
     <div className={agGridTheme} style={{ height: "100%", width: "100%" }}>
-      <div className="mt-2">
+      <div className="flex justify-between mb-2">
         <div className="text-3xl text-foreground font-semibold">Queries</div>
-        <Button
-          onClick={onExportToCsv}
-          className="my-2 text-foreground"
-          variant="outline"
-        >
-          Export to CSV
-        </Button>
-        <FormDialog triggerMessage="Add Query" icon={<Plus className="py-1" />}>
-          <AddQueryForm session={session} categories={categories} />
-        </FormDialog>
+        <div className="flex space-x-2">
+          <FormDialog triggerMessage="Add Query" icon={<Plus className="w-4 h-4" />}>
+            <AddQueryForm session={session} categories={categories} />
+          </FormDialog>
+
+          <Button
+            onClick={onExportToCsv}
+            className="text-foreground"
+            variant="outline"
+          >
+            Export to CSV
+          </Button>
+        </div>
       </div>
       <div className="h-full w-full">
         <AgGridReact
