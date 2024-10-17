@@ -77,7 +77,7 @@ const QueryList = ({
 
                 ) {
 
-
+                  console.log(category.value)
                   const defaultExpandedStyle = (defaultExpandedAccordion && defaultExpandedAccordion === category.value) ? "bg-primary/80 text-primary-foreground" : "even:bg-secondary/10 "
                   console.log(defaultExpandedStyle)
                   return (
