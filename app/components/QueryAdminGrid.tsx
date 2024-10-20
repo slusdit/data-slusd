@@ -240,12 +240,11 @@ const AggridTest = ({
               maxWidth: '90vw',
             },
             cellEditorPopup: true,
-            valueFormatter: false,
-            // valueFormatter: (params: { data: { query: string } }) =>
-            //   format(params.data?.query, {
-            //     language: "tsql",
-            //     keywordCase: "upper",
-            //   }),
+            valueFormatter: (params: { data: { query: string } }) =>
+              format(params.data?.query, {
+                language: "tsql",
+                keywordCase: "upper",
+              }),
             cellEditorParams: {
               useFormatter: true,
               maxLength: 999999,
@@ -254,7 +253,7 @@ const AggridTest = ({
                 return value
               }
             },
-            cellRenderer: true,
+            cellRenderer: queryRenderer,
             autoSize: true,
             minWidth: 600,
             
