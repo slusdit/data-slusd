@@ -19,78 +19,291 @@ import FormDialog from "./forms/FormDialog";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 
+// const QueryEditor = forwardRef((props: ICellEditorParams, ref) => {
+//   const textAreaRef = useRef<HTMLTextAreaElement>(null);
+//   const initialValue = props.value;
+//   console.log('props', props);
+
+//   useEffect(() => {
+//     if (textAreaRef.current) {
+//       const formattedValue = format(initialValue || '', {
+//         language: "tsql",
+//         keywordCase: "upper",
+//       });
+//       textAreaRef.current.value = formattedValue;
+//       textAreaRef.current.focus();
+//     }
+//   }, [initialValue]);
+
+//   const getValue = () => {
+//     const currentValue = textAreaRef.current?.value || '';
+//     return currentValue;
+//   };
+
+//   useEffect(() => {
+//     if (ref && typeof ref === 'object') {
+//       (ref as any).current = {
+//         getValue,
+//         isCancelBeforeStart: () => false,
+//         isCancelAfterEnd: () => false,
+//       };
+//     }
+//   }, []);
+//   const handleKeyUp = async (event: React.KeyboardEvent) => {
+//     if (event.key === 'Enter') {
+//       if (event.shiftKey) {
+//         const start = textAreaRef.current!.selectionStart;
+//         const end = textAreaRef.current!.selectionEnd;
+//         const value = textAreaRef.current!.value;
+//         const newValue = value.substring(0, start) + '\n' + value.substring(end);
+//         textAreaRef.current!.selectionStart = textAreaRef.current!.selectionEnd = start + 1;
+//         event.preventDefault();
+//       } else {
+//         event.preventDefault();
+//         event.stopPropagation();
+//         try {
+//           const value = getValue();
+//           const formattedQuery = format(value || '', {
+//             language: "tsql",
+//             keywordCase: "upper",
+//           });
+
+//           const data = { ...props.data, query: formattedQuery };
+//           await updateQuery(data, 'query');
+
+//           // Update the grid with formatted query
+//           if (props.api) {
+//             const rowNode = props.api.getRowNode(props.rowIndex.toString());
+//             console.log(rowNode)
+//             if (rowNode) {
+//               rowNode.setDataValue('query', formattedQuery);
+//               // props.api.refreshCells({
+//               //   force: true,
+//               //   rowNodes: [rowNode],
+//               //   columns: ['query']
+//               // });
+//             }
+//           }
+
+//           toast.success("Query updated successfully");
+//         } catch (error) {
+//           console.error("Error updating query:", error);
+//           toast.error("Error updating query: Invalid SQL format");
+//         }
+
+//         if (props.stopEditing) {
+//           props.stopEditing();
+//         }
+//       }
+//     }
+//   };
+//   // const handleKeyUp = async (event: React.KeyboardEvent) => {
+//   //   console.log("key up", event.key);
+//   //   console.log('event', event);
+//   //   if (event.key === 'Enter') {
+//   //     console.log("enter");
+//   //     // If Shift + Enter is pressed, insert a new line
+//   //     if (event.shiftKey) {
+//   //       console.log("shift + enter");
+//   //       const start = textAreaRef.current!.selectionStart;
+//   //       const end = textAreaRef.current!.selectionEnd;
+//   //       const value = textAreaRef.current!.value;
+//   //       console.log('value', value)
+
+//   //       // Insert actual newline character
+//   //       const newValue = value.substring(0, start) + '\n' + value.substring(end);
+//   //       // textAreaRef.current!.value = newValue;
+
+//   //       // Move cursor to after the newline
+//   //       textAreaRef.current!.selectionStart = textAreaRef.current!.selectionEnd = start + 1;
+
+//   //       // Prevent default to handle the newline insertion manually
+//   //       event.preventDefault();
+//   //     } else {
+//   //       // If just Enter is pressed, stop editing and save
+//   //       event.preventDefault();
+//   //       event.stopPropagation();
+//   //       try {
+//   //         // Format the query
+//   //         const value = getValue();
+//   //         const formattedQuery = format(value || '', {
+//   //           language: "tsql",
+//   //           keywordCase: "upper",
+//   //         });
+
+//   //         // Update the data with formatted query
+//   //         // data.query = formattedQuery;
+
+//   //         // Send update to the server
+//   //         const data = { ...props.data, query: formattedQuery };
+//   //         console.log('data', data);
+//   //         console.log('rowNode1',props.api.getRowNode(props.rowIndex.toString()))
+//   //         await updateQuery(data, 'query');
+
+//   //         // Update the grid with formatted query
+//   //         let rowNode = props.api.getRowNode(props.rowIndex.toString()) || {data: {}};
+//   //         rowNode.data = { ...rowNode.data, query: formattedQuery };
+          
+//   //         if (rowNode) {
+//   //           props.api.refreshCells({
+//   //             force: true,
+//   //             rowNodes: [rowNode],
+//   //             columns: ['query']
+//   //           });
+//   //         }
+
+
+//   //         toast.success("Query updated successfully");
+//   //       } catch (error) {
+//   //         console.error("Error updating query:", error);
+//   //         toast.error("Error updating query: Invalid SQL format");
+
+//   //         // Revert to old value if update fails
+//   //         if (event.oldValue) {
+//   //           const rowNode = props.api.getRowNode(props.rowIndex.toString());
+//   //         if (rowNode) {
+//   //           props.api.refreshCells({
+//   //             force: true,
+//   //             rowNodes: [rowNode],
+//   //             columns: ['query']
+//   //           });
+//   //         }
+//   //         }
+//   //       }
+
+//   //       if (props.stopEditing) {
+//   //         props.stopEditing();
+//   //       }
+//   //     }
+//   //   }
+//   // };
+
+//   return (
+//     <textarea
+//       ref={textAreaRef}
+//       defaultValue={initialValue}
+//       onKeyUp={handleKeyUp}
+//       className="w-full h-[600px] p-4 font-mono text-sm bg-background border rounded-md whitespace-pre-wrap"
+//     />
+//   );
+// });
+
 const QueryEditor = forwardRef((props: ICellEditorParams, ref) => {
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
-  const value = props.value;
+  const initialValue = props.value;
 
   useEffect(() => {
     if (textAreaRef.current) {
-      const formattedValue = format(value || '', {
+      const formattedValue = format(initialValue || '', {
         language: "tsql",
         keywordCase: "upper",
       });
       textAreaRef.current.value = formattedValue;
       textAreaRef.current.focus();
     }
-  }, [value]);
+  }, [initialValue]);
+
+  const getValue = () => {
+    return textAreaRef.current?.value || '';
+  };
+
+  useEffect(() => {
+    if (ref && typeof ref === 'object') {
+      (ref as any).current = {
+        getValue,
+        isCancelBeforeStart: () => false,
+        isCancelAfterEnd: () => false,
+      };
+    }
+  }, []);
+
+  const handleKeyUp = async (event: React.KeyboardEvent) => {
+    if (event.key === 'Enter') {
+      if (event.shiftKey) {
+        const start = textAreaRef.current!.selectionStart;
+        const end = textAreaRef.current!.selectionEnd;
+        const value = textAreaRef.current!.value;
+        const newValue = value.substring(0, start) + '\n' + value.substring(end);
+        textAreaRef.current!.value = newValue;
+        textAreaRef.current!.selectionStart = textAreaRef.current!.selectionEnd = start + 1;
+        event.preventDefault();
+      } else {
+        event.preventDefault();
+        event.stopPropagation();
+        try {
+          const value = getValue();
+          const formattedQuery = format(value || '', {
+            language: "tsql",
+            keywordCase: "upper",
+          });
+
+          const data = { ...props.data, query: formattedQuery };
+          await updateQuery(data, 'query');
+
+          // Update the cell value directly in the grid
+          const rowNode = props.api.getRowNode(props.data.id.toString());
+          if (rowNode) {
+            rowNode.setDataValue('query', formattedQuery);
+          }
+
+          toast.success("Query updated successfully");
+          if (props.stopEditing) {
+            props.stopEditing();
+          }
+        } catch (error) {
+          console.error("Error updating query:", error);
+          toast.error("Error updating query: Invalid SQL format");
+          if (props.stopEditing) {
+            props.stopEditing();
+          }
+        }
+      }
+    }
+  };
 
   return (
     <textarea
       ref={textAreaRef}
-      defaultValue={value}
+      defaultValue={initialValue}
+      onKeyUp={handleKeyUp}
       className="w-full h-[600px] p-4 font-mono text-sm bg-background border rounded-md whitespace-pre-wrap"
     />
   );
 });
 
 QueryEditor.displayName = 'QueryEditor';
-const AggridTest = ({
+
+const QueryAdminGrid = ({
   dataIn,
   session,
   categories,
 }: {
   dataIn: QueryWithCategory[];
-  session: Session ;
+  session: Session;
   categories: any[];
 }) => {
   const { theme } = useTheme();
-  const agGridTheme =
-    theme === "dark" ? "ag-theme-alpine-dark" : "ag-theme-alpine";
+  const agGridTheme = theme === "dark" ? "ag-theme-alpine-dark" : "ag-theme-alpine";
   const gridRef = useRef<AgGridReact>(null);
- 
+
   const categoryNameArray = useMemo(() => {
     return categories.map((category) => category.label).sort();
   }, [categories]);
-
-  const queryRenderer = (params: { value: string }) => {
-    if (!params.value) return <></>
-    const formattedQuery = format(params.value, {
-      language: "tsql",
-      keywordCase: "upper",
-    })
-    // return <div style={{whiteSpace: "pre-wrap"}}>{formattedQuery}</div>
-
-    return <div>{formattedQuery}</div>;
-  };
 
   const categoryValueFormatter = (params: { value: string }) => {
     const selectedCategory = categoryNameArray.find(
       (category) => category.label === params.value
     );
-    // console.log('selectedCategory', selectedCategory );
     return selectedCategory?.id;
   };
 
   const nameRenderer = (params: {
     data: { name: string; id: string; category: { label: string } };
   }) => {
-    // console.log(params.data.category);
     return (
       <div className="cursor-pointer text-blue-500 underline">
         <Link
-          href={`/query/${params.data.category.label.toLowerCase()}/${
-            params.data.id
-          }`}
+          href={`/query/${params.data.category.label.toLowerCase()}/${params.data.id}`}
           target="_blank"
         >
           {params.data.name}
@@ -99,52 +312,10 @@ const AggridTest = ({
     );
   };
 
-  const CustomQueryEditor = () => {
-    const [value, setValue] = useState('');
-    const refInput = useRef(null);
-    const afterGuiAttached = () => {
-      refInput.current.value = format(value, {
-        language: "tsql",
-        keywordCase: "upper",
-      });
-    };
+  const createAgGridData = (data: any[]) => {
+    if (!data || !data.length) return { data: [], colDefs: [] };
 
-    return {
-      // Gets called once before editing starts
-      init: function(params: any) {
-        setValue(params.value);
-        return value;
-      },
-
-      // Gets called once when editing is finished
-      getValue: function() {
-        return refInput.current.value;
-      },
-
-      // Return the DOM element of your editor
-      getGui: function() {
-        const eDiv = document.createElement('div');
-        const textArea = document.createElement('textarea');
-        textArea.style.height = '200px';
-        textArea.style.width = '100%';
-        textArea.style.fontFamily = 'monospace';
-        textArea.value = format(value, {
-          language: "tsql",
-          keywordCase: "upper",
-        });
-        refInput.current = textArea;
-        eDiv.appendChild(textArea);
-        return eDiv;
-      },
-
-      afterGuiAttached,
-    };
-  };
-  const createAgGridData =  (data: any[]) => {
-      // console.log({ data })
-      if (!data || !data.length) return { data: [], colDefs: [] };
-
-      const keys = Object.keys(data[0]);
+    const keys = Object.keys(data[0]);
     let colDefs = keys.map((key, index) => {
       if (["id", "category", 'createdBy', 'publicQuery'].includes(key)) {
         return {
@@ -159,210 +330,213 @@ const AggridTest = ({
           hide: true,
           cellStyle: { whiteSpace: "normal" },
         };
-            
-      } else
-        if (["publicQuery", "chart"].includes(key)) {
-          return {
-            field: key.trim(),
-            resizable: true,
-            sortable: true,
-            filter: true,
-            floatingFilter: true,
-            editable: true,
-            cellDataType: "boolean",
-
-            autoSize: true,
-            // minWidth: 100,
-            // checkboxSelection: index === 0 ? true : false,
-            cellStyle: { whiteSpace: "normal" },
-          };
-        } else if ("categoryId" === key) {
-          return {
-            field: key.trim(),
-            resizable: true,
-            sortable: true,
-            filter: true,
-            floatingFilter: true,
-            editable: true,
-            cellEditor: "agSelectCellEditor",
-            cellEditorParams: {
-              values: categoryNameArray,
-              valueFormatter: categoryValueFormatter,
-            },
-            valueGetter: (params: { data: { category: { label: string } } }) => {
-              return params.data?.category?.label;
-            },
-            valueSetter: (params: { 
-              newValue: string,
-              data: { categoryId: string, category: { label: string } }
-            }) => {
-              const selectedCategory = categories.find(
-                (category) => category.label === params.newValue
-              );
-              // console.log(selectedCategory);
-              if (selectedCategory) {
-                params.data.categoryId = selectedCategory.id;
-                params.data.category = selectedCategory;
-                // console.log(params.data.category);
-                return true;
-              }
-              return false;
-            },
-            
-            
-            valueFormatter: (params: { value: { label: any } }) => {
-              // console.log(params.value);
-              // console.log(categories[0]);
-              const selectedCategory = categories.filter((category) => category.label === params.value);
-              // console.log(selectedCategory)
-              return selectedCategory[0]?.label;
-             
-            },
-            autoSize: true,
-            // minWidth: 100,
-            // checkboxSelection: index === 0 ? true : false,
-            cellStyle: { whiteSpace: "normal" },
-          };
-        } else if ("query" === key) {
-          return {
-            field: key.trim(),
-            resizable: true,
-            sortable: true,
-            filter: true,
-            floatingFilter: true,
-            editable: true,
-            autoHeight: false,
-            // cellEditor: "agLargeTextCellEditor",
-            // cellEditor: CustomQueryEditor,
-            cellEditor: QueryEditor,
-            cellEditorPopupStyle: {
-              width: '800px',
-              maxWidth: '90vw',
-            },
-            cellEditorPopup: true,
-            valueFormatter: false,
-            // valueFormatter: (params: { data: { query: string } }) =>
-            //   format(params.data?.query, {
-            //     language: "tsql",
-            //     keywordCase: "upper",
-            //   }),
-            cellEditorParams: {
-              useFormatter: true,
-              maxLength: 999999,
-              formatValue: (value: string) => {
-                if (!value) return "";
-                return value
-              }
-            },
-            cellRenderer: true,
-            autoSize: true,
-            minWidth: 600,
-            
-            cellStyle: { whiteSpace: "pre-wrap" },
-          };
-        } else if ("name" === key) {
-          return {
-            field: key.trim(),
-            resizable: true,
-            sortable: true,
-            filter: true,
-            floatingFilter: true,
-            editable: true,
-
-            cellRenderer: nameRenderer,
-            autoSize: true,
-            minWidth: 300,
-            // checkboxSelection: index === 0 ? true : false,
-            cellStyle: { whiteSpace: "normal" },
-          };
-         } else
-          return {
-            field: key.trim(),
-            resizable: true,
-            sortable: true,
-            filter: true,
-            floatingFilter: true,
-            editable: true,
-
-            autoSize: true,
-            minWidth: 25,
-            // checkboxSelection: index === 0 ? true : false,
-            cellStyle: { whiteSpace: "normal" },
-          };
-      });
-    
-    // colDefs = colDefs.filter(colDef => (colDef.field !== 'id') );
-    // colDefs = colDefs.filter(colDef => (colDef.field !== 'id') );
-
-      // colDefs = colDefs.map(c => c.field === 'category' ? { ...c, valueFormatter: (params) => params.value?.label } : c);
-      colDefs = [
-        ...colDefs,
-        {
-          field: "delete",
+      } else if (["publicQuery", "chart"].includes(key)) {
+        return {
+          field: key.trim(),
           resizable: true,
-          sortable: false,
-          filter: false,
-          floatingFilter: false,
-          editable: false,
+          sortable: true,
+          filter: true,
+          floatingFilter: true,
+          editable: true,
+          cellDataType: "boolean",
           autoSize: true,
-          autoHeight: true, 
-
-          valueFormatter: (params) => params.value, 
-          cellEditorParams: {}, 
+          cellStyle: { whiteSpace: "normal" },
+        };
+      } else if ("categoryId" === key) {
+        return {
+          field: key.trim(),
+          resizable: true,
+          sortable: true,
+          filter: true,
+          floatingFilter: true,
+          editable: true,
+          cellEditor: "agSelectCellEditor",
+          cellEditorParams: {
+            values: categoryNameArray,
+            valueFormatter: categoryValueFormatter,
+          },
+          valueGetter: (params: { data: { category: { label: string } } }) => {
+            return params.data?.category?.label;
+          },
+          valueSetter: (params: {
+            newValue: string,
+            data: { categoryId: string, category: { label: string } }
+          }) => {
+            const selectedCategory = categories.find(
+              (category) => category.label === params.newValue
+            );
+            if (selectedCategory) {
+              params.data.categoryId = selectedCategory.id;
+              params.data.category = selectedCategory;
+              return true;
+            }
+            return false;
+          },
+          valueFormatter: (params: { value: { label: any } }) => {
+            const selectedCategory = categories.filter((category) => category.label === params.value);
+            return selectedCategory[0]?.label;
+          },
+          autoSize: true,
+          cellStyle: { whiteSpace: "normal" },
+        };
+      } else if ("query" === key) {
+        return {
+          field: key.trim(),
+          resizable: true,
+          suppressKeyboardEvent: (params: { event: KeyboardEvent }) => {
+            return params.event.key === "Enter";
+          },
+          sortable: true,
+          filter: true,
+          floatingFilter: true,
+          editable: true,
+          cellEditor: QueryEditor,
+          cellEditorPopup: true,
+          cellEditorPopupStyle: {
+            width: '800px',
+            maxWidth: '90vw',
+          },
+          autoSize: true,
+          minWidth: 600,
+          cellStyle: { whiteSpace: "pre-wrap" },
+          valueSetter: (params: { newValue: string; data: any }) => {
+            const oldValue = params.data.query;
+            params.data.query = params.newValue;
+            console.log( 'gridRef.current.api',gridRef.current?.api);
+            // Trigger the onCellValueChanged event
+            if (oldValue !== params.newValue && gridRef.current?.api) {
+              const rowNode = gridRef.current.api.getRowNode(params.data.id.toString());
+              if (rowNode) {
+                rowNode.setDataValue('query', params.newValue);
+                gridRef.current.api.refreshCells({
+                  force: true,
+                  rowNodes: [rowNode],
+                  columns: ['query']
+                });
+              }
+            }
+            return true;
+          }
+          // cellRenderer: (params: { value: string }) => {
+          //   try {
+          //     return format(params.value || '', {
+          //       language: "tsql",
+          //       keywordCase: "upper",
+          //     });
+          //   } catch (error) {
+          //     return params.value;
+          //   }
+          // }
+        };
+      } else if ("name" === key) {
+        return {
+          field: key.trim(),
+          resizable: true,
+          sortable: true,
+          filter: true,
+          floatingFilter: true,
+          editable: true,
+          cellRenderer: nameRenderer,
+          autoSize: true,
+          minWidth: 300,
+          cellStyle: { whiteSpace: "normal" },
+        };
+      } else {
+        return {
+          field: key.trim(),
+          resizable: true,
+          sortable: true,
+          filter: true,
+          floatingFilter: true,
+          editable: true,
+          autoSize: true,
           minWidth: 25,
           cellStyle: { whiteSpace: "normal" },
+        };
+      }
+    });
 
-          cellRenderer: (params: { data: any }) => (
-            <Button
-              className="bg-destructive text-white hover:bg-red-600"
-              size="sm"
-              onClick={() => {
-                if (gridRef.current) {
-                  const confirmDelete = window.confirm(
-                    `Are you sure you want to delete ${params.data.name}`
-                  );
-                  if (!confirmDelete) return;
-                  try {
-                    gridRef.current.api.applyTransaction({
-                      remove: [params.data],
-                    });
-                    deleteQuery({ id: params.data.id });
-                    toast.success(
-                      `Query ${params.data.name} deleted successfully`
-                    );
-                  } catch (e) {
-                    console.error(e);
-                    toast.error(`Error deleting query  ${params.data.name}`);
-                  }
+    colDefs = [
+      ...colDefs,
+      {
+        field: "delete",
+        resizable: true,
+        sortable: false,
+        filter: false,
+        floatingFilter: false,
+        editable: false,
+        autoSize: true,
+        valueFormatter: (params) => params.value,
+        cellEditorParams: {},
+        minWidth: 25,
+        cellStyle: { whiteSpace: "normal" },
+        cellRenderer: (params: { data: any }) => (
+          <Button
+            className="bg-destructive text-white hover:bg-red-600"
+            size="sm"
+            onClick={() => {
+              if (gridRef.current) {
+                const confirmDelete = window.confirm(
+                  `Are you sure you want to delete ${params.data.name}`
+                );
+                if (!confirmDelete) return;
+                try {
+                  gridRef.current.api.applyTransaction({
+                    remove: [params.data],
+                  });
+                  deleteQuery({ id: params.data.id });
+                  toast.success(`Query ${params.data.name} deleted successfully`);
+                } catch (e) {
+                  console.error(e);
+                  toast.error(`Error deleting query ${params.data.name}`);
                 }
-              }}
-            >
-              Delete
-            </Button>
-          ),
-        },
-      ];
-      let formattedData = data.map((row) =>
-        keys.reduce((acc, key) => {
-          if (!row[key]) return acc;
-          acc[key.trim()] = row[key] ?? "";
-          // acc = {
-          //   ...acc,
-          //   checkboxSelection: true,
-          // };
-          // console.log({ acc });
-          return acc;
-        }, {})
-      );
+              }
+            }}
+          >
+            Delete
+          </Button>
+        ),
+      },
+    ];
 
-      return { data: formattedData, colDefs };
+    let formattedData = data.map((row) =>
+      keys.reduce((acc, key) => {
+        if (!row[key]) return acc;
+        acc[key.trim()] = row[key] ?? "";
+        return acc;
+      }, {})
+    );
+
+    return { data: formattedData, colDefs };
+  };
+
+  // const { data, colDefs } = useMemo(
+  //   () => {
+  //     createAgGridData(dataIn),
+  //   }
+  //   [dataIn, createAgGridData]
+  // );
+  const { data, colDefs } = useMemo(() => {
+    const gridData = createAgGridData(dataIn);
+    const queryColDef = gridData.colDefs.find(col => col.field === 'query');
+    if (queryColDef) {
+      queryColDef.valueSetter = (params: { newValue: string; data: any }) => {
+        const oldValue = params.data.query;
+        params.data.query = params.newValue;
+        console.log( 'params.data.query',params.data.query);
+        
+        // Instead of dispatching event, update the cell directly
+        if (oldValue !== params.newValue && gridRef.current?.api) {
+          const rowNode = gridRef.current.api.getRowNode(params.data.id.toString());
+          if (rowNode) {
+            rowNode.setDataValue('query', params.newValue);
+          }
+        }
+        return true;
+      };
     }
-    
-
-  const { data, colDefs } = useMemo(
-    () => createAgGridData(dataIn),
-    [dataIn, createAgGridData]
-  );
+    return gridData;
+  }, [dataIn, createAgGridData]);
 
   const autoSizeStrategy = () => {
     if (gridRef.current && gridRef.current.api) {
@@ -378,47 +552,97 @@ const AggridTest = ({
   const onSelectionChanged = useCallback(() => {
     if (gridRef.current) {
       const selectedRows = gridRef.current.api.getSelectedRows();
-      // console.log("Selected rows:", selectedRows);
     }
   }, []);
-  const onExportToCsv = () => {
-    {
-      // console.log("CLICK");
-      gridApi.exportDataAsCsv();
-    }
-  };
-  // console.log(data);
+
   let gridApi: GridApi;
+
+  const onExportToCsv = () => {
+    gridApi.exportDataAsCsv();
+  };
+
   const onGridReady = (params: { api: GridApi<any> }) => {
     gridApi = params.api;
     autoSizeStrategy();
   };
-
-  const onCellValueChanged = async (event: { colDef?: any; data?: any }) => {
-    if (event.colDef?.field === "categoryId") {
-      console.log(event)
-    }
-    // console.log({ event });
-    const field = event.colDef.field;
-
-    // console.log({ field });
+  const onCellValueChanged = async (event: { colDef?: any; data?: any; oldValue?: string; newValue?: string }) => {
+    const field = event.colDef?.field;
     const { data } = event;
-    // console.log({event})
-    // console.log(data);
+
+    console.log('field', field, 'data', data);
+    if (!field || !data || field === 'query') return;
+
     try {
-      const response = await updateQuery(data, field);
-      // console.log({ response });
+      await updateQuery(data, field);
       toast.success("Query updated successfully");
     } catch (error) {
       console.error("Error updating query:", error);
       toast.error("Error updating query");
-      return error;
     }
+
   };
+  // const onCellValueChanged = async (event: { colDef?: any; data?: any }) => {
+  //   const field = event.colDef?.field;
+  //   const { data } = event;
+
+  //   console.log(data)
+  //   console.log(field)
+
+  //   if (field === 'query') {
+  //     console.log('IS A QUERY');
+
+  //     try {
+  //       // Validate the SQL query format
+  //       const formattedQuery = format(data.query || '', {
+  //         language: "tsql",
+  //         keywordCase: "upper",
+  //       });
+
+  //       // Update the data with the formatted query
+  //       data.query = formattedQuery;
+
+  //       // Send the update to the server
+  //       const response = await updateQuery(data, field);
+  //       toast.success("Query updated and formatted successfully");
+
+  //       // Refresh the cell to show the formatted query
+  //       if (gridRef.current) {
+  //         gridRef.current.api.refreshCells({
+  //           force: true,
+  //           columns: ['query'],
+  //         });
+  //       }
+  //     } catch (error) {
+  //       console.error("Error updating query:", error);
+  //       toast.error("Error updating query: Invalid SQL format");
+
+  //       // Optionally revert the change if the update fails
+  //       if (gridRef.current) {
+  //         gridRef.current.api.refreshCells({
+  //           force: true,
+  //           columns: ['query'],
+  //         });
+  //       }
+  //       return error;
+  //     }
+  //   } 
+  //   if (field === "categoryId") {
+  //     console.log(event);
+  //   }
+
+  //   try {
+  //     const response = await updateQuery(data, field);
+  //     toast.success("Query updated successfully");
+  //   } catch (error) {
+  //     console.error("Error updating query:", error);
+  //     toast.error("Error updating query");
+  //     return error;
+  //   }
+  // };
 
   return (
     <div className={agGridTheme} style={{ height: "100%", width: "100%" }}>
-<style jsx global>{`
+      <style jsx global>{`
         .ag-popup-editor {
           max-width: 90vw !important;
         }
@@ -460,4 +684,4 @@ const AggridTest = ({
   );
 };
 
-export default AggridTest;
+export default QueryAdminGrid;
