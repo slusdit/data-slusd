@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Sidebar from "@/app/components/Sidebar";
 import ReportGrid from "@/app/components/ReportGrid";
+import DataTableAgGrid from "@/app/components/DataTableAgGrid";
 
 // const prisma = new PrismaClient();
 export default async function Page({ params }: { params: { id: string, category: string } }) {
@@ -41,6 +42,7 @@ export default async function Page({ params }: { params: { id: string, category:
         id: true,
         name: true,
         description: true,
+        hiddenCols: true,
 
         category: {
           select: {
@@ -62,6 +64,15 @@ export default async function Page({ params }: { params: { id: string, category:
   if (result) {
     let data: any[] = await runQuery(result?.query);
     const category = result
+    function getHiddenColumns(hiddenCols: string): string[] | undefined {
+
+        if(!hiddenCols){
+          return []
+        }
+        return hiddenCols.split(',').map((col) => col.trim().toUpperCase());
+      
+    }
+
     return (
       <div >
         {/* <Sidebar session={session} categories={categories} queries={queries} /> */}
@@ -142,14 +153,23 @@ export default async function Page({ params }: { params: { id: string, category:
               <h2 className="text-xl underline font-bold mt-2 w-full">Data:</h2>
               {/* <ReportGrid data={data} id={id}/> */}
 
-              <DataTable
+              <DataTableAgGrid
                 data={data}
                 id={id}
                 showChart={result.chart}
                 chartTitle={result?.name}
                 chartValueKey={result?.chartValueKey}
                 chartColumnKey={result?.chartColumnKey}
-              />
+                hiddenColumns={getHiddenColumns(result?.hiddenCols)}
+                title={result.name}              />
+              {/* <DataTable
+                data={data}
+                id={id}
+                showChart={result.chart}
+                chartTitle={result?.name}
+                chartValueKey={result?.chartValueKey}
+                chartColumnKey={result?.chartColumnKey}
+              /> */}
 
             </>
           {/* )} */}
