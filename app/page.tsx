@@ -69,7 +69,7 @@ export default async function Home() {
           categories={categories}
           queries={queries}
           session={session}
-          accordion={false}
+          accordion={false} 
         />
 
         {/* Main Landing Page */}
