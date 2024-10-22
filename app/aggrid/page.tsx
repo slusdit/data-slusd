@@ -137,7 +137,7 @@ export default async function Page() {
                 id={id}
                 showChart={result.chart}
                 chartTitle={result?.name}
-                chartValueKey={result?.chartValueKey}
+                chartXKey={result?.chartXKey}
                 chartColumnKey={result?.chartColumnKey}
               />
 
