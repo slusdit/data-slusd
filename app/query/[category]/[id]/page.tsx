@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Sidebar from "@/app/components/Sidebar";
 import ReportGrid from "@/app/components/ReportGrid";
+import DataTableAgGrid from "@/app/components/DataTableAgGrid";
 
 // const prisma = new PrismaClient();
 export default async function Page({ params }: { params: { id: string, category: string } }) {
@@ -41,6 +42,10 @@ export default async function Page({ params }: { params: { id: string, category:
         id: true,
         name: true,
         description: true,
+        hiddenCols: true,
+        chartTypeKey: true,
+        chartXKey: true,
+        chartYKey: true,
 
         category: {
           select: {
@@ -62,6 +67,15 @@ export default async function Page({ params }: { params: { id: string, category:
   if (result) {
     let data: any[] = await runQuery(result?.query);
     const category = result
+    function getHiddenColumns(hiddenCols: string): string[] | undefined {
+
+      if (!hiddenCols) {
+        return []
+      }
+      return hiddenCols.split(',').map((col) => col.trim().toUpperCase());
+
+    }
+
     return (
       <div >
         {/* <Sidebar session={session} categories={categories} queries={queries} /> */}
@@ -107,52 +121,19 @@ export default async function Page({ params }: { params: { id: string, category:
             <label htmlFor="description">Description:</label>
             <div id="description">{result.description}</div>
           </div>
-          {/* <p>Public/Private: {result.publicQuery ? "Public" : "Private"}</p>
-        <p>
-          Created By:{" "}
-          <a
-            className="hover:underline text-primary"
-            href={`mailto:${result.createdBy}`}
-          >
-            {result.createdBy}{" "}
-          </a>
-        </p> */}
 
+          <h2 className="text-xl underline font-bold mt-2 w-full">Data:</h2>
+          <DataTableAgGrid
+            data={data}
+            id={id}
+            showChart={result.chart}
+            chartTitle={result?.name}
+            chartXKey={result?.chartXKey}
+            chartYKey={result?.chartYKey}
+            chartTypeKey={result?.chartTypeKey}
+            hiddenColumns={getHiddenColumns(result?.hiddenCols)}
+            title={result.name} />
 
-
-          {/* <DataTable columns={columns} data={data} /> */}
-
-          {/* {id === "cly54bp030001hv31khj4zt38" &&
-        <DiyChartByGrade chartData={data} />} */}
-{/* 
-          {session?.user?.queryEdit ? (
-            <div className="w-full">
-
-
-              <QueryInput
-                initialValue={result?.query}
-                initialResult={data}
-                showChart={result.chart}
-                chartTitle={result?.name}
-                id={id}
-              />
-            </div>
-          ) : ( */}
-            <>
-              <h2 className="text-xl underline font-bold mt-2 w-full">Data:</h2>
-              {/* <ReportGrid data={data} id={id}/> */}
-
-              <DataTable
-                data={data}
-                id={id}
-                showChart={result.chart}
-                chartTitle={result?.name}
-                chartValueKey={result?.chartValueKey}
-                chartColumnKey={result?.chartColumnKey}
-              />
-
-            </>
-          {/* )} */}
         </div>
       </div>
     );
