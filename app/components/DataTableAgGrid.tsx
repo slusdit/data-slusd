@@ -86,7 +86,7 @@ function DataTable<T extends object>({
       return {
         ...baseChartOptions,
         series: chartYKey.split(',').map((key) => ({
-          type: 'bar',
+          type: chartTypeKey || 'bar',
           xKey: chartXKey || 'SC',
           yKey: key.toString(),
           yName: key.toString(),
@@ -279,7 +279,7 @@ function DataTable<T extends object>({
 
       <div className="w-full py-4 grid grid-cols-1 gap-4 items-center">
 
-        <div className="mb-4 flex justify-between items-center w-5/6 ">
+        <div className="mb-4 flex justify-between items-center w-full ">
           <Button
             onClick={exportToCSV}
             className="bg-primary text-white hover:bg-blue-600"

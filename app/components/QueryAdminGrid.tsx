@@ -224,7 +224,7 @@ const QueryEditor = forwardRef((props: ICellEditorParams, ref) => {
         const end = textAreaRef.current!.selectionEnd;
         const value = textAreaRef.current!.value;
         const newValue = value.substring(0, start) + '\n' + value.substring(end);
-        textAreaRef.current!.value = newValue;
+        // textAreaRef.current!.value = newValue;
         textAreaRef.current!.selectionStart = textAreaRef.current!.selectionEnd = start + 1;
         event.preventDefault();
       } else {
