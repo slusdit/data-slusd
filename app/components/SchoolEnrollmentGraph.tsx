@@ -26,8 +26,8 @@ type SchoolEnrollmentSummary = {
     label: string;
     createdBy: string;
     chart: boolean;
-    chartColumnKey: string | null;
-    chartValueKey: string | null;
+    chartXKey: string | null;
+    chartYKey: string | null;
     description: string;
     publicQuery: boolean;
     categoryId: string;

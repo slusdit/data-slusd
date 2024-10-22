@@ -47,8 +47,9 @@ export default async function AdminPage() {
       createdBy: true,
       query: true,
       chart: true,
-      chartColumnKey: true,
-      chartValueKey: true,
+      chartXKey: true,
+      chartYKey: true,
+      chartTypeKey: true,
       hiddenCols: true,
       categoryId: true,
 

@@ -24,8 +24,8 @@ interface DataTableProps<T extends object> {
   id?: string
   showChart?: boolean 
   chartTitle?: string
-  chartValueKey?: string | null
-  chartColumnKey?: string | null
+  chartXKey?: string | null
+  chartYKey?: string | null
 }
 
 function DataTable<T extends object>({ 
@@ -33,8 +33,8 @@ function DataTable<T extends object>({
   id,
   showChart,
   chartTitle,
-  chartValueKey,
-  chartColumnKey 
+  chartXKey,
+  chartYKey 
   }: DataTableProps<any>){
   const [sorting, setSorting] = useState<SortingState>([]);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
@@ -134,8 +134,8 @@ function DataTable<T extends object>({
     <BarChartCustomGraph
     table={reactTable}
     title={chartTitle}
-    chartKey={chartColumnKey}
-    chartDataKey={chartValueKey}
+    chartKey={chartXKey}
+    chartDataKey={chartYKey}
     />
           }
           {(showChart && id == 'clziv5kbm00018un4swvvb5a7') &&
