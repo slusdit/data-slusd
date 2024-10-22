@@ -1,12 +1,12 @@
 "use client";
-import { useRef, useEffect, useMemo, useCallback } from "react";
+import { useRef, useEffect, useMemo, useCallback, forwardRef } from "react";
 import { AgGridReact } from "ag-grid-react";
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-balham.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
 import AggridChart from "./AggridChart";
 import { Button } from "@/components/ui/button";
-import { GridApi } from "ag-grid-community";
+import { GridApi, ICellEditorParams } from "ag-grid-community";
 import { QueryWithCategory } from "./QueryBar";
 import { toast } from "sonner";
 import { updateQuery } from "@/lib/formActions";
