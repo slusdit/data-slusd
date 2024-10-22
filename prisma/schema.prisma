@@ -162,8 +162,9 @@ model Query {
   categoryId     String?
   hiddenCols     String         @default("")
   chart          Boolean        @default(false)
-  chartColumnKey String?
-  chartValueKey  String?
+  chartXKey      String?
+  chartYKey      String?
+  chartTypeKey   String? 
   Chart          Chart[]
   category       QueryCategory? @relation(fields: [categoryId], references: [id])
   roles          Role[]
@@ -212,4 +213,15 @@ enum CHARTTYPE {
   AREA
   PIE
   OTHER
+}
+
+enum ChartColumnKeyType {
+  BAR
+  LINE
+  AREA
+  SCATTER
+  BUBBLE
+  PIE
+  DONUT
+  COMBINATION
 }

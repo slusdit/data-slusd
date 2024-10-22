@@ -224,7 +224,7 @@ const QueryEditor = forwardRef((props: ICellEditorParams, ref) => {
         const end = textAreaRef.current!.selectionEnd;
         const value = textAreaRef.current!.value;
         const newValue = value.substring(0, start) + '\n' + value.substring(end);
-        textAreaRef.current!.value = newValue;
+        // textAreaRef.current!.value = newValue;
         textAreaRef.current!.selectionStart = textAreaRef.current!.selectionEnd = start + 1;
         event.preventDefault();
       } else {
@@ -581,64 +581,7 @@ const QueryAdminGrid = ({
     }
 
   };
-  // const onCellValueChanged = async (event: { colDef?: any; data?: any }) => {
-  //   const field = event.colDef?.field;
-  //   const { data } = event;
 
-  //   console.log(data)
-  //   console.log(field)
-
-  //   if (field === 'query') {
-  //     console.log('IS A QUERY');
-
-  //     try {
-  //       // Validate the SQL query format
-  //       const formattedQuery = format(data.query || '', {
-  //         language: "tsql",
-  //         keywordCase: "upper",
-  //       });
-
-  //       // Update the data with the formatted query
-  //       data.query = formattedQuery;
-
-  //       // Send the update to the server
-  //       const response = await updateQuery(data, field);
-  //       toast.success("Query updated and formatted successfully");
-
-  //       // Refresh the cell to show the formatted query
-  //       if (gridRef.current) {
-  //         gridRef.current.api.refreshCells({
-  //           force: true,
-  //           columns: ['query'],
-  //         });
-  //       }
-  //     } catch (error) {
-  //       console.error("Error updating query:", error);
-  //       toast.error("Error updating query: Invalid SQL format");
-
-  //       // Optionally revert the change if the update fails
-  //       if (gridRef.current) {
-  //         gridRef.current.api.refreshCells({
-  //           force: true,
-  //           columns: ['query'],
-  //         });
-  //       }
-  //       return error;
-  //     }
-  //   } 
-  //   if (field === "categoryId") {
-  //     console.log(event);
-  //   }
-
-  //   try {
-  //     const response = await updateQuery(data, field);
-  //     toast.success("Query updated successfully");
-  //   } catch (error) {
-  //     console.error("Error updating query:", error);
-  //     toast.error("Error updating query");
-  //     return error;
-  //   }
-  // };
 
   return (
     <div className={agGridTheme} style={{ height: "100%", width: "100%" }}>
