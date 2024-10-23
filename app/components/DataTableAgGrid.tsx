@@ -16,7 +16,7 @@ import { AttendanceOverTimeChart } from "./charts/AttendanceOverTime";
 // Import AG Grid styles
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
-import { AgCharts } from 'ag-charts-react';
+import { AgCharts } from "ag-charts-react";
 import { useTheme } from "next-themes";
 
 interface DataTableProps<T extends object> {
@@ -27,12 +27,11 @@ interface DataTableProps<T extends object> {
   chartTypeKey?: string | null;
   chartXKey?: string | null;
   chartYKey?: string | null;
+  chartStackKey?: boolean | null;
   hiddenColumns?: string[];
   title?: string;
   aggFunction?: string;
 }
-
-
 
 function DataTable<T extends object>({
   data,
@@ -42,28 +41,28 @@ function DataTable<T extends object>({
   chartXKey,
   chartYKey,
   chartTypeKey,
+  chartStackKey,
   hiddenColumns,
   aggFunction,
   title = "Data",
 }: DataTableProps<T>) {
-
-  function createChartOptions(
-    //   {
-    //   chartTitle,
-    //   chartXKey,
-    //   chartYKey,
-    //   chartTypeKey,
-    //   hiddenColumns,
-    //   aggFunction,
-    // }: {
-    //   chartTitle: string,
-    //   chartXKey: string,
-    //   chartYKey: string,
-    //   chartTypeKey: string,
-    //   hiddenColumns: string,
-    //   aggFunction: string,
-    // }
-  ) {
+  function createChartOptions({
+    chartTitle,
+    chartXKey,
+    chartYKey,
+    chartTypeKey,
+    hiddenColumns,
+    chartStackKey,
+    aggFunction,
+  }: {
+    chartTitle?: string | null;
+    chartXKey?: string | null;
+    chartYKey?: string | null;
+    chartTypeKey?: string | null;
+    chartStackKey?: string | null;
+    hiddenColumns?: string | null;
+    aggFunction?: string | null;
+  }) {
     const baseChartOptions = {
       autoSize: true,
       title: {
@@ -71,42 +70,37 @@ function DataTable<T extends object>({
       },
       theme: theme === "dark" ? `${agTheme}-dark` : `${agTheme}`,
 
-
       data: selectedRows.length ? selectedRows : rowData, // Use selected or all data
 
-      series: [{
-        type: chartTypeKey || 'bar',
-        xKey: chartXKey || 'SC',
-        yKey: chartYKey || 'ID',
-        // aggFunc: aggFunction || 'count'
-      }],
-    }
+      series: [
+        {
+          type: chartTypeKey || "bar",
+          xKey: chartXKey || "SC",
+          yKey: chartYKey || "ID",
+          // aggFunc: aggFunction || 'count'
+        },
+      ],
+    };
 
-    if (chartYKey && chartYKey.includes(',')) {
+    if (chartYKey && chartYKey.includes(",")) {
       return {
         ...baseChartOptions,
-        series: chartYKey.split(',').map((key) => ({
-          type: chartTypeKey || 'bar',
-          xKey: chartXKey || 'SC',
+        series: chartYKey.split(",").map((key) => ({
+          type: chartTypeKey || "bar",
+          xKey: chartXKey || "SC",
           yKey: key.toString(),
           yName: key.toString(),
-          stacked: true,
-        }))
-
-       
-      }
+          stacked: chartStackKey || false,
+        })),
+      };
     } else {
       return baseChartOptions;
     }
-    
   }
 
   const { theme } = useTheme();
-  // const agTheme = 'ag-default'
-  // const agTheme = 'ag-sheets'
-  const agTheme = 'ag-polychroma'
-  // const agTheme = 'ag-vivid'
-  // const agTheme = 'ag-material'
+
+  const agTheme = "ag-polychroma";
 
   const [gridApi, setGridApi] = useState<GridApi | null>(null);
   const [columns, setColumns] = useState<ColDef[]>([]);
@@ -114,8 +108,20 @@ function DataTable<T extends object>({
   const [selectedRows, setSelectedRows] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
   const [pageSize, setPageSize] = useState<number>(10);
-  const [chartOptions, setChartOptions] = useState(createChartOptions());
-  const [agGridTheme, setAgGridTheme] = useState(theme === "dark" ? "ag-theme-alpine-dark" : "ag-theme-alpine")
+  const [chartOptions, setChartOptions] = useState(
+    createChartOptions({
+      chartTitle,
+      chartXKey,
+      chartYKey,
+      chartTypeKey,
+      hiddenColumns,
+      chartStackKey,
+      aggFunction,
+    })
+  );
+  const [agGridTheme, setAgGridTheme] = useState(
+    theme === "dark" ? "ag-theme-alpine-dark" : "ag-theme-alpine"
+  );
   const [filteredData, setFilteredData] = useState<T[]>(data || []);
   // const chartOptions = useMemo(() => {
   //   return createChartOptions()
@@ -128,14 +134,15 @@ function DataTable<T extends object>({
   }, [data]);
 
   useEffect(() => {
-    setAgGridTheme(theme === "dark" ? "ag-theme-alpine-dark" : "ag-theme-alpine")
+    setAgGridTheme(
+      theme === "dark" ? "ag-theme-alpine-dark" : "ag-theme-alpine"
+    );
     setChartOptions((prevOptions) => ({
       ...prevOptions,
       theme: theme === "dark" ? "ag-sheets-dark" : "ag-sheets",
-    }))
-    console.log(chartOptions)
-
-  }, [theme])
+    }));
+    console.log(chartOptions);
+  }, [theme]);
 
   useEffect(() => {
     setChartOptions((prevOptions) => ({
@@ -144,17 +151,16 @@ function DataTable<T extends object>({
     }));
   }, [selectedRows, rowData]);
 
-  const defaultColDef = useMemo(() => ({
+  const defaultColDef = {
     sortable: true,
     resizable: true,
     filter: true,
     flex: 1,
+    floatingFilter: true,
     minWidth: 100,
     headerClass: "text-center flex justify-center items-center text-sm",
     cellClass: "text-center text-xs bg-card",
-  }), []);
-
-
+  };
   const columnDefs = useMemo(() => {
     if (!data || data.length === 0) return [];
 
@@ -164,43 +170,77 @@ function DataTable<T extends object>({
       headerCheckboxSelection: true,
       checkboxSelection: true,
       filter: false,
-
       width: 10,
 
       flex: 0.5,
       hide: false,
     };
-
     const dataCols = Object.keys(data[0]).map((key) => {
-      if (key === 'ID') {
-        return ({
-          headerName: key,
-          field: key,
-          hide: hiddenColumns?.includes(key.toUpperCase()) ? true : false,
-          floatingFilter: true,
-          resizable: true,
-          aggFunc: 'count',
-
-        })
-      }
-      return ({
-        headerName: key,
+      const keyLoopDefault = {
+        ...defaultColDef,
         field: key,
+        headerName: key,
         hide: hiddenColumns?.includes(key.toUpperCase()) ? true : false,
-        floatingFilter: true,
-        resizable: true,
-
-      })
+      };
+      if (key === "ID") {
+        return {
+          ...keyLoopDefault,
+          hide: hiddenColumns?.includes(key.toUpperCase()) ? true : false,
+          resizable: true,
+          aggFunc: "count",
+        };
+      }
+      if (["dt", "date", "day"].includes(key)) {
+        return {
+          ...keyLoopDefault,
+          filter: "agDateColumnFilter",
+          filterParams: {
+            comparator: (
+              filterLocalDateAtMidnight: Date,
+              cellValue: string
+            ) => {
+              var dateAsString = cellValue;
+              if (dateAsString == null) return -1;
+              var dateParts = dateAsString.split("/");
+              console.log(dateParts)
+              var cellDate = new Date(
+                Number(dateParts[2]),
+                Number(dateParts[0]) - 1,
+                Number(dateParts[1]),
+              );
+              console.log(cellDate)
+              if (filterLocalDateAtMidnight.getTime() === cellDate.getTime()) {
+                return 0;
+              }
+              if (cellDate < filterLocalDateAtMidnight) {
+                return -1;
+              }
+              if (cellDate > filterLocalDateAtMidnight) {
+                return 1;
+              }
+              return 0;
+            },
+          },
+        };
+      }
+      return {
+        ...keyLoopDefault,
+        // headerName: key,
+        // field: key,
+        // hide: hiddenColumns?.includes(key.toUpperCase()) ? true : false,
+        // floatingFilter: true,
+        // resizable: true,
+      };
     });
 
     return [checkboxCol, ...dataCols];
-  }, [data]);
+  }, [data, hiddenColumns, filteredData]);
 
   const onGridReady = (params: GridReadyEvent) => {
     setGridApi(params.api);
     setColumns(params.api.getColumnDefs() as ColDef[]);
-    params.api.addEventListener('filterChanged', onFilterChanged);
-    setLoading(false)
+    params.api.addEventListener("filterChanged", onFilterChanged);
+    setLoading(false);
   };
   const onFilterChanged = () => {
     if (gridApi) {
@@ -216,27 +256,26 @@ function DataTable<T extends object>({
   const exportToCSV = () => {
     if (!gridApi) return;
 
-
     const visibleColumns = columns
-      .filter(col => !col.hide && col.field !== 'checkboxCol')
-      .map(col => col.field);
+      .filter((col) => !col.hide && col.field !== "checkboxCol")
+      .map((col) => col.field);
 
     const exportParams = {
       skipHeader: false,
       columnKeys: visibleColumns,
       onlySelected: gridApi.getSelectedRows().length > 0,
       allColumns: false,
-      fileName: `${title} - ${new Date().toISOString().split('T')[0]}.csv`,
+      fileName: `${title} - ${new Date().toISOString().split("T")[0]}.csv`,
       processCellCallback: (params: any) => {
-        return params.value?.toString() ?? '';
-      }
+        return params.value?.toString() ?? "";
+      },
     };
 
     gridApi.exportDataAsCsv(exportParams);
   };
 
   const toggleColumnVisibility = (field: string, visible: boolean) => {
-    const updatedColumns = columns.map(col => {
+    const updatedColumns = columns.map((col) => {
       if (col.field === field) {
         return { ...col, hide: !visible };
       }
@@ -252,8 +291,6 @@ function DataTable<T extends object>({
     setSelectedRows(selectedData);
   };
 
-
-
   if (loading) {
     return (
       <div className="flex justify-center items-center h-[600px]">
@@ -263,22 +300,21 @@ function DataTable<T extends object>({
     );
   }
 
-
   if (!data || !data.length) {
     return <div>No data available</div>;
   }
 
   return (
     <div className="w-full flex flex-col justify-center">
-      {showChart &&
-        <div className={`${agGridTheme} w-full h-full border-b-2 border-muted/20 pb-4`}>
+      {showChart && (
+        <div
+          className={`${agGridTheme} w-full h-full border-b-2 border-muted/20 pb-4`}
+        >
           <AgCharts options={chartOptions} />
-
         </div>
-      }
+      )}
 
       <div className="w-full py-4 grid grid-cols-1 gap-4 items-center">
-
         <div className="mb-4 flex justify-between items-center w-full ">
           <Button
             onClick={exportToCSV}
@@ -288,13 +324,14 @@ function DataTable<T extends object>({
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                Columns
-              </Button>
+              <Button variant="outline">Columns</Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="max-h-96 overflow-y-auto">
+            <DropdownMenuContent
+              align="end"
+              className="max-h-96 overflow-y-auto"
+            >
               {columns
-                .filter(col => col.field !== 'checkboxCol')
+                .filter((col) => col.field !== "checkboxCol")
                 .map((column) => (
                   <DropdownMenuCheckboxItem
                     key={column.field}
@@ -322,8 +359,6 @@ function DataTable<T extends object>({
               enableCellTextSelection={true}
               suppressRowClickSelection={true}
               pagination={true}
-
-
             />
           </div>
         </div>

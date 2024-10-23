@@ -50,6 +50,7 @@ export default async function AdminPage() {
       chartXKey: true,
       chartYKey: true,
       chartTypeKey: true,
+      chartStackKey: true,
       hiddenCols: true,
       categoryId: true,
 
