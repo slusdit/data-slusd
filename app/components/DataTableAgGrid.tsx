@@ -59,7 +59,7 @@ function DataTable<T extends object>({
     chartXKey?: string | null;
     chartYKey?: string | null;
     chartTypeKey?: string | null;
-    chartStackKey?: string | null;
+    chartStackKey?: boolean | null;
     hiddenColumns?: string | null;
     aggFunction?: string | null;
   }) {
@@ -91,6 +91,7 @@ function DataTable<T extends object>({
           yKey: key.toString(),
           yName: key.toString(),
           stacked: chartStackKey || false,
+          cornerRadius: 5,
         })),
       };
     } else {
