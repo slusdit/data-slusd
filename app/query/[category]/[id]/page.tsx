@@ -131,6 +131,7 @@ export default async function Page({ params }: { params: { id: string, category:
             chartXKey={result?.chartXKey}
             chartYKey={result?.chartYKey}
             chartTypeKey={result?.chartTypeKey}
+            chartStackKey={result?.chartStackKey}
             hiddenColumns={getHiddenColumns(result?.hiddenCols)}
             title={result.name} />
 

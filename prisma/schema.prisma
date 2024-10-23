@@ -165,6 +165,7 @@ model Query {
   chartXKey      String?
   chartYKey      String?
   chartTypeKey   String? 
+  chartStackKey  Boolean        @default(false)
   Chart          Chart[]
   category       QueryCategory? @relation(fields: [categoryId], references: [id])
   roles          Role[]
