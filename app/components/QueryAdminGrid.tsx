@@ -22,6 +22,7 @@ import Link from "next/link";
 const QueryEditor = forwardRef((props: ICellEditorParams, ref) => {
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const initialValue = props.value;
+  // console.log({...props})
 
   useEffect(() => {
     if (textAreaRef.current) {
@@ -47,7 +48,7 @@ const QueryEditor = forwardRef((props: ICellEditorParams, ref) => {
       };
     }
   }, []);
-
+  // console.log({ref})
   const handleKeyUp = async (event: React.KeyboardEvent) => {
     if (event.key === 'Enter') {
       if (event.shiftKey) {
@@ -72,7 +73,10 @@ const QueryEditor = forwardRef((props: ICellEditorParams, ref) => {
           await updateQuery(data, 'query');
 
           // Update the cell value directly in the grid
+
+          // console.log('props.api', { ...props });
           const rowNode = props.api.getRowNode(props.data.id.toString());
+          // console.log('rowNode', rowNode);
           if (rowNode) {
             rowNode.setDataValue('query', formattedQuery);
           }
@@ -97,7 +101,7 @@ const QueryEditor = forwardRef((props: ICellEditorParams, ref) => {
       ref={textAreaRef}
       defaultValue={initialValue}
       onKeyUp={handleKeyUp}
-      className="w-full h-[600px] p-4 font-mono text-sm bg-background border rounded-md whitespace-pre-wrap"
+      className="w-[500px] h-[600px] p-4 font-mono text-sm bg-background border rounded-md whitespace-pre-wrap"
     />
   );
 });
