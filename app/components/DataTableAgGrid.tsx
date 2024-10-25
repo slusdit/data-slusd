@@ -60,7 +60,7 @@ function DataTable<T extends object>({
     chartYKey?: string | null;
     chartTypeKey?: string | null;
     chartStackKey?: boolean | null;
-    hiddenColumns?: string | null;
+    hiddenColumns?: string[] | null;
     aggFunction?: string | null;
   }) {
     const baseChartOptions = {
@@ -77,21 +77,28 @@ function DataTable<T extends object>({
           type: chartTypeKey || "bar",
           xKey: chartXKey || "SC",
           yKey: chartYKey || "ID",
+          cornerRadius: 5,
           // aggFunc: aggFunction || 'count'
         },
       ],
     };
+    let chartYKeyArray = chartYKey?.split(",")
 
+    if (hiddenColumns && hiddenColumns?.length > 0) {
+      chartYKeyArray = chartYKeyArray.filter((key) => !key.includes(hiddenColumns))
+      
+    }
     if (chartYKey && chartYKey.includes(",")) {
       return {
         ...baseChartOptions,
-        series: chartYKey.split(",").map((key) => ({
+        series: chartYKeyArray.map((key) => ({
           type: chartTypeKey || "bar",
           xKey: chartXKey || "SC",
           yKey: key.toString(),
           yName: key.toString(),
           stacked: chartStackKey || false,
           cornerRadius: 5,
+          
         })),
       };
     } else {
