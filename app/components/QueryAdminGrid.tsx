@@ -234,7 +234,7 @@ const QueryAdminGrid = ({
             maxWidth: '90vw',
           },
           autoSize: true,
-          minWidth: 600,
+          minWidth: 100,
           cellStyle: { whiteSpace: "pre-wrap" },
           valueSetter: (params: { newValue: string; data: any }) => {
             const oldValue = params.data.query;
@@ -275,7 +275,7 @@ const QueryAdminGrid = ({
           editable: true,
           cellRenderer: nameRenderer,
           autoSize: true,
-          minWidth: 300,
+          minWidth: 175,
           cellStyle: { whiteSpace: "normal" },
         };
       } else {
@@ -287,7 +287,7 @@ const QueryAdminGrid = ({
           floatingFilter: true,
           editable: true,
           autoSize: true,
-          minWidth: 25,
+          minWidth: 100,
           cellStyle: { whiteSpace: "normal" },
         };
       }
