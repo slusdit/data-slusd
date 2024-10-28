@@ -10,6 +10,7 @@ import { useSession } from "next-auth/react";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -29,6 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { addQuery } from "@/lib/formActions";
+import { Textarea } from "@/components/ui/textarea";
 
 type PageValues = {
   id: string;
@@ -37,8 +39,13 @@ type PageValues = {
   label: string;
   createdBy: string;
   description: string;
-  publicQuery: boolean;
+  chart: boolean;
+  chartXKey: string | null;
+  chartYKey: string | null;
+  chartTypeKey: string | null;
+  chartStackKey: boolean;
   categoryId: string | null;
+  hiddenCols: string | null;
 };
 interface Props {
   session: Session;
@@ -51,11 +58,15 @@ interface Props {
 export const queryFormSchema = z.object({
   query: z.string().min(1, { message: "Query must not be empty" }),
   name: z.string().min(1, { message: "Query Title must not be empty" }),
-  // label: z.string(),
   createdBy: z.string().email({ message: "Must be a valid email" }),
   description: z.string().min(1, { message: "Description must not be empty" }),
-  publicQuery: z.boolean().default(false),
   categoryId: z.string(),
+  hiddenCols: z.string().optional(),
+  chart: z.boolean(),
+  chartStackKey: z.boolean().optional(),
+  chartXKey: z.string().optional(),
+  chartYKey: z.string().optional(),
+  chartTypeKey: z.string().optional(),
 });
 
 export default function AddQueryForm({
@@ -66,9 +77,9 @@ export default function AddQueryForm({
   dialogState,
 }: Props) {
   const createdBy = session.user?.email?.toString();
-  const { query, name, description, publicQuery, categoryId, id } =
+  const { query, name, description, categoryId, chart, chartStackKey, hiddenCols, chartYKey, chartXKey, chartTypeKey } =
     pageValues || {};
-  
+
 
   // if (pageValues) {
 
@@ -81,8 +92,13 @@ export default function AddQueryForm({
       createdBy: createdBy ?? "",
       name: name ?? "",
       description: description ?? "",
-      publicQuery: publicQuery ?? false,
       categoryId: categoryId ?? "0",
+      chart: chart ?? false,
+      chartStackKey: chartStackKey ?? false,
+      chartXKey: undefined,
+      chartYKey: undefined,
+      chartTypeKey: "bar",
+      hiddenCols: "",
     },
   });
 
@@ -116,125 +132,245 @@ export default function AddQueryForm({
   }
 
   return (
-    <Form {...form}>
-    <form onSubmit={form.handleSubmit(onSubmit, onError)} className="space-y-8">
-      <div className="flex w-full m-2 justify-between">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>
-                Query Name<span className="text-red-500">*</span>
-              </FormLabel>
-              <FormControl>
-                <Input placeholder={name} {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="createdBy"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>
-                Created By<span className="text-red-500">*</span>
-              </FormLabel>
-              <FormControl>
-                <Input className="w-fit" {...field} disabled />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
-      <FormField
-        control={form.control}
-        name="description"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>
-              Description<span className="text-red-500">*</span>
-            </FormLabel>
-            <FormControl>
-              <Input placeholder={description} {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={form.control}
-        name="query"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>
-              Query<span className="text-red-500">*</span>
-            </FormLabel>
-            <FormControl>
-              <Input placeholder={query} {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+    <Form {...form} >
+      <form onSubmit={form.handleSubmit(onSubmit, onError)} className="space-y-8">
+        <div className="flex gap-4">
+          <div className="w-full" >
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Query Name</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="..."
 
-      <div className="flex justify-between w-full p-2 border-2 rounded">
+                      type="text"
+                      {...field} />
+                  </FormControl>
+                  <FormDescription>Simple query name</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div >
+            <FormField
+              control={form.control}
+              name="categoryId"
+              render={({ field }) => (
+                <FormItem className="min-w-48 w-[100%]">
+                  <FormLabel>Query Category</FormLabel>
+                  <FormControl className="w-full">
+                    <Select onValueChange={field.onChange} defaultValue={field.value} className="w-full">
+                      <SelectTrigger >
+                        <SelectValue placeholder="Test" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+
+                          {categories.map((category) => (
+                            <SelectItem key={category.id} value={category.id}>
+                              {category.label}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+
+              )}
+            />
+          </div>
+        </div>
+
         <FormField
           control={form.control}
-          name="publicQuery"
+          name="description"
           render={({ field }) => (
-            <FormItem className="m-1">
-              <FormLabel className="m-1">Public Query</FormLabel>
+            <FormItem>
+              <FormLabel>Description</FormLabel>
               <FormControl>
-                <Switch
+                <Textarea
+                  placeholder="..."
+                  className="resize-none"
                   {...field}
-                  id="publicQuery"
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                  
                 />
               </FormControl>
+              <FormDescription>Detailed query description</FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
-          <FormField
-          className="w-full"
+
+        <FormField
           control={form.control}
-          name="categoryId"
+          name="query"
           render={({ field }) => (
-            <FormItem className="m-1 w-48">
-              <FormLabel>Query Category</FormLabel>
-              <FormControl className="w-full">
-                <Select onValueChange={field.onChange} defaultValue={field.value} className="w-full">
-                  <SelectTrigger className="w-1/2">
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      
-                      {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.label}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
+            <FormItem>
+              <FormLabel>Query</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="SELECT TOP 10 * FROM STU"
+                  className="resize-none"
+                  {...field}
+                />
               </FormControl>
+              <FormDescription>SQL query</FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
-      </div>
-      <Button type="submit">
-        {submitTitle ?? "Add"}
-        <Plus className="py-1" />
-      </Button>
-    </form>
-  </Form>
+        <FormField
+              control={form.control}
+              name="hiddenCols"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Hidden Columns</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="..."
+
+                      type="text"
+                      {...field} />
+                  </FormControl>
+                  <FormDescription>Comma separated list of columns to hide on the result page</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="grid grid-cols-12 gap-4">
+          
+          <div className="col-span-6">
+            
+          <FormField
+              control={form.control}
+              name="chart"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <FormLabel>Chart?</FormLabel>
+                    <FormDescription>Add a chart to the result page?</FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </div>
+          
+          <div className="col-span-6">
+            
+        <FormField
+          control={form.control}
+          name="chartTypeKey"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Chart Type</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="bar">Bar</SelectItem>
+                  <SelectItem value="line">Line</SelectItem>
+                  <SelectItem value="area">Aera</SelectItem>
+                </SelectContent>
+              </Select>
+                <FormDescription>Select the chart type</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+          </div>
+          
+        </div>
+        
+        <div className="grid grid-cols-12 gap-4">
+          
+          <div className="col-span-6">
+            
+        <FormField
+          control={form.control}
+          name="chartXKey"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Chart X Key</FormLabel>
+              <FormControl>
+                <Input 
+                placeholder="DT, SC, etc..."
+                
+                type=""
+                {...field} />
+              </FormControl>
+              <FormDescription>Column to use for the X-Axis</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+          </div>
+          
+          <div className="col-span-6">
+            
+        <FormField
+          control={form.control}
+          name="chartYKey"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Chart Y Key</FormLabel>
+              <FormControl>
+                <Input 
+                placeholder="TK,K,1,2,3,4,5..."
+                
+                type=""
+                {...field} />
+              </FormControl>
+              <FormDescription>Comma separated values for items in the Y-axis</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+          </div>
+          
+        </div>
+        
+          <FormField
+              control={form.control}
+              name="chartStackKey"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <FormLabel>Stacked Chart?</FormLabel>
+                    <FormDescription>Is the Y-Axis information stacked</FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          
+
+
+
+
+        <Button type="submit">
+          {submitTitle ?? "Add"}
+          <Plus className="py-1" />
+        </Button>
+      </form>
+    </Form>
   );
 }
