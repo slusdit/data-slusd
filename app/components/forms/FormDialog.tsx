@@ -8,12 +8,14 @@ export default function FormDialog({
     children,
     triggerMessage,
     title,
-    icon
+    icon,
+    className='w-3xl'
 }: {
     children: React.ReactNode
     triggerMessage?: string
     title?: string
     icon?: React.ReactNode
+    className?: string
 }) {
 
     const [open, setOpen] = useState(false)
@@ -26,7 +28,7 @@ export default function FormDialog({
                     {icon}
                 </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className={`${className}`}>
                 <DialogTitle>{title ?? ''}</DialogTitle>
                 {children}
                 <DialogFooter >

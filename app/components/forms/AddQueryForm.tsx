@@ -60,7 +60,7 @@ export const queryFormSchema = z.object({
   name: z.string().min(1, { message: "Query Title must not be empty" }),
   createdBy: z.string().email({ message: "Must be a valid email" }),
   description: z.string().min(1, { message: "Description must not be empty" }),
-  categoryId: z.string(),
+  categoryId: z.string().min(1, { message: "Category must not be empty" }),
   hiddenCols: z.string().optional(),
   chart: z.boolean(),
   chartStackKey: z.boolean().optional(),
@@ -225,151 +225,154 @@ export default function AddQueryForm({
           )}
         />
         <FormField
-              control={form.control}
-              name="hiddenCols"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Hidden Columns</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="..."
-
-                      type="text"
-                      {...field} />
-                  </FormControl>
-                  <FormDescription>Comma separated list of columns to hide on the result page</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="grid grid-cols-12 gap-4">
-          
-          <div className="col-span-6">
-            
-          <FormField
-              control={form.control}
-              name="chart"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <FormLabel>Chart?</FormLabel>
-                    <FormDescription>Add a chart to the result page?</FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-          </div>
-          
-          <div className="col-span-6">
-            
-        <FormField
           control={form.control}
-          name="chartTypeKey"
+          name="hiddenCols"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Chart Type</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <FormLabel>Hidden Columns</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="..."
+
+                  type="text"
+                  {...field} />
+              </FormControl>
+              <FormDescription>Comma separated list of columns to hide on the result page</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <div className="border-2 border-primary/30 rounded p-2">
+        <div className="text-xl underline text-center w-full pb-3">Chart Options</div>
+          <div className="grid grid-cols-12 gap-4 ">
+
+            <div className="col-span-6">
+
+              <FormField
+                control={form.control}
+                name="chart"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel>Chart?</FormLabel>
+                      <FormDescription>Add a chart to the result page?</FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="col-span-6">
+
+              <FormField
+                control={form.control}
+                name="chartTypeKey"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Chart Type</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="bar">Bar</SelectItem>
+                        <SelectItem value="line">Line</SelectItem>
+                        <SelectItem value="area">Aera</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>Select the chart type</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+          </div>
+
+          <div className="grid grid-cols-12 gap-4">
+
+            <div className="col-span-6">
+
+              <FormField
+                control={form.control}
+                name="chartXKey"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Chart X Key</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="DT, SC, etc..."
+
+                        type=""
+                        {...field} />
+                    </FormControl>
+                    <FormDescription>Column to use for the X-Axis</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="col-span-6">
+
+              <FormField
+                control={form.control}
+                name="chartYKey"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Chart Y Key</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="TK,K,1,2,3,4,5..."
+
+                        type=""
+                        {...field} />
+                    </FormControl>
+                    <FormDescription>Comma separated values for items in the Y-axis</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+          </div>
+
+          <FormField
+            control={form.control}
+            name="chartStackKey"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                  <FormLabel>Stacked Chart?</FormLabel>
+                  <FormDescription>Is the Y-Axis information stacked</FormDescription>
+                </div>
                 <FormControl>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
                 </FormControl>
-                <SelectContent>
-                  <SelectItem value="bar">Bar</SelectItem>
-                  <SelectItem value="line">Line</SelectItem>
-                  <SelectItem value="area">Aera</SelectItem>
-                </SelectContent>
-              </Select>
-                <FormDescription>Select the chart type</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+              </FormItem>
+            )}
+          />
           </div>
-          
-        </div>
-        
-        <div className="grid grid-cols-12 gap-4">
-          
-          <div className="col-span-6">
-            
-        <FormField
-          control={form.control}
-          name="chartXKey"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Chart X Key</FormLabel>
-              <FormControl>
-                <Input 
-                placeholder="DT, SC, etc..."
-                
-                type=""
-                {...field} />
-              </FormControl>
-              <FormDescription>Column to use for the X-Axis</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-          </div>
-          
-          <div className="col-span-6">
-            
-        <FormField
-          control={form.control}
-          name="chartYKey"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Chart Y Key</FormLabel>
-              <FormControl>
-                <Input 
-                placeholder="TK,K,1,2,3,4,5..."
-                
-                type=""
-                {...field} />
-              </FormControl>
-              <FormDescription>Comma separated values for items in the Y-axis</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-          </div>
-          
-        </div>
-        
-          <FormField
-              control={form.control}
-              name="chartStackKey"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <FormLabel>Stacked Chart?</FormLabel>
-                    <FormDescription>Is the Y-Axis information stacked</FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-          
 
 
 
 
-        <Button type="submit">
-          {submitTitle ?? "Add"}
-          <Plus className="py-1" />
-        </Button>
+
+          <Button type="submit">
+            {submitTitle ?? "Add"}
+            <Plus className="py-1" />
+          </Button>
       </form>
     </Form>
   );
