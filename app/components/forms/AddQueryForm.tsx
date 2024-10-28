@@ -243,8 +243,8 @@ export default function AddQueryForm({
           )}
         />
         <div className="border-2 border-primary/30 rounded p-2">
-        <div className="text-xl underline text-center w-full pb-3">Chart Options</div>
-          <div className="grid grid-cols-12 gap-4 ">
+          <div className="text-xl underline text-center w-full pb-3">Chart Options</div>
+          <div className="grid grid-cols-12 gap-4 p-2 ">
 
             <div className="col-span-6">
 
@@ -252,8 +252,8 @@ export default function AddQueryForm({
                 control={form.control}
                 name="chart"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg  ">
+                    <div className="space-y-2 space-x-2">
                       <FormLabel>Chart?</FormLabel>
                       <FormDescription>Add a chart to the result page?</FormDescription>
                     </div>
@@ -363,16 +363,16 @@ export default function AddQueryForm({
               </FormItem>
             )}
           />
-          </div>
+        </div>
 
 
 
 
 
-          <Button type="submit">
-            {submitTitle ?? "Add"}
-            <Plus className="py-1" />
-          </Button>
+        <Button type="submit">
+          {submitTitle ?? "Add"}
+          <Plus className="py-1" />
+        </Button>
       </form>
     </Form>
   );
