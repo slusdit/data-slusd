@@ -78,6 +78,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       const dbUser = await prisma.user.findUnique({
         where: { id: user.id },
         include: {
+          favorites: true,
           userRole: {
             include: {
               // role: true,

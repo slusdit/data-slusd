@@ -1,11 +1,13 @@
 "use client";
-import { QueryCategory, Session, User } from "@prisma/client";
+// import { QueryCategory, Session, User } from "@prisma/client";
+import { User } from "@prisma/client";
 import Link from "next/link";
 import { QueryWithCategory } from "./QueryBar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CounterClockwiseClockIcon } from "@radix-ui/react-icons";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { createFactory } from "react";
 
 
 const QueryList = ({
@@ -25,6 +27,8 @@ const QueryList = ({
   defaultExpandedAccordion?: string;
   accordion?: boolean
 }) => {
+
+  console.log(categories)
   if (accordion) {
     return (
       <ScrollArea className="w-full max-h-1/2 ">
@@ -33,9 +37,15 @@ const QueryList = ({
             categories
               .filter((category) => category)
               .map((category) => {
+                console.log(category.label)
                 // Don't render the category if there are no queries in that category
-                const queriesWithCategories = queries.filter(
+                let queriesWithCategories = queries.filter(
                   (query) => {
+                    if (category.label.toLowerCase() === "favorites") {
+                      return user.favorites.includes(query.id)
+                      
+                    }
+         
 
                     return (
                       query.category?.value === category.value
@@ -44,8 +54,10 @@ const QueryList = ({
                       // || query.createdBy === user.email
                     )
                   }
-                );
+                )
+
                 if (queriesWithCategories.length === 0) {
+                  console.log(category.label)
                   return null;
                 }
                 const categoryRoles: string[] | undefined = category.roles.map(
@@ -73,11 +85,13 @@ const QueryList = ({
                   )
                   || user.roles.includes("SUPERADMIN")
                   || categoryRoles?.length === 0
+                  || category.label.toLowerCase() === 'favorites'
+                  
 
 
                 ) {
-
-                  console.log(category.value)
+                  console.log(category.label)
+                  console.log(category.value === 'favorites' )  
                   const defaultExpandedStyle = (defaultExpandedAccordion && defaultExpandedAccordion === category.value) ? "bg-primary/80 text-primary-foreground" : "even:bg-secondary/10 "
                   console.log(defaultExpandedStyle)
                   return (

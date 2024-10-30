@@ -21,7 +21,8 @@ model User {
   primarySchool Int?
   psl           Int?            @unique
   activeSchool  Int             @default(0)
-  manualSchool  Int?         
+  manualSchool  Int?  
+  favorites     Query[]         @relation("id")       
   Account       Account?
   Authenticator Authenticator[]
   Session       Session[]
@@ -171,6 +172,7 @@ model Query {
   roles          Role[]
 
   @@index([categoryId], map: "Query_categoryId_fkey")
+  User User[] @relation("id")
 }
 
 model QueryCategory {
