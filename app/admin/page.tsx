@@ -71,6 +71,7 @@ export default async function AdminPage() {
       email: true,
       // image: true,
       admin: true,
+      favorites: true,
       queryEdit: true,
       activeSchool: true,
       userRole: {

@@ -49,7 +49,20 @@ export default async function Home() {
         roles: true,
       },
     });
+    if (session?.user?.favorites){
+
+      categories = [{
+        id: 'favorites',
+        label: 'Favorites',
+        value: 'favorites',
+        queries: session?.user.favorites
+      },
+        ...categories]
+    }
+    console.log(categories);
   }
+
+  console.log(session?.user.favorites)
 
   const activeSchool = await prisma.schoolInfo.findUnique({
     where: {
