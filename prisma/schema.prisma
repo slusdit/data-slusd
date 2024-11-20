@@ -211,20 +211,10 @@ enum ROLE {
 
 enum CHARTTYPE {
   BAR
-  STACKEDBAR
-  LINE
-  AREA
-  PIE
-  OTHER
-}
-
-enum ChartColumnKeyType {
-  BAR
   LINE
   AREA
   SCATTER
   BUBBLE
   PIE
   DONUT
-  COMBINATION
 }

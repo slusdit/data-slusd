@@ -46,7 +46,7 @@ export async function updateSchools(profileEmail: string, allQueriedSchools?: Ge
         })
 
         const existingSchoolCodes = existingSchools.map(school => school.sc)
-        console.log(existingSchoolCodes)
+        // console.log(existingSchoolCodes)
 
         // First, remove all existing school associations
         await prisma.userSchool.deleteMany({

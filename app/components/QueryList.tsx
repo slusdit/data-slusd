@@ -28,21 +28,21 @@ const QueryList = ({
   accordion?: boolean
 }) => {
 
-  console.log(categories)
+ 
   if (accordion) {
     return (
       <ScrollArea className="w-full max-h-1/2 ">
-        <Accordion type="multiple" collapseable className="flex flex-col gap-1 w-full mb-8 " defaultValue={defaultExpandedAccordion}>
+        <Accordion type="multiple" className="flex flex-col gap-1 w-full mb-8 " defaultValue={defaultExpandedAccordion|| []}>
           {categories &&
             categories
               .filter((category) => category)
               .map((category) => {
-                console.log(category.label)
+               
                 // Don't render the category if there are no queries in that category
                 let queriesWithCategories = queries.filter(
                   (query) => {
                     if (category.label.toLowerCase() === "favorites") {
-                      return user.favorites.includes(query.id)
+                      return  user.favorites.includes(query.id)
                       
                     }
          
@@ -57,7 +57,7 @@ const QueryList = ({
                 )
 
                 if (queriesWithCategories.length === 0) {
-                  console.log(category.label)
+                 
                   return null;
                 }
                 const categoryRoles: string[] | undefined = category.roles.map(
@@ -90,10 +90,9 @@ const QueryList = ({
 
 
                 ) {
-                  console.log(category.label)
-                  console.log(category.value === 'favorites' )  
+              
                   const defaultExpandedStyle = (defaultExpandedAccordion && defaultExpandedAccordion === category.value) ? "bg-primary/80 text-primary-foreground" : "even:bg-secondary/10 "
-                  console.log(defaultExpandedStyle)
+                  
                   return (
 
                     <AccordionItem key={category.id} className='' value={category.value} >
@@ -113,7 +112,9 @@ const QueryList = ({
                               )
                             )
                             .map((query) => (
-                              <Tooltip>
+                              <Tooltip
+                                key={query.id}
+                              >
 
                               <li
                                 key={query.id}
@@ -152,15 +153,7 @@ const QueryList = ({
               // Don't render the category if there are no queries in that category
               const queriesWithCategories = queries.filter(
                 (query) => {
-                  console.log(query?.publicQuery === true || query.createdBy === user.email)
-                  console.log(query.category?.value === category.value
-                    // && (query.publicQuery === true || query.createdBy === user.email)
-                    || query.publicQuery === true
-                    || query.createdBy === user.email, query.name)
-                  // && (query.publicQuery === true || query.createdBy === user.email)
-                  // || query.publicQuery === true 
-                  // || query.createdBy === user.email
-                  console.log(query)
+  
                   return (
                     query.category?.value === category.value
                     // && (query.publicQuery === true || query.createdBy === user.email)
@@ -185,7 +178,6 @@ const QueryList = ({
                 categoryRoles &&
                 categoryRoles?.length < 0
               ) {
-                console.log("~~~~~~~ Empty Category ~~~~~~~")
                 return null;
               }
 
@@ -215,7 +207,9 @@ const QueryList = ({
                           )
                         )
                         .map((query) => (
-                          <Tooltip>
+                          <Tooltip
+                            key={`${query.id}-tooltip`}
+                          >
 
                               <li
                                 key={query.id}
