@@ -84,7 +84,7 @@ function DataTable<T extends object>({
               (column) => column.getCanHide()
             )
             .map((column) => {
-              console.log(column)
+              // console.log(column)
               return (
                 <DropdownMenuCheckboxItem
                   key={column.id}

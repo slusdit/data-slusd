@@ -36,7 +36,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-
+# Old files
+*.old
 #backend
 backend/venv
 

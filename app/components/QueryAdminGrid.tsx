@@ -10,7 +10,7 @@ import { GridApi, ICellEditorParams } from "ag-grid-community";
 import { QueryWithCategory } from "./QueryBar";
 import { toast } from "sonner";
 import { updateQuery } from "@/lib/formActions";
-import { PrismaClient, Session } from "@prisma/client";
+import { Session, CHARTTYPE } from "@prisma/client";
 import { useTheme } from "next-themes";
 import { format } from "sql-formatter";
 import { deleteQuery } from "@/lib/deleteQuery";
@@ -18,6 +18,7 @@ import AddQueryForm from "./forms/AddQueryForm";
 import FormDialog from "./forms/FormDialog";
 import { Plus } from "lucide-react";
 import Link from "next/link";
+
 
 const QueryEditor = forwardRef((props: ICellEditorParams, ref) => {
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
@@ -124,8 +125,12 @@ const QueryAdminGrid = ({
   const gridRef = useRef<AgGridReact>(null);
 
   const categoryNameArray = useMemo(() => {
-    return categories.map((category) => category.label).sort();
+    return ["", ...categories.map((category) => category.label).sort()];
   }, [categories]);
+
+  const chartTypeArray = useMemo(() => {
+   return Object.values(CHARTTYPE).map((chartType) => chartType.toLowerCase()).sort();
+  }, [CHARTTYPE]);
 
   const categoryValueFormatter = (params: { value: string }) => {
     const selectedCategory = categoryNameArray.find(
@@ -216,6 +221,20 @@ const QueryAdminGrid = ({
           autoSize: true,
           cellStyle: { whiteSpace: "normal" },
         };
+      } else if ("chartTypeKey" === key) { 
+        return {
+          field: key.trim(),
+          resizable: true,
+          sortable: true,
+          filter: true,
+          floatingFilter: true,
+          editable: true,
+          cellEditor: "agSelectCellEditor",
+          cellEditorParams: {
+            values: chartTypeArray,
+            valueFormatter: categoryValueFormatter,
+          },
+        }
       } else if ("query" === key) {
         return {
           field: key.trim(),
@@ -239,7 +258,7 @@ const QueryAdminGrid = ({
           valueSetter: (params: { newValue: string; data: any }) => {
             const oldValue = params.data.query;
             params.data.query = params.newValue;
-            console.log( 'gridRef.current.api',gridRef.current?.api);
+            // console.log( 'gridRef.current.api',gridRef.current?.api);
             // Trigger the onCellValueChanged event
             if (oldValue !== params.newValue && gridRef.current?.api) {
               const rowNode = gridRef.current.api.getRowNode(params.data.id.toString());
@@ -360,7 +379,7 @@ const QueryAdminGrid = ({
       queryColDef.valueSetter = (params: { newValue: string; data: any }) => {
         const oldValue = params.data.query;
         params.data.query = params.newValue;
-        console.log( 'params.data.query',params.data.query);
+        // console.log( 'params.data.query',params.data.query);
         
         // Instead of dispatching event, update the cell directly
         if (oldValue !== params.newValue && gridRef.current?.api) {
@@ -406,7 +425,7 @@ const QueryAdminGrid = ({
     const field = event.colDef?.field;
     const { data } = event;
 
-    console.log('field', field, 'data', data);
+    // console.log('field', field, 'data', data);
     if (!field || !data || field === 'query') return;
 
     try {

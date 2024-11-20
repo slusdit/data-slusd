@@ -59,7 +59,7 @@ export default async function Home() {
       },
         ...categories]
     }
-    console.log(categories);
+    // console.log(categories);
   }
 
   console.log(session?.user.favorites)
@@ -70,9 +70,13 @@ export default async function Home() {
     },
   });
 
-  const attendanceData = await getQueryData({
-    queryLabel: "daily-attendance-school",
-  });
+  let attendanceData;
+  if (activeSchool.sc !== '0') {
+    attendanceData = await getQueryData({
+      queryLabel: "daily-attendance-school",
+    });   
+  } 
+ 
 
   return (
     <>
