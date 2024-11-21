@@ -40,7 +40,7 @@ export function QuerySheet({
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant={"outline"}>
+        <Button>
           <Menu className="mr-2 h-4 w-4" />
           Reports
         </Button>

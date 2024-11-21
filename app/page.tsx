@@ -6,6 +6,7 @@ import SchoolEnrollmentGraph from "./components/SchoolEnrollmentGraph";
 import { AttendanceOverTimeChart } from "./components/charts/AttendanceOverTime";
 import { getQueryData } from "@/lib/getQuery";
 import Sidebar from "./components/Sidebar";
+import FavoritesCard from "./components/FavoritesCard";
 
 // const prisma = new PrismaClient();
 export default async function Home() {
@@ -77,12 +78,13 @@ export default async function Home() {
         />
 
         {/* Main Landing Page */}
+        <FavoritesCard user={session?.user} />
         <Card className="w-full p-2 mr-4 justify-center flex flex-col h-full">
           <h1 className="text-3xl font-weight-800 mb-5 text-center">
             Welcome {session?.user?.name}
           </h1>
           {/* Main section for district users */}
-          {session?.user?.activeSchool == 0 && (
+          {session?.user.activeSchool == 0 && (
             <>
               <div className="grid grid-cols-1 h-lg w-md items-center">
                 District View
@@ -90,7 +92,7 @@ export default async function Home() {
             </>
           )}
           {/* Main section for non district users */}
-          {session?.user?.activeSchool != 0 && (
+          {session?.user.activeSchool != 0 && (
             <>
               <div className="grid grid-cols-1 h-lg w-md items-center">
                 {/* <AreaChartComponent /> */}

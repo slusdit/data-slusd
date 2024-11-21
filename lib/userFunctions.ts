@@ -5,12 +5,12 @@ import prisma from "./db";
 export async function toggleFavorite(user: SessionUser, queryId: string) {
     const userWithFavorites = await prisma.user.findUnique({
       where: { id: user.id },
-      include: { favorites: true }
+      select: { favorites: true }
     });
   
     const hasFavorite = userWithFavorites?.favorites.some(q => q.id === queryId);
   
-    await prisma.user.update({
+    const updatedUser = await prisma.user.update({
       where: { id: user.id },
       data: {
         favorites: {

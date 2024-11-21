@@ -126,14 +126,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       session.user = {
         ...session.user,
         ...(dbUser as SessionUser),
-        // @ts-ignore
+        // schools,
+        primaryRole: dbUser?.primaryRole,
+        primarySchool: dbUser?.primarySchool,
+        activeSchool: dbUser?.activeSchool,
+        psl: dbUser?.psl,
 
-        schools,
+        favorites: dbUser?.favorites || [],
         roles: dbUser?.userRole.map((role) => role.role) || [],
         classes: dbUser?.UserClass.map((userClass) => userClass.class) || [],
         // queryCategories: dbUser?.queryCategories || [],
       };
-      // console.log(session)
+      console.log(session.user)
       return session;
     },
   },
