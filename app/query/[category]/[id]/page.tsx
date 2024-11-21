@@ -84,9 +84,9 @@ export default async function Page({ params }: { params: { id: string, category:
 
             </Button>
             <h1 className="text-3xl text-left  font-bold">{result.name}</h1>
-            {session?.user &&
+            
               <FavoriteQuerySwitch queryId={id} user={session?.user} />
-            }
+            
             <div className="my-2">
 
               <QuerySheet
@@ -98,16 +98,7 @@ export default async function Page({ params }: { params: { id: string, category:
                 accordion
                 defaultExpandedAccordion={urlCategory}
               />
-              {session?.user?.queryEdit ?? (
-                <FormDialog
-                  triggerMessage="Add Query"
-                  icon={<Plus className="py-1" />}
-                  title="Add Query"
-
-                >
-                  <AddQueryForm session={session} categories={categories} pageValues={result} />
-                </FormDialog>
-              )}
+             
 
             </div>
             <label htmlFor="description">Description:</label>
