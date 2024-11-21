@@ -6,6 +6,18 @@ import { getAllSchools, getPrimarySchool, syncTeacherClasses } from "./lib/signi
 import { Class, ROLE, SchoolInfo, User } from "@prisma/client";
 import { AeriesSimpleTeacher } from "./lib/aeries";
 
+
+export interface SessionUser extends User {
+  schools?: string[];
+  roles?: ROLE[];
+  classes?: Class[];
+  primaryRole: ROLE;
+  favorites: Query[];
+  primarySchool: number | null;
+  activeSchool: number;
+  psl: number;
+}
+
 async function getSchools({
   schools,
   manualSchool,
@@ -29,16 +41,7 @@ async function getSchools({
 
   return schoolsSc
 }
-type SessionUser = {
-  admin?: boolean;
-  schools?: string[];
-  roles?: ROLE[];
-  classes?: Class[];
-  primaryRole: string;
-  primarySchool?: number;
-  activeSchool?: number; 
-  psl: number;
-} & User;
+
 // const prisma = new PrismaClient();
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),

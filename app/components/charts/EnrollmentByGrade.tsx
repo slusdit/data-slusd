@@ -69,7 +69,7 @@ export function EnrollmentByGradeChart({
       <CardHeader>
         {url ?
           <Link href={url}>
-            <CardTitle>{school.name.split(" ")[0]} Enrollment</CardTitle>
+            <CardTitle>{school.name ? school.name.split(" ")[0] : "School" } Enrollment</CardTitle>
           </Link> :
           <CardTitle>School Enrollment</CardTitle>
         }

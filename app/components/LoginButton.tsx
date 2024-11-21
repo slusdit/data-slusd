@@ -34,19 +34,14 @@ export default function LoginButton({
     user: User | null
 }) {
     const [imgUrl, setImgUrl] = useState<string | null>()
-
+    console.log(user)
     useEffect(() => {
 
         setImgUrl(user?.image)
     }, [])
 
     if (user) {
-        if (!imgUrl) {
-            setImgUrl(user.image)
-
-
-
-        }
+        
 
 
         const userInitials = user ? user?.name?.split(" ").map((initial) => initial[0]).join('') : "NA"
