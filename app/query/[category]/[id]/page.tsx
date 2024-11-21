@@ -1,23 +1,16 @@
-import QueryInput from "@/app/components/QueryInput";
 import AddQueryForm from "@/app/components/forms/AddQueryForm";
 import FormDialog from "@/app/components/forms/FormDialog";
 import { auth } from "@/auth";
 import { runQuery } from "@/lib/aeries";
 import { ArrowLeft, Home, Plus } from "lucide-react";
-import BackButton from "@/app/components/BackButton";
-import DataTable from "@/app/components/DataTable";
-import BarChart from "@/app/components/charts/BarChart";
-import { DiyChartBySchool } from "@/app/components/charts/DiyChartBySchool";
 import { QueryWithCategory } from "@/app/components/QueryBar";
 import { QuerySheet } from "@/app/components/QueiesSheet";
 import prisma from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import Sidebar from "@/app/components/Sidebar";
-import ReportGrid from "@/app/components/ReportGrid";
 import DataTableAgGrid from "@/app/components/DataTableAgGrid";
+import FavoriteQuerySwitch from "@/app/components/FavoriteQuerySwitch";
 
-// const prisma = new PrismaClient();
 export default async function Page({ params }: { params: { id: string, category: string } }) {
   const session = await auth();
   const id = params.id;
@@ -63,7 +56,6 @@ export default async function Page({ params }: { params: { id: string, category:
   //   return <DiyChartBySchool table={table} />;
   // };
 
-  console.log(urlCategory)
   if (result) {
     let data: any[] = await runQuery(result?.query);
     const category = result
@@ -92,9 +84,9 @@ export default async function Page({ params }: { params: { id: string, category:
 
             </Button>
             <h1 className="text-3xl text-left  font-bold">{result.name}</h1>
-
-
-            <br></br>
+            {session?.user &&
+              <FavoriteQuerySwitch queryId={id} user={session?.user} />
+            }
             <div className="my-2">
 
               <QuerySheet

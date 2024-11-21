@@ -1,23 +1,10 @@
 import { auth } from "@/auth";
-import { PrismaClient, QueryCategory } from "@prisma/client";
-import Link from "next/link";
-import AddQueryForm from "./components/forms/AddQueryForm";
-import FormDialog from "./components/forms/FormDialog";
-import { Plus } from "lucide-react";
 import { QueryWithCategory } from "./components/QueryBar";
-import { Separator } from "@/components/ui/separator";
-import { QuerySheet } from "./components/QueiesSheet";
 import { Card } from "@/components/ui/card";
 import prisma from "@/lib/db";
 import SchoolEnrollmentGraph from "./components/SchoolEnrollmentGraph";
-import PieChart from "./charts/page";
-import PieChartCard from "./components/charts/PieChart";
-import { AreaChartComponent } from "./components/charts/AreaChart";
-import { BarChartCustomGraph } from "./components/charts/BarChartCustom";
 import { AttendanceOverTimeChart } from "./components/charts/AttendanceOverTime";
-import { Button } from "@/components/ui/button";
 import { getQueryData } from "@/lib/getQuery";
-import QueryList from "./components/QueryList";
 import Sidebar from "./components/Sidebar";
 
 // const prisma = new PrismaClient();
@@ -66,7 +53,7 @@ export default async function Home() {
 
   const activeSchool = await prisma.schoolInfo.findUnique({
     where: {
-      sc: session?.user?.activeSchool.toString(),
+      sc: session?.user?.activeSchool?.toString(),
     },
   });
 
