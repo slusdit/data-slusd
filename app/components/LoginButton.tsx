@@ -34,7 +34,7 @@ export default function LoginButton({
     user: User | null
 }) {
     const [imgUrl, setImgUrl] = useState<string | null>()
-    console.log(user)
+    // console.log(user)
     useEffect(() => {
 
         setImgUrl(user?.image)

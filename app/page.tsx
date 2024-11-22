@@ -50,7 +50,7 @@ export default async function Home() {
     // console.log(categories);
   }
 
-  console.log(session?.user.favorites)
+  // console.log(session?.user.favorites)
 
   const activeSchool = await prisma.schoolInfo.findUnique({
     where: {

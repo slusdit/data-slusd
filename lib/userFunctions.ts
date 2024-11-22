@@ -19,5 +19,5 @@ export async function toggleFavorite(user: SessionUser, queryId: string) {
       }
     });
     const newUser = await auth();
-    console.log({newUser})
+    // console.log({newUser})
   }
