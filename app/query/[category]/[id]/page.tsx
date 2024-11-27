@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import DataTableAgGrid from "@/app/components/DataTableAgGrid";
 import FavoriteQuerySwitch from "@/app/components/FavoriteQuerySwitch";
+import FavoriteStarSwitch from "@/app/components/FavoriteStarSwitch";
 
 export default async function Page({ params }: { params: { id: string, category: string } }) {
   const session = await auth();
@@ -83,9 +84,13 @@ export default async function Page({ params }: { params: { id: string, category:
               ><ArrowLeft className="h-4 w-4 mr-2 text-primary " />Home</Link>
 
             </Button>
+              <div className="flex justify-between w-full">
             <h1 className="text-3xl text-left  font-bold">{result.name}</h1>
             
-              <FavoriteQuerySwitch queryId={id} user={session?.user} />
+             
+
+              <FavoriteStarSwitch queryId={id} user={session?.user} />
+              </div>
             
             <div className="my-2">
 
