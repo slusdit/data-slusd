@@ -85,7 +85,7 @@ const QueryList = ({
                   )
                   || user.roles.includes("SUPERADMIN")
                   || categoryRoles?.length === 0
-                  || category.label.toLowerCase() === 'favorites'
+                  // || category.label.toLowerCase() === 'favorites'
                   
 
 
@@ -146,7 +146,7 @@ const QueryList = ({
   return (
     <ScrollArea className="w-full h-full">
       <ul className="flex flex-col gap-1 w-2/3 mb-8">
-        {categories &&
+        {categories && 
           categories
             .filter((category) => category)
             .map((category) => {
