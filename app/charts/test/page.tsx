@@ -325,22 +325,22 @@ const chartData = [
         }
       }
     })
-    console.log(result)
+    // console.log(result)
     return result
   }
 
   const makeChartData = async (data: Record<string, Record<string, number>>) => {
     const result: ChartConfig[] = []
-    console.log(data)
+    // console.log(data)
     for (const key in data) {
-      console.log(key, data[key])
+      // console.log(key, data[key])
       result.push({
         label: key,
         
         data: data[key],
       })
     }
-    console.log(result)
+    // console.log(result)
     return result
   }
 
@@ -365,16 +365,16 @@ const chartData = [
 
   const makeChartConfig = (data: Record<string, Record<string, number>>) => {
     const result: ChartConfig[] = []
-    console.log(data)
+    // console.log(data)
     for (const key in data) {
-      console.log(key, data[key])
+      // console.log(key, data[key])
       result.push({
         label: key,
         
         data: data[key],
       })
     }
-    console.log(result)
+    // console.log(result)
     return result
   }
 
@@ -391,10 +391,10 @@ const chartData = [
   } satisfies ChartConfig
 export default async function Page() {
     let newChartData = restackData(chartData)
-    console.log(newChartData)
+    // console.log(newChartData)
     const finalChartData =  await makeChartData(newChartData)
     const finalFinalChartData = transformData(newChartData)
-    console.log(finalChartData)
+    // console.log(finalChartData)
     return (
         <div className="px-12 max-w-5xl">
             <h1 className="text-3xl">Test</h1>

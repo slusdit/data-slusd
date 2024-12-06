@@ -47,14 +47,14 @@ const FavoritesCard = ({ user }: { user: SessionUser }) => {
   const [error, setError] = useState<string | null>(null);
   const [queryData, setQueryData] = useState([]);
   const [category, setCategory] = useState();
-  console.log(user.favorites)
+  // console.log(user.favorites)
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         setError(null);
         const queryData = await getQueryData({ queryId: user.favorites[0] });
-        console.log(queryData)
+        // console.log(queryData)
         setQueryData(queryData);
         setLoading(false);
       } catch (error) {
@@ -105,7 +105,7 @@ const FavoritesCard = ({ user }: { user: SessionUser }) => {
   
               <Card className="w-full p-2 mr-4 justify-center flex flex-col h-full">
                 <Badge className="mb-5 text-center w-fit text-xs opacity-50">{query.category.label}</Badge>
-                {console.log(query.category.label)}
+
                 <Link href={`/query/${query.category.label.toLowerCase()}/${query.id}`}>
                   <CardTitle className="mb-5 text-center">
                     {query.name}
@@ -122,7 +122,7 @@ const FavoritesCard = ({ user }: { user: SessionUser }) => {
 
             <Card className="w-full p-2 mr-4 justify-center flex flex-col h-full">
               <Badge className="mb-5 text-center w-fit text-xs opacity-50">{query.category.label}</Badge>
-              {console.log(query)}
+
               <Link href={`/query/${query.category.label.toLowerCase()}/${query.id}`}>
                 <CardTitle className="mb-5 text-center">
                   {query.name}
@@ -135,28 +135,7 @@ const FavoritesCard = ({ user }: { user: SessionUser }) => {
       </div>
     </Card>
   );
-  return (
-
-    <Card className="w-full p-2 mr-4 justify-center flex flex-col h-full">
-      <h1 className="text-3xl font-weight-800 mb-5 text-center">
-        Welcome {user?.name}
-      </h1>
-
-      <div className="grid grid-cols-2 h-lg w-md items-center">
-        {user.favorites.map((query) => (
-
-          <Card className="w-full p-2 mr-4 justify-center flex flex-col h-full">
-            {console.log(query)}
-            <Link href={`/query/${query.category.label.toLowerCase()}/${query.id}`}>
-              <CardTitle className="mb-5 text-center">
-                {query.name}
-              </CardTitle>
-            </Link>
-          </Card>
-        ))}
-      </div>
-    </Card>
-  );
+  
 };
 
 export default FavoritesCard;

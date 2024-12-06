@@ -130,7 +130,7 @@ function DataTable<T extends object>({
                 return(
                 <tr key={row.id}>
                   {row.getVisibleCells().map((cell) => {
-                    console.log(cell.row.original)
+
                     return (
                     <td
                     key={cell.id}
