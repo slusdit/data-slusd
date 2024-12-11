@@ -53,10 +53,11 @@ export default async function AdminPage() {
       chartStackKey: true,
       hiddenCols: true,
       categoryId: true,
+      widgetLinkOverride: true,
 
       category: {
         select: {
-          id: true,
+          // id: true,
           label: true,
           // value: true
         },
