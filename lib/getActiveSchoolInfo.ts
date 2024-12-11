@@ -8,8 +8,10 @@ export default async function getActiveSchoolInfo() {
     const session = await auth()
     const activeSchool = session?.user?.activeSchool?.toString()
     const schoolInfo = await prisma.schoolInfo.findUnique({
-        where: { sc: activeSchool}
-    })
+        where: {
+          sc: session?.user?.activeSchool.toString()
+        }
+      })
     console.log(schoolInfo)
     return schoolInfo
 

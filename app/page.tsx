@@ -21,7 +21,7 @@ export default async function Home() {
 
       category: {
         select: {
-          id: true,
+          // id: true,
           label: true,
           value: true,
         },
