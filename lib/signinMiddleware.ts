@@ -116,6 +116,7 @@ export async function getAllSchools(profileEmail: string) {
     const results = await getPrimarySchool(profileEmail)
     const profileName = profileEmail.split('@')[0]
     const allSchoolsQuery = `SELECT SCH FROM USR where NM like '${profileName}%' and DEL = 0`
+    // console.log(allSchoolsQuery)
     const allSchoolsResults = await runQuery(allSchoolsQuery)
     // console.log({ allSchoolsResults })
     results['allSchools'] = allSchoolsResults.map((school) => school.SCH)
@@ -128,7 +129,7 @@ export async function getAllSchools(profileEmail: string) {
     })
     // console.log({ user })
     // console.log({ results })
-    if (!user?.primarySchool) {
+    if (user && !user?.primarySchool) {
         // console.log(profileEmail)
         const ret = await updateSchools(profileEmail, results)
         // console.log(ret)
