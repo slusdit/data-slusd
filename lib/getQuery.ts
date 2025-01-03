@@ -39,7 +39,7 @@ export async function getQueryData({
         include: {
           category: {
             include: {
-              id: true,
+              // id: true,
               label: true,
               value: true,
               queries: true,
