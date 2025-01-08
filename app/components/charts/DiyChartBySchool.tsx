@@ -386,7 +386,7 @@ function createConfig(chartData: SDCEnrollmentPercentByGrade[], key: string = 'S
     let config: BaseBySchoolChartConfig = {}
 
     chartData.forEach(item => {
-        console.log(item)
+        // console.log(item)
         let school;
         for (const key in item) {
             if (key.toLowerCase() === 'school' || key.toLowerCase() === 'sch#' || key.toLowerCase() === 'sc') {

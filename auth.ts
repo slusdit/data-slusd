@@ -141,7 +141,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         classes: dbUser?.UserClass.map((userClass) => userClass.class) || [],
         // queryCategories: dbUser?.queryCategories || [],
       };
-      console.log(session.user)
       return session;
     },
   },

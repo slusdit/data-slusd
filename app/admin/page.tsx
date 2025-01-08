@@ -57,9 +57,9 @@ export default async function AdminPage() {
 
       category: {
         select: {
-          // id: true,
-          label: true,
-          // value: true
+          id: true,
+          // label: true,
+          value: true
         },
       },
     },

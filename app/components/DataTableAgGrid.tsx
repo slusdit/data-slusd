@@ -13,6 +13,7 @@ import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
 import { AgCharts } from "ag-charts-react";
 import { useTheme } from "next-themes";
+// import { createChartOptions } from "@/lib/chartOptions";
 
 interface DataTableProps<T extends object> {
   data: T[];

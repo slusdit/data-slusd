@@ -23,25 +23,22 @@ export async function getQueryData({
   queryId?: string;
   queryLabel?: string;
 }) {
-  // console.log({ queryId, queryLabel });
   async function fetchQuery({
     queryId,
     queryLabel,
   }: {
     queryId?: string;
     queryLabel?: string;
-  }){
-    if (queryId) {
+  }) {
+    // Add validation to ensure queryId is a string
+    if (queryId && typeof queryId === 'string') {
       return await prisma.query.findUnique({
         where: {
-          id: queryId,
+          id: queryId // This should be just the string ID
         },
         include: {
           category: {
             include: {
-              // id: true,
-              label: true,
-              value: true,
               queries: true,
             }
           },
@@ -58,17 +55,17 @@ export async function getQueryData({
         },
       });
     }
-  };
+  }
 
   const query = await fetchQuery({ queryId, queryLabel });
-
-  // console.log(query);
+  
   if (!query) return;
   const data = await runQuery(query.query);
-  // console.log(data)
+  
   return {
     data: data,
     query: query,
   };
 }
 
+  

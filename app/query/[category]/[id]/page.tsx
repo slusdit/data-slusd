@@ -44,7 +44,7 @@ export default async function Page({ params }: { params: { id: string, category:
         category: {
           select: {
             id: true,
-            label: true,
+            // label: true,
             value: true,
 
           }
