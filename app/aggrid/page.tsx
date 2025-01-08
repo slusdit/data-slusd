@@ -49,7 +49,7 @@ export default async function Page() {
         category: {
           select: {
             id: true,
-            label: true,
+            // label: true,
             value: true,
 
           }

@@ -6,7 +6,7 @@ import SchoolEnrollmentGraph from "./components/SchoolEnrollmentGraph";
 import { AttendanceOverTimeChart } from "./components/charts/AttendanceOverTime";
 import { getQueryData } from "@/lib/getQuery";
 import Sidebar from "./components/Sidebar";
-import FavoritesCard from "./components/FavoritesCard";
+import FavoritesSectionGrid from "./components/FavoritesSectionGrid";
 
 // const prisma = new PrismaClient();
 export default async function Home() {
@@ -22,7 +22,7 @@ export default async function Home() {
       category: {
         select: {
           // id: true,
-          label: true,
+          // label: true,
           value: true,
         },
       },
@@ -78,7 +78,7 @@ export default async function Home() {
         />
 
         {/* Main Landing Page */}
-        <FavoritesCard user={session?.user}  />
+        <FavoritesSectionGrid user={session?.user}  />
         {/* <Card className="w-full p-2 mr-4 justify-center flex flex-col h-full">
           <h1 className="text-3xl font-weight-800 mb-5 text-center">
             Welcome {session?.user?.name}
