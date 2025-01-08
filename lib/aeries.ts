@@ -289,7 +289,7 @@ export async function runQuery(
            
           } else {
           
-            query = query.replace("@@asc", "'" + session?.user?.activeSchool + "'");
+            query = query.replace("@@asc", "'" + session?.user?.activeSchool + "'");           
           }
 
           query = query.replace("@@asc", "'"+ session?.user?.primarySchool + "'");

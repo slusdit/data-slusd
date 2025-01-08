@@ -47,7 +47,6 @@ const FavoritesCard = ({ user }: { user: SessionUser }) => {
   const [error, setError] = useState<string | null>(null);
   const [queryData, setQueryData] = useState([]);
   const [category, setCategory] = useState();
-  console.log(user.favorites)
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -92,7 +91,7 @@ const FavoritesCard = ({ user }: { user: SessionUser }) => {
   //   );
   // }
   return (
-
+    
     <Card className="w-full p-2 mr-4 justify-center flex flex-col h-full">
       <CardTitle className="mb-5 text-center">
         Welcome {user?.name}
@@ -100,13 +99,14 @@ const FavoritesCard = ({ user }: { user: SessionUser }) => {
 
       <CardContent className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 h-lg w-md gap-4 items-center">
         {user.favorites.map((query) => {
+      console.log(query.widgetLinkOverride);
+
           if (query.chart) {
             return (
   
               <Card className="w-full p-2 mr-4 justify-center flex flex-col h-full" key={query.id}>
                 <Badge className="mb-5 text-center w-fit text-xs opacity-50">{query.category.label}</Badge>
-                {console.log(query.category.label)}
-                <Link href={`/query/${query.category.label.toLowerCase()}/${query.id}`}>
+                <Link href={query.widgetLinkOverride ? query.widgetLinkOverride : `/query/${query.category.label.toLowerCase()}/${query.id}`}>
                   <CardTitle className="mb-5 text-center">
                     {query.name}
                   </CardTitle>
