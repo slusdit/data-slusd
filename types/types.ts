@@ -25,4 +25,13 @@ export interface ChartOptionsProps {
   theme?: string;
   rowData?: any[];
   selectedRows?: any[];
+  angleKey?: string;
+  calloutLabelKey?: string;
+  sectorLabelKey?: string;
+  sectorLabel?: SectorLabel;
+}
+
+export interface SectorLabel {
+  color?: string;
+  fontWeight?: string;
 }
