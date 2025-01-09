@@ -22,7 +22,7 @@ const FavoriteCard = ({
     user: SessionUser
 }) => {
     const [data, setData] = useState([]);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [chartOptions, setChartOptions] = useState({});
     
     const { theme } = useTheme() || "light";
@@ -48,8 +48,10 @@ const FavoriteCard = ({
                     aggFunction: "sum"
                 });
                 
+                
                 setData(response);
                 setChartOptions(chartOpt); // This is async
+                console.log("chartOptions updated:", chartOpt);
             } catch (error) {
                 console.error("Error fetching data:", error);
             } finally {

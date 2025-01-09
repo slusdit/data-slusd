@@ -139,13 +139,22 @@ const QueryAdminGrid = ({
     return selectedCategory?.id;
   };
 
-  const nameRenderer = (params: {
-    data: { name: string; id: string; category: { label: string } };
+  const nameRenderer = (params:
+    {
+      data: {
+        name: string;
+        id: string;
+        category: {
+          id: string;
+          value: string;
+        }
+      };
   }) => {
+
     return (
       <div className="cursor-pointer text-blue-500 underline">
         <Link
-          href={`/query/${params.data.category.label.toLowerCase()}/${params.data.id}`}
+          href={`/query/${params.data.category.value.toLowerCase()}/${params.data.id}`}
           target="_blank"
         >
           {params.data.name}

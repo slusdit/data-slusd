@@ -38,19 +38,21 @@ export async function createChartOptions({
       );
     }
   
-    if (chartYKeyArray.length > 0) {
-      return {
+  if (chartYKeyArray.length > 0) {
+      const finalChartOptions = {
         ...baseChartOptions,
         series: chartYKeyArray.map((key) => ({
           type: chartTypeKey || "bar",
           xKey: chartXKey || "SC",
-          yKey: key.trim(),
-          yName: key.trim(),
+          yKey: chartYKey || "ID",
           stacked: chartStackKey || false,
-          cornerRadius: 5,
-        })),
-      };
+          cornerRadius: 5
+        }
+      )),
+    };
+    console.log("finalChartOptions", finalChartOptions);
+    return finalChartOptions;
     }
-  
+    
     return baseChartOptions;
   }
