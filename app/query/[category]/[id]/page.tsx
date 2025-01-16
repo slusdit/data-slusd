@@ -9,7 +9,6 @@ import prisma from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import DataTableAgGrid from "@/app/components/DataTableAgGrid";
-import FavoriteQuerySwitch from "@/app/components/FavoriteQuerySwitch";
 import FavoriteStarSwitch from "@/app/components/FavoriteStarSwitch";
 
 export default async function Page({ params }: { params: { id: string, category: string } }) {
