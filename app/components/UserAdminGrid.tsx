@@ -63,6 +63,22 @@ const UserAdminGrid = ({
             // checkboxSelection: index === 0 ? true : false,
             cellStyle: { whiteSpace: "normal" },
           };
+        } else if (key === "favorites") {
+          return {
+            field: key.trim(),
+            resizable: true,
+            sortable: true,
+            filter: true,
+            floatingFilter: true,
+            editable: false,
+            valueFormatter: (params) => {
+              if (!params.value) return '';
+              // Assuming each favorite object has a name property
+              return params.value.map(favorite => favorite.name).join(', ');
+            },
+            autoSize: true,
+            cellStyle: { whiteSpace: "normal" },
+          };
         } else if (key === "UserSchool") {
           return {
             field: "Aeries - School Access",

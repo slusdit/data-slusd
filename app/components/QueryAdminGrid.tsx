@@ -136,6 +136,8 @@ const QueryAdminGrid = ({
     const selectedCategory = categoryNameArray.find(
       (category) => category.label === params.value
     );
+    console.log({ selectedCategory })
+    // return selectedCategory?.label || '';
     return selectedCategory?.id;
   };
 
@@ -194,6 +196,7 @@ const QueryAdminGrid = ({
           cellStyle: { whiteSpace: "normal" },
         };
       } else if ("categoryId" === key) {
+        
         return {
           field: key.trim(),
           resizable: true,
@@ -206,9 +209,17 @@ const QueryAdminGrid = ({
             values: categoryNameArray,
             valueFormatter: categoryValueFormatter,
           },
-          valueGetter: (params: { data: { category: { label: string } } }) => {
-            return params.data?.category?.label;
+          valueGetter: (params: { data: { category?: { label?: string }, categoryId?: string } }) => {
+            if (params.data?.category?.label) {
+              return params.data.category.label;
+            }
+            // Fallback to finding category by ID if label is not available
+            const category = categories.find(c => c.id === params.data.categoryId);
+            return category?.label || '';
           },
+          // valueGetter: (params: { data: { category: { label: string } } }) => {
+          //   return params.data?.category?.label;
+          // },
           valueSetter: (params: {
             newValue: string,
             data: { categoryId: string, category: { label: string } }
