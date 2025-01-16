@@ -24,8 +24,21 @@ const FavoriteCard = ({
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [chartOptions, setChartOptions] = useState({});
-    
-    const { theme } = useTheme() || "light";
+    const { theme } = useTheme();
+    console.log(theme)
+    const [agGridTheme, setAgGridTheme] = useState(
+        theme === "dark" ? "ag-theme-alpine-dark" : "ag-theme-alpine"
+      );
+
+    useEffect(() => {
+        setAgGridTheme(theme === "dark" ? "ag-theme-alpine-dark" : "ag-theme-alpine");
+        setChartOptions(prevOptions => ({
+          ...prevOptions,
+          theme: theme === "dark" ? "ag-sheets-dark" : "ag-sheets",
+        }));
+      }, [ theme ]);
+
+
 
 
     // useEffect(() => {
@@ -45,13 +58,14 @@ const FavoriteCard = ({
                     rowData: response,
                     visibleColumns: query.hiddenCols.split(","),
                     chartStackKey: query.chartStackKey || false,
-                    aggFunction: "sum"
+                    aggFunction: "sum",
+                    theme: theme,
                 });
                 
                 
                 setData(response);
                 setChartOptions(chartOpt); // This is async
-                console.log("chartOptions updated:", chartOpt);
+                
             } catch (error) {
                 console.error("Error fetching data:", error);
             } finally {
