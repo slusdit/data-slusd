@@ -58,7 +58,9 @@ function DataTable<T extends object>({
     visibleColumns?: string[];
     chartStackKey?: boolean | null;
     aggFunction?: string | null;
-  }) {
+    }) {
+    
+    console.log(data)
     const baseChartOptions = {
       autoSize: true,
       title: {
@@ -76,29 +78,34 @@ function DataTable<T extends object>({
       ],
     };
 
-    let chartYKeyArray = chartYKey?.split(",") || [];
+    let chartYKeyArray = chartYKey?.split(",") || [chartYKey];
+    // chartYKeyArray = chartYKeyArray.map((key) => key?.toString().trim());
+    console.log(chartYKeyArray);
 
     // Filter yKeys based on visible columns
-    if (visibleColumns && chartYKeyArray.length > 0) {
-      chartYKeyArray = chartYKeyArray.filter(key => 
-        visibleColumns.includes(key.trim())
-      );
-    }
-
+    // if (visibleColumns && chartYKeyArray.length > 0) {
+    //   chartYKeyArray = chartYKeyArray.filter(key => 
+    //     console.log(key, visibleColumns.includes(key))
+    //     visibleColumns.includes(key)
+    //   );
+    // }
+    console.log(baseChartOptions);
     if (chartYKeyArray.length > 0) {
-      return {
+      const finalChartOptions = {
         ...baseChartOptions,
         series: chartYKeyArray.map((key) => ({
           type: chartTypeKey || "bar",
           xKey: chartXKey || "SC",
-          yKey: key.trim(),
-          yName: key.trim(),
+          yKey: key?.toString().trim().toString(),
+          yName: key?.toString().trim().toString(),
           stacked: chartStackKey || false,
           cornerRadius: 5,
         })),
       };
+      console.log(finalChartOptions.series);
+      return finalChartOptions
     }
-
+    console.log(baseChartOptions.series);
     return baseChartOptions;
   }
 
@@ -136,6 +143,7 @@ function DataTable<T extends object>({
 
       // Update chart options with new visible columns
       setChartOptions(prevOptions => createChartOptions({
+        ...prevOptions,
         chartTitle,
         chartXKey,
         chartYKey,
@@ -245,7 +253,7 @@ function DataTable<T extends object>({
 
     return [checkboxCol, ...dataCols];
   }, [data, hiddenColumns]);
-
+  console.log(columnDefs);
   const onGridReady = (params: GridReadyEvent) => {
     setGridApi(params.api);
     setColumns(params.api.getColumnDefs() as ColDef[]);
@@ -297,7 +305,7 @@ function DataTable<T extends object>({
   if (!data || !data.length) {
     return <div>No data available</div>;
   }
-
+  console.log(chartOptions)
   return (
     <div className="w-full flex flex-col justify-center">
       {showChart && (

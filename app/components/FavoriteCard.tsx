@@ -23,49 +23,41 @@ const FavoriteCard = ({
 }) => {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [chartOptions, setChartOptions] = useState({});
+    const [chartOptions, setChartOptions] = useState(null); // Change to null initially
     const { theme } = useTheme();
-    console.log(theme)
+
     const [agGridTheme, setAgGridTheme] = useState(
         theme === "dark" ? "ag-theme-alpine-dark" : "ag-theme-alpine"
-      );
+    );
 
+    // Separate effect for theme changes
     useEffect(() => {
         setAgGridTheme(theme === "dark" ? "ag-theme-alpine-dark" : "ag-theme-alpine");
-        setChartOptions(prevOptions => ({
-          ...prevOptions,
-          theme: theme === "dark" ? "ag-sheets-dark" : "ag-sheets",
-        }));
-      }, [ theme ]);
+    }, [theme]);
 
-
-
-
-    // useEffect(() => {
-    //     console.log("chartOptions updated:", chartOptions);
-    // }, [chartOptions]);
-
+    // Main data fetching effect
     useEffect(() => {
         const fetchData = async () => {
             try {
                 setLoading(true);
                 const response = await runQuery(query.query);
+                setData(response);
+                
+                // Create chart options after data is set
                 const chartOpt = await createChartOptions({
                     chartTitle: query.name,
                     chartXKey: query.chartXKey,
                     chartYKey: query.chartYKey,
                     chartTypeKey: query.chartTypeKey,
-                    rowData: response,
-                    visibleColumns: query.hiddenCols.split(","),
+                    rowData: response, // Use response directly
+                    visibleColumns: query.hiddenCols?.split(",") || [],
                     chartStackKey: query.chartStackKey || false,
                     aggFunction: "sum",
                     theme: theme,
                 });
                 
-                
-                setData(response);
-                setChartOptions(chartOpt); // This is async
-                
+                setChartOptions(chartOpt);
+                console.log(chartOpt)
             } catch (error) {
                 console.error("Error fetching data:", error);
             } finally {
@@ -73,21 +65,23 @@ const FavoriteCard = ({
             }
         };
 
-        fetchData();
-    }, [query]); // Add query as a dependency
+        if (query) {
+            fetchData();
+        }
+    }, [query, theme]); // Add theme as dependency
 
     return (       
         <Card className="w-full p-2 mr-4 justify-center flex flex-col h-full" key={query.id}>
             <Badge className="mb-5 text-center w-fit text-xs opacity-50">
                 {query.category.label}
             </Badge>
-            <Link href={query.widgetLinkOverride ? query.widgetLinkOverride : `/query/${query.category.label.toLowerCase()}/${query.id}`}>
+            <Link href={query.widgetLinkOverride || `/query/${query.category.label.toLowerCase()}/${query.id}`}>
                 <CardTitle className="mb-5 text-center">
                     {query.name}
                 </CardTitle>
 
                 <CardContent>
-                    {loading ? (
+                    {loading || !chartOptions ? (
                         <Skeleton className="text-center grid place-items-center h-[300px]">
                             Loading...
                         </Skeleton>
