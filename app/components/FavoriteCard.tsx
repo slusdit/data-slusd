@@ -79,7 +79,7 @@ const FavoriteCard = ({
     }, [query, theme]); // Add theme as dependency
 
     return (       
-        <Card className="w-full p-2 mr-4 justify-center flex flex-col h-full" key={query.id}>
+        <Card className="w-full p-2 mr-4 justify-center flex flex-col h-full shadow-md" key={query.id}>
             <Badge className="mb-5 text-center w-fit text-xs opacity-50">
                 {query.category.label}
             </Badge>
