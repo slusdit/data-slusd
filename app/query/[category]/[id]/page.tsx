@@ -57,7 +57,9 @@ export default async function Page({ params }: { params: { id: string, category:
   // };
 
   if (result) {
+    console.log(result)
     let data: any[] = await runQuery(result?.query);
+    console.log(data)
     const category = result
     function getHiddenColumns(hiddenCols: string): string[] | undefined {
 

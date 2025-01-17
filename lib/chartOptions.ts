@@ -11,6 +11,7 @@ export async function createChartOptions({
   theme,
   rowData,
   selectedRows,
+  chartSeriesOverride,
 }: ChartOptionsProps) {
   const agTheme = "ag-polychroma";
 
@@ -31,14 +32,22 @@ export async function createChartOptions({
     ],
   };
 
-  let chartYKeyArray = chartYKey?.split(",").map(item => item.trim()) || [];
-  
+  let chartYKeyArray = chartYKey?.split(",").map((item) => item.trim()) || [];
+
   // if (visibleColumns && chartYKeyArray.length > 0) {
   //   chartYKeyArray = chartYKeyArray.filter((key) =>
   //     visibleColumns.includes(key.trim())
   //   );
   // }
-  console.log(chartYKeyArray.length)
+  if (chartSeriesOverride) {
+    const finalChartOptions = {
+      ...baseChartOptions,
+      series: chartSeriesOverride,
+    };
+    return finalChartOptions;
+  }
+
+  console.log(chartYKeyArray.length);
   if (chartYKeyArray && chartYKeyArray.length > 0) {
     const finalChartOptions = {
       ...baseChartOptions,
@@ -46,18 +55,18 @@ export async function createChartOptions({
         type: chartTypeKey || "bar",
         xKey: chartXKey || "SC",
         yKey: key || "ID",
-        yName: key, 
+        yName: key,
         stacked: chartStackKey || false,
         cornerRadius: 5,
       })),
     };
-   
+
     return finalChartOptions;
   }
   console.log("baseChartOptions", baseChartOptions.series);
   return baseChartOptions;
 }
- 
+
 export async function createChartOptions2({
   chartTitle,
   chartXKey,
@@ -96,7 +105,7 @@ export async function createChartOptions2({
 
   // Filter yKeys based on visible columns
   if (visibleColumns && chartYKeyArray.length > 0) {
-    chartYKeyArray = chartYKeyArray.filter(key => 
+    chartYKeyArray = chartYKeyArray.filter((key) =>
       visibleColumns.includes(key.trim())
     );
   }
