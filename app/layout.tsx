@@ -42,7 +42,7 @@ export default async function RootLayout({
       <body suppressHydrationWarning={true} className={`${fontSans.className} w-full bg-card/90 flex flex-col min-h-screen`}>
         <ThemeProvider
           attribute='class'
-          defaultTheme='system'
+          defaultTheme='light'
           enableSystem
           disableTransitionOnChange
           >

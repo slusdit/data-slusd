@@ -16,18 +16,26 @@ import { useTheme } from "next-themes";
 
 const FavoriteCard = ({
     query,
-    user
+    user, 
+    theme 
 }: {
     query: QueryWithCategory;
     user: SessionUser
+    theme?: string
 }) => {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [chartOptions, setChartOptions] = useState(null); // Change to null initially
-    const { theme } = useTheme();
+    // const { theme } = useTheme();
+    console.log(theme)
+    if (!theme) {
+        const { theme: providerTheme } = useTheme()
+       theme = providerTheme
+    }
 
     const [agGridTheme, setAgGridTheme] = useState(
         theme === "dark" ? "ag-theme-alpine-dark" : "ag-theme-alpine"
+        // theme ||  useTheme()
     );
 
     // Separate effect for theme changes
