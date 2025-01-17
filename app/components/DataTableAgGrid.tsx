@@ -18,10 +18,10 @@ import Link from "next/link";
 // import { createChartOptions } from "@/lib/chartOptions";
 
 const IdCellRenderer = (props: any) => {
-  console.log(props)
+  console.log(props);
   const sc = props.data.sc || props.data.SC;
   return (
-    <Link 
+    <Link
       href={`/${sc}/student/${props.value}`}
       className="text-blue-500 hover:text-blue-700 hover:underline"
     >
@@ -65,6 +65,7 @@ function DataTable<T extends object>({
     visibleColumns,
     chartStackKey,
     aggFunction,
+    chartSeriesOverride,
   }: {
     chartTitle?: string | null;
     chartXKey?: string | null;
@@ -73,9 +74,9 @@ function DataTable<T extends object>({
     visibleColumns?: string[];
     chartStackKey?: boolean | null;
     aggFunction?: string | null;
-    }) {
-    
-    console.log(data)
+    chartSeriesOverride?: string;
+  }) {
+    console.log(data);
     const baseChartOptions = {
       autoSize: true,
       title: {
@@ -99,11 +100,21 @@ function DataTable<T extends object>({
 
     // Filter yKeys based on visible columns
     // if (visibleColumns && chartYKeyArray.length > 0) {
-    //   chartYKeyArray = chartYKeyArray.filter(key => 
+    //   chartYKeyArray = chartYKeyArray.filter(key =>
     //     console.log(key, visibleColumns.includes(key))
     //     visibleColumns.includes(key)
     //   );
     // }
+
+    if (chartSeriesOverride) {
+      const finalChartOptions = {
+        ...baseChartOptions,
+        series: chartSeriesOverride
+      }
+
+      console.log(finalChartOptions);
+      return finalChartOptions
+    }
     console.log(baseChartOptions);
     if (chartYKeyArray.length > 0) {
       const finalChartOptions = {
@@ -118,7 +129,7 @@ function DataTable<T extends object>({
         })),
       };
       console.log(finalChartOptions.series);
-      return finalChartOptions
+      return finalChartOptions;
     }
     console.log(baseChartOptions.series);
     return baseChartOptions;
@@ -133,17 +144,25 @@ function DataTable<T extends object>({
   const [selectedRows, setSelectedRows] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
   const [visibleColumns, setVisibleColumns] = useState<string[]>([]);
-  const [chartOptions, setChartOptions] = useState(
-    createChartOptions({
-      chartTitle,
-      chartXKey,
-      chartYKey,
-      chartTypeKey,
-      visibleColumns: [],
-      chartStackKey,
-      aggFunction,
-    })
-  );
+  const [chartOptions, setChartOptions] = useState(null);
+
+  useEffect(() => {
+    async function fetchColumns() {
+      const response = await createChartOptions({
+        chartTitle,
+        chartXKey,
+        chartYKey,
+        chartTypeKey,
+        visibleColumns: [],
+        chartStackKey,
+        aggFunction,
+      });
+      const chartOptions = await response;
+      setChartOptions(chartOptions);
+    }
+    fetchColumns();
+  }, []);
+  console.log(chartOptions);
   const [agGridTheme, setAgGridTheme] = useState(
     theme === "dark" ? "ag-theme-alpine-dark" : "ag-theme-alpine"
   );
@@ -152,21 +171,23 @@ function DataTable<T extends object>({
   useEffect(() => {
     if (columns.length > 0) {
       const currentVisibleColumns = columns
-        .filter(col => !col.hide && col.field !== "checkboxCol")
-        .map(col => col.field as string);
+        .filter((col) => !col.hide && col.field !== "checkboxCol")
+        .map((col) => col.field as string);
       setVisibleColumns(currentVisibleColumns);
 
       // Update chart options with new visible columns
-      setChartOptions(prevOptions => createChartOptions({
-        ...prevOptions,
-        chartTitle,
-        chartXKey,
-        chartYKey,
-        chartTypeKey,
-        visibleColumns: currentVisibleColumns,
-        chartStackKey,
-        aggFunction,
-      }));
+      setChartOptions((prevOptions) =>
+        createChartOptions({
+          ...prevOptions,
+          chartTitle,
+          chartXKey,
+          chartYKey,
+          chartTypeKey,
+          visibleColumns: currentVisibleColumns,
+          chartStackKey,
+          aggFunction,
+        })
+      );
     }
   }, [columns]);
 
@@ -178,15 +199,17 @@ function DataTable<T extends object>({
   }, [data]);
 
   useEffect(() => {
-    setAgGridTheme(theme === "dark" ? "ag-theme-alpine-dark" : "ag-theme-alpine");
-    setChartOptions(prevOptions => ({
+    setAgGridTheme(
+      theme === "dark" ? "ag-theme-alpine-dark" : "ag-theme-alpine"
+    );
+    setChartOptions((prevOptions) => ({
       ...prevOptions,
       theme: theme === "dark" ? "ag-sheets-dark" : "ag-sheets",
     }));
   }, [theme]);
 
   useEffect(() => {
-    setChartOptions(prevOptions => ({
+    setChartOptions((prevOptions) => ({
       ...prevOptions,
       data: selectedRows.length ? selectedRows : rowData,
     }));
@@ -225,14 +248,14 @@ function DataTable<T extends object>({
         hide: hiddenColumns?.includes(key.toUpperCase()) ? true : false,
       };
 
-      if (key.toLowerCase() === "id" && ('sc' in data[0] || 'SC' in data[0])) {
+      if (key.toLowerCase() === "id" && ("sc" in data[0] || "SC" in data[0])) {
         return {
           ...keyLoopDefault,
           hide: hiddenColumns?.includes(key.toUpperCase()) ? true : false,
           resizable: true,
           aggFunc: "count",
           cellRenderer: IdCellRenderer,
-          cellClass: "text-center text-xs bg-card cursor-pointer"
+          cellClass: "text-center text-xs bg-card cursor-pointer",
         };
       }
 
@@ -241,7 +264,10 @@ function DataTable<T extends object>({
           ...keyLoopDefault,
           filter: "agDateColumnFilter",
           filterParams: {
-            comparator: (filterLocalDateAtMidnight: Date, cellValue: string) => {
+            comparator: (
+              filterLocalDateAtMidnight: Date,
+              cellValue: string
+            ) => {
               if (cellValue == null) return -1;
               const dateParts = cellValue.split("/");
               const cellDate = new Date(
@@ -322,11 +348,13 @@ function DataTable<T extends object>({
   if (!data || !data.length) {
     return <div>No data available</div>;
   }
-  console.log(chartOptions)
+  console.log(chartOptions);
   return (
     <div className="w-full flex flex-col justify-center">
       {showChart && (
-        <div className={`${agGridTheme} w-full h-full border-b-2 border-muted/20 pb-4`}>
+        <div
+          className={`${agGridTheme} w-full h-full border-b-2 border-muted/20 pb-4`}
+        >
           <AgCharts options={chartOptions} />
         </div>
       )}
@@ -343,7 +371,10 @@ function DataTable<T extends object>({
             <DropdownMenuTrigger asChild>
               <Button variant="outline">Columns</Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="max-h-96 overflow-y-auto">
+            <DropdownMenuContent
+              align="end"
+              className="max-h-96 overflow-y-auto"
+            >
               {columns
                 .filter((col) => col.field !== "checkboxCol")
                 .map((column) => (
