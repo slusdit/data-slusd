@@ -69,7 +69,7 @@ export default async function Page({ params }: { params: { id: string, category:
     }
 
     return (
-      <div >
+      <div className="">
         {/* <Sidebar session={session} categories={categories} queries={queries} /> */}
         <div className="flex flex-col w-full items-center">
           <div className="items-left w-full">
@@ -109,7 +109,6 @@ export default async function Page({ params }: { params: { id: string, category:
             <div id="description">{result.description}</div>
           </div>
 
-          <h2 className="text-xl underline font-bold mt-2 w-full">Data:</h2>
           <DataTableAgGrid
             data={data}
             id={id}
