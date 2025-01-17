@@ -57,9 +57,9 @@ export default async function Page({ params }: { params: { id: string, category:
   // };
 
   if (result) {
-    console.log(result)
+   
     let data: any[] = await runQuery(result?.query);
-    console.log(data)
+
     const category = result
     function getHiddenColumns(hiddenCols: string): string[] | undefined {
 
@@ -121,7 +121,9 @@ export default async function Page({ params }: { params: { id: string, category:
             chartTypeKey={result?.chartTypeKey}
             chartStackKey={result?.chartStackKey}
             hiddenColumns={getHiddenColumns(result?.hiddenCols)}
-            title={result.name} />
+            title={result.name}
+            chartSeriesOverride={result?.chartSeriesOverride}
+          />
 
         </div>
       </div>
