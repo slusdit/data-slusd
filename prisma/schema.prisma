@@ -168,7 +168,7 @@ model Query {
   chartTypeKey   String? 
   chartStackKey  Boolean        @default(false)
   widgetLinkOverride  String?
-  chartSeriesOverride Json?      
+  chartSeriesOverride String?      
   Chart          Chart[]
   category       QueryCategory? @relation(fields: [categoryId], references: [id])
   roles          Role[]

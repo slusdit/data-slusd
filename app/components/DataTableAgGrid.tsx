@@ -41,6 +41,7 @@ interface DataTableProps<T extends object> {
   chartStackKey?: boolean | null;
   hiddenColumns?: string[];
   title?: string;
+  chartSeriesOverride?: string
   aggFunction?: string;
 }
 
@@ -55,6 +56,7 @@ function DataTable<T extends object>({
   chartStackKey,
   hiddenColumns,
   aggFunction,
+  chartSeriesOverride,
   title = "Data",
 }: DataTableProps<T>) {
   function createChartOptions({
@@ -77,7 +79,7 @@ function DataTable<T extends object>({
     chartSeriesOverride?: string;
   }) {
     console.log(data);
-    const baseChartOptions = {
+    let baseChartOptions = {
       autoSize: true,
       title: {
         text: chartTitle || "Data Chart",
@@ -106,15 +108,27 @@ function DataTable<T extends object>({
     //   );
     // }
 
+    console.log(chartSeriesOverride);
     if (chartSeriesOverride) {
-      const finalChartOptions = {
+      console.log(baseChartOptions);
+      baseChartOptions = {
         ...baseChartOptions,
-        series: chartSeriesOverride
+        // ...chartSeriesOverride,
+        
+          // "normalizedTo": 100,
+          // "label": {
+          //   "enabled": true,
+          //   "formatter": ({ value, yKey }) => `${yKey}: ${value.toString()}%`,
+          //   "placement": 'center',
+          // },
+        
       }
-
-      console.log(finalChartOptions);
-      return finalChartOptions
+      console.log(baseChartOptions);
     }
+
+    //   console.log(finalChartOptions);
+    //   return finalChartOptions
+    // }
     console.log(baseChartOptions);
     if (chartYKeyArray.length > 0) {
       const finalChartOptions = {
@@ -125,7 +139,7 @@ function DataTable<T extends object>({
           yKey: key?.toString().trim().toString(),
           yName: key?.toString().trim().toString(),
           stacked: chartStackKey || false,
-          cornerRadius: 5,
+          // cornerRadius: 5,
         })),
       };
       console.log(finalChartOptions.series);
@@ -156,6 +170,7 @@ function DataTable<T extends object>({
         visibleColumns: [],
         chartStackKey,
         aggFunction,
+        chartSeriesOverride
       });
       const chartOptions = await response;
       setChartOptions(chartOptions);
@@ -186,6 +201,7 @@ function DataTable<T extends object>({
           visibleColumns: currentVisibleColumns,
           chartStackKey,
           aggFunction,
+          chartSeriesOverride
         })
       );
     }
@@ -355,7 +371,10 @@ function DataTable<T extends object>({
         <div
           className={`${agGridTheme} w-full h-full border-b-2 border-muted/20 pb-4`}
         >
-          <AgCharts options={chartOptions} />
+          <AgCharts
+            options={chartOptions}
+            style={{ width: "100%", height: 400 }}
+          />
         </div>
       )}
 
