@@ -219,7 +219,12 @@ export default function AddQueryForm({
                   {...field}
                 />
               </FormControl>
-              <FormDescription>SQL query</FormDescription>
+              <FormDescription> SQL Query
+                <small>
+                  <br />
+                  `@@asc` - User's current active school
+                </small>
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}

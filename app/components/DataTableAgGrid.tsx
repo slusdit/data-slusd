@@ -13,7 +13,22 @@ import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
 import { AgCharts } from "ag-charts-react";
 import { useTheme } from "next-themes";
+import Link from "next/link";
+
 // import { createChartOptions } from "@/lib/chartOptions";
+
+const IdCellRenderer = (props: any) => {
+  console.log(props)
+  
+  return (
+    <Link 
+      href={`/**placeholder**/student/${props.value}`}
+      className="text-blue-500 hover:text-blue-700 hover:underline"
+    >
+      {props.value}
+    </Link>
+  );
+};
 
 interface DataTableProps<T extends object> {
   data: T[];
@@ -210,12 +225,14 @@ function DataTable<T extends object>({
         hide: hiddenColumns?.includes(key.toUpperCase()) ? true : false,
       };
 
-      if (key === "ID") {
+      if (key.toLowerCase() === "id" && ('sc' in data[0] || 'SC' in data[0])) {
         return {
           ...keyLoopDefault,
           hide: hiddenColumns?.includes(key.toUpperCase()) ? true : false,
           resizable: true,
           aggFunc: "count",
+          cellRenderer: IdCellRenderer,
+          cellClass: "text-center text-xs bg-card cursor-pointer"
         };
       }
 
