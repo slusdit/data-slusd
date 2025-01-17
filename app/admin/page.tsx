@@ -54,6 +54,7 @@ export default async function AdminPage() {
       hiddenCols: true,
       categoryId: true,
       widgetLinkOverride: true,
+      chartSeriesOverride: true,
 
       category: {
         select: {

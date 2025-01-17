@@ -29,6 +29,7 @@ export interface ChartOptionsProps {
   calloutLabelKey?: string;
   sectorLabelKey?: string;
   sectorLabel?: SectorLabel;
+  chartSeriesOverride?: string;
 }
 
 export interface SectorLabel {
