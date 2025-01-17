@@ -7,46 +7,15 @@ import { getQueryData } from "@/lib/getQuery";
 import Link from "next/link";
 import { use, useEffect, useMemo, useState } from "react";
 import FavoriteCard from "./FavoriteCard";
+import { useTheme } from "next-themes";
 
-function createChartOptions({
-  chartTitle,
-  chartXKey,
-  chartYKey,
-  chartTypeKey,
-  visibleColumns,
-  chartStackKey,
-  aggFunction,
-}: {
-  chartTitle?: string | null;
-  chartXKey?: string | null;
-  chartYKey?: string | null;
-  chartTypeKey?: string | null;
-  visibleColumns?: string[];
-  chartStackKey?: boolean | null;
-  aggFunction?: string | null;
-}) {
-  const baseChartOptions = {
-    autoSize: true,
-    title: {
-      text: chartTitle || "Data Chart",
-    },
-    theme: theme === "dark" ? `${agTheme}-dark` : `${agTheme}`,
-    data: selectedRows.length ? selectedRows : rowData,
-    series: [
-      {
-        type: chartTypeKey || "bar",
-        xKey: chartXKey || "SC",
-        yKey: chartYKey || "ID",
-        cornerRadius: 5,
-      },
-    ],
-  };
-}
 const FavoritesSectionGrid = ({ user }: { user: SessionUser }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [queryData, setQueryData] = useState([]);
   const [category, setCategory] = useState();
+
+  const { theme } = useTheme();
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -95,7 +64,7 @@ const FavoritesSectionGrid = ({ user }: { user: SessionUser }) => {
       <CardContent className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 h-lg w-md gap-4 items-center">
         {user.favorites.map((query) => {
           if (query.chart) {
-            return <FavoriteCard key={query.id} query={query} user={user} />;
+            return <FavoriteCard key={query.id} query={query} user={user} theme={theme} />;
           }
         })}
       </CardContent>
