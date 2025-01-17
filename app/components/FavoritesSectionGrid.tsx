@@ -34,7 +34,7 @@ const FavoritesSectionGrid = ({ user }: { user: SessionUser }) => {
   }, []);
   if (user.favorites.length == 0) {
     return (
-      <Card className="w-full p-2 mr-4 justify-center flex flex-col h-full">
+      <Card className="w-full p-2 mr-4 justify-center flex flex-col h-full ">
         <CardTitle className="mb-5 text-center">Welcome {user?.name}</CardTitle>
         {/* Main section for district users */}
         <CardContent className="grid grid-cols-1 h-lg w-md items-center">
@@ -58,7 +58,8 @@ const FavoritesSectionGrid = ({ user }: { user: SessionUser }) => {
   //   );
   // }
   return (
-    <Card className="w-full p-2 mr-4 justify-center flex flex-col h-full">
+    // <Card className="w-full p-2 mr-4 justify-center flex flex-col h-full">
+    <Card className="w-full p-2 mr-4 justify-center flex flex-col h-full shadow-md ">
       <CardTitle className="mb-5 text-center">Welcome {user?.name}</CardTitle>
 
       <CardContent className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 h-lg w-md gap-4 items-center">

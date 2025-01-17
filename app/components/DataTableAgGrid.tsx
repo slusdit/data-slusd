@@ -19,10 +19,10 @@ import Link from "next/link";
 
 const IdCellRenderer = (props: any) => {
   console.log(props)
-  
+  const sc = props.data.sc || props.data.SC;
   return (
     <Link 
-      href={`/**placeholder**/student/${props.value}`}
+      href={`/${sc}/student/${props.value}`}
       className="text-blue-500 hover:text-blue-700 hover:underline"
     >
       {props.value}

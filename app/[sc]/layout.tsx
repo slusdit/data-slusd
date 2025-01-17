@@ -1,0 +1,34 @@
+import { auth } from "@/auth";
+import UnauthorizedButton from "../components/UnauthorizedButton";
+
+export default async function SchoolLayout({
+    children,
+    params,
+  }: Readonly<{
+      children: React.ReactNode;
+      params: { sc: string };
+  }>) {
+    // const session = await serverAuth()
+    const session = await auth()
+    const sc = session?.user?.activeSchool
+
+    if (sc?.toString() !== params.sc) {
+      return (
+        <div>
+          Unauthorized, please go back
+        </div>
+      );
+    }
+
+  
+    return (
+        <div>
+            {session ? children :
+                  <UnauthorizedButton
+                    home
+                  />
+                }
+        </div>
+    );
+  }
+  
