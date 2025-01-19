@@ -7,5 +7,22 @@
         "tanstack"
     ],
     "WillLuke.nextjs.addTypesOnSave": true,
-    "WillLuke.nextjs.hasPrompted": true
+    "WillLuke.nextjs.hasPrompted": true,
+    "sqltools.connections": [
+        {
+            "mysqlOptions": {
+                "authProtocol": "default",
+                "enableSsl": "Disabled"
+            },
+            "previewLimit": 50,
+            "server": "192.168.0.5",
+            "port": 3306,
+            "driver": "MySQL",
+            "name": "slusd_data on NAS",
+            "group": "work",
+            "database": "data_slusd",
+            "username": "data_user",
+            "password": "iS!VDP43ni82ei"
+        }
+    ]
 }
