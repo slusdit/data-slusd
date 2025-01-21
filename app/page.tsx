@@ -45,10 +45,12 @@ export default async function Home() {
         value: 'favorites',
         queries: session?.user.favorites
       },
-        ...categories]
+      
+      ...categories]
     }
-    // console.log(categories);
-  }
+
+  // console.log(categories);
+}
 
   // console.log(session?.user.favorites)
 
