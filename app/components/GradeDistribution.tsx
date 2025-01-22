@@ -22,7 +22,7 @@ const PercentCellRenderer = (props) => {
       teacher={props.data.Teacher}
       sc={props.data.SC}
       tn={props.data.TN}
-      isOpen
+      params={props}
       colField={props.colDef.field}
     >
       {value}%
@@ -32,7 +32,7 @@ const PercentCellRenderer = (props) => {
 const GradeDistribution = ({ data }) => {
     const [hoveredTeacher, setHoveredTeacher] = useState(null);
     const { theme } = useTheme();
-    console.log(theme)
+
 
   const columnDefs = useMemo(() => [
     {
@@ -67,10 +67,10 @@ const GradeDistribution = ({ data }) => {
       field: 'Other_Percent',
       type: 'numericColumn', headerName: 'Other %',
       cellRenderer: PercentCellRenderer },
-    { 
-      field: 'Total_Marks',
-      type: 'numericColumn',
-      cellRenderer: PercentCellRenderer }
+    // { 
+    //   field: 'Total_Marks',
+    //   type: 'numericColumn',
+    //    }
   ]);
 
   const defaultColDef = useMemo(() => ({
@@ -147,6 +147,7 @@ const GradeDistribution = ({ data }) => {
               onGridReady={onGridReady}
               animateRows={true}
               pagination={true}
+              
             />
           </div>
         </CardContent>
