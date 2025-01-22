@@ -13,7 +13,7 @@ export default async function GradedistributionLayout({
     const userRoles = session?.user?.roles
     console.log(userRoles)
 
-    if (!userRoles?.some(role => ["GRADEDISTRIBUTION", "SUPERADMIN"].includes(role))) {
+    if (!userRoles?.some(role => ["GRADEDISTRIBUTION", "SUPERADMIN", "PRINCIPAL"].includes(role))) {
       return (
         <div>
           Unauthorized, please go back

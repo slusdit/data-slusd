@@ -26,13 +26,26 @@ const Sidebar = async({
     return (
 
         <div className="min-w-60 w-1/6 mr-4 p-2 flex flex-col gap-2 justify-top">
-            {(
+            {/* {(
                 session?.user?.roles?.includes("ASSESSMENT") ||
                 session?.user?.roles?.includes("SUPERADMIN")) && 
                 (
                     <>
                         <div className="flex justify-center">
                             <Link href="/assessment/grades" className="text-primary px-4 py-2">Assessment</Link>
+                        </div>
+                        <Separator className="my-4 w-full" />
+                    </>
+
+                )} */}
+            {(
+                session?.user?.roles?.includes("PRINCIPAL") ||
+                session?.user?.roles?.includes("GRADEDISTRIBUTION") ||
+                session?.user?.roles?.includes("SUPERADMIN")) && 
+                (
+                    <>
+                        <div className="flex justify-center">
+                            <Link href="/gradedistribution" className="text-primary px-4 py-2">Grade Distribution</Link>
                         </div>
                         <Separator className="my-4 w-full" />
                     </>
