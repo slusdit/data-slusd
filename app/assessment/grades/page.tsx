@@ -10,7 +10,7 @@ import DataTableAgGrid from "@/app/components/DataTableAgGrid";
 import { AgGridReact } from "ag-grid-react";
 
 export default async function GradeDistributionPage() {
-    const percentQueryId = 'cm63uvaed0005ammu8q0uh7y2'
+    const percentQueryId = process.env.QUERY_ASSESSMENT_GRADE_PERCENTAGE
     const session = await auth();
 
     // const categories = await prisma.queryCategory.findMany();
