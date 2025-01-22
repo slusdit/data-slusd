@@ -46,8 +46,8 @@ const TeacherGradesDialog = ({
     },
     { field: "CO", headerName: "Course Name", filter: true },
     { field: "PD", headerName: "Period", filter: true },
-    //   { field: 'CN', headerName: 'Course Number', filter: true },
-    //   { field: 'SE', headerName: 'Section', filter: true },
+      { field: 'CN', headerName: 'Course Number', filter: true },
+      { field: 'SE', headerName: 'Section', filter: true },
     {
       field: 'Grade_Count',
       headerName: "Grade Count",
