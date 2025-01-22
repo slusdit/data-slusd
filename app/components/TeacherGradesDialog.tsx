@@ -24,11 +24,24 @@ const TeacherGradesDialog = ({
     const { theme } = useTheme();
 
     const columnDefs = [
-      { field: 'CN', headerName: 'Course Number', filter: true },
-      { field: 'SE', headerName: 'Section', filter: true },
-      { field: 'TERM', headerName: 'Term', filter: true },
-      { field: 'MARK', headerName: 'Mark', filter: true },
-      { field: 'StudentCount', headerName: 'Grade Count', filter: 'agNumberColumnFilter' }
+        // { field: 'TERM', headerName: 'Term', filter: true },
+        { 
+            field: 'TERM', 
+            headerName: 'Term', 
+            filter: 'agSetColumnFilter',
+            filterParams: {
+                values: (params) => {
+                    // Get unique TERM values
+                    return [...new Set(params.rowModel.rowsToDisplay.map((row: { data: { TERM: any; }; }) => row.data.TERM))].sort();
+                }
+            }
+        },
+        { field: 'CO', headerName: 'Course Name', filter: true },
+        { field: 'PD', headerName: 'Period', filter: true },
+    //   { field: 'CN', headerName: 'Course Number', filter: true },
+    //   { field: 'SE', headerName: 'Section', filter: true },
+      { field: 'StudentCount', headerName: 'Grade Count', filter: 'agNumberColumnFilter' },
+    //   { field: 'MARK', headerName: 'Mark', filter: true },
     ];
   
     const defaultColDef = useMemo(() => ({
@@ -43,13 +56,14 @@ const TeacherGradesDialog = ({
         const fetchData = async () => {
           const mark = colField.toUpperCase().substring(0, 1);
           const query = `
-          SELECT CN, SE, TERM,
-          CASE WHEN MARK LIKE '${mark}%' THEN '${mark}' END as MARK,
-          COUNT(*) as StudentCount 
+          SELECT CRS.CN, CRS.CO, SE, PD, TERM,
+          COUNT(*) as StudentCount, 
+          CASE WHEN MARK LIKE '${mark}%' THEN '${mark}' END as MARK
           FROM SLUSD_GRADES 
+          left join CRS on SLUSD_GRADES.cn = CRS.CN
           WHERE sc = ${sc} AND tn = ${tn} AND MARK LIKE '${mark}%'
-          GROUP BY CN, SE, TERM, MARK
-          ORDER BY CN, SE, TERM`;
+          GROUP BY CRS.CN, CRS.CO, PD, SE, TERM, MARK
+          ORDER BY TERM, CN`;
           
           try {
             const result = await runQuery(query);
@@ -71,7 +85,7 @@ const TeacherGradesDialog = ({
         </DialogTrigger>
         <DialogContent className="max-w-4xl">
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">{teacher} - {colField} Grades</h3>
+            <h3 className="text-lg font-semibold">{teacher} - {colField.substring(0, 1)} Grades</h3>
             {loading ? (
               <p>Loading...</p>
             ) : gradeData && gradeData.length ? (
