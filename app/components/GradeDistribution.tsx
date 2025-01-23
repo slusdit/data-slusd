@@ -31,7 +31,9 @@ const PercentCellRenderer = (props) => {
 };
 const GradeDistribution = ({ data }) => {
     const [hoveredTeacher, setHoveredTeacher] = useState(null);
-    const { theme } = useTheme();
+  const { theme } = useTheme();
+  
+  const baseChartTheme = useMemo(() => (theme === 'dark' ? 'ag-sheets-dark' : 'ag-sheets'), [theme]);
 
 
   const columnDefs = useMemo(() => [
@@ -82,7 +84,13 @@ const GradeDistribution = ({ data }) => {
   const chartOptions = {
     title: { text: 'Grade Distribution by Teacher' },
     data: data,
-    theme: `ag-sheets${theme === 'dark' ? '-dark' : ''}`,
+    theme: {
+      baseTheme: {baseChartTheme},
+      palette: { 
+        fills: ['#2E86C1','#5DADE2','#F4D03F','#E67E22','#C0392B','#000000'],
+        strokes: ['gray'], 
+      },
+    },
     series: [
       { type: 'bar', xKey: 'Teacher', yKey: 'A%', yName: 'A%', stacked: true },
       { type: 'bar', xKey: 'Teacher', yKey: 'B%', yName: 'B%', stacked: true },
@@ -121,6 +129,13 @@ const GradeDistribution = ({ data }) => {
     }
   }, []);
 
+  const newTheme = {
+    palette: { 
+    fills: ['#2E86C1','#5DADE2','#F4D03F','#E67E22','#C0392B','#BDC3C7'],
+    strokes: ['black'], 
+  }, 
+}
+
   return (
     <div className="w-full space-y-4">
       <Card>
@@ -128,8 +143,14 @@ const GradeDistribution = ({ data }) => {
           <CardTitle>Grade Distribution Chart</CardTitle>
         </CardHeader>
         <CardContent>
-          <div style={{ height: '300px' }} className={`ag-sheets${theme === 'dark' ? '-dark' : ''}`}>
-            <AgCharts options={chartOptions} onNodeClick={onChartHover} theme={`ag-sheets${theme === 'dark' ? '-dark' : ''}`} />
+          <div style={{ height: '300px' }} className={newTheme}>
+          {/* <div style={{ height: '300px' }} className={`ag-sheets${theme === 'dark' ? '-dark' : ''}`}> */}
+            <AgCharts
+              options={chartOptions}
+              onNodeClick={onChartHover}
+              // theme={`ag-sheets${theme === 'dark' ? '-dark' : ''}`}
+              theme={newTheme}
+            />
           </div>
         </CardContent>
       </Card>
