@@ -68,7 +68,8 @@ const GradeDistribution = ({ data }) => {
     { 
       field: 'Other_Percent',
       type: 'numericColumn', headerName: 'Other %',
-      cellRenderer: PercentCellRenderer },
+      cellRenderer: (props) => `${props.value}%`
+    },
     // { 
     //   field: 'Total_Marks',
     //   type: 'numericColumn',

@@ -184,28 +184,28 @@ ORDER BY CN, PD, TERM;`
         {children}
       </DialogTrigger>
       <DialogContent className="max-w-4xl">
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">
-            {teacher} - {colField.substring(0, 1)} Grades
-          </h3>
-          {loading ? (
-            <p>Loading...</p>
-          ) : gradeData && gradeData.length ? (
-            <div
-              style={{ height: "800px", width: "800px" }}
-              className={`ag-theme-alpine${theme === "dark" ? "-dark" : ""}`}
-            >
-              <AgGridReact
-                rowData={gradeData}
-                columnDefs={columnDefs}
-                defaultColDef={defaultColDef}
-                animateRows={true}
-                pagination={true}
-              />
-            </div>
-          ) : null}
-        </div>
-      </DialogContent>
+  <div className="flex flex-col items-center space-y-4">
+    <h3 className="text-lg font-semibold">
+      {teacher} - {colField.substring(0, 1)} Grades
+    </h3>
+    {loading ? (
+      <p>Loading...</p>
+    ) : gradeData && gradeData.length ? (
+      <div
+        style={{ height: "800px", width: "800px" }}
+        className={`ag-theme-alpine${theme === "dark" ? "-dark" : ""} mx-auto`}
+      >
+        <AgGridReact
+          rowData={gradeData}
+          columnDefs={columnDefs}
+          defaultColDef={defaultColDef}
+          animateRows={true}
+          pagination={true}
+        />
+      </div>
+    ) : null}
+  </div>
+</DialogContent>
     </Dialog>
   );
 };
