@@ -40,7 +40,25 @@ const GradeDistribution = ({ data }) => {
     {
       field: 'Teacher',
       filter: true,
-      sortable: true
+      sortable: true,
+      width: 225
+    },
+    {
+      field: 'TERM',
+      headerName: 'Term',
+      filter: 'agSetColumnFilter',
+      sortable: true,
+      filterParams: {
+        
+        buttons: [
+          {
+            text: 'All',
+            value: null,
+          },
+        ],
+        closeOnApply: true
+      }
+      // width: 100
     },
     {
       field: 'A%',
@@ -70,10 +88,7 @@ const GradeDistribution = ({ data }) => {
       type: 'numericColumn', headerName: 'Other %',
       cellRenderer: (props) => `${props.value}%`
     },
-    // { 
-    //   field: 'Total_Marks',
-    //   type: 'numericColumn',
-    //    }
+
   ]);
 
   const defaultColDef = useMemo(() => ({
