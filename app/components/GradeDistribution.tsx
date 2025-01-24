@@ -1,3 +1,4 @@
+
 'use client'
 import React, { useCallback, useMemo, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
@@ -7,6 +8,7 @@ import 'ag-grid-community/styles/ag-theme-alpine.css';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTheme } from 'next-themes';
 import TeacherGradesDialog from './TeacherGradesDialog';
+import { Button } from '@/components/ui/button';
 
 const PercentCellRenderer = (props) => {
   const value = props.value;
@@ -25,8 +27,28 @@ const PercentCellRenderer = (props) => {
 
 const GradeDistribution = ({ data }) => {
   const [filteredData, setFilteredData] = useState(data);
-  const { theme } = useTheme();
-  const baseChartTheme = useMemo(() => (theme === 'dark' ? 'ag-sheets-dark' : 'ag-sheets'), [theme]);
+  const [gridApi, setGridApi] = useState(null);
+  const { resolvedTheme } = useTheme();
+  const baseChartTheme = useMemo(() => (resolvedTheme === 'dark' ? 'ag-sheets-dark' : 'ag-sheets'), [resolvedTheme]);
+
+  const exportToCSV = useCallback(() => {
+    if (!gridApi) return;
+
+    const exportParams = {
+      skipHeader: false,
+      suppressQuotes: true,
+      columnSeparator: ',',
+      onlyFilteredAndSortedData: true,
+      processCellCallback: (params) => {
+        if (params.value === null || params.value === undefined) return '';
+        if (typeof params.value === 'number') return params.value;
+        return params.value.toString();
+      },
+      fileName: `Grade_Distribution_${new Date().toISOString().split('T')[0]}.csv`
+    };
+
+    gridApi.exportDataAsCsv(exportParams);
+  }, [gridApi]);
 
   const columnDefs = useMemo(() => [
     {
@@ -120,6 +142,7 @@ const GradeDistribution = ({ data }) => {
   }), [filteredData, baseChartTheme]);
 
   const onGridReady = useCallback((params) => {
+    setGridApi(params.api);
     params.api.sizeColumnsToFit();
   }, []);
 
@@ -153,11 +176,20 @@ const GradeDistribution = ({ data }) => {
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Grade Distribution Data</CardTitle>
+        <CardHeader >
+          <CardTitle className='flex flex-row justify-between'>
+            Grade Distribution Data
+
+            <Button
+              onClick={exportToCSV}
+              className="bg-primary text-white hover:bg-blue-600  p-2"
+              >
+              Export to CSV
+            </Button>
+              </CardTitle>
         </CardHeader>
         <CardContent>
-          <div style={{ height: '600px' }} className={`ag-theme-alpine${theme === 'dark' ? '-dark' : ''}`}>
+          <div style={{ height: '600px' }} className={`ag-theme-alpine${resolvedTheme === 'dark' ? '-dark' : ''} `}>
             <AgGridReact
               rowData={data}
               columnDefs={columnDefs}
