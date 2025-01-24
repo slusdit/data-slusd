@@ -166,7 +166,7 @@ const GradeDistribution = ({ data }) => {
     <div className="w-full space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>Grade Distribution Chart</CardTitle>
+          {/* <CardTitle>Grade Distribution Chart</CardTitle> */}
         </CardHeader>
         <CardContent>
           <div style={{ height: '300px' }}>
