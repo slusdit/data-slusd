@@ -1,22 +1,15 @@
 'use client'
-import React, { useCallback, useMemo, useState, useEffect } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import { AgCharts } from 'ag-charts-react';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTheme } from 'next-themes';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
-import { runQuery } from '@/lib/aeries';
 import TeacherGradesDialog from './TeacherGradesDialog';
-
-
 
 const PercentCellRenderer = (props) => {
   const value = props.value;
-  const count = Math.round((value / 100) * props.data.Total_Marks);
-  
   return (
     <TeacherGradesDialog 
       teacher={props.data.Teacher}
@@ -29,12 +22,11 @@ const PercentCellRenderer = (props) => {
     </TeacherGradesDialog>
   );
 };
-const GradeDistribution = ({ data }) => {
-    const [hoveredTeacher, setHoveredTeacher] = useState(null);
-  const { theme } = useTheme();
-  
-  const baseChartTheme = useMemo(() => (theme === 'dark' ? 'ag-sheets-dark' : 'ag-sheets'), [theme]);
 
+const GradeDistribution = ({ data }) => {
+  const [filteredData, setFilteredData] = useState(data);
+  const { theme } = useTheme();
+  const baseChartTheme = useMemo(() => (theme === 'dark' ? 'ag-sheets-dark' : 'ag-sheets'), [theme]);
 
   const columnDefs = useMemo(() => [
     {
@@ -44,21 +36,13 @@ const GradeDistribution = ({ data }) => {
       width: 225
     },
     {
-      field: 'TERM',
-      headerName: 'Term',
+      field: 'Department',
       filter: 'agSetColumnFilter',
       sortable: true,
       filterParams: {
-        
-        buttons: [
-          {
-            text: 'All',
-            value: null,
-          },
-        ],
+        buttons: ['apply', 'reset'],
         closeOnApply: true
       }
-      // width: 100
     },
     {
       field: 'A%',
@@ -78,30 +62,32 @@ const GradeDistribution = ({ data }) => {
     { 
       field: 'D%',
       type: 'numericColumn',
-      cellRenderer: PercentCellRenderer },
+      cellRenderer: PercentCellRenderer
+    },
     { 
       field: 'F%',
       type: 'numericColumn',
-      cellRenderer: PercentCellRenderer },
+      cellRenderer: PercentCellRenderer
+    },
     { 
       field: 'Other_Percent',
-      type: 'numericColumn', headerName: 'Other %',
+      type: 'numericColumn', 
+      headerName: 'Other %',
       cellRenderer: (props) => `${props.value}%`
-    },
-
-  ]);
+    }
+  ], []);
 
   const defaultColDef = useMemo(() => ({
     resizable: true,
     sortable: true,
     filter: true
-  }));
+  }), []);
 
-  const chartOptions = {
+  const chartOptions = useMemo(() => ({
     title: { text: 'Grade Distribution by Teacher' },
-    data: data,
+    data: filteredData,
     theme: {
-      baseTheme: {baseChartTheme},
+      baseTheme: baseChartTheme,
       palette: { 
         fills: ['#2E86C1','#5DADE2','#F4D03F','#E67E22','#C0392B','#000000'],
         strokes: ['gray'], 
@@ -131,26 +117,27 @@ const GradeDistribution = ({ data }) => {
         max: 100
       }
     ]
-  };
+  }), [filteredData, baseChartTheme]);
 
   const onGridReady = useCallback((params) => {
     params.api.sizeColumnsToFit();
   }, []);
 
-  const onChartHover = useCallback((event) => {
-    if (event?.datum?.Teacher) {
-      setHoveredTeacher(event.datum.Teacher);
-      // Here you would trigger the query to fetch class breakdown
-      console.log(`Fetch class breakdown for teacher: ${event.datum.TN}`);
-    }
+  const updateChartData = useCallback((params) => {
+    const sortedData = [];
+    params.api.forEachNodeAfterFilterAndSort((node) => {
+      sortedData.push(node.data);
+    });
+    setFilteredData(sortedData);
   }, []);
 
-  const newTheme = {
-    palette: { 
-    fills: ['#2E86C1','#5DADE2','#F4D03F','#E67E22','#C0392B','#BDC3C7'],
-    strokes: ['black'], 
-  }, 
-}
+  const onFilterChanged = useCallback((params) => {
+    updateChartData(params);
+  }, [updateChartData]);
+
+  const onSortChanged = useCallback((params) => {
+    updateChartData(params);
+  }, [updateChartData]);
 
   return (
     <div className="w-full space-y-4">
@@ -159,14 +146,8 @@ const GradeDistribution = ({ data }) => {
           <CardTitle>Grade Distribution Chart</CardTitle>
         </CardHeader>
         <CardContent>
-          <div style={{ height: '300px' }} className={newTheme}>
-          {/* <div style={{ height: '300px' }} className={`ag-sheets${theme === 'dark' ? '-dark' : ''}`}> */}
-            <AgCharts
-              options={chartOptions}
-              onNodeClick={onChartHover}
-              // theme={`ag-sheets${theme === 'dark' ? '-dark' : ''}`}
-              theme={newTheme}
-            />
+          <div style={{ height: '300px' }}>
+            <AgCharts options={chartOptions} />
           </div>
         </CardContent>
       </Card>
@@ -182,9 +163,10 @@ const GradeDistribution = ({ data }) => {
               columnDefs={columnDefs}
               defaultColDef={defaultColDef}
               onGridReady={onGridReady}
+              onFilterChanged={onFilterChanged}
+              onSortChanged={onSortChanged}
               animateRows={true}
               pagination={true}
-              
             />
           </div>
         </CardContent>
