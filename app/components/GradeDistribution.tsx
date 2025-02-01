@@ -9,16 +9,26 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTheme } from 'next-themes';
 import TeacherGradesDialog from './TeacherGradesDialog';
 import { Button } from '@/components/ui/button';
+import { ModuleRegistry, createGrid } from "ag-grid-community";
+import { AllEnterpriseModule, LicenseManager, IntegratedChartsModule } from "ag-grid-enterprise";
+import { AgChartsEnterpriseModule } from "ag-charts-enterprise";
 
+ModuleRegistry.registerModules([
+  AllEnterpriseModule,
+  IntegratedChartsModule.with(AgChartsEnterpriseModule)
+]);
+
+
+LicenseManager.setLicenseKey(process.env.AG_GRID_LICENSE_KEY as string);
 const PercentCellRenderer = (props) => {
   const value = props.value;
   return (
     <TeacherGradesDialog 
-      teacher={props.data.Teacher}
-      sc={props.data.SC}
-      tn={props.data.TN}
-      params={props}
-      colField={props.colDef.field}
+    teacher={props.data.Teacher}
+    sc={props.data.SC}
+    tn={props.data.TN}
+    params={props}
+    colField={props.colDef.field}
     >
       {value}%
     </TeacherGradesDialog>
@@ -61,10 +71,10 @@ const GradeDistribution = ({ data }) => {
       field: 'Department',
       filter: 'agSetColumnFilter',
       sortable: true,
-      filterParams: {
-        buttons: ['apply', 'reset'],
-        closeOnApply: true
-      }
+      // filterParams: {
+      //   buttons: ['apply', 'reset'],
+      //   closeOnApply: true
+      // }
     },
     {
       field: 'A%',
