@@ -59,6 +59,7 @@ function DataTable<T extends object>({
   const [gridApi, setGridApi] = useState<GridApi | null>(null);
   const [columns, setColumns] = useState<ColDef[]>([]);
   const [rowData, setRowData] = useState<T[]>([]);
+  const [originalData, setOriginalData] = useState<T[]>([]);
   const [selectedRows, setSelectedRows] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
   const [visibleColumns, setVisibleColumns] = useState<string[]>([]);
@@ -73,6 +74,30 @@ function DataTable<T extends object>({
   const baseChartTheme = useMemo(() => 
     resolvedTheme === 'dark' ? 'ag-sheets-dark' : 'ag-sheets'
   , [resolvedTheme]);
+
+  // Function to update chart data based on grid state
+  const updateChartData = useCallback((params: any) => {
+    const updatedData: T[] = [];
+    params.api.forEachNodeAfterFilterAndSort((node: any) => {
+      updatedData.push(node.data);
+    });
+    setRowData(updatedData);
+  }, []);
+
+  // Event handlers for grid changes
+  const onFilterChanged = useCallback((params: any) => {
+    // Check if this is a filter reset
+    const filterModel = params.api.getFilterModel();
+    if (Object.keys(filterModel).length === 0) {
+      setRowData(originalData);
+    } else {
+      updateChartData(params);
+    }
+  }, [updateChartData, originalData]);
+
+  const onSortChanged = useCallback((params: any) => {
+    updateChartData(params);
+  }, [updateChartData]);
 
   const createChartOptions = useCallback(({
     chartTitle,
@@ -119,18 +144,34 @@ function DataTable<T extends object>({
     return baseOptions;
   }, [baseChartTheme, selectedRows, rowData]);
 
+  const onFilterReset = useCallback(() => {
+    if (gridApi) {
+      gridApi.setFilterModel(null);
+      gridApi.setSortModel(null);
+      setRowData(originalData);
+    }
+  }, [gridApi, originalData]);
+
   const defaultColDef = useMemo(() => ({
     sortable: true,
     resizable: true,
-    filter: true,
+    filter: 'agSetColumnFilter',
     floatingFilter: true,
     flex: 1,
     minWidth: 100,
     filterParams: {
-      buttons: ['reset', 'apply'],
-      closeOnApply: true
+      buttons: ['apply', 'reset'],
+      closeOnApply: true,
+      suppressSelectAll: false,
+      refreshValuesOnOpen: true,
+      values: params => {
+        // Get unique values from original data for this column
+        const values = new Set(originalData.map(item => item[params.colDef.field]));
+        return Array.from(values).sort();
+      },
+      excelMode: 'windows'
     }
-  }), []);
+  }), [originalData]);
 
   const columnDefs = useMemo(() => {
     if (!data || data.length === 0) return [];
@@ -168,6 +209,22 @@ function DataTable<T extends object>({
           filterParams: {
             buttons: ['apply', 'reset'],
             closeOnApply: true,
+            comparator: (filterLocalDateAtMidnight: Date, cellValue: string) => {
+              if (!cellValue) return -1;
+              const dateParts = cellValue.split("/");
+              const cellDate = new Date(
+                Number(dateParts[2]),
+                Number(dateParts[0]) - 1,
+                Number(dateParts[1])
+              );
+              if (filterLocalDateAtMidnight.getTime() === cellDate.getTime()) {
+                return 0;
+              }
+              if (cellDate < filterLocalDateAtMidnight) {
+                return -1;
+              }
+              return 1;
+            },
           },
         };
       }
@@ -206,6 +263,7 @@ function DataTable<T extends object>({
   useEffect(() => {
     if (data) {
       setRowData(data);
+      setOriginalData(data);
       setLoading(false);
     }
   }, [data]);
@@ -246,7 +304,8 @@ function DataTable<T extends object>({
         >
           Export to CSV
         </Button>
-
+        
+        
       </div>
 
       <div className="h-[600px] w-full">
@@ -260,8 +319,10 @@ function DataTable<T extends object>({
           onSelectionChanged={(event) => 
             setSelectedRows(event.api.getSelectedRows())
           }
+          onFilterChanged={onFilterChanged}
+          onSortChanged={onSortChanged}
           enableCellTextSelection={true}
-
+          suppressRowClickSelection={true}
           pagination={true}
           animateRows={true}
         />
