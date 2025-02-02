@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTheme } from 'next-themes';
 import TeacherGradesDialog from './TeacherGradesDialog';
 import { Button } from '@/components/ui/button';
-import { themeQuartz } from 'ag-grid-enterprise';
+import { colorSchemeDark, themeQuartz } from 'ag-grid-enterprise';
 
 const PercentCellRenderer = (props) => {
   const value = props.value;
@@ -33,11 +33,11 @@ const GradeDistribution = ({ data }) => {
   const gridThemeClass = useMemo(() => {
     console.log(resolvedTheme);
     return resolvedTheme === 'dark' 
-      ? 'ag-theme-quartz-dark' 
-      : 'ag-theme-quartz';
+      ? themeQuartz.withPart(colorSchemeDark) 
+      : themeQuartz;
   }, [resolvedTheme]);
-  console.log(gridThemeClass);
-  // Rest of the component remains the same...
+
+  
   const exportToCSV = useCallback(() => {
     if (!gridApi) return;
 
@@ -208,7 +208,7 @@ const GradeDistribution = ({ data }) => {
         <CardContent>
           <div className={`h-[600px] w-full `}>
             <AgGridReact
-              theme={themeQuartz}
+              theme={gridThemeClass}
               rowData={data}
               columnDefs={columnDefs}
               defaultColDef={defaultColDef}
