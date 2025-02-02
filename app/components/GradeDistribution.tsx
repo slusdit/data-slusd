@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTheme } from 'next-themes';
 import TeacherGradesDialog from './TeacherGradesDialog';
 import { Button } from '@/components/ui/button';
-import { colorSchemeDark, themeQuartz } from 'ag-grid-enterprise';
+import { colorSchemeDark, colorSchemeDarkBlue, themeQuartz } from 'ag-grid-enterprise';
 
 const PercentCellRenderer = (props) => {
   const value = props.value;
@@ -33,7 +33,7 @@ const GradeDistribution = ({ data }) => {
   const gridThemeClass = useMemo(() => {
     console.log(resolvedTheme);
     return resolvedTheme === 'dark' 
-      ? themeQuartz.withPart(colorSchemeDark) 
+      ? themeQuartz.withPart(colorSchemeDarkBlue) 
       : themeQuartz;
   }, [resolvedTheme]);
 
