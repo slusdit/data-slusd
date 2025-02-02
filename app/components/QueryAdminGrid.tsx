@@ -1,9 +1,10 @@
 "use client";
 import { useRef, useEffect, useMemo, useCallback, forwardRef } from "react";
 import { AgGridReact } from "ag-grid-react";
-import "ag-grid-community/styles/ag-grid.css";
+// import "ag-grid-community/styles/ag-grid.css";
+import { themeQuartz } from 'ag-grid-community';
 import "ag-grid-community/styles/ag-theme-balham.css";
-import "ag-grid-community/styles/ag-theme-alpine.css";
+import "ag-grid-community/styles/ag-theme-quartz.css";
 import AggridChart from "./AggridChart";
 import { Button } from "@/components/ui/button";
 import { GridApi, ICellEditorParams } from "ag-grid-community";
@@ -121,7 +122,7 @@ const QueryAdminGrid = ({
   // onCellValueChange: (event: any) => void
 }) => {
   const { theme } = useTheme();
-  const agGridTheme = theme === "dark" ? "ag-theme-alpine-dark" : "ag-theme-alpine";
+  const agGridTheme = theme === "dark" ? "ag-theme-quartz-dark" : "ag-theme-quartz";
   const gridRef = useRef<AgGridReact>(null);
 
   const categoryNameArray = useMemo(() => {
@@ -488,6 +489,7 @@ const QueryAdminGrid = ({
       </div>
       <div className="h-full w-full">
         <AgGridReact
+          theme={themeQuartz}
           ref={gridRef}
           rowData={data}
           columnDefs={colDefs}

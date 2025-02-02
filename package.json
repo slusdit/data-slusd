@@ -32,7 +32,7 @@
     "ag-charts-enterprise": "^11.0.4",
     "ag-charts-react": "^10.2.0",
     "ag-grid-enterprise": "^33.0.4",
-    "ag-grid-react": "^33.0.2",
+    "ag-grid-react": "^33.0.4",
     "chart.js": "^4.4.3",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",

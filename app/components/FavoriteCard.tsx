@@ -34,13 +34,13 @@ const FavoriteCard = ({
     }
 
     const [agGridTheme, setAgGridTheme] = useState(
-        theme === "dark" ? "ag-theme-alpine-dark" : "ag-theme-alpine"
+        theme === "dark" ? "ag-theme-quartz-dark" : "ag-theme-quartz"
         // theme ||  useTheme()
     );
 
     // Separate effect for theme changes
     useEffect(() => {
-        setAgGridTheme(theme === "dark" ? "ag-theme-alpine-dark" : "ag-theme-alpine");
+        setAgGridTheme(theme === "dark" ? "ag-theme-quartz-dark" : "ag-theme-quartz");
     }, [theme]);
 
     // Main data fetching effect

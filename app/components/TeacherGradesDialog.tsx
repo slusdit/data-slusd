@@ -193,7 +193,7 @@ ORDER BY CN, PD, TERM;`
     ) : gradeData && gradeData.length ? (
       <div
         style={{ height: "800px", width: "800px" }}
-        className={`ag-theme-alpine${theme === "dark" ? "-dark" : ""} mx-auto`}
+        className={`ag-theme-quartz${theme === "dark" ? "-dark" : ""} mx-auto`}
       >
         <AgGridReact
           rowData={gradeData}
