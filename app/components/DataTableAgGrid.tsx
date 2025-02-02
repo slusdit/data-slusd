@@ -246,28 +246,7 @@ function DataTable<T extends object>({
         >
           Export to CSV
         </Button>
-        
-        {/* <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline">Columns</Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="max-h-96 overflow-y-auto">
-            {columns
-              .filter((col) => col.field !== "checkboxCol")
-              .map((column) => (
-                <DropdownMenuCheckboxItem
-                  key={column.field}
-                  className="capitalize"
-                  checked={!column.hide}
-                  onCheckedChange={(value) =>
-                    gridApi?.setColumnVisible(column.field!, value)
-                  }
-                >
-                  {column.headerName || column.field}
-                </DropdownMenuCheckboxItem>
-              ))}
-          </DropdownMenuContent>
-        </DropdownMenu> */}
+
       </div>
 
       <div className="h-[600px] w-full">
@@ -282,7 +261,7 @@ function DataTable<T extends object>({
             setSelectedRows(event.api.getSelectedRows())
           }
           enableCellTextSelection={true}
-          suppressRowClickSelection={true}
+
           pagination={true}
           animateRows={true}
         />
