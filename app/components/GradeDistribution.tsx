@@ -1,34 +1,23 @@
+'use client';
 
-'use client'
 import React, { useCallback, useMemo, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import { AgCharts } from 'ag-charts-react';
-import 'ag-grid-community/styles/ag-grid.css';
-import 'ag-grid-community/styles/ag-theme-alpine.css';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTheme } from 'next-themes';
 import TeacherGradesDialog from './TeacherGradesDialog';
 import { Button } from '@/components/ui/button';
-import { ModuleRegistry, createGrid } from "ag-grid-community";
-import { AllEnterpriseModule, LicenseManager, IntegratedChartsModule } from "ag-grid-enterprise";
-import { AgChartsEnterpriseModule } from "ag-charts-enterprise";
+import { themeQuartz } from 'ag-grid-enterprise';
 
-ModuleRegistry.registerModules([
-  AllEnterpriseModule,
-  IntegratedChartsModule.with(AgChartsEnterpriseModule)
-]);
-
-
-LicenseManager.setLicenseKey(process.env.AG_GRID_LICENSE_KEY as string);
 const PercentCellRenderer = (props) => {
   const value = props.value;
   return (
     <TeacherGradesDialog 
-    teacher={props.data.Teacher}
-    sc={props.data.SC}
-    tn={props.data.TN}
-    params={props}
-    colField={props.colDef.field}
+      teacher={props.data.Teacher}
+      sc={props.data.SC}
+      tn={props.data.TN}
+      params={props}
+      colField={props.colDef.field}
     >
       {value}%
     </TeacherGradesDialog>
@@ -41,6 +30,14 @@ const GradeDistribution = ({ data }) => {
   const { resolvedTheme } = useTheme();
   const baseChartTheme = useMemo(() => (resolvedTheme === 'dark' ? 'ag-sheets-dark' : 'ag-sheets'), [resolvedTheme]);
 
+  const gridThemeClass = useMemo(() => {
+    console.log(resolvedTheme);
+    return resolvedTheme === 'dark' 
+      ? 'ag-theme-quartz-dark' 
+      : 'ag-theme-quartz';
+  }, [resolvedTheme]);
+  console.log(gridThemeClass);
+  // Rest of the component remains the same...
   const exportToCSV = useCallback(() => {
     if (!gridApi) return;
 
@@ -65,54 +62,65 @@ const GradeDistribution = ({ data }) => {
       field: 'Teacher',
       filter: true,
       sortable: true,
-      width: 225
+      width: 225,
+      filterParams: {
+        buttons: ['reset', 'apply'],
+        closeOnApply: true
+      }
     },
     {
       field: 'Department',
       filter: 'agSetColumnFilter',
       sortable: true,
-      // filterParams: {
-      //   buttons: ['apply', 'reset'],
-      //   closeOnApply: true
-      // }
+      filterParams: {
+        buttons: ['reset', 'apply'],
+        closeOnApply: true
+      }
     },
     {
       field: 'A%',
       type: 'numericColumn',
-      cellRenderer: PercentCellRenderer
+      cellRenderer: PercentCellRenderer,
+      filter: 'agNumberColumnFilter'
     },
     {
       field: 'B%',
       type: 'numericColumn',
-      cellRenderer: PercentCellRenderer
+      cellRenderer: PercentCellRenderer,
+      filter: 'agNumberColumnFilter'
     },
     {
       field: 'C%',
       type: 'numericColumn',
-      cellRenderer: PercentCellRenderer
+      cellRenderer: PercentCellRenderer,
+      filter: 'agNumberColumnFilter'
     },
     { 
       field: 'D%',
       type: 'numericColumn',
-      cellRenderer: PercentCellRenderer
+      cellRenderer: PercentCellRenderer,
+      filter: 'agNumberColumnFilter'
     },
     { 
       field: 'F%',
       type: 'numericColumn',
-      cellRenderer: PercentCellRenderer
+      cellRenderer: PercentCellRenderer,
+      filter: 'agNumberColumnFilter'
     },
     { 
       field: 'Other_Percent',
       type: 'numericColumn', 
       headerName: 'Other %',
-      cellRenderer: (props) => `${props.value}%`
+      cellRenderer: (props) => `${props.value}%`,
+      filter: 'agNumberColumnFilter'
     }
   ], []);
 
   const defaultColDef = useMemo(() => ({
     resizable: true,
     sortable: true,
-    filter: true
+    filter: true,
+    floatingFilter: true
   }), []);
 
   const chartOptions = useMemo(() => ({
@@ -176,31 +184,31 @@ const GradeDistribution = ({ data }) => {
     <div className="w-full space-y-4">
       <Card>
         <CardHeader>
-          {/* <CardTitle>Grade Distribution Chart</CardTitle> */}
+          <CardTitle>Grade Distribution Chart</CardTitle>
         </CardHeader>
         <CardContent>
-          <div style={{ height: '300px' }}>
+          <div className="h-[300px]">
             <AgCharts options={chartOptions} />
           </div>
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader >
-          <CardTitle className='flex flex-row justify-between'>
-            Grade Distribution Data
-
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <CardTitle>Grade Distribution Data</CardTitle>
             <Button
               onClick={exportToCSV}
-              className="bg-primary text-white hover:bg-blue-600  p-2"
-              >
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+            >
               Export to CSV
             </Button>
-              </CardTitle>
+          </div>
         </CardHeader>
         <CardContent>
-          <div style={{ height: '600px' }} className={`ag-theme-alpine${resolvedTheme === 'dark' ? '-dark' : ''} `}>
+          <div className={`h-[600px] w-full `}>
             <AgGridReact
+              theme={themeQuartz}
               rowData={data}
               columnDefs={columnDefs}
               defaultColDef={defaultColDef}
@@ -209,6 +217,7 @@ const GradeDistribution = ({ data }) => {
               onSortChanged={onSortChanged}
               animateRows={true}
               pagination={true}
+
             />
           </div>
         </CardContent>

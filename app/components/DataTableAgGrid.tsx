@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import "ag-grid-community/styles/ag-grid.css";
-import "ag-grid-community/styles/ag-theme-alpine.css";
+import "ag-grid-community/styles/ag-theme-quartz.css";
 import { AgCharts } from "ag-charts-react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
@@ -179,7 +179,7 @@ function DataTable<T extends object>({
   }, []);
   console.log(chartOptions);
   const [agGridTheme, setAgGridTheme] = useState(
-    theme === "dark" ? "ag-theme-alpine-dark" : "ag-theme-alpine"
+    theme === "dark" ? "ag-theme-quartz-dark" : "ag-theme-quartz"
   );
 
   // Update visible columns on initial load and when columns change
@@ -216,7 +216,7 @@ function DataTable<T extends object>({
 
   useEffect(() => {
     setAgGridTheme(
-      theme === "dark" ? "ag-theme-alpine-dark" : "ag-theme-alpine"
+      theme === "dark" ? "ag-theme-quartz-dark" : "ag-theme-quartz"
     );
     setChartOptions((prevOptions) => ({
       ...prevOptions,

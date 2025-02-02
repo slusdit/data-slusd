@@ -10,7 +10,7 @@ export function DataChart({ chartOptions, theme = 'light' }: DataChartProps) {
     console.log(chartOptions);
     console.log(theme);
   const agTheme = "ag-polychroma";
-    const themeClass = theme === "dark" ? "ag-theme-alpine-dark" : "ag-theme-alpine";
+    const themeClass = theme === "dark" ? "ag-theme-quartz-dark" : "ag-theme-quartz";
     
     console.log
 
