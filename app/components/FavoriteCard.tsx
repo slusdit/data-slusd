@@ -26,8 +26,7 @@ const FavoriteCard = ({
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [chartOptions, setChartOptions] = useState(null); // Change to null initially
-    // const { theme } = useTheme();
-    console.log(theme)
+
     if (!theme) {
         const { theme: providerTheme } = useTheme()
        theme = providerTheme
@@ -65,7 +64,7 @@ const FavoriteCard = ({
                 });
                 
                 setChartOptions(chartOpt);
-                console.log(chartOpt)
+
             } catch (error) {
                 console.error("Error fetching data:", error);
             } finally {
