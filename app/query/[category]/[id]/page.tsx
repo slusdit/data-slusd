@@ -1,5 +1,3 @@
-import AddQueryForm from "@/app/components/forms/AddQueryForm";
-import FormDialog from "@/app/components/forms/FormDialog";
 import { auth } from "@/auth";
 import { runQuery } from "@/lib/aeries";
 import { ArrowLeft, Home, Plus } from "lucide-react";
