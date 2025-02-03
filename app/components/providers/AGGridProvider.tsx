@@ -13,8 +13,6 @@ ModuleRegistry.registerModules([
 
 // Set license key
 LicenseManager.setLicenseKey(process.env.NEXT_PUBLIC_AG_GRID_LICENSE_KEY as string);
-console.log(process.env.NEXT_PUBLIC_AG_GRID_LICENSE_KEY);
-
 
 export function AGGridProvider({ children }: { children: React.ReactNode }) {
     return children;
