@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState, useEffect } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import { AgCharts } from 'ag-charts-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,13 +31,11 @@ const GradeDistribution = ({ data }) => {
   const baseChartTheme = useMemo(() => (resolvedTheme === 'dark' ? 'ag-sheets-dark' : 'ag-sheets'), [resolvedTheme]);
 
   const gridThemeClass = useMemo(() => {
-    console.log(resolvedTheme);
     return resolvedTheme === 'dark' 
       ? themeQuartz.withPart(colorSchemeDarkBlue) 
       : themeQuartz;
   }, [resolvedTheme]);
 
-  
   const exportToCSV = useCallback(() => {
     if (!gridApi) return;
 
@@ -62,57 +60,63 @@ const GradeDistribution = ({ data }) => {
       field: 'Teacher',
       filter: true,
       sortable: true,
-      width: 225,
-      filterParams: {
-        buttons: ['reset', 'apply'],
-        closeOnApply: true
-      }
+      floatingFilter: true,
+      flex: 2,
     },
     {
       field: 'Department',
-      filter: 'agSetColumnFilter',
       sortable: true,
-      filterParams: {
-        buttons: ['reset', 'apply'],
-        closeOnApply: true
-      }
+      filter: true,
+      floatingFilter: true,
+      flex: 1,
     },
     {
       field: 'A%',
       type: 'numericColumn',
       cellRenderer: PercentCellRenderer,
-      filter: 'agNumberColumnFilter'
+      filter: 'agNumberColumnFilter',
+      floatingFilter: true,
+      flex: 1,
     },
     {
       field: 'B%',
       type: 'numericColumn',
       cellRenderer: PercentCellRenderer,
-      filter: 'agNumberColumnFilter'
+      filter: 'agNumberColumnFilter',
+      floatingFilter: true,
+      flex: 1,
     },
     {
       field: 'C%',
       type: 'numericColumn',
       cellRenderer: PercentCellRenderer,
-      filter: 'agNumberColumnFilter'
+      filter: 'agNumberColumnFilter',
+      floatingFilter: true,
+      flex: 1,
     },
     { 
       field: 'D%',
       type: 'numericColumn',
       cellRenderer: PercentCellRenderer,
-      filter: 'agNumberColumnFilter'
+      filter: 'agNumberColumnFilter',
+      floatingFilter: true,
+      flex: 1,
     },
     { 
       field: 'F%',
       type: 'numericColumn',
       cellRenderer: PercentCellRenderer,
-      filter: 'agNumberColumnFilter'
+      filter: 'agNumberColumnFilter',
+      floatingFilter: true,
+      flex: 1,
     },
     { 
       field: 'Other_Percent',
-      type: 'numericColumn', 
+      type: 'numericColumn',
       headerName: 'Other %',
       cellRenderer: (props) => `${props.value}%`,
-      filter: 'agNumberColumnFilter'
+      filter: 'agNumberColumnFilter',
+      flex: 1,
     }
   ], []);
 
@@ -120,7 +124,8 @@ const GradeDistribution = ({ data }) => {
     resizable: true,
     sortable: true,
     filter: true,
-    floatingFilter: true
+    floatingFilter: true,
+    minWidth: 100,
   }), []);
 
   const chartOptions = useMemo(() => ({
@@ -158,6 +163,24 @@ const GradeDistribution = ({ data }) => {
       }
     ]
   }), [filteredData, baseChartTheme]);
+
+  const onGridSizeChanged = useCallback((params) => {
+    const gridWidth = document.querySelector('.ag-center-cols')?.clientWidth;
+    if (gridWidth) {
+      params.api.sizeColumnsToFit();
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (gridApi) {
+        gridApi.sizeColumnsToFit();
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [gridApi]);
 
   const onGridReady = useCallback((params) => {
     setGridApi(params.api);
@@ -206,18 +229,18 @@ const GradeDistribution = ({ data }) => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className={`h-[600px] w-full `}>
+          <div className="h-[600px] w-full">
             <AgGridReact
               theme={gridThemeClass}
               rowData={data}
               columnDefs={columnDefs}
               defaultColDef={defaultColDef}
               onGridReady={onGridReady}
+              onGridSizeChanged={onGridSizeChanged}
               onFilterChanged={onFilterChanged}
               onSortChanged={onSortChanged}
               animateRows={true}
               pagination={true}
-
             />
           </div>
         </CardContent>
