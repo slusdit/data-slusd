@@ -64,7 +64,6 @@ function DataTable<T extends object>({
   const [loading, setLoading] = useState(true);
   const [visibleColumns, setVisibleColumns] = useState<string[]>([]);
 
-  // Theme handling
   const gridThemeClass = useMemo(() => {
     return resolvedTheme === 'dark' 
       ? themeQuartz.withPart(colorSchemeDarkBlue) 
@@ -75,7 +74,6 @@ function DataTable<T extends object>({
     resolvedTheme === 'dark' ? 'ag-sheets-dark' : 'ag-sheets'
   , [resolvedTheme]);
 
-  // Function to update chart data based on grid state
   const updateChartData = useCallback((params: any) => {
     const updatedData: T[] = [];
     params.api.forEachNodeAfterFilterAndSort((node: any) => {
@@ -84,15 +82,15 @@ function DataTable<T extends object>({
     setRowData(updatedData);
   }, []);
 
-  // Event handlers for grid changes
   const onFilterChanged = useCallback((params: any) => {
-    // Check if this is a filter reset
     const filterModel = params.api.getFilterModel();
     if (Object.keys(filterModel).length === 0) {
       setRowData(originalData);
     } else {
       updateChartData(params);
     }
+    // Force refresh of filter lists
+    params.api.refreshFilterValues();
   }, [updateChartData, originalData]);
 
   const onSortChanged = useCallback((params: any) => {
@@ -149,6 +147,8 @@ function DataTable<T extends object>({
       gridApi.setFilterModel(null);
       gridApi.setSortModel(null);
       setRowData(originalData);
+      // Force refresh of the grid
+      gridApi.refreshCells({ force: true });
     }
   }, [gridApi, originalData]);
 
@@ -163,13 +163,37 @@ function DataTable<T extends object>({
       buttons: ['apply', 'reset'],
       closeOnApply: true,
       suppressSelectAll: false,
-      refreshValuesOnOpen: true,
       values: params => {
-        // Get unique values from original data for this column
-        const values = new Set(originalData.map(item => item[params.colDef.field]));
-        return Array.from(values).sort();
+        try {
+          // Get unique values from original data for this column
+          const uniqueValues = Array.from(new Set(originalData.map(item => {
+            const value = item[params.colDef.field];
+            return value === null || value === undefined ? '' : value;
+          })));
+          
+          // Filter out undefined and null values
+          const filteredValues = uniqueValues.filter(value => value !== undefined && value !== null);
+          
+          // Sort values based on type
+          return filteredValues.sort((a, b) => {
+            if (typeof a === 'string' && typeof b === 'string') {
+              return a.localeCompare(b);
+            }
+            if (typeof a === 'number' && typeof b === 'number') {
+              return a - b;
+            }
+            return String(a).localeCompare(String(b));
+          });
+        } catch (error) {
+          console.error('Error loading filter values:', error);
+          return [];
+        }
       },
-      excelMode: 'windows'
+      excelMode: 'windows',
+      refreshValuesOnOpen: true,
+      syncValuesLikeExcel: true,
+      suppressSyncValuesAfterDataChange: false,
+      clearButton: true
     }
   }), [originalData]);
 
@@ -257,6 +281,10 @@ function DataTable<T extends object>({
     setGridApi(params.api);
     setColumns(params.api.getColumnDefs() as ColDef[]);
     params.api.sizeColumnsToFit();
+    
+    // Ensure filter values are properly initialized
+    params.api.refreshFilterValues();
+    
     setLoading(false);
   }, []);
 
@@ -305,7 +333,27 @@ function DataTable<T extends object>({
           Export to CSV
         </Button>
         
-        
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline">Columns</Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="max-h-96 overflow-y-auto">
+            {columns
+              .filter((col) => col.field !== "checkboxCol")
+              .map((column) => (
+                <DropdownMenuCheckboxItem
+                  key={column.field}
+                  className="capitalize"
+                  checked={!column.hide}
+                  onCheckedChange={(value) =>
+                    gridApi?.setColumnVisible(column.field!, value)
+                  }
+                >
+                  {column.headerName || column.field}
+                </DropdownMenuCheckboxItem>
+              ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <div className="h-[600px] w-full">
