@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTheme } from 'next-themes';
 import TeacherGradesDialog from './TeacherGradesDialog';
 import { Button } from '@/components/ui/button';
-import { colorSchemeDark, colorSchemeDarkBlue, themeQuartz } from 'ag-grid-enterprise';
+import { colorSchemeDarkBlue, themeQuartz } from 'ag-grid-enterprise';
 
 const PercentCellRenderer = (props) => {
   const value = props.value;
@@ -24,8 +24,9 @@ const PercentCellRenderer = (props) => {
   );
 };
 
-const GradeDistribution = ({ data }) => {
-  const [filteredData, setFilteredData] = useState(data);
+const GradeDistribution = ({ data: initialData }) => {
+  const [data, setData] = useState(initialData);
+  const [filteredData, setFilteredData] = useState(initialData);
   const [gridApi, setGridApi] = useState(null);
   const { resolvedTheme } = useTheme();
   const baseChartTheme = useMemo(() => (resolvedTheme === 'dark' ? 'ag-sheets-dark' : 'ag-sheets'), [resolvedTheme]);
@@ -35,6 +36,12 @@ const GradeDistribution = ({ data }) => {
       ? themeQuartz.withPart(colorSchemeDarkBlue) 
       : themeQuartz;
   }, [resolvedTheme]);
+
+  // Update internal data when props change
+  useEffect(() => {
+    setData(initialData);
+    setFilteredData(initialData);
+  }, [initialData]);
 
   const exportToCSV = useCallback(() => {
     if (!gridApi) return;
@@ -130,7 +137,7 @@ const GradeDistribution = ({ data }) => {
 
   const chartOptions = useMemo(() => ({
     title: { text: 'Grade Distribution by Teacher' },
-    data: filteredData,
+    data: filteredData, // Use filteredData instead of data directly
     theme: {
       baseTheme: baseChartTheme,
       palette: { 
@@ -171,22 +178,6 @@ const GradeDistribution = ({ data }) => {
     }
   }, []);
 
-  useEffect(() => {
-    const handleResize = () => {
-      if (gridApi) {
-        gridApi.sizeColumnsToFit();
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [gridApi]);
-
-  const onGridReady = useCallback((params) => {
-    setGridApi(params.api);
-    params.api.sizeColumnsToFit();
-  }, []);
-
   const updateChartData = useCallback((params) => {
     const sortedData = [];
     params.api.forEachNodeAfterFilterAndSort((node) => {
@@ -202,6 +193,22 @@ const GradeDistribution = ({ data }) => {
   const onSortChanged = useCallback((params) => {
     updateChartData(params);
   }, [updateChartData]);
+
+  const onGridReady = useCallback((params) => {
+    setGridApi(params.api);
+    params.api.sizeColumnsToFit();
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (gridApi) {
+        gridApi.sizeColumnsToFit();
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [gridApi]);
 
   return (
     <div className="w-full space-y-4">
