@@ -24,13 +24,13 @@ const TeacherGradesDialog = ({
   const [gradeData, setGradeData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
-    const { theme } = useTheme();
-    const mark = colField.toUpperCase().substring(0, 1);
-//   console.log(params.rowModel.rowsToDisplay);
+  const { theme } = useTheme();
+  const mark = colField.toUpperCase().substring(0, 1);
+  //   console.log(params.rowModel.rowsToDisplay);
   const { resolvedTheme } = useTheme();
   const gridThemeClass = useMemo(() => {
-    return resolvedTheme === 'dark' 
-      ? themeQuartz.withPart(colorSchemeDarkBlue) 
+    return resolvedTheme === 'dark'
+      ? themeQuartz.withPart(colorSchemeDarkBlue)
       : themeQuartz;
   }, [resolvedTheme]);
 
@@ -39,21 +39,47 @@ const TeacherGradesDialog = ({
     {
       field: "TERM",
       headerName: "Term",
-          filter: "agSetColumnFilter",
-      maxWidth: 100,
       filter: true,
+      maxWidth: 150,
+      flex: 2,
     },
-    { field: 'CN', headerName: 'Course Num', filter: true, maxWidth: 100 },
-    { field: 'SE', headerName: 'Section', filter: true, maxWidth: 100 },
-    { field: "CO", headerName: "Course Name", filter: true, maxWidth: 150 },
-    { field: "PD", headerName: "Period", filter: true, maxWidth: 100 },
-      { field: 'Mark_Count', headerName: `${mark} Count`, filter: true, maxWidth: 125 },
-   
+    {
+      field: "CO",
+      headerName: "Course Name",
+      filter: true,
+      flex: 1,
+    },
+    {
+      field: 'CN',
+      headerName: 'Course Num',
+      filter: true,
+      flex: 1,
+    },
+    {
+      field: 'SE',
+      headerName: 'Section',
+      filter: true,
+      flex: 1,
+    },
+    {
+      field: "PD",
+      headerName: "Period",
+      filter: true,
+      flex: 1,
+    },
+    {
+      field: 'Mark_Count',
+      headerName: `${mark} Count`,
+      filter: true,
+      flex: 1,
+
+    },
+
     {
       field: 'Total_Grades',
       headerName: "Students",
-        filter: "agNumberColumnFilter",
-      maxWidth: 125,
+      filter: "agNumberColumnFilter",
+      flex: 1,
     },
     //   { field: 'MARK', headerName: 'Mark', filter: true },
   ];
@@ -71,8 +97,8 @@ const TeacherGradesDialog = ({
     if (open && sc && tn) {
       setLoading(true);
       const fetchData = async () => {
-          
-          const query = `
+
+        const query = `
           WITH GradeCounts AS (
     SELECT
         SLUSD_MARKS_GRD.SC,
@@ -144,30 +170,30 @@ ORDER BY CN, PD, TERM;`
       <DialogTrigger className="w-full h-full text-right pr-2 underline hover:text-primary">
         {children}
       </DialogTrigger>
-      <DialogContent className="max-w-4xl">
-  <div className="flex flex-col items-center space-y-4">
-    <h3 className="text-lg font-semibold">
-      {teacher} - {colField.substring(0, 1)} Grades
-    </h3>
-    {loading ? (
-      <p>Loading...</p>
-    ) : gradeData && gradeData.length ? (
-      <div
-        style={{ height: "800px", width: "800px" }}
-        className={`ag-theme-quartz${theme === "dark" ? "-dark" : ""} mx-auto`}
-      >
-        <AgGridReact
-          theme={gridThemeClass}
-          rowData={gradeData}
-          columnDefs={columnDefs}
-          defaultColDef={defaultColDef}
-          animateRows={true}
-          pagination={true}
-        />
-      </div>
-    ) : null}
-  </div>
-</DialogContent>
+      <DialogContent className="max-w-fit">
+        <div className="flex flex-col items-center space-y-4">
+          <h3 className="text-lg font-semibold">
+            {teacher} - {colField.substring(0, 1)} Grades
+          </h3>
+          {loading ? (
+            <p>Loading...</p>
+          ) : gradeData && gradeData.length ? (
+            <div
+              style={{ height: "75vh", width: "60vw" }}
+              
+            >
+              <AgGridReact
+                theme={gridThemeClass}
+                rowData={gradeData}
+                columnDefs={columnDefs}
+                defaultColDef={defaultColDef}
+                animateRows={true}
+                pagination={true}
+              />
+            </div>
+          ) : null}
+        </div>
+      </DialogContent>
     </Dialog>
   );
 };
