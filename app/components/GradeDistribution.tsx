@@ -78,6 +78,13 @@ const GradeDistribution = ({ data: initialData }) => {
       flex: 1,
     },
     {
+      field: 'Term',
+      sortable: true,
+      filter: true,
+      floatingFilter: true,
+      flex: 1,
+    },
+    {
       field: 'A%',
       type: 'numericColumn',
       cellRenderer: PercentCellRenderer,
