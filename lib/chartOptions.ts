@@ -47,7 +47,7 @@ export async function createChartOptions({
     return finalChartOptions;
   }
 
-  console.log(chartYKeyArray.length);
+
   if (chartYKeyArray && chartYKeyArray.length > 0) {
     const finalChartOptions = {
       ...baseChartOptions,
@@ -63,7 +63,7 @@ export async function createChartOptions({
 
     return finalChartOptions;
   }
-  console.log("baseChartOptions", baseChartOptions.series);
+
   return baseChartOptions;
 }
 
