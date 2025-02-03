@@ -12,7 +12,7 @@ import {
 import { AgCharts } from "ag-charts-react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
-import { colorSchemeDark, colorSchemeDarkBlue, themeQuartz } from 'ag-grid-enterprise';
+import { colorSchemeDarkBlue, themeQuartz } from 'ag-grid-enterprise';
 
 const IdCellRenderer = (props: any) => {
   const sc = props.data.sc || props.data.SC;
