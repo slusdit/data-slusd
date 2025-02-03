@@ -111,7 +111,7 @@ function DataTable<T extends object>({
     const baseOptions = {
       title: { text: chartTitle || "Data Chart" },
       theme: baseChartTheme,
-      data: selectedRows.length ? selectedRows : (filteredData.length ? filteredData : rowData),
+      data: selectedRows.length ? selectedRows : filteredData,
       series: chartYKeyArray.map(key => ({
         type: chartTypeKey || "bar",
         xKey: chartXKey || "SC",
@@ -134,7 +134,7 @@ function DataTable<T extends object>({
     };
 
     return baseOptions;
-  }, [baseChartTheme, selectedRows, rowData]);
+  }, [baseChartTheme, selectedRows, filteredData]);
 
   const defaultColDef = useMemo(() => ({
     sortable: true,
