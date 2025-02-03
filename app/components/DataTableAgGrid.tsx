@@ -59,7 +59,6 @@ function DataTable<T extends object>({
   const [gridApi, setGridApi] = useState<GridApi | null>(null);
   const [columns, setColumns] = useState<ColDef[]>([]);
   const [rowData, setRowData] = useState<T[]>([]);
-  const [originalData, setOriginalData] = useState<T[]>([]);
   const [selectedRows, setSelectedRows] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
   const [visibleColumns, setVisibleColumns] = useState<string[]>([]);
@@ -74,22 +73,19 @@ function DataTable<T extends object>({
     resolvedTheme === 'dark' ? 'ag-sheets-dark' : 'ag-sheets'
   , [resolvedTheme]);
 
+  const [filteredData, setFilteredData] = useState<T[]>([]);
+
   const updateChartData = useCallback((params: any) => {
     const updatedData: T[] = [];
     params.api.forEachNodeAfterFilterAndSort((node: any) => {
       updatedData.push(node.data);
     });
-    setRowData(updatedData);
+    setFilteredData(updatedData);
   }, []);
 
   const onFilterChanged = useCallback((params: any) => {
-    const filterModel = params.api.getFilterModel();
-    if (Object.keys(filterModel).length === 0) {
-      setRowData(originalData);
-    } else {
-      updateChartData(params);
-    }
-  }, [updateChartData, originalData]);
+    updateChartData(params);
+  }, [updateChartData]);
 
   const onSortChanged = useCallback((params: any) => {
     updateChartData(params);
@@ -115,7 +111,7 @@ function DataTable<T extends object>({
     const baseOptions = {
       title: { text: chartTitle || "Data Chart" },
       theme: baseChartTheme,
-      data: selectedRows.length ? selectedRows : rowData,
+      data: selectedRows.length ? selectedRows : (filteredData.length ? filteredData : rowData),
       series: chartYKeyArray.map(key => ({
         type: chartTypeKey || "bar",
         xKey: chartXKey || "SC",
@@ -143,17 +139,10 @@ function DataTable<T extends object>({
   const defaultColDef = useMemo(() => ({
     sortable: true,
     resizable: true,
-    filter: 'agSetColumnFilter',
+    filter: true,
     floatingFilter: true,
     flex: 1,
     minWidth: 100,
-    filterParams: {
-      buttons: ['apply', 'reset'],
-      closeOnApply: true,
-      suppressSelectAll: false,
-      excelMode: 'windows',
-      refreshValuesOnOpen: true,
-    }
   }), []);
 
   const columnDefs = useMemo(() => {
@@ -255,7 +244,6 @@ function DataTable<T extends object>({
     // Initialize with data if available
     if (data?.length) {
       setRowData(data);
-      setOriginalData(data);
     }
     
     params.api.sizeColumnsToFit();
@@ -265,7 +253,7 @@ function DataTable<T extends object>({
   useEffect(() => {
     if (data?.length) {
       setRowData(data);
-      setOriginalData(data);
+      setFilteredData(data);
       setLoading(false);
     }
   }, [data]);
