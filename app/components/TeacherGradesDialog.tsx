@@ -1,6 +1,7 @@
 "use client";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { runQuery } from "@/lib/aeries";
+import { colorSchemeDarkBlue, themeQuartz } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import { useTheme } from "next-themes";
 import { useEffect, useMemo, useState } from "react";
@@ -26,6 +27,13 @@ const TeacherGradesDialog = ({
     const { theme } = useTheme();
     const mark = colField.toUpperCase().substring(0, 1);
 //   console.log(params.rowModel.rowsToDisplay);
+  const { resolvedTheme } = useTheme();
+  const gridThemeClass = useMemo(() => {
+    return resolvedTheme === 'dark' 
+      ? themeQuartz.withPart(colorSchemeDarkBlue) 
+      : themeQuartz;
+  }, [resolvedTheme]);
+
   const columnDefs = [
     // { field: 'TERM', headerName: 'Term', filter: true },
     {
@@ -33,18 +41,7 @@ const TeacherGradesDialog = ({
       headerName: "Term",
           filter: "agSetColumnFilter",
       maxWidth: 100,
-      filterParams: {
-        values: (params: any) => {
-          // Get unique TERM values
-          return [
-            ...new Set(
-              params.rowModel.rowsToDisplay.map(
-                (row: { data: { TERM: any } }) => row.data.TERM
-              )
-            ),
-          ].sort();
-        },
-      },
+      filter: true,
     },
     { field: 'CN', headerName: 'Course Num', filter: true, maxWidth: 100 },
     { field: 'SE', headerName: 'Section', filter: true, maxWidth: 100 },
@@ -128,43 +125,7 @@ WHERE TN = ${tn}
 and sc = ${sc}
 GROUP BY CN, CO, SE, TERM, PD
 ORDER BY CN, PD, TERM;`
-//         const query = `
-//           WITH
-//     AllGradeCounts
-//     AS
-//     (
-//         SELECT
-//             CRS.CN,
-//             CRS.CO as [name],
-//             SE,
-//             PD,
-//             TERM,
-//             COUNT(*) as Total_Grade_Count
-//         FROM SLUSD_GRADES
-//             left join CRS on SLUSD_GRADES.cn = CRS.CN
-//         WHERE sc = ${sc} AND tn = ${tn}
-//         GROUP BY CRS.CN, CRS.CO, SE, PD, TERM
-//     )
-// SELECT
-//     g.CN,
-//     CRS.CO,    
-//     g.SE,
-//     g.PD,
-//     g.TERM,
-//     COUNT(*) as Grade_Count,
-//     agc.Total_Grade_Count,
-//     '${mark}' as 'MARK'
-// FROM SLUSD_GRADES g
-//     left join CRS on g.cn = CRS.CN
-//     left join AllGradeCounts agc
-//     on g.CN = agc.CN
-//         and g.SE = agc.SE
-//         and g.PD = agc.PD
-//         and g.TERM = agc.TERM
-// WHERE g.sc = ${sc} AND g.tn = ${tn} AND g.MARK LIKE '${mark}%'
-// GROUP BY g.CN, CRS.CO, g.SE, g.PD, g.TERM, MARK, agc.Total_Grade_Count  
-// ORDER BY g.TERM, g.CN`;
-        console.log(query);
+
         try {
           const result = await runQuery(query);
           setGradeData(result);
@@ -196,6 +157,7 @@ ORDER BY CN, PD, TERM;`
         className={`ag-theme-quartz${theme === "dark" ? "-dark" : ""} mx-auto`}
       >
         <AgGridReact
+          theme={gridThemeClass}
           rowData={gradeData}
           columnDefs={columnDefs}
           defaultColDef={defaultColDef}

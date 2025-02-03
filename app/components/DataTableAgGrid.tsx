@@ -89,8 +89,6 @@ function DataTable<T extends object>({
     } else {
       updateChartData(params);
     }
-    // Force refresh of filter lists
-    params.api.refreshFilterValues();
   }, [updateChartData, originalData]);
 
   const onSortChanged = useCallback((params: any) => {
@@ -142,16 +140,6 @@ function DataTable<T extends object>({
     return baseOptions;
   }, [baseChartTheme, selectedRows, rowData]);
 
-  const onFilterReset = useCallback(() => {
-    if (gridApi) {
-      gridApi.setFilterModel(null);
-      gridApi.setSortModel(null);
-      setRowData(originalData);
-      // Force refresh of the grid
-      gridApi.refreshCells({ force: true });
-    }
-  }, [gridApi, originalData]);
-
   const defaultColDef = useMemo(() => ({
     sortable: true,
     resizable: true,
@@ -163,39 +151,10 @@ function DataTable<T extends object>({
       buttons: ['apply', 'reset'],
       closeOnApply: true,
       suppressSelectAll: false,
-      values: params => {
-        try {
-          // Get unique values from original data for this column
-          const uniqueValues = Array.from(new Set(originalData.map(item => {
-            const value = item[params.colDef.field];
-            return value === null || value === undefined ? '' : value;
-          })));
-          
-          // Filter out undefined and null values
-          const filteredValues = uniqueValues.filter(value => value !== undefined && value !== null);
-          
-          // Sort values based on type
-          return filteredValues.sort((a, b) => {
-            if (typeof a === 'string' && typeof b === 'string') {
-              return a.localeCompare(b);
-            }
-            if (typeof a === 'number' && typeof b === 'number') {
-              return a - b;
-            }
-            return String(a).localeCompare(String(b));
-          });
-        } catch (error) {
-          console.error('Error loading filter values:', error);
-          return [];
-        }
-      },
       excelMode: 'windows',
       refreshValuesOnOpen: true,
-      syncValuesLikeExcel: true,
-      suppressSyncValuesAfterDataChange: false,
-      clearButton: true
     }
-  }), [originalData]);
+  }), []);
 
   const columnDefs = useMemo(() => {
     if (!data || data.length === 0) return [];
@@ -253,6 +212,18 @@ function DataTable<T extends object>({
         };
       }
 
+      // Handle numeric columns
+      if (typeof data[0][key] === 'number') {
+        return {
+          ...baseCol,
+          filter: 'agNumberColumnFilter',
+          filterParams: {
+            buttons: ['apply', 'reset'],
+            closeOnApply: true,
+          },
+        };
+      }
+
       return baseCol;
     });
 
@@ -279,17 +250,20 @@ function DataTable<T extends object>({
 
   const onGridReady = useCallback((params: GridReadyEvent) => {
     setGridApi(params.api);
-    setColumns(params.api.getColumnDefs() as ColDef[]);
+    setColumns(params.api.getColumns()?.map(col => col.getColDef()) || []);
+    
+    // Initialize with data if available
+    if (data?.length) {
+      setRowData(data);
+      setOriginalData(data);
+    }
+    
     params.api.sizeColumnsToFit();
-    
-    // Ensure filter values are properly initialized
-    params.api.refreshFilterValues();
-    
     setLoading(false);
-  }, []);
+  }, [data]);
 
   useEffect(() => {
-    if (data) {
+    if (data?.length) {
       setRowData(data);
       setOriginalData(data);
       setLoading(false);
@@ -373,6 +347,8 @@ function DataTable<T extends object>({
           suppressRowClickSelection={true}
           pagination={true}
           animateRows={true}
+          suppressLoadingOverlay={false}
+          suppressNoRowsOverlay={false}
         />
       </div>
     </div>
