@@ -7,12 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTheme } from 'next-themes';
 import TeacherGradesDialog from './TeacherGradesDialog';
 import { Button } from '@/components/ui/button';
-import { colorSchemeDarkBlue, themeQuartz } from 'ag-grid-enterprise';
+import { colorSchemeDarkBlue, SideBarDef, themeQuartz } from 'ag-grid-enterprise';
 
 const PercentCellRenderer = (props) => {
   const value = props.value;
   return (
-    <TeacherGradesDialog 
+    <TeacherGradesDialog
       teacher={props.data.Teacher}
       sc={props.data.SC}
       tn={props.data.TN}
@@ -32,10 +32,31 @@ const GradeDistribution = ({ data: initialData }) => {
   const baseChartTheme = useMemo(() => (resolvedTheme === 'dark' ? 'ag-sheets-dark' : 'ag-sheets'), [resolvedTheme]);
 
   const gridThemeClass = useMemo(() => {
-    return resolvedTheme === 'dark' 
-      ? themeQuartz.withPart(colorSchemeDarkBlue) 
+    return resolvedTheme === 'dark'
+      ? themeQuartz.withPart(colorSchemeDarkBlue)
       : themeQuartz;
   }, [resolvedTheme]);
+
+  const sideBar = useMemo<
+    SideBarDef | string | string[] | boolean | null
+  >(() => {
+    return {
+      defaultToolPanel: "columns",
+      toolPanels: [
+        {
+          id: "columns",
+          labelDefault: "Columns",
+          labelKey: "columns",
+          iconKey: "columns",
+          toolPanel: "agColumnsToolPanel",
+          toolPanelParams: {
+            suppressPivots: true,
+            suppressPivotMode: true,
+          },
+        },
+      ],
+    };
+  }, []);
 
   // Update internal data when props change
   useEffect(() => {
@@ -69,6 +90,9 @@ const GradeDistribution = ({ data: initialData }) => {
       sortable: true,
       floatingFilter: true,
       flex: 2,
+      pivot: true,
+      enableRowGroup: true
+      
     },
     {
       field: 'Department',
@@ -76,6 +100,9 @@ const GradeDistribution = ({ data: initialData }) => {
       filter: true,
       floatingFilter: true,
       flex: 1,
+      pivot: true,
+      enableRowGroup: true
+      
     },
     {
       field: 'Term',
@@ -83,6 +110,9 @@ const GradeDistribution = ({ data: initialData }) => {
       filter: true,
       floatingFilter: true,
       flex: 1,
+      pivot: true,
+      enableRowGroup: true
+      
     },
     {
       field: 'A%',
@@ -91,6 +121,9 @@ const GradeDistribution = ({ data: initialData }) => {
       filter: 'agNumberColumnFilter',
       floatingFilter: true,
       flex: 1,
+      pivot: true,
+      enableRowGroup: true
+      
     },
     {
       field: 'B%',
@@ -99,6 +132,9 @@ const GradeDistribution = ({ data: initialData }) => {
       filter: 'agNumberColumnFilter',
       floatingFilter: true,
       flex: 1,
+      pivot: true,
+      enableRowGroup: true
+      
     },
     {
       field: 'C%',
@@ -107,30 +143,42 @@ const GradeDistribution = ({ data: initialData }) => {
       filter: 'agNumberColumnFilter',
       floatingFilter: true,
       flex: 1,
+      pivot: true,
+      enableRowGroup: true
+      
     },
-    { 
+    {
       field: 'D%',
       type: 'numericColumn',
       cellRenderer: PercentCellRenderer,
       filter: 'agNumberColumnFilter',
       floatingFilter: true,
       flex: 1,
+      pivot: true,
+      enableRowGroup: true
+      
     },
-    { 
+    {
       field: 'F%',
       type: 'numericColumn',
       cellRenderer: PercentCellRenderer,
       filter: 'agNumberColumnFilter',
       floatingFilter: true,
       flex: 1,
+      pivot: true,
+      enableRowGroup: true
+      
     },
-    { 
+    {
       field: 'Other_Percent',
       type: 'numericColumn',
       headerName: 'Other %',
       cellRenderer: (props) => `${props.value}%`,
       filter: 'agNumberColumnFilter',
       flex: 1,
+      pivot: true,
+      enableRowGroup: true
+      
     }
   ], []);
 
@@ -142,23 +190,27 @@ const GradeDistribution = ({ data: initialData }) => {
     minWidth: 100,
   }), []);
 
+  const cellSelection = useMemo(() => {
+    return true;
+  }, []);
+
   const chartOptions = useMemo(() => ({
     title: { text: 'Grade Distribution by Teacher' },
     data: filteredData, // Use filteredData instead of data directly
     theme: {
       baseTheme: baseChartTheme,
-      palette: { 
-        fills: ['#2E86C1','#5DADE2','#F4D03F','#E67E22','#C0392B','#000000'],
-        strokes: ['gray'], 
+      palette: {
+        fills: ['#2E86C1', '#5DADE2', '#F4D03F', '#E67E22', '#C0392B', '#000000'],
+        strokes: ['gray'],
       },
     },
     series: [
-      { type: 'bar', xKey: 'Teacher', yKey: 'A%', yName: 'A%', stacked: true },
-      { type: 'bar', xKey: 'Teacher', yKey: 'B%', yName: 'B%', stacked: true },
-      { type: 'bar', xKey: 'Teacher', yKey: 'C%', yName: 'C%', stacked: true }, 
-      { type: 'bar', xKey: 'Teacher', yKey: 'D%', yName: 'D%', stacked: true },
-      { type: 'bar', xKey: 'Teacher', yKey: 'F%', yName: 'F%', stacked: true },
-      { type: 'bar', xKey: 'Teacher', yKey: 'Other_Percent', yName: 'Other %', stacked: true }
+      { type: 'bar', xKey: 'Teacher', yKey: 'A%', yName: 'A%', stacked: true, },
+      { type: 'bar', xKey: 'Teacher', yKey: 'B%', yName: 'B%', stacked: true, },
+      { type: 'bar', xKey: 'Teacher', yKey: 'C%', yName: 'C%', stacked: true, },
+      { type: 'bar', xKey: 'Teacher', yKey: 'D%', yName: 'D%', stacked: true, },
+      { type: 'bar', xKey: 'Teacher', yKey: 'F%', yName: 'F%', stacked: true, },
+      { type: 'bar', xKey: 'Teacher', yKey: 'Other_Percent', yName: 'Other %', stacked: true, }
     ],
     axes: [
       {
@@ -255,6 +307,11 @@ const GradeDistribution = ({ data: initialData }) => {
               onSortChanged={onSortChanged}
               animateRows={true}
               pagination={true}
+              enableCharts={true}
+              cellSelection={cellSelection}
+              // pivotMode={true}
+              // pivotPanelShow='onlyWhenPivoting'
+              // sideBar={"columns"}
             />
           </div>
         </CardContent>
