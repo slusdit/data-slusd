@@ -64,14 +64,19 @@ function DataTable<T extends object>({
   const [visibleColumns, setVisibleColumns] = useState<string[]>([]);
 
   const gridThemeClass = useMemo(() => {
-    return resolvedTheme === 'dark' 
-      ? themeQuartz.withPart(colorSchemeDarkBlue) 
+    return resolvedTheme === 'dark'
+      ? themeQuartz.withPart(colorSchemeDarkBlue)
       : themeQuartz;
   }, [resolvedTheme]);
 
-  const baseChartTheme = useMemo(() => 
+  const baseChartTheme = useMemo(() =>
     resolvedTheme === 'dark' ? 'ag-sheets-dark' : 'ag-sheets'
-  , [resolvedTheme]);
+    , [resolvedTheme]);
+
+  const enableCharts = true;
+  const cellSelection = useMemo(() => {
+    return true;
+  }, []);
 
   const [filteredData, setFilteredData] = useState<T[]>([]);
 
@@ -107,7 +112,7 @@ function DataTable<T extends object>({
     chartStackKey?: boolean | null;
   }) => {
     const chartYKeyArray = chartYKey?.split(",").map(key => key.trim()) || [chartYKey];
-    
+
     const baseOptions = {
       title: { text: chartTitle || "Data Chart" },
       theme: baseChartTheme,
@@ -240,12 +245,12 @@ function DataTable<T extends object>({
   const onGridReady = useCallback((params: GridReadyEvent) => {
     setGridApi(params.api);
     setColumns(params.api.getColumns()?.map(col => col.getColDef()) || []);
-    
+
     // Initialize with data if available
     if (data?.length) {
       setRowData(data);
     }
-    
+
     params.api.sizeColumnsToFit();
     setLoading(false);
   }, [data]);
@@ -294,7 +299,7 @@ function DataTable<T extends object>({
         >
           Export to CSV
         </Button>
-        
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline">Columns</Button>
@@ -326,7 +331,7 @@ function DataTable<T extends object>({
           defaultColDef={defaultColDef}
           onGridReady={onGridReady}
           rowSelection="multiple"
-          onSelectionChanged={(event) => 
+          onSelectionChanged={(event) =>
             setSelectedRows(event.api.getSelectedRows())
           }
           onFilterChanged={onFilterChanged}
@@ -337,6 +342,9 @@ function DataTable<T extends object>({
           animateRows={true}
           suppressLoadingOverlay={false}
           suppressNoRowsOverlay={false}
+          enableCharts={enableCharts}
+          cellSelection={cellSelection}
+
         />
       </div>
     </div>
