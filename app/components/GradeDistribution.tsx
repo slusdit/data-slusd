@@ -309,9 +309,9 @@ const GradeDistribution = ({ data: initialData }) => {
               pagination={true}
               enableCharts={true}
               cellSelection={cellSelection}
-              // pivotMode={true}
-              // pivotPanelShow='onlyWhenPivoting'
-              // sideBar={"columns"}
+              pivotMode={true}
+              pivotPanelShow='onlyWhenPivoting'
+              sideBar={"columns"}
             />
           </div>
         </CardContent>
