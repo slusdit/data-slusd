@@ -342,12 +342,10 @@ function DataTable<T extends object>({
           onSortChanged={onSortChanged}
           enableCellTextSelection={true}
           suppressRowClickSelection={true}
-          pagination={true}
           animateRows={true}
           suppressNoRowsOverlay={false}
           enableCharts={enableCharts}
           cellSelection={cellSelection}
-          animateRows={true}
           pagination={true}
           paginationPageSizeSelector={paginationPageSizes}
           paginationPageSize={data.length > 20 ? data.length : 20}
