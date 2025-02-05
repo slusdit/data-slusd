@@ -12,7 +12,8 @@ import {
 import { AgCharts } from "ag-charts-react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
-import { colorSchemeDarkBlue, themeQuartz } from 'ag-grid-enterprise';
+import { colorSchemeDarkBlue, themeQuartz } from "ag-grid-enterprise";
+import { generatePaginationOptions } from "@/lib/utils";
 
 const IdCellRenderer = (props: any) => {
   const sc = props.data.sc || props.data.SC;
@@ -64,14 +65,15 @@ function DataTable<T extends object>({
   const [visibleColumns, setVisibleColumns] = useState<string[]>([]);
 
   const gridThemeClass = useMemo(() => {
-    return resolvedTheme === 'dark'
+    return resolvedTheme === "dark"
       ? themeQuartz.withPart(colorSchemeDarkBlue)
       : themeQuartz;
   }, [resolvedTheme]);
 
-  const baseChartTheme = useMemo(() =>
-    resolvedTheme === 'dark' ? 'ag-sheets-dark' : 'ag-sheets'
-    , [resolvedTheme]);
+  const baseChartTheme = useMemo(
+    () => (resolvedTheme === "dark" ? "ag-sheets-dark" : "ag-sheets"),
+    [resolvedTheme]
+  );
 
   const enableCharts = true;
   const cellSelection = useMemo(() => {
@@ -88,67 +90,85 @@ function DataTable<T extends object>({
     setFilteredData(updatedData);
   }, []);
 
-  const onFilterChanged = useCallback((params: any) => {
-    updateChartData(params);
-  }, [updateChartData]);
+  const onFilterChanged = useCallback(
+    (params: any) => {
+      updateChartData(params);
+    },
+    [updateChartData]
+  );
 
-  const onSortChanged = useCallback((params: any) => {
-    updateChartData(params);
-  }, [updateChartData]);
+  const onSortChanged = useCallback(
+    (params: any) => {
+      updateChartData(params);
+    },
+    [updateChartData]
+  );
 
-  const createChartOptions = useCallback(({
-    chartTitle,
-    chartXKey,
-    chartYKey,
-    chartTypeKey,
-    visibleColumns,
-    chartStackKey,
-  }: {
-    chartTitle?: string | null;
-    chartXKey?: string | null;
-    chartYKey?: string | null;
-    chartTypeKey?: string | null;
-    visibleColumns?: string[];
-    chartStackKey?: boolean | null;
-  }) => {
-    const chartYKeyArray = chartYKey?.split(",").map(key => key.trim()) || [chartYKey];
+  const paginationPageSizes = useMemo(() => {
+    return generatePaginationOptions(data.length);
+  }, [data.length]);
 
-    const baseOptions = {
-      title: { text: chartTitle || "Data Chart" },
-      theme: baseChartTheme,
-      data: selectedRows.length ? selectedRows : filteredData,
-      series: chartYKeyArray.map(key => ({
-        type: chartTypeKey || "bar",
-        xKey: chartXKey || "SC",
-        yKey: key,
-        yName: key,
-        stacked: chartStackKey || false,
-      })),
-      axes: [
-        {
-          type: 'category',
-          position: 'bottom',
-          label: { rotation: 45 },
-        },
-        {
-          type: 'number',
-          position: 'left',
-          title: { text: 'Values' },
-        }
-      ],
-    };
+  const createChartOptions = useCallback(
+    ({
+      chartTitle,
+      chartXKey,
+      chartYKey,
+      chartTypeKey,
+      visibleColumns,
+      chartStackKey,
+    }: {
+      chartTitle?: string | null;
+      chartXKey?: string | null;
+      chartYKey?: string | null;
+      chartTypeKey?: string | null;
+      visibleColumns?: string[];
+      chartStackKey?: boolean | null;
+    }) => {
+      const chartYKeyArray = chartYKey?.split(",").map((key) => key.trim()) || [
+        chartYKey,
+      ];
 
-    return baseOptions;
-  }, [baseChartTheme, selectedRows, filteredData]);
+      const baseOptions = {
+        title: { text: chartTitle || "Data Chart" },
+        theme: baseChartTheme,
+        data: selectedRows.length ? selectedRows : filteredData,
+        series: chartYKeyArray.map((key) => ({
+          type: chartTypeKey || "bar",
+          xKey: chartXKey || "SC",
+          yKey: key,
+          yName: key,
+          stacked: chartStackKey || false,
+        })),
+        axes: [
+          {
+            type: "category",
+            position: "bottom",
+            label: { rotation: 45 },
+          },
+          {
+            type: "number",
+            position: "left",
+            title: { text: "Values" },
+          },
+        ],
+      };
 
-  const defaultColDef = useMemo(() => ({
-    sortable: true,
-    resizable: true,
-    filter: true,
-    floatingFilter: true,
-    flex: 1,
-    minWidth: 100,
-  }), []);
+      return baseOptions;
+    },
+    [baseChartTheme, selectedRows, filteredData]
+  );
+
+  const defaultColDef = useMemo(
+    () => ({
+      sortable: true,
+      resizable: true,
+      filter: true,
+      floatingFilter: true,
+      flex: 1,
+      minWidth: 100,
+    }),
+    []
+  );
 
   const columnDefs = useMemo(() => {
     if (!data || data.length === 0) return [];
@@ -184,9 +204,12 @@ function DataTable<T extends object>({
           ...baseCol,
           filter: "agDateColumnFilter",
           filterParams: {
-            buttons: ['apply', 'reset'],
+            buttons: ["apply", "reset"],
             closeOnApply: true,
-            comparator: (filterLocalDateAtMidnight: Date, cellValue: string) => {
+            comparator: (
+              filterLocalDateAtMidnight: Date,
+              cellValue: string
+            ) => {
               if (!cellValue) return -1;
               const dateParts = cellValue.split("/");
               const cellDate = new Date(
@@ -207,12 +230,12 @@ function DataTable<T extends object>({
       }
 
       // Handle numeric columns
-      if (typeof data[0][key] === 'number') {
+      if (typeof data[0][key] === "number") {
         return {
           ...baseCol,
-          filter: 'agNumberColumnFilter',
+          filter: "agNumberColumnFilter",
           filterParams: {
-            buttons: ['apply', 'reset'],
+            buttons: ["apply", "reset"],
             closeOnApply: true,
           },
         };
@@ -230,11 +253,11 @@ function DataTable<T extends object>({
     const exportParams = {
       skipHeader: false,
       suppressQuotes: true,
-      columnSeparator: ',',
+      columnSeparator: ",",
       onlySelected: gridApi.getSelectedRows().length > 0,
-      fileName: `${title}_${new Date().toISOString().split('T')[0]}.csv`,
+      fileName: `${title}_${new Date().toISOString().split("T")[0]}.csv`,
       processCellCallback: (params: any) => {
-        if (params.value === null || params.value === undefined) return '';
+        if (params.value === null || params.value === undefined) return "";
         return params.value.toString();
       },
     };
@@ -242,18 +265,21 @@ function DataTable<T extends object>({
     gridApi.exportDataAsCsv(exportParams);
   }, [gridApi, title]);
 
-  const onGridReady = useCallback((params: GridReadyEvent) => {
-    setGridApi(params.api);
-    setColumns(params.api.getColumns()?.map(col => col.getColDef()) || []);
+  const onGridReady = useCallback(
+    (params: GridReadyEvent) => {
+      setGridApi(params.api);
+      setColumns(params.api.getColumns()?.map((col) => col.getColDef()) || []);
 
-    // Initialize with data if available
-    if (data?.length) {
-      setRowData(data);
-    }
+      // Initialize with data if available
+      if (data?.length) {
+        setRowData(data);
+      }
 
-    params.api.sizeColumnsToFit();
-    setLoading(false);
-  }, [data]);
+      params.api.sizeColumnsToFit();
+      setLoading(false);
+    },
+    [data]
+  );
 
   useEffect(() => {
     if (data?.length) {
@@ -276,9 +302,9 @@ function DataTable<T extends object>({
   }
 
   return (
-    <div className="w-full flex flex-col gap-4">
+    <div className="w-full flex flex-col gap-1">
       {showChart && (
-        <div className="w-full h-96 border rounded-lg overflow-hidden">
+        <div className="w-full h-72 border rounded-lg overflow-hidden">
           <AgCharts
             options={createChartOptions({
               chartTitle,
@@ -299,28 +325,6 @@ function DataTable<T extends object>({
         >
           Export to CSV
         </Button>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline">Columns</Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="max-h-96 overflow-y-auto">
-            {columns
-              .filter((col) => col.field !== "checkboxCol")
-              .map((column) => (
-                <DropdownMenuCheckboxItem
-                  key={column.field}
-                  className="capitalize"
-                  checked={!column.hide}
-                  onCheckedChange={(value) =>
-                    gridApi?.setColumnVisible(column.field!, value)
-                  }
-                >
-                  {column.headerName || column.field}
-                </DropdownMenuCheckboxItem>
-              ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
 
       <div className="h-[600px] w-full">
@@ -340,11 +344,16 @@ function DataTable<T extends object>({
           suppressRowClickSelection={true}
           pagination={true}
           animateRows={true}
-          suppressLoadingOverlay={false}
           suppressNoRowsOverlay={false}
           enableCharts={enableCharts}
           cellSelection={cellSelection}
-
+          animateRows={true}
+          pagination={true}
+          paginationPageSizeSelector={paginationPageSizes}
+          paginationPageSize={data.length > 20 ? data.length : 20}
+          pivotMode={false}
+          pivotPanelShow="onlyWhenPivoting"
+          sideBar={["columns", "filters"]}
         />
       </div>
     </div>
