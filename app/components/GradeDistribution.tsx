@@ -32,7 +32,7 @@ const GradeDistribution = ({ data: initialData }) => {
   const [gridApi, setGridApi] = useState(null);
   const { resolvedTheme } = useTheme();
   const baseChartTheme = useMemo(() => (resolvedTheme === 'dark' ? 'ag-sheets-dark' : 'ag-sheets'), [resolvedTheme]);
-
+  console.log(initialData)
   // Generate pagination options based on total data size
   const paginationPageSizes = useMemo(() => {
     return generatePaginationOptions(data.length);

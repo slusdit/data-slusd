@@ -13,8 +13,8 @@ import { AgCharts } from "ag-charts-react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 import { colorSchemeDarkBlue, themeQuartz } from "ag-grid-enterprise";
-import { generatePaginationOptions } from "@/lib/utils";
 
+// Custom cell renderer for ID columns that create links
 const IdCellRenderer = (props: any) => {
   const sc = props.data.sc || props.data.SC;
   return (
@@ -63,7 +63,9 @@ function DataTable<T extends object>({
   const [selectedRows, setSelectedRows] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
   const [visibleColumns, setVisibleColumns] = useState<string[]>([]);
+  const [filteredData, setFilteredData] = useState<T[]>([]);
 
+  // Theme configuration for grid and chart
   const gridThemeClass = useMemo(() => {
     return resolvedTheme === "dark"
       ? themeQuartz.withPart(colorSchemeDarkBlue)
@@ -75,13 +77,11 @@ function DataTable<T extends object>({
     [resolvedTheme]
   );
 
+  // Enable advanced grid features
   const enableCharts = true;
-  const cellSelection = useMemo(() => {
-    return true;
-  }, []);
+  const cellSelection = true;
 
-  const [filteredData, setFilteredData] = useState<T[]>([]);
-
+  // Data update handlers for filtering and sorting
   const updateChartData = useCallback((params: any) => {
     const updatedData: T[] = [];
     params.api.forEachNodeAfterFilterAndSort((node: any) => {
@@ -104,10 +104,7 @@ function DataTable<T extends object>({
     [updateChartData]
   );
 
-  const paginationPageSizes = useMemo(() => {
-    return generatePaginationOptions(data.length);
-  }, [data.length]);
-
+  // Chart configuration
   const createChartOptions = useCallback(
     ({
       chartTitle,
@@ -134,7 +131,7 @@ function DataTable<T extends object>({
         data: selectedRows.length ? selectedRows : filteredData,
         series: chartYKeyArray.map((key) => ({
           type: chartTypeKey || "bar",
-          xKey: chartXKey || "SC",
+          xKey: chartXKey || "Department",
           yKey: key,
           yName: key,
           stacked: chartStackKey || false,
@@ -143,7 +140,7 @@ function DataTable<T extends object>({
           {
             type: "category",
             position: "bottom",
-            label: { rotation: 45 },
+            label: { rotation: 90 },
           },
           {
             type: "number",
@@ -158,18 +155,7 @@ function DataTable<T extends object>({
     [baseChartTheme, selectedRows, filteredData]
   );
 
-  const defaultColDef = useMemo(
-    () => ({
-      sortable: true,
-      resizable: true,
-      filter: true,
-      floatingFilter: true,
-      flex: 1,
-      minWidth: 100,
-    }),
-    []
-  );
-
+  // Column definitions with grouping configuration
   const columnDefs = useMemo(() => {
     if (!data || data.length === 0) return [];
 
@@ -184,69 +170,68 @@ function DataTable<T extends object>({
       hide: false,
     };
 
-    const dataCols = Object.keys(data[0]).map((key) => {
-      const baseCol = {
-        field: key,
-        headerName: key,
-        hide: hiddenColumns?.includes(key.toUpperCase()),
-      };
+    // Define grouping columns
+    const groupingCols = [
+      {
+        field: "Department",
+        rowGroup: true,
+        hide: true,
+      },
+      {
+        field: "Term",
+        rowGroup: true,
+        hide: true,
+      },
+      {
+        field: "Teacher",
+        hide: false,
+      },
+    ];
 
-      if (key.toLowerCase() === "id" && ("sc" in data[0] || "SC" in data[0])) {
-        return {
-          ...baseCol,
-          cellRenderer: IdCellRenderer,
-          aggFunc: "count",
-        };
-      }
+    // Create grade percentage columns with aggregation
+    const gradeCols = ["A%", "B%", "C%", "D%", "F%", "Other %"].map((key) => ({
+      field: key,
+      headerName: key,
+      aggFunc: "avg",
+      valueFormatter: (params: any) =>
+        params.value ? `${params.value.toFixed(1)}%` : "",
+      filter: "agNumberColumnFilter",
+      filterParams: {
+        buttons: ["apply", "reset"],
+        closeOnApply: true,
+      },
+    }));
 
-      if (["dt", "date", "day"].includes(key.toLowerCase())) {
-        return {
-          ...baseCol,
-          filter: "agDateColumnFilter",
-          filterParams: {
-            buttons: ["apply", "reset"],
-            closeOnApply: true,
-            comparator: (
-              filterLocalDateAtMidnight: Date,
-              cellValue: string
-            ) => {
-              if (!cellValue) return -1;
-              const dateParts = cellValue.split("/");
-              const cellDate = new Date(
-                Number(dateParts[2]),
-                Number(dateParts[0]) - 1,
-                Number(dateParts[1])
-              );
-              if (filterLocalDateAtMidnight.getTime() === cellDate.getTime()) {
-                return 0;
-              }
-              if (cellDate < filterLocalDateAtMidnight) {
-                return -1;
-              }
-              return 1;
-            },
-          },
-        };
-      }
-
-      // Handle numeric columns
-      if (typeof data[0][key] === "number") {
-        return {
-          ...baseCol,
-          filter: "agNumberColumnFilter",
-          filterParams: {
-            buttons: ["apply", "reset"],
-            closeOnApply: true,
-          },
-        };
-      }
-
-      return baseCol;
-    });
-
-    return [checkboxCol, ...dataCols];
+    return [checkboxCol, ...groupingCols, ...gradeCols];
   }, [data, hiddenColumns]);
 
+  // Default column properties
+  const defaultColDef = useMemo(
+    () => ({
+      sortable: true,
+      resizable: true,
+      filter: true,
+      floatingFilter: true,
+      flex: 1,
+      minWidth: 100,
+    }),
+    []
+  );
+
+  // Auto group column definition for grouped rows
+  const autoGroupColumnDef = useMemo(
+    () => ({
+      headerName: "Group",
+      minWidth: 200,
+      cellRendererParams: {
+        suppressCount: false,
+        checkbox: true,
+      },
+    }),
+    []
+  );
+
+  // Export functionality
   const exportToCSV = useCallback(() => {
     if (!gridApi) return;
 
@@ -265,14 +250,15 @@ function DataTable<T extends object>({
     gridApi.exportDataAsCsv(exportParams);
   }, [gridApi, title]);
 
+  // Grid initialization
   const onGridReady = useCallback(
     (params: GridReadyEvent) => {
       setGridApi(params.api);
       setColumns(params.api.getColumns()?.map((col) => col.getColDef()) || []);
 
-      // Initialize with data if available
       if (data?.length) {
         setRowData(data);
+        setFilteredData(data);
       }
 
       params.api.sizeColumnsToFit();
@@ -281,6 +267,7 @@ function DataTable<T extends object>({
     [data]
   );
 
+  // Update data when props change
   useEffect(() => {
     if (data?.length) {
       setRowData(data);
@@ -289,6 +276,7 @@ function DataTable<T extends object>({
     }
   }, [data]);
 
+  // Loading and error states
   if (loading) {
     return (
       <div className="flex justify-center items-center h-96">
@@ -302,9 +290,9 @@ function DataTable<T extends object>({
   }
 
   return (
-    <div className="w-full flex flex-col gap-1">
+    <div className="w-full flex flex-col gap-4">
       {showChart && (
-        <div className="w-full h-72 border rounded-lg overflow-hidden">
+        <div className="w-full h-96 border rounded-lg overflow-hidden">
           <AgCharts
             options={createChartOptions({
               chartTitle,
@@ -325,6 +313,28 @@ function DataTable<T extends object>({
         >
           Export to CSV
         </Button>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline">Columns</Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="max-h-96 overflow-y-auto">
+            {columns
+              .filter((col) => col.field !== "checkboxCol")
+              .map((column) => (
+                <DropdownMenuCheckboxItem
+                  key={column.field}
+                  className="capitalize"
+                  checked={!column.hide}
+                  onCheckedChange={(value) =>
+                    gridApi?.setColumnVisible(column.field!, value)
+                  }
+                >
+                  {column.headerName || column.field}
+                </DropdownMenuCheckboxItem>
+              ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <div className="h-[600px] w-full">
@@ -333,6 +343,12 @@ function DataTable<T extends object>({
           rowData={rowData}
           columnDefs={columnDefs}
           defaultColDef={defaultColDef}
+          autoGroupColumnDef={autoGroupColumnDef}
+          groupDisplayType="groupRows"
+          animateRows={true}
+          groupDefaultExpanded={1}
+          suppressAggFuncInHeader={true}
+          enableRangeSelection={true}
           onGridReady={onGridReady}
           rowSelection="multiple"
           onSelectionChanged={(event) =>
@@ -342,16 +358,11 @@ function DataTable<T extends object>({
           onSortChanged={onSortChanged}
           enableCellTextSelection={true}
           suppressRowClickSelection={true}
-          animateRows={true}
-          suppressNoRowsOverlay={false}
+          pagination={true}
           enableCharts={enableCharts}
           cellSelection={cellSelection}
-          pagination={true}
-          paginationPageSizeSelector={paginationPageSizes}
-          paginationPageSize={data.length > 20 ? data.length : 20}
-          pivotMode={false}
-          pivotPanelShow="onlyWhenPivoting"
-          sideBar={["columns", "filters"]}
+          groupIncludeFooter={false}
+          groupIncludeTotalFooter={false}
         />
       </div>
     </div>
