@@ -30,7 +30,7 @@
     "@radix-ui/react-tooltip": "^1.1.2",
     "@tanstack/react-table": "^8.19.2",
     "ag-charts-enterprise": "^11.0.4",
-    "ag-charts-react": "^10.2.0",
+    "ag-charts-react": "^11.0.4",
     "ag-grid-enterprise": "^33.0.4",
     "ag-grid-react": "^33.0.4",
     "chart.js": "^4.4.3",
