@@ -30,7 +30,7 @@ const GroupedGradeChart = () => {
                   text: "Grade Distribution by Department, Term, and Teacher",
                   fontSize: 18
                 },
-                data: initialData,
+                data: processedData,
                 theme: {
                   baseTheme: baseChartTheme,
                   palette: {
