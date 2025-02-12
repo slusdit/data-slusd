@@ -14,10 +14,10 @@ const PercentCellRenderer = (props) => {
   const value = props.value;
   return (
     <TeacherGradesDialog
-      teacher={props.data.Teacher}
-      sc={props.data.SC}
-      tn={props.data.TN}
-      department={props.data.Department}
+      teacher={props.data?.Teacher ? props.data.Teacher :''}
+      sc={props.data?.SC ? props.data.SC : ''}
+      tn={props.data?.TN ? props.data.TN : ''}
+      department={props.data?.Department ? props.data.Department : ''}
       params={props}
       colField={props.colDef.field}
     >
