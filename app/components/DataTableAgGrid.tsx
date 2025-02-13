@@ -12,9 +12,17 @@ import {
 import { AgCharts } from "ag-charts-react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
-import { colorSchemeDarkBlue, themeQuartz } from "ag-grid-enterprise";
+import { colorSchemeDarkBlue, themeQuartz } from 'ag-grid-enterprise';
 
-// Custom cell renderer for ID columns that create links
+const transformLabel = (label: string) => {
+  if (typeof label === 'string' && label.startsWith('SLVA')) {
+    if (label.includes('Elementary')) return 'SLVA - Elem';
+    if (label.includes('Middle')) return 'SLVA - Mid';
+    if (label.includes('High')) return 'SLVA - High';
+  }
+  return label;
+};
+
 const IdCellRenderer = (props: any) => {
   const sc = props.data.sc || props.data.SC;
   return (
@@ -65,23 +73,21 @@ function DataTable<T extends object>({
   const [visibleColumns, setVisibleColumns] = useState<string[]>([]);
   const [filteredData, setFilteredData] = useState<T[]>([]);
 
-  // Theme configuration for grid and chart
   const gridThemeClass = useMemo(() => {
-    return resolvedTheme === "dark"
+    return resolvedTheme === 'dark'
       ? themeQuartz.withPart(colorSchemeDarkBlue)
       : themeQuartz;
   }, [resolvedTheme]);
 
-  const baseChartTheme = useMemo(
-    () => (resolvedTheme === "dark" ? "ag-sheets-dark" : "ag-sheets"),
-    [resolvedTheme]
-  );
+  const baseChartTheme = useMemo(() =>
+    resolvedTheme === 'dark' ? 'ag-sheets-dark' : 'ag-sheets'
+  , [resolvedTheme]);
 
-  // Enable advanced grid features
   const enableCharts = true;
-  const cellSelection = true;
+  const cellSelection = useMemo(() => {
+    return true;
+  }, []);
 
-  // Data update handlers for filtering and sorting
   const updateChartData = useCallback((params: any) => {
     const updatedData: T[] = [];
     params.api.forEachNodeAfterFilterAndSort((node: any) => {
@@ -90,72 +96,102 @@ function DataTable<T extends object>({
     setFilteredData(updatedData);
   }, []);
 
-  const onFilterChanged = useCallback(
-    (params: any) => {
-      updateChartData(params);
-    },
-    [updateChartData]
-  );
+  const onFilterChanged = useCallback((params: any) => {
+    updateChartData(params);
+  }, [updateChartData]);
 
-  const onSortChanged = useCallback(
-    (params: any) => {
-      updateChartData(params);
-    },
-    [updateChartData]
-  );
+  const onSortChanged = useCallback((params: any) => {
+    updateChartData(params);
+  }, [updateChartData]);
 
-  // Chart configuration
-  const createChartOptions = useCallback(
-    ({
-      chartTitle,
-      chartXKey,
-      chartYKey,
-      chartTypeKey,
-      visibleColumns,
-      chartStackKey,
-    }: {
-      chartTitle?: string | null;
-      chartXKey?: string | null;
-      chartYKey?: string | null;
-      chartTypeKey?: string | null;
-      visibleColumns?: string[];
-      chartStackKey?: boolean | null;
-    }) => {
-      const chartYKeyArray = chartYKey?.split(",").map((key) => key.trim()) || [
-        chartYKey,
-      ];
+  const createChartOptions = useCallback(({
+    chartTitle,
+    chartXKey,
+    chartYKey,
+    chartTypeKey,
+    visibleColumns,
+    chartStackKey,
+  }: {
+    chartTitle?: string | null;
+    chartXKey?: string | null;
+    chartYKey?: string | null;
+    chartTypeKey?: string | null;
+    visibleColumns?: string[];
+    chartStackKey?: boolean | null;
+  }) => {
+    const chartYKeyArray = chartYKey?.split(",").map(key => key.trim()) || [chartYKey];
+    
+    const transformedData = (selectedRows.length ? selectedRows : filteredData).map(row => ({
+      ...row,
+      [chartXKey]: chartXKey ? transformLabel(row[chartXKey]) : row[chartXKey]
+    }));
 
-      const baseOptions = {
-        title: { text: chartTitle || "Data Chart" },
-        theme: baseChartTheme,
-        data: selectedRows.length ? selectedRows : filteredData,
-        series: chartYKeyArray.map((key) => ({
-          type: chartTypeKey || "bar",
-          xKey: chartXKey || "Department",
-          yKey: key,
-          yName: key,
-          stacked: chartStackKey || false,
-        })),
-        axes: [
-          {
-            type: "category",
-            position: "bottom",
-            label: { rotation: 90 },
+    const baseOptions = {
+      // height: 350,
+      title: { 
+        text: chartTitle || "Data Chart",
+        fontSize: 20,
+        padding: { top: 10, bottom: 20 }
+      },
+      theme: baseChartTheme,
+      data: transformedData,
+      series: chartYKeyArray.map(key => ({
+        type: chartTypeKey || "bar",
+        xKey: chartXKey || "SC",
+        yKey: key,
+        yName: key,
+        stacked: chartStackKey || false,
+      })),
+      axes: [
+        {
+          type: 'category',
+          position: 'bottom',
+          label: { 
+            rotation: 45,
+            fontSize: 12
           },
-          {
-            type: "number",
-            position: "left",
-            title: { text: "Values" },
+          title: {
+            text: chartXKey || '',
+            fontSize: 14
+          }
+        },
+        {
+          type: 'number',
+          position: 'left',
+          title: { 
+            text: 'Values',
+            fontSize: 14
           },
-        ],
-      };
+          label: {
+            fontSize: 12
+          }
+        }
+      ],
+      padding: {
+        top: 20,
+        right: 40,
+        bottom: 40,
+        left: 60
+      },
+      legend: {
+        position: 'bottom',
+        spacing: 40,
+        fontSize: 12
+      }
+    };
 
-      return baseOptions;
-    },
-    [baseChartTheme, selectedRows, filteredData]
-  );
+    return baseOptions;
+  }, [baseChartTheme, selectedRows, filteredData]);
 
-  // Column definitions with grouping configuration
+  const defaultColDef = useMemo(() => ({
+    sortable: true,
+    resizable: true,
+    filter: true,
+    floatingFilter: true,
+    flex: 1,
+    minWidth: 100,
+  }), []);
+
   const columnDefs = useMemo(() => {
     if (!data || data.length === 0) return [];
 
@@ -170,79 +206,77 @@ function DataTable<T extends object>({
       hide: false,
     };
 
-    // Define grouping columns
-    const groupingCols = [
-      {
-        field: "Department",
-        rowGroup: true,
-        hide: true,
-      },
-      {
-        field: "Term",
-        rowGroup: true,
-        hide: true,
-      },
-      {
-        field: "Teacher",
-        hide: false,
-      },
-    ];
+    const dataCols = Object.keys(data[0]).map((key) => {
+      const baseCol = {
+        field: key,
+        headerName: key,
+        hide: hiddenColumns?.includes(key.toUpperCase()),
+      };
 
-    // Create grade percentage columns with aggregation
-    const gradeCols = ["A%", "B%", "C%", "D%", "F%", "Other %"].map((key) => ({
-      field: key,
-      headerName: key,
-      aggFunc: "avg",
-      valueFormatter: (params: any) =>
-        params.value ? `${params.value.toFixed(1)}%` : "",
-      filter: "agNumberColumnFilter",
-      filterParams: {
-        buttons: ["apply", "reset"],
-        closeOnApply: true,
-      },
-    }));
+      if (key.toLowerCase() === "id" && ("sc" in data[0] || "SC" in data[0])) {
+        return {
+          ...baseCol,
+          cellRenderer: IdCellRenderer,
+          aggFunc: "count",
+        };
+      }
 
-    return [checkboxCol, ...groupingCols, ...gradeCols];
+      if (["dt", "date", "day"].includes(key.toLowerCase())) {
+        return {
+          ...baseCol,
+          filter: "agDateColumnFilter",
+          filterParams: {
+            buttons: ['apply', 'reset'],
+            closeOnApply: true,
+            comparator: (filterLocalDateAtMidnight: Date, cellValue: string) => {
+              if (!cellValue) return -1;
+              const dateParts = cellValue.split("/");
+              const cellDate = new Date(
+                Number(dateParts[2]),
+                Number(dateParts[0]) - 1,
+                Number(dateParts[1])
+              );
+              if (filterLocalDateAtMidnight.getTime() === cellDate.getTime()) {
+                return 0;
+              }
+              if (cellDate < filterLocalDateAtMidnight) {
+                return -1;
+              }
+              return 1;
+            },
+          },
+        };
+      }
+
+      // Handle numeric columns
+      if (typeof data[0][key] === 'number') {
+        return {
+          ...baseCol,
+          filter: 'agNumberColumnFilter',
+          filterParams: {
+            buttons: ['apply', 'reset'],
+            closeOnApply: true,
+          },
+        };
+      }
+
+      return baseCol;
+    });
+
+    return [checkboxCol, ...dataCols];
   }, [data, hiddenColumns]);
 
-  // Default column properties
-  const defaultColDef = useMemo(
-    () => ({
-      sortable: true,
-      resizable: true,
-      filter: true,
-      floatingFilter: true,
-      flex: 1,
-      minWidth: 100,
-    }),
-    []
-  );
-
-  // Auto group column definition for grouped rows
-  const autoGroupColumnDef = useMemo(
-    () => ({
-      headerName: "Group",
-      minWidth: 200,
-      cellRendererParams: {
-        suppressCount: false,
-        checkbox: true,
-      },
-    }),
-    []
-  );
-
-  // Export functionality
   const exportToCSV = useCallback(() => {
     if (!gridApi) return;
 
     const exportParams = {
       skipHeader: false,
       suppressQuotes: true,
-      columnSeparator: ",",
+      columnSeparator: ',',
       onlySelected: gridApi.getSelectedRows().length > 0,
-      fileName: `${title}_${new Date().toISOString().split("T")[0]}.csv`,
+      fileName: `${title}_${new Date().toISOString().split('T')[0]}.csv`,
       processCellCallback: (params: any) => {
-        if (params.value === null || params.value === undefined) return "";
+        if (params.value === null || params.value === undefined) return '';
         return params.value.toString();
       },
     };
@@ -250,24 +284,19 @@ function DataTable<T extends object>({
     gridApi.exportDataAsCsv(exportParams);
   }, [gridApi, title]);
 
-  // Grid initialization
-  const onGridReady = useCallback(
-    (params: GridReadyEvent) => {
-      setGridApi(params.api);
-      setColumns(params.api.getColumns()?.map((col) => col.getColDef()) || []);
+  const onGridReady = useCallback((params: GridReadyEvent) => {
+    setGridApi(params.api);
+    setColumns(params.api.getColumns()?.map(col => col.getColDef()) || []);
 
-      if (data?.length) {
-        setRowData(data);
-        setFilteredData(data);
-      }
+    // Initialize with data if available
+    if (data?.length) {
+      setRowData(data);
+    }
 
-      params.api.sizeColumnsToFit();
-      setLoading(false);
-    },
-    [data]
-  );
+    params.api.sizeColumnsToFit();
+    setLoading(false);
+  }, [data]);
 
-  // Update data when props change
   useEffect(() => {
     if (data?.length) {
       setRowData(data);
@@ -276,7 +305,6 @@ function DataTable<T extends object>({
     }
   }, [data]);
 
-  // Loading and error states
   if (loading) {
     return (
       <div className="flex justify-center items-center h-96">
@@ -292,7 +320,7 @@ function DataTable<T extends object>({
   return (
     <div className="w-full flex flex-col gap-4">
       {showChart && (
-        <div className="w-full h-96 border rounded-lg overflow-hidden">
+        <div className="w-full min-h-fit border rounded-lg overflow-hidden">
           <AgCharts
             options={createChartOptions({
               chartTitle,
@@ -339,16 +367,11 @@ function DataTable<T extends object>({
 
       <div className="h-[600px] w-full">
         <AgGridReact
+          // containerStyle={containerStyle}
           theme={gridThemeClass}
           rowData={rowData}
           columnDefs={columnDefs}
           defaultColDef={defaultColDef}
-          autoGroupColumnDef={autoGroupColumnDef}
-          groupDisplayType="groupRows"
-          animateRows={true}
-          groupDefaultExpanded={1}
-          suppressAggFuncInHeader={true}
-          enableRangeSelection={true}
           onGridReady={onGridReady}
           rowSelection="multiple"
           onSelectionChanged={(event) =>
@@ -359,10 +382,11 @@ function DataTable<T extends object>({
           enableCellTextSelection={true}
           suppressRowClickSelection={true}
           pagination={true}
+          animateRows={true}
+          suppressLoadingOverlay={false}
+          suppressNoRowsOverlay={false}
           enableCharts={enableCharts}
           cellSelection={cellSelection}
-          groupIncludeFooter={false}
-          groupIncludeTotalFooter={false}
         />
       </div>
     </div>
