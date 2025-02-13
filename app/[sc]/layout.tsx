@@ -12,7 +12,7 @@ export default async function SchoolLayout({
     const session = await auth()
     const sc = session?.user?.activeSchool
 
-    if (sc?.toString() !== params.sc) {
+    if (sc?.toString() !== params.sc && sc != 0) {
       return (
         <div>
           Unauthorized, please go back
