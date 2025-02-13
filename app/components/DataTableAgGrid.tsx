@@ -168,14 +168,14 @@ function DataTable<T extends object>({
         }
       ],
       padding: {
-        top: 20,
+        top: 10,
         right: 40,
-        bottom: 40,
+        bottom: 10,
         left: 60
       },
       legend: {
-        position: 'bottom',
-        spacing: 40,
+        position: 'top',
+        spacing:5,
         fontSize: 12
       }
     };
@@ -185,6 +185,8 @@ function DataTable<T extends object>({
 
   const defaultColDef = useMemo(() => ({
     sortable: true,
+    pivot: true,
+    enableRowGroup: true,
     resizable: true,
     filter: true,
     floatingFilter: true,
@@ -387,6 +389,9 @@ function DataTable<T extends object>({
           suppressNoRowsOverlay={false}
           enableCharts={enableCharts}
           cellSelection={cellSelection}
+          pivotMode={false}
+          pivotPanelShow='onlyWhenPivoting'
+          sideBar={['columns']}
         />
       </div>
     </div>
