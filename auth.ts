@@ -6,7 +6,6 @@ import { getAllSchools, getPrimarySchool, syncTeacherClasses } from "./lib/signi
 import { Class, ROLE, SchoolInfo, User } from "@prisma/client";
 import { AeriesSimpleTeacher } from "./lib/aeries";
 
-
 export interface SessionUser extends User {
   schools?: string[];
   roles?: ROLE[];
@@ -27,7 +26,6 @@ async function getSchools({
   manualSchool?: number | null
   classes?: Class[] | null
 }) {
-
   let schoolsSc: string[] = schools.length > 0 ? schools.map((school) => school.sc) : []
 
   if (manualSchool) {
@@ -49,23 +47,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async signIn({ user, account, profile, email, credentials }) {
       if (account?.provider === "google") {
-        // console.log('~~~~~~~~~~~~ SIGNING IN WITH GOOGLE ~~~~~~~~~~~~')
         let profileEmail = profile?.email
-        // profileEmail =  'jfox@slusd.us' // 'xbugarin@slusd.us' // !! Override for testing
         const profileId = user?.id
-        // console.log({ profileEmail })
-        // console.log({ profileId })
         if (profileId && profileEmail) {
           const result = await syncTeacherClasses(profileId, profileEmail)
-          // console.log({ user }, { account }, { profile }, { profileEmail }, { profileId }, { result })
           const allSchools = await getAllSchools(profileEmail)
-          // console.log({ result })
         }
 
-        // console.log(user)
-
-        // console.log({ profileEmail })
-        // console.log(profile?.email_verified && profile?.email?.endsWith("@slusd.us"))
         return profile?.email_verified && profile?.email?.endsWith("@slusd.us")
       }
 
@@ -78,8 +66,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         user: any
       }
     ) {
+      // Emulation override - Remove this in production or add proper controls
+      const emulatedUserId = null // 'cm73n2pf60004hz1rsv056ri8';
+      const emulatedUserEmail = null //'jalmendarez@slusd.us';
+      
+      // Use the emulated user's ID for database queries
+      const userId = emulatedUserId || user?.id;
+
       const dbUser = await prisma.user.findUnique({
-        where: { id: user.id },
+        where: { id: userId }, // Using emulated user ID
         include: {
           favorites: {
             include: {
@@ -88,62 +83,48 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           },
           userRole: {
             include: {
-              // role: true,
               QueryCategory: true,
             },
           },
-
           UserSchool: {
             include: {
               school: true,
             },
           },
           school: true,
-
           UserClass: {
             include: {
               class: true,
             },
           },
-        }, // Include roles if needed
+        },
       });
 
       let schools: string[] = []
-      // console.log(dbUser)
       if (dbUser) {
-
         const dbUserSchools = dbUser.UserSchool.map((userSchool) => userSchool.school)
         const dbUserClasses = dbUser.UserClass.map((userClass) => userClass.class)
-
 
         schools = await getSchools(
           { schools: dbUserSchools, manualSchool: dbUser.manualSchool, classes: dbUserClasses },
         );
-
-
       }
-      // console.log(dbUser)
-      // @ts-ignore
-      // auth.ts
 
-
+      // Override the session user with emulated user data
       session.user = {
         ...session.user,
         ...(dbUser as SessionUser),
-        // schools,
+        email: emulatedUserEmail, // Override email with emulated user's email
         primaryRole: dbUser?.primaryRole,
         primarySchool: dbUser?.primarySchool,
         activeSchool: dbUser?.activeSchool,
         psl: dbUser?.psl,
-
         favorites: dbUser?.favorites || [],
         roles: dbUser?.userRole.map((role) => role.role) || [],
         classes: dbUser?.UserClass.map((userClass) => userClass.class) || [],
-        // queryCategories: dbUser?.queryCategories || [],
       };
+
       return session;
     },
   },
 });
-
-

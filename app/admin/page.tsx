@@ -10,6 +10,7 @@ import UserAdminGrid from "../components/UserAdminGrid";
 import { Separator } from "@/components/ui/separator";
 import { auth } from "@/auth";
 import prisma from "@/lib/db";
+import { UserEmulator } from "../components/UserEmulator";
 
 type UserRole = {
   id: string;
@@ -109,6 +110,10 @@ export default async function AdminPage() {
       {/* <QueryBar queries={queries}/>
             <AddClassToUserButton /> */}
       {/* <pre>{JSON.stringify(queries, null, 2)}</pre> */}
+      <UserEmulator />
+      <div>
+        Current User Email: <pre>{JSON.stringify(session?.user)}</pre>
+      </div>
       <UserAdminGrid dataIn={users} />
       <div className="my-4">
       <Separator />

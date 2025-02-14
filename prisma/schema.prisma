@@ -22,6 +22,9 @@ model User {
   psl           Int?            @unique
   activeSchool  Int             @default(0)
   manualSchool  Int?  
+  emulatedUserId String?
+  emulatedUserEmail String?
+           
   favorites     Query[]         @relation("id")       
   Account       Account?
   Authenticator Authenticator[]
