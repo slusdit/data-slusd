@@ -197,6 +197,72 @@ model Chart {
   @@index([queryId], map: "Chart_queryId_fkey")
 }
 
+// Grade Distribution
+// Add this to your schema.prisma file
+
+model GradeDistribution {
+  id            String   @id @default(cuid())
+  source        String?
+  schoolYear    String   @db.VarChar(50)
+  sc            Int      // School Code
+  studentId     String   // Student ID
+  studentNumber String   // Student Number (SN)
+  grade         String?  // GR
+  period        String?  // PD
+  departmentCode String? // DEPT_CODE
+  divisionCode  String?  // DC
+  courseNumber  String?  // CN
+  courseTitle   String?  // CO
+  teacherNumber String     // TN
+  section       String?  // SE
+  term          String
+  mark          String
+  teacherName   String   // TE
+  specialEd     String?
+  ell           String?  // English Language Learner
+  ard           String?  // American Race/Ethnicity
+  
+  // Additional fields for tracking
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Consider adding an index for faster queries
+  @@index([sc, teacherNumber, term, mark])
+  @@index([schoolYear, sc])
+  @@index([studentId, term])
+}
+
+// Optional: Create a view or calculated table for aggregated grade distributions
+model TeacherGradeSummary {
+  id            String   @id @default(cuid())
+  sc            Int
+  tn            String
+  teacherName   String
+  department    String
+  period        String?
+  term          String
+  schoolYear    String
+  aCount        Int
+  bCount        Int
+  cCount        Int
+  dCount        Int
+  fCount        Int
+  otherCount    Int
+  totalGrades   Int
+  aPercent      Float
+  bPercent      Float
+  cPercent      Float
+  dPercent      Float
+  fPercent      Float
+  otherPercent  Float
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@index([sc, tn, term])
+  @@index([schoolYear, sc])
+}
+
 enum ROLE {
   USER
   ADMIN
