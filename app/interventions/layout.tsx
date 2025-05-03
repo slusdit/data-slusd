@@ -1,18 +1,22 @@
 import { auth } from "@/auth";
 import UnauthorizedButton from "../components/UnauthorizedButton";
 
-export default async function SchoolLayout({
+export default async function GradedistributionLayout({
     children,
-    params,
+
   }: Readonly<{
       children: React.ReactNode;
-      params: { sc: string };
+      
   }>) {
-    // const session = await serverAuth()
     const session = await auth()
-    const sc = session?.user?.activeSchool
+    const userRoles = session?.user?.roles
+    // console.log(userRoles)
 
-    if (sc?.toString() !== params.sc && sc != 0) {
+    if (!userRoles?.some(role => [
+        "INTERVENTIONS",
+        "SUPERADMIN",
+        "PRINCIPAL",
+    ].includes(role))) {
       return (
         <div>
           Unauthorized, please go back

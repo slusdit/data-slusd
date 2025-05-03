@@ -10,14 +10,16 @@ const TeacherGradesDialog = ({
   children,
   teacher,
   sc,
-  tn,
+    tn,
+  department,
   colField,
   params,
 }: {
   children: React.ReactNode;
   teacher: string;
   sc: number;
-  tn: number;
+        tn: number;
+  department: string;
   colField: string;
   params: any;
 }) => {
