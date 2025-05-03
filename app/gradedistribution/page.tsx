@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import GradeDistribution from "@/app/components/GradeDistribution";
 import prisma from "@/lib/db";
+import GradeDistribution2 from "../components/GradeDistribution2";
+import SyncGradeDistributionButton from "../components/SyncGradeDistributionButton";
 export default async function GradeDistributionPage() {
     const percentQueryId = process.env.QUERY_ASSESSMENT_GRADE_PERCENTAGE;
     const session = await auth();
@@ -32,8 +34,9 @@ export default async function GradeDistributionPage() {
                     <h1 className="text-3xl font-bold">{resultsPercent.name}</h1>
                     <p className="text-muted-foreground">{resultsPercent.description}</p>
                 </div>
-
-                <GradeDistribution data={data} />
+                <SyncGradeDistributionButton />
+                <GradeDistribution2 data={data} />
+                {/* <GradeDistribution data={data} /> */}
             </div>
         </div>
     );
