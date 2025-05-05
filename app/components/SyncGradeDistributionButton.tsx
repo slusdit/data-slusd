@@ -1,23 +1,46 @@
 'use client';
 
 import { Button } from "@/components/ui/button";
-import { syncGradeDistribution } from "@/lib/syncGradeDistribution";
-import { useEffect } from "react";
+import { aggregateTeacherGradeSummaries, syncGradeDistribution } from "@/lib/syncGradeDistribution";
+import { useEffect, useState } from "react";
 
 const SyncGradeDistributionButton = () => {
-    const handleSync = async () => {
+    const [isLoading, setIsLoading] = useState(false);
 
-        syncGradeDistribution();
-        console.log("Syncing grades...");
-
+    const handleFullSync = async () => {
+        setIsLoading(true);
+        try {
+            await syncGradeDistribution();  // Uncomment if you want to include this function
+            // await aggregateTeacherGradeSummaries();
+            console.log("Syncing grades...");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    const handleSummarySync = async () => {
+        setIsLoading(true);
+        try {
+            // await syncGradeDistribution();  // Uncomment if you want to include this function
+            await aggregateTeacherGradeSummaries({});
+            console.log("Syncing grades...");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
-        <div>
+        <div className="flex gap-2">
             <Button
-                onClick={handleSync}
+                onClick={handleFullSync}
+                disabled={isLoading}
             >
-                Sync Grades
+                {isLoading ? "Loading..." : "Sync Grades"}
+            </Button>
+            <Button
+                onClick={handleSummarySync}
+                disabled={isLoading}
+            >
+                {isLoading ? "Loading..." : "Sync Summary"}
             </Button>
         </div>
     );

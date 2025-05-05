@@ -39,7 +39,7 @@ export default async function RootLayout({
   const session = await auth()
 
   return (
-    <html lang="en" className="bg-card/90">
+    <html lang="en" className="bg-card/90 ">
       <body suppressHydrationWarning={true} className={`${fontSans.className} w-full bg-card/90 flex flex-col min-h-screen`}>
         <ThemeProvider
           attribute='class'
