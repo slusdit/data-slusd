@@ -61,7 +61,7 @@ export async function syncGradeDistribution() {
       period: record.PD.toString(),
       departmentCode: record.DEPT_CODE,
       divisionCode: record.DC,
-      courseNumber: record.CN,
+      courseNumber: record.CN.toString(),
       courseTitle: record.CO,
       teacherNumber: record.TN.toString(),
       section: record.SE.toString(),
@@ -88,7 +88,7 @@ export async function syncGradeDistribution() {
     console.log("Grade distribution sync completed successfully.");
     
     // Optionally, aggregate data for faster queries
-    await aggregateTeacherGradeSummaries();
+    // await aggregateTeacherGradeSummaries({});
     
   } catch (error) {
     console.error("Error syncing grade distribution:", error);
@@ -96,14 +96,68 @@ export async function syncGradeDistribution() {
   }
 }
 
-async function aggregateTeacherGradeSummaries() {
-//   try {
-    // Calculate grade summaries per teacher
+interface Props {
+    schoolYear?: string;
+    term?: string;
+    sc?: number;
+    teacherNumber?: string;
+    departmentCode?: string;
+    period?: string;
+    grade?: string;
+}
+import { Prisma } from '@prisma/client';
+
+export async function aggregateTeacherGradeSummaries(props: Props) {
+  try {
+    // Create an array to store conditions and parameters
+    const whereConditions = ["1=1"];
+    const queryParams: any[] = [];
+
+    // Add conditions based on props
+    if (props?.schoolYear) {
+      whereConditions.push(`schoolYear = ${props.schoolYear}`);
+      queryParams.push(props.schoolYear);
+    }
+
+    if (props?.grade) {
+      whereConditions.push(`grade = ${props.grade}`);
+      queryParams.push(props.schoolYear);
+    }
+
+    if (props?.term) {
+      whereConditions.push(`term = ${props.term}`);
+      queryParams.push(props.term);
+    }
+
+    if (props?.sc) {
+      whereConditions.push(`sc = ${props.sc}`);
+      queryParams.push(props.sc);
+    }
+
+    if (props?.teacherNumber) {
+      whereConditions.push(`teacherNumber = ${props.teacherNumber}`);
+      queryParams.push(props.teacherNumber);
+    }
+
+    if (props?.departmentCode) {
+      whereConditions.push(`departmentCode = ${props.departmentCode}`);
+      queryParams.push(props.departmentCode);
+    }
+
+    if (props?.period) {
+      whereConditions.push(`period = ${props.period}`);
+      queryParams.push(props.period);
+    }
+
+    // Construct the WHERE clause
+    const whereClause = Prisma.sql([`WHERE ${whereConditions.join(' AND ')}`, ...queryParams]);
+    console.log("Where clause:", whereClause);
     const summaries = await prisma.$queryRaw<Array<{
       sc: number;
       tn: number;
       teacherName: string | null;
       department: string | null;
+      courseTitle: string | null;
       period: string;
       term: string;
       schoolYear: string;
@@ -120,18 +174,20 @@ async function aggregateTeacherGradeSummaries() {
         teacherNumber as tn,
         teacherName,
         departmentCode as department,
+        courseTitle as course,
         period,
         term,
         schoolYear,
-        SUM(CASE WHEN mark = 'A' THEN 1 ELSE 0 END) as aCount,
-        SUM(CASE WHEN mark = 'B' THEN 1 ELSE 0 END) as bCount,
-        SUM(CASE WHEN mark = 'C' THEN 1 ELSE 0 END) as cCount,
-        SUM(CASE WHEN mark = 'D' THEN 1 ELSE 0 END) as dCount,
-        SUM(CASE WHEN mark = 'F' THEN 1 ELSE 0 END) as fCount,
+        SUM(CASE WHEN mark like 'A%' THEN 1 ELSE 0 END) as aCount,
+        SUM(CASE WHEN mark like 'B%' THEN 1 ELSE 0 END) as bCount,
+        SUM(CASE WHEN mark like 'C%' THEN 1 ELSE 0 END) as cCount,
+        SUM(CASE WHEN mark like 'D%' THEN 1 ELSE 0 END) as dCount,
+        SUM(CASE WHEN mark like 'F%' THEN 1 ELSE 0 END) as fCount,
         SUM(CASE WHEN mark NOT IN ('A', 'B', 'C', 'D', 'F') THEN 1 ELSE 0 END) as otherCount,
         COUNT(*) as totalGrades
       FROM GradeDistribution
-      GROUP BY sc, teacherNumber, teacherName, departmentCode, period, term, schoolYear
+      ${whereClause}
+      GROUP BY sc, teacherNumber, teacherName, departmentCode, courseTitle, period, term, schoolYear
       HAVING COUNT(*) > 0
     `;
     
@@ -144,6 +200,7 @@ async function aggregateTeacherGradeSummaries() {
       tn: summary.tn,
       teacherName: summary.teacherName || 'Unknown',
       department: summary.department || 'Unknown',
+      courseTitle: summary.course || 'Unknown',
       period: summary.period,
       term: summary.term,
       schoolYear: summary.schoolYear,
@@ -167,8 +224,7 @@ async function aggregateTeacherGradeSummaries() {
     });
     
     console.log("Teacher grade summaries aggregated successfully.");
-//   } catch (error) {
-//     console.error("Error aggregating teacher grade summaries:", error);
-//   }
+  } catch (error) {
+    console.error("Error aggregating teacher grade summaries:", error);
+  }
 }
-
