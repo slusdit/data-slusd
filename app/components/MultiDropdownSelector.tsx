@@ -90,8 +90,8 @@ const MultiDropdownSelector: React.FC<MultiDropdownSelectorProps> = ({
         {displayItems.map((item) => (
           <Badge 
             key={item.id} 
-            variant="secondary"
-            className="flex items-center gap-1 px-2 py-0.5"
+            
+            className="flex items-center gap-1 px-2 py-0.5 bg-primary/80 text-white"
           >
             {item.label}
             <X 

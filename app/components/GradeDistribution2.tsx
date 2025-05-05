@@ -72,6 +72,16 @@ const GradeDistribution2 = ({
   const [selectedSpecialEd, setSelectedSpecialEd] = useState<string[]>([]);
   const [selectedArd, setSelectedArd] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  
+  // New state variables for filtered dropdown options
+  const [filteredTeacherItems, setFilteredTeacherItems] = useState<{ id: string; label: string }[]>([]);
+  const [filteredDepartmentItems, setFilteredDepartmentItems] = useState<{ id: string; label: string }[]>([]);
+  const [filteredCourseTitleItems, setFilteredCourseTitleItems] = useState<{ id: string; label: string }[]>([]);
+  const [filteredTermItems, setFilteredTermItems] = useState<{ id: string; label: string }[]>([]);
+  const [filteredEllItems, setFilteredEllItems] = useState<{ id: string; label: string }[]>([]);
+  const [filteredSpecialEdItems, setFilteredSpecialEdItems] = useState<{ id: string; label: string }[]>([]);
+  const [filteredArdItems, setFilteredArdItems] = useState<{ id: string; label: string }[]>([]);
+  
   const { resolvedTheme } = useTheme();
   const chartRef = React.useRef(null);
 
@@ -130,6 +140,115 @@ const GradeDistribution2 = ({
     };
   }, []);
 
+  // Teacher, department, course, and term items derivation
+  const teacherItems = useMemo(() => {
+    if (!initialData || initialData.length === 0) return [];
+
+    // Get unique teachers sorted alphabetically
+    const uniqueTeachers = [...new Set(initialData.map(item => item.teacherName))]
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b));
+
+    return uniqueTeachers.map(teacher => ({
+      id: teacher,
+      label: teacher
+    }));
+  }, [initialData]);
+
+  const departmentItems = useMemo(() => {
+    if (!initialData || initialData.length === 0) return [];
+
+    // Get unique departments sorted alphabetically
+    const uniqueDepartments = [...new Set(initialData.map(item => item.department))]
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b));
+
+    return uniqueDepartments.map(department => ({
+      id: department,
+      label: department
+    }));
+  }, [initialData]);
+
+  const courseTitleItems = useMemo(() => {
+    if (!initialData || initialData.length === 0) return [];
+
+    const uniqueCourseTitles = [...new Set(initialData.map(item => item.courseTitle))]
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b));
+
+    return uniqueCourseTitles.map(courseTitle => ({
+      id: courseTitle,
+      label: courseTitle
+    }));
+  }, [initialData]);
+
+  const termItems = useMemo(() => {
+    if (!initialData || initialData.length === 0) return [];
+
+    const uniqueTerms = [...new Set(initialData.map(item => item.term))]
+      .filter(Boolean);
+
+    uniqueTerms.sort((a, b) => {
+      const aMatch = a.match(/(\D+)(\d+)/);
+      const bMatch = b.match(/(\D+)(\d+)/);
+
+      if (aMatch && bMatch && aMatch[1] === bMatch[1]) {
+        return parseInt(aMatch[2]) - parseInt(bMatch[2]);
+      }
+
+      return a.localeCompare(b);
+    });
+
+    return uniqueTerms.map(term => ({
+      id: term,
+      label: term
+    }));
+  }, [initialData]);
+
+  const ellItems = useMemo(() => {
+    const options = studentAttributes.ellOptions && studentAttributes.ellOptions.length > 0
+      ? studentAttributes.ellOptions
+      : ['Y', 'N'];
+
+    return options.map(value => ({
+      id: value,
+      label: value
+    }));
+  }, [studentAttributes.ellOptions]);
+
+  const specialEdItems = useMemo(() => {
+    const options = studentAttributes.specialEdOptions && studentAttributes.specialEdOptions.length > 0
+      ? studentAttributes.specialEdOptions
+      : ['Y', 'N'];
+
+    return options.map(value => ({
+      id: value,
+      label: value
+    }));
+  }, [studentAttributes.specialEdOptions]);
+
+  const ardItems = useMemo(() => {
+    const options = studentAttributes.ardOptions && studentAttributes.ardOptions.length > 0
+      ? studentAttributes.ardOptions
+      : ['Y', 'N'];
+
+    return options.map(value => ({
+      id: value,
+      label: value
+    }));
+  }, [studentAttributes.ardOptions]);
+
+  // Initialize filtered dropdown options with full lists
+  useEffect(() => {
+    setFilteredTeacherItems(teacherItems);
+    setFilteredDepartmentItems(departmentItems);
+    setFilteredCourseTitleItems(courseTitleItems);
+    setFilteredTermItems(termItems);
+    setFilteredEllItems(ellItems);
+    setFilteredSpecialEdItems(specialEdItems);
+    setFilteredArdItems(ardItems);
+  }, [teacherItems, departmentItems, courseTitleItems, termItems, ellItems, specialEdItems, ardItems]);
+
   // Update internal data when props change
   useEffect(() => {
     if (initialData) {
@@ -137,6 +256,150 @@ const GradeDistribution2 = ({
       setFilteredData(initialData);
     }
   }, [initialData]);
+
+  // Helper function to get filtered data excluding a specific filter
+  const getFilteredDataExcluding = useCallback((excludeFilter: string) => {
+    let result = initialData || [];
+
+    if (excludeFilter !== 'teachers' && selectedTeachers.length > 0) {
+      result = result.filter(item => selectedTeachers.includes(item.teacherName));
+    }
+
+    if (excludeFilter !== 'departments' && selectedDepartments.length > 0) {
+      result = result.filter(item => selectedDepartments.includes(item.department));
+    }
+
+    if (excludeFilter !== 'courses' && selectedCourseTitles.length > 0) {
+      result = result.filter(item => selectedCourseTitles.includes(item.courseTitle));
+    }
+
+    if (excludeFilter !== 'terms' && selectedTerms.length > 0) {
+      result = result.filter(item => selectedTerms.includes(item.term));
+    }
+
+    if (excludeFilter !== 'ell' && selectedEll.length > 0) {
+      result = result.filter(item => selectedEll.includes(item.ell));
+    }
+
+    if (excludeFilter !== 'specialEd' && selectedSpecialEd.length > 0) {
+      result = result.filter(item => selectedSpecialEd.includes(item.specialEd));
+    }
+
+    if (excludeFilter !== 'ard' && selectedArd.length > 0) {
+      result = result.filter(item => selectedArd.includes(item.ard));
+    }
+
+    return result;
+  }, [
+    initialData,
+    selectedTeachers,
+    selectedDepartments,
+    selectedCourseTitles,
+    selectedTerms,
+    selectedEll,
+    selectedSpecialEd,
+    selectedArd
+  ]);
+
+  // Helper function to update dropdown options based on filtered data
+  const updateDropdownOptions = useCallback(() => {
+    // Get filtered data excluding each respective filter
+    const teacherFilteredData = getFilteredDataExcluding('teachers');
+    const departmentFilteredData = getFilteredDataExcluding('departments');
+    const courseFilteredData = getFilteredDataExcluding('courses');
+    const termFilteredData = getFilteredDataExcluding('terms');
+    const ellFilteredData = getFilteredDataExcluding('ell');
+    const specialEdFilteredData = getFilteredDataExcluding('specialEd');
+    const ardFilteredData = getFilteredDataExcluding('ard');
+
+    // Helper to get unique items and ensure selected values remain in the list
+    const getUniqueItemsWithSelection = (
+      data: any[],
+      field: string,
+      selectedValues: string[],
+      allItems: { id: string; label: string }[]
+    ) => {
+      // Get unique values from filtered data
+      const uniqueValues = [...new Set(data.map(item => item[field]))].filter(Boolean);
+      
+      // Create set for faster lookups
+      const uniqueValuesSet = new Set(uniqueValues);
+      
+      // First prioritize keeping selected values that exist
+      const orderedItems = allItems.filter(item => 
+        selectedValues.includes(item.id) || uniqueValuesSet.has(item.id)
+      );
+      
+      return orderedItems;
+    };
+
+    // Update all dropdown options
+    setFilteredTeacherItems(getUniqueItemsWithSelection(
+      teacherFilteredData,
+      'teacherName',
+      selectedTeachers,
+      teacherItems
+    ));
+
+    setFilteredDepartmentItems(getUniqueItemsWithSelection(
+      departmentFilteredData,
+      'department',
+      selectedDepartments,
+      departmentItems
+    ));
+
+    setFilteredCourseTitleItems(getUniqueItemsWithSelection(
+      courseFilteredData,
+      'courseTitle',
+      selectedCourseTitles,
+      courseTitleItems
+    ));
+
+    setFilteredTermItems(getUniqueItemsWithSelection(
+      termFilteredData,
+      'term',
+      selectedTerms,
+      termItems
+    ));
+
+    // For Y/N fields
+    setFilteredEllItems(getUniqueItemsWithSelection(
+      ellFilteredData,
+      'ell',
+      selectedEll,
+      ellItems
+    ));
+
+    setFilteredSpecialEdItems(getUniqueItemsWithSelection(
+      specialEdFilteredData,
+      'specialEd',
+      selectedSpecialEd,
+      specialEdItems
+    ));
+
+    setFilteredArdItems(getUniqueItemsWithSelection(
+      ardFilteredData,
+      'ard',
+      selectedArd,
+      ardItems
+    ));
+  }, [
+    getFilteredDataExcluding,
+    selectedTeachers,
+    selectedDepartments,
+    selectedCourseTitles,
+    selectedTerms,
+    selectedEll,
+    selectedSpecialEd,
+    selectedArd,
+    teacherItems,
+    departmentItems,
+    courseTitleItems,
+    termItems,
+    ellItems,
+    specialEdItems,
+    ardItems
+  ]);
 
   // Update effect for handling filter changes
   useEffect(() => {
@@ -175,15 +438,12 @@ const GradeDistribution2 = ({
         result = result.filter(item => selectedArd.includes(item.ard));
       }
 
+      // Update filtered data
       setData(result);
-
-      // Update chart data when filters change
       setFilteredData(result);
 
-      // Apply filters to grid if it exists
-      // if (gridApi) {
-      //   gridApi.setRowData(result);
-      // }
+      // Update dropdown options based on current filters
+      updateDropdownOptions();
 
       // Run the aggregation function with the current filters
       aggregateTeacherGradeSummaries({
@@ -213,7 +473,8 @@ const GradeDistribution2 = ({
     initialData,
     gridApi,
     isLoading,
-    getTeacherNumberFromName
+    getTeacherNumberFromName,
+    updateDropdownOptions
   ]);
 
   const exportToCSV = useCallback(() => {
@@ -565,7 +826,7 @@ const GradeDistribution2 = ({
         max: 1,
       },
     }),
-    [filteredData, baseChartTheme, selectedDepartments, selectedTerms, selectedEll, selectedSpecialEd, selectedArd, CustomTooltip]
+    [filteredData, baseChartTheme, selectedDepartments, selectedCourseTitles, selectedTerms, selectedEll, selectedSpecialEd, selectedArd, CustomTooltip]
   );
 
   const onGridSizeChanged = useCallback((params) => {
@@ -585,6 +846,10 @@ const GradeDistribution2 = ({
 
       // Update the chart data when grid filters change
       setFilteredData(sortedData);
+
+      // Update dropdown options based on grid filters
+      // This ensures the dropdowns stay in sync with grid filters
+      updateDropdownOptions();
 
       // Create title sections for each filter type
       const departmentSection = selectedDepartments.length === 1
@@ -622,7 +887,7 @@ const GradeDistribution2 = ({
     } finally {
       setIsProcessing(false);
     }
-  }, [chartOptions, selectedDepartments, selectedTerms, selectedEll, selectedSpecialEd, selectedArd]);
+  }, [chartOptions, selectedDepartments, selectedTerms, selectedEll, selectedSpecialEd, selectedArd, updateDropdownOptions]);
 
   const onFilterChanged = useCallback(
     (params) => {
@@ -724,8 +989,10 @@ const GradeDistribution2 = ({
   const resetFilters = useCallback(() => {
     setIsProcessing(true);
     try {
+      // Reset selected values
       setSelectedTeachers([]);
       setSelectedDepartments([]);
+      setSelectedCourseTitles([]);
       setSelectedTerms([]);
       setSelectedEll([]);
       setSelectedSpecialEd([]);
@@ -733,6 +1000,15 @@ const GradeDistribution2 = ({
 
       // Reset filtered data to show all records
       setFilteredData(initialData || []);
+
+      // Reset filtered dropdown options to show all available options
+      setFilteredTeacherItems(teacherItems);
+      setFilteredDepartmentItems(departmentItems);
+      setFilteredCourseTitleItems(courseTitleItems);
+      setFilteredTermItems(termItems);
+      setFilteredEllItems(ellItems);
+      setFilteredSpecialEdItems(specialEdItems);
+      setFilteredArdItems(ardItems);
 
       // Run the aggregation with no filters when resetting
       aggregateTeacherGradeSummaries({});
@@ -751,116 +1027,7 @@ const GradeDistribution2 = ({
     } finally {
       setIsProcessing(false);
     }
-  }, [gridApi, initialData]);
-
-  const teacherItems = useMemo(() => {
-    if (!initialData || initialData.length === 0) return [];
-
-    // Get unique teachers sorted alphabetically
-    const uniqueTeachers = [...new Set(initialData.map(item => item.teacherName))]
-      .filter(Boolean)
-      .sort((a, b) => a.localeCompare(b));
-
-    return uniqueTeachers.map(teacher => ({
-      id: teacher,
-      label: teacher
-    }));
-  }, [initialData]);
-
-  const departmentItems = useMemo(() => {
-    if (!initialData || initialData.length === 0) return [];
-
-    // Get unique departments sorted alphabetically
-    const uniqueDepartments = [...new Set(initialData.map(item => item.department))]
-      .filter(Boolean)
-      .sort((a, b) => a.localeCompare(b));
-
-    return uniqueDepartments.map(department => ({
-      id: department,
-      label: department
-    }));
-  }, [initialData]);
-
-  const courseTitleItems = useMemo(() => {
-    if (!initialData || initialData.length === 0) return [];
-
-    const uniqueCourseTitles = [...new Set(initialData.map(item => item.courseTitle))]
-      .filter(Boolean)
-      .sort((a, b) => a.localeCompare(b));
-
-    return uniqueCourseTitles.map(courseTitle => ({
-      id: courseTitle,
-      label: courseTitle
-    }));
-  }, [initialData]);
-
-  const termItems = useMemo(() => {
-    if (!initialData || initialData.length === 0) return [];
-
-
-    const uniqueTerms = [...new Set(initialData.map(item => item.term))]
-      .filter(Boolean);
-
-
-    uniqueTerms.sort((a, b) => {
-
-      const aMatch = a.match(/(\D+)(\d+)/);
-      const bMatch = b.match(/(\D+)(\d+)/);
-
-      if (aMatch && bMatch && aMatch[1] === bMatch[1]) {
-        return parseInt(aMatch[2]) - parseInt(bMatch[2]);
-      }
-
-
-      return a.localeCompare(b);
-    });
-
-
-    return uniqueTerms.map(term => ({
-      id: term,
-      label: term
-    }));
-  }, [initialData]);
-
-
-  const ellItems = useMemo(() => {
-
-    const options = studentAttributes.ellOptions && studentAttributes.ellOptions.length > 0
-      ? studentAttributes.ellOptions
-      : ['Y', 'N'];
-
-
-    return options.map(value => ({
-      id: value,
-      label: value
-    }));
-  }, [studentAttributes.ellOptions]);
-
-  const specialEdItems = useMemo(() => {
-
-    const options = studentAttributes.specialEdOptions && studentAttributes.specialEdOptions.length > 0
-      ? studentAttributes.specialEdOptions
-      : ['Y', 'N'];
-
-
-    return options.map(value => ({
-      id: value,
-      label: value
-    }));
-  }, [studentAttributes.specialEdOptions]);
-
-  const ardItems = useMemo(() => {
-
-    const options = studentAttributes.ardOptions && studentAttributes.ardOptions.length > 0
-      ? studentAttributes.ardOptions
-      : ['Y', 'N'];
-
-
-    return options.map(value => ({
-      id: value,
-      label: value
-    }));
-  }, [studentAttributes.ardOptions]);
+  }, [gridApi, initialData, teacherItems, departmentItems, courseTitleItems, termItems, ellItems, specialEdItems, ardItems]);
 
   // Determine if we should show loading state
   const showLoading = isLoading || isProcessing;
@@ -901,7 +1068,7 @@ const GradeDistribution2 = ({
             <>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <MultiDropdownSelector
-                  items={teacherItems}
+                  items={filteredTeacherItems}
                   values={selectedTeachers}
                   onChange={setSelectedTeachers}
                   placeholder="Select teachers"
@@ -912,7 +1079,7 @@ const GradeDistribution2 = ({
                 />
 
                 <MultiDropdownSelector
-                  items={departmentItems}
+                  items={filteredDepartmentItems}
                   values={selectedDepartments}
                   onChange={setSelectedDepartments}
                   placeholder="Select departments"
@@ -922,7 +1089,7 @@ const GradeDistribution2 = ({
                   maxDisplayItems={1}
                 />
                 <MultiDropdownSelector
-                  items={courseTitleItems}
+                  items={filteredCourseTitleItems}
                   values={selectedCourseTitles}
                   onChange={setSelectedCourseTitles}
                   placeholder="Select Courses"
@@ -933,7 +1100,7 @@ const GradeDistribution2 = ({
                 />
 
                 <MultiDropdownSelector
-                  items={termItems}
+                  items={filteredTermItems}
                   values={selectedTerms}
                   onChange={setSelectedTerms}
                   placeholder="Select terms"
@@ -946,152 +1113,41 @@ const GradeDistribution2 = ({
               <Separator className="my-4" />
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <MultiDropdownSelector
-                  items={ellItems}
+                  items={filteredEllItems}
                   values={selectedEll}
                   onChange={setSelectedEll}
                   placeholder="Select ELL status"
                   label="ELL Status"
                   width="w-full"
-                  disabled={showLoading || ellItems.length === 0}
+                  disabled={showLoading || filteredEllItems.length === 0}
                   maxDisplayItems={1}
                 />
 
                 <MultiDropdownSelector
-                  items={specialEdItems}
+                  items={filteredSpecialEdItems}
                   values={selectedSpecialEd}
                   onChange={setSelectedSpecialEd}
                   placeholder="Select Special Ed status"
                   label="Special Ed Status"
                   width="w-full"
-                  disabled={showLoading || specialEdItems.length === 0}
+                  disabled={showLoading || filteredSpecialEdItems.length === 0}
                   maxDisplayItems={1}
                 />
 
                 <MultiDropdownSelector
-                  items={ardItems}
+                  items={filteredArdItems}
                   values={selectedArd}
                   onChange={setSelectedArd}
                   placeholder="Select ARD status"
                   label="ARD Status"
                   width="w-full"
-                  disabled={showLoading || ardItems.length === 0}
+                  disabled={showLoading || filteredArdItems.length === 0}
                   maxDisplayItems={1}
                 />
               </div>
 
               <div className="mt-4 flex flex-wrap items-center gap-2">
-                {selectedTeachers.length > 0 && (
-                  <div className="flex items-center">
-                    <span className="text-sm mr-1">Teachers:</span>
-                    <div className="flex flex-wrap gap-1">
-                      {selectedTeachers.map(teacherId => {
-                        const teacher = teacherItems.find(t => t.id === teacherId);
-                        return (
-                          <Badge key={teacherId} variant="outline" className="text-xs py-0">
-                            {teacher?.label || teacherId}
-                          </Badge>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {selectedDepartments.length > 0 && (
-                  <div className="flex items-center">
-                    <span className="text-sm mr-1">Departments:</span>
-                    <div className="flex flex-wrap gap-1">
-                      {selectedDepartments.map(deptId => {
-                        const dept = departmentItems.find(d => d.id === deptId);
-                        return (
-                          <Badge key={deptId} variant="outline" className="text-xs py-0">
-                            {dept?.label || deptId}
-                          </Badge>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {selectedCourseTitles.length > 0 && (
-                  <div className="flex items-center">
-
-                    <span className="text-sm mr-1">Courses:</span>
-                    <div className="flex flex-wrap gap-1">
-                      {selectedCourseTitles.map(courseId => {
-                        const course = courseTitleItems.find(c => c.id === courseId);
-                        return (
-                          <Badge key={courseId} variant="outline" className="text-xs py-0">
-                            {course?.label || courseId}
-                          </Badge>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {selectedTerms.length > 0 && (
-                  <div className="flex items-center">
-                    <span className="text-sm mr-1">Terms:</span>
-                    <div className="flex flex-wrap gap-1">
-                      {selectedTerms.map(termId => {
-                        const term = termItems.find(t => t.id === termId);
-                        return (
-                          <Badge key={termId} variant="outline" className="text-xs py-0">
-                            {term?.label || termId}
-                          </Badge>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {selectedEll.length > 0 && (
-                  <div className="flex items-center">
-                    <span className="text-sm mr-1">ELL:</span>
-                    <div className="flex flex-wrap gap-1">
-                      {selectedEll.map(ellId => {
-                        const ell = ellItems.find(e => e.id === ellId);
-                        return (
-                          <Badge key={ellId} variant="outline" className="text-xs py-0">
-                            {ell?.label || ellId}
-                          </Badge>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {selectedSpecialEd.length > 0 && (
-                  <div className="flex items-center">
-                    <span className="text-sm mr-1">Special Ed:</span>
-                    <div className="flex flex-wrap gap-1">
-                      {selectedSpecialEd.map(specialEdId => {
-                        const specialEd = specialEdItems.find(s => s.id === specialEdId);
-                        return (
-                          <Badge key={specialEdId} variant="outline" className="text-xs py-0">
-                            {specialEd?.label || specialEdId}
-                          </Badge>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {selectedArd.length > 0 && (
-                  <div className="flex items-center">
-                    <span className="text-sm mr-1">ARD:</span>
-                    <div className="flex flex-wrap gap-1">
-                      {selectedArd.map(ardId => {
-                        const ard = ardItems.find(a => a.id === ardId);
-                        return (
-                          <Badge key={ardId} variant="outline" className="text-xs py-0">
-                            {ard?.label || ardId}
-                          </Badge>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
+                
 
                 <div className="ml-auto">
                   <Button
@@ -1118,6 +1174,118 @@ const GradeDistribution2 = ({
       <Card>
         <CardHeader>
           <CardTitle>Grade Distribution Chart</CardTitle>
+          {selectedTeachers.length > 0 && (
+                  <div className="flex items-center">
+                    <span className="text-sm mr-1">Teachers:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedTeachers.map(teacherId => {
+                        const teacher = teacherItems.find(t => t.id === teacherId);
+                        return (
+                          <Badge key={teacherId} className="text-xs py-0 bg-primary/80 text-white">
+                            {teacher?.label || teacherId}
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {selectedDepartments.length > 0 && (
+                  <div className="flex items-center">
+                    <span className="text-sm mr-1">Departments:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedDepartments.map(deptId => {
+                        const dept = departmentItems.find(d => d.id === deptId);
+                        return (
+                          <Badge key={deptId} className="text-xs py-0 bg-primary/80 text-white">
+                            {dept?.label || deptId}
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {selectedCourseTitles.length > 0 && (
+                  <div className="flex items-center">
+
+                    <span className="text-sm mr-1">Courses:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedCourseTitles.map(courseId => {
+                        const course = courseTitleItems.find(c => c.id === courseId);
+                        return (
+                          <Badge key={courseId} className="text-xs py-0 bg-primary/80 text-white">
+                            {course?.label || courseId}
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {selectedTerms.length > 0 && (
+                  <div className="flex items-center">
+                    <span className="text-sm mr-1">Terms:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedTerms.map(termId => {
+                        const term = termItems.find(t => t.id === termId);
+                        return (
+                          <Badge key={termId} className="text-xs py-0 bg-primary/80 text-white">
+                            {term?.label || termId}
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {selectedEll.length > 0 && (
+                  <div className="flex items-center">
+                    <span className="text-sm mr-1">ELL:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedEll.map(ellId => {
+                        const ell = ellItems.find(e => e.id === ellId);
+                        return (
+                          <Badge key={ellId} className="text-xs py-0 bg-primary/80 text-white">
+                            {ell?.label || ellId}
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {selectedSpecialEd.length > 0 && (
+                  <div className="flex items-center">
+                    <span className="text-sm mr-1">Special Ed:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedSpecialEd.map(specialEdId => {
+                        const specialEd = specialEdItems.find(s => s.id === specialEdId);
+                        return (
+                          <Badge key={specialEdId} className="text-xs py-0 bg-primary/80 text-white">
+                            {specialEd?.label || specialEdId}
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {selectedArd.length > 0 && (
+                  <div className="flex items-center">
+                    <span className="text-sm mr-1">ARD:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedArd.map(ardId => {
+                        const ard = ardItems.find(a => a.id === ardId);
+                        return (
+                          <Badge key={ardId}  className="text-xs py-0 bg-primary/80 text-white">
+                            {ard?.label || ardId}
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
         </CardHeader>
         <CardContent>
           {isLoading ? (
