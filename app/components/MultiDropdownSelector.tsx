@@ -1,5 +1,5 @@
 "use client";
-import * as React from "react";
+
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -16,11 +16,12 @@ import {
 } from "@/components/ui/popover";
 import { Check, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { FC, ReactNode, MouseEvent, useMemo, useState } from "react";
 
 interface DropdownItem {
   id: string;
   label: string;
-  icon?: React.ReactNode;
+  icon?: ReactNode;
 }
 
 interface MultiDropdownSelectorProps {
@@ -38,7 +39,7 @@ interface MultiDropdownSelectorProps {
   maxDisplayItems?: number;
 }
 
-const MultiDropdownSelector: React.FC<MultiDropdownSelectorProps> = ({
+const MultiDropdownSelector: FC<MultiDropdownSelectorProps> = ({
   items,
   values = [],
   onChange,
@@ -52,9 +53,9 @@ const MultiDropdownSelector: React.FC<MultiDropdownSelectorProps> = ({
   align = "start",
   maxDisplayItems = 3,
 }) => {
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useState(false);
   
-  const selectedItems = React.useMemo(() => {
+  const selectedItems = useMemo(() => {
     return items.filter((item) => values.includes(item.id));
   }, [items, values]);
 
@@ -67,12 +68,12 @@ const MultiDropdownSelector: React.FC<MultiDropdownSelectorProps> = ({
     }
   };
 
-  const handleClearAll = (e: React.MouseEvent) => {
+  const handleClearAll = (e: MouseEvent) => {
     e.stopPropagation();
     onChange([]);
   };
 
-  const handleRemoveItem = (itemId: string, e: React.MouseEvent) => {
+  const handleRemoveItem = (itemId: string, e: MouseEvent) => {
     e.stopPropagation();
     onChange(values.filter((id) => id !== itemId));
   };

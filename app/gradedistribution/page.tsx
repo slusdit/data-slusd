@@ -24,11 +24,13 @@ export default async function GradeDistributionPage() {
     const ellOptions = [...new Set(rawData.map(item => item.ell).filter(Boolean))];
     console.log("Unique ELL options:", ellOptions);
     const specialEdOptions = [...new Set(rawData.map(item => item.specialEd).filter(Boolean))];
+    console.log("Unique Special Ed options:", specialEdOptions);
     const ardOptions = [...new Set(rawData.map(item => item.ard).filter(Boolean))];
-
+    console.log("Unique ARD options:", ardOptions);
 
     const data = await prisma.teacherGradeSummary.findMany({});
     console.log("Data fetched from the database:", data[0]);
+    
 
     return (
         <div className="container mx-auto p-4">
