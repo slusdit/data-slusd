@@ -31,7 +31,19 @@ export default async function GradeDistributionPage() {
     const data = await prisma.teacherGradeSummary.findMany({});
     console.log("Data fetched from the database:", data[0]);
     
+    if (!session) {    
+        return (
+            <div className="container mx-auto p-4">
+                <h1 className="text-3xl font-bold">Grade Distribution</h1>
+                <p className="text-muted-foreground">Grade Distribution Description</p>
+                <p className="text-red-500">You must be logged in to view this page.</p>
+            </div>
+        );
+    }
 
+    //     session.user.schoolSc,
+    
+    
     return (
         <div className="container mx-auto p-4">
             <Button variant="link">
@@ -53,6 +65,7 @@ export default async function GradeDistributionPage() {
                         specialEdOptions,
                         ardOptions
                     }}
+                    session={session}
                 />
             </div>
         </div>
