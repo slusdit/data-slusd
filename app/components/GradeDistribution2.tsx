@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useMemo, useState, useEffect } from "react";
+import { useCallback, useMemo, useState, useEffect, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { AgCharts } from "ag-charts-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -72,7 +72,7 @@ const GradeDistribution2 = ({
   const [selectedSpecialEd, setSelectedSpecialEd] = useState<string[]>([]);
   const [selectedArd, setSelectedArd] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
-  
+
   // New state variables for filtered dropdown options
   const [filteredTeacherItems, setFilteredTeacherItems] = useState<{ id: string; label: string }[]>([]);
   const [filteredDepartmentItems, setFilteredDepartmentItems] = useState<{ id: string; label: string }[]>([]);
@@ -81,9 +81,9 @@ const GradeDistribution2 = ({
   const [filteredEllItems, setFilteredEllItems] = useState<{ id: string; label: string }[]>([]);
   const [filteredSpecialEdItems, setFilteredSpecialEdItems] = useState<{ id: string; label: string }[]>([]);
   const [filteredArdItems, setFilteredArdItems] = useState<{ id: string; label: string }[]>([]);
-  
+
   const { resolvedTheme } = useTheme();
-  const chartRef = React.useRef(null);
+  const chartRef = useRef(null);
 
   const baseChartTheme = useMemo(
     () => (resolvedTheme === "dark" ? "ag-sheets-dark" : "ag-sheets"),
@@ -182,6 +182,8 @@ const GradeDistribution2 = ({
     }));
   }, [initialData]);
 
+
+
   const termItems = useMemo(() => {
     if (!initialData || initialData.length === 0) return [];
 
@@ -247,10 +249,19 @@ const GradeDistribution2 = ({
     setFilteredEllItems(ellItems);
     setFilteredSpecialEdItems(specialEdItems);
     setFilteredArdItems(ardItems);
-  }, [teacherItems, departmentItems, courseTitleItems, termItems, ellItems, specialEdItems, ardItems]);
+  }, [
+    teacherItems,
+    departmentItems,
+    courseTitleItems,
+    termItems,
+    ellItems,
+    specialEdItems,
+    ardItems
+  ]);
 
   // Update internal data when props change
   useEffect(() => {
+    if (!initialData || initialData.length === 0) return;
     if (initialData) {
       setData(initialData);
       setFilteredData(initialData);
@@ -321,15 +332,15 @@ const GradeDistribution2 = ({
     ) => {
       // Get unique values from filtered data
       const uniqueValues = [...new Set(data.map(item => item[field]))].filter(Boolean);
-      
+
       // Create set for faster lookups
       const uniqueValuesSet = new Set(uniqueValues);
-      
+
       // First prioritize keeping selected values that exist
-      const orderedItems = allItems.filter(item => 
+      const orderedItems = allItems.filter(item =>
         selectedValues.includes(item.id) || uniqueValuesSet.has(item.id)
       );
-      
+
       return orderedItems;
     };
 
@@ -361,28 +372,28 @@ const GradeDistribution2 = ({
       selectedTerms,
       termItems
     ));
-
+    console.log(selectedEll, ellItems, ellFilteredData, 'ellItems')
     // For Y/N fields
-    setFilteredEllItems(getUniqueItemsWithSelection(
-      ellFilteredData,
-      'ell',
-      selectedEll,
-      ellItems
-    ));
+    // setFilteredEllItems(getUniqueItemsWithSelection(
+    //   ellFilteredData,
+    //   'ell',
+    //   selectedEll,
+    //   ellItems
+    // ));
 
-    setFilteredSpecialEdItems(getUniqueItemsWithSelection(
-      specialEdFilteredData,
-      'specialEd',
-      selectedSpecialEd,
-      specialEdItems
-    ));
+    // setFilteredSpecialEdItems(getUniqueItemsWithSelection(
+    //   specialEdFilteredData,
+    //   'specialEd',
+    //   selectedSpecialEd,
+    //   specialEdItems
+    // ));
 
-    setFilteredArdItems(getUniqueItemsWithSelection(
-      ardFilteredData,
-      'ard',
-      selectedArd,
-      ardItems
-    ));
+    // setFilteredArdItems(getUniqueItemsWithSelection(
+    //   ardFilteredData,
+    //   'ard',
+    //   selectedArd,
+    //   ardItems
+    // ));
   }, [
     getFilteredDataExcluding,
     selectedTeachers,
@@ -396,9 +407,9 @@ const GradeDistribution2 = ({
     departmentItems,
     courseTitleItems,
     termItems,
-    ellItems,
-    specialEdItems,
-    ardItems
+    // ellItems,
+    // specialEdItems,
+    // ardItems
   ]);
 
   // Update effect for handling filter changes
@@ -713,8 +724,7 @@ const GradeDistribution2 = ({
       title: {
         text: `Grade Distribution by Teacher${selectedDepartments.length === 1 ? ` - ${selectedDepartments[0]}` :
           selectedDepartments.length > 1 ? ` - Multiple Departments` : ''
-          }${
-            selectedCourseTitles.length === 1 ? ` for ${selectedCourseTitles[0]}` :
+          }${selectedCourseTitles.length === 1 ? ` for ${selectedCourseTitles[0]}` :
             selectedCourseTitles.length > 1 ? ` for Multiple Courses` : ''
           }${selectedTerms.length === 1 ? ` (${selectedTerms[0]})` :
             selectedTerms.length > 1 ? ` (Multiple Terms)` : ''
@@ -1138,8 +1148,8 @@ const GradeDistribution2 = ({
                   items={filteredArdItems}
                   values={selectedArd}
                   onChange={setSelectedArd}
-                  placeholder="Select ARD status"
-                  label="ARD Status"
+                  placeholder="Select Race / Ethnicity"
+                  label="Race / Ethnicity"
                   width="w-full"
                   disabled={showLoading || filteredArdItems.length === 0}
                   maxDisplayItems={1}
@@ -1147,7 +1157,7 @@ const GradeDistribution2 = ({
               </div>
 
               <div className="mt-4 flex flex-wrap items-center gap-2">
-                
+
 
                 <div className="ml-auto">
                   <Button
@@ -1175,117 +1185,117 @@ const GradeDistribution2 = ({
         <CardHeader>
           <CardTitle>Grade Distribution Chart</CardTitle>
           {selectedTeachers.length > 0 && (
-                  <div className="flex items-center">
-                    <span className="text-sm mr-1">Teachers:</span>
-                    <div className="flex flex-wrap gap-1">
-                      {selectedTeachers.map(teacherId => {
-                        const teacher = teacherItems.find(t => t.id === teacherId);
-                        return (
-                          <Badge key={teacherId} className="text-xs py-0 bg-primary/80 text-white">
-                            {teacher?.label || teacherId}
-                          </Badge>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
+            <div className="flex items-center">
+              <span className="text-sm mr-1">Teachers:</span>
+              <div className="flex flex-wrap gap-1">
+                {selectedTeachers.map(teacherId => {
+                  const teacher = teacherItems.find(t => t.id === teacherId);
+                  return (
+                    <Badge key={teacherId} className="text-xs py-0 bg-primary/80 text-white">
+                      {teacher?.label || teacherId}
+                    </Badge>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
-                {selectedDepartments.length > 0 && (
-                  <div className="flex items-center">
-                    <span className="text-sm mr-1">Departments:</span>
-                    <div className="flex flex-wrap gap-1">
-                      {selectedDepartments.map(deptId => {
-                        const dept = departmentItems.find(d => d.id === deptId);
-                        return (
-                          <Badge key={deptId} className="text-xs py-0 bg-primary/80 text-white">
-                            {dept?.label || deptId}
-                          </Badge>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
+          {selectedDepartments.length > 0 && (
+            <div className="flex items-center">
+              <span className="text-sm mr-1">Departments:</span>
+              <div className="flex flex-wrap gap-1">
+                {selectedDepartments.map(deptId => {
+                  const dept = departmentItems.find(d => d.id === deptId);
+                  return (
+                    <Badge key={deptId} className="text-xs py-0 bg-primary/80 text-white">
+                      {dept?.label || deptId}
+                    </Badge>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
-                {selectedCourseTitles.length > 0 && (
-                  <div className="flex items-center">
+          {selectedCourseTitles.length > 0 && (
+            <div className="flex items-center">
 
-                    <span className="text-sm mr-1">Courses:</span>
-                    <div className="flex flex-wrap gap-1">
-                      {selectedCourseTitles.map(courseId => {
-                        const course = courseTitleItems.find(c => c.id === courseId);
-                        return (
-                          <Badge key={courseId} className="text-xs py-0 bg-primary/80 text-white">
-                            {course?.label || courseId}
-                          </Badge>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
+              <span className="text-sm mr-1">Courses:</span>
+              <div className="flex flex-wrap gap-1">
+                {selectedCourseTitles.map(courseId => {
+                  const course = courseTitleItems.find(c => c.id === courseId);
+                  return (
+                    <Badge key={courseId} className="text-xs py-0 bg-primary/80 text-white">
+                      {course?.label || courseId}
+                    </Badge>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
-                {selectedTerms.length > 0 && (
-                  <div className="flex items-center">
-                    <span className="text-sm mr-1">Terms:</span>
-                    <div className="flex flex-wrap gap-1">
-                      {selectedTerms.map(termId => {
-                        const term = termItems.find(t => t.id === termId);
-                        return (
-                          <Badge key={termId} className="text-xs py-0 bg-primary/80 text-white">
-                            {term?.label || termId}
-                          </Badge>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
+          {selectedTerms.length > 0 && (
+            <div className="flex items-center">
+              <span className="text-sm mr-1">Terms:</span>
+              <div className="flex flex-wrap gap-1">
+                {selectedTerms.map(termId => {
+                  const term = termItems.find(t => t.id === termId);
+                  return (
+                    <Badge key={termId} className="text-xs py-0 bg-primary/80 text-white">
+                      {term?.label || termId}
+                    </Badge>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
-                {selectedEll.length > 0 && (
-                  <div className="flex items-center">
-                    <span className="text-sm mr-1">ELL:</span>
-                    <div className="flex flex-wrap gap-1">
-                      {selectedEll.map(ellId => {
-                        const ell = ellItems.find(e => e.id === ellId);
-                        return (
-                          <Badge key={ellId} className="text-xs py-0 bg-primary/80 text-white">
-                            {ell?.label || ellId}
-                          </Badge>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
+          {selectedEll.length > 0 && (
+            <div className="flex items-center">
+              <span className="text-sm mr-1">ELL:</span>
+              <div className="flex flex-wrap gap-1">
+                {selectedEll.map(ellId => {
+                  const ell = ellItems.find(e => e.id === ellId);
+                  return (
+                    <Badge key={ellId} className="text-xs py-0 bg-primary/80 text-white">
+                      {ell?.label || ellId}
+                    </Badge>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
-                {selectedSpecialEd.length > 0 && (
-                  <div className="flex items-center">
-                    <span className="text-sm mr-1">Special Ed:</span>
-                    <div className="flex flex-wrap gap-1">
-                      {selectedSpecialEd.map(specialEdId => {
-                        const specialEd = specialEdItems.find(s => s.id === specialEdId);
-                        return (
-                          <Badge key={specialEdId} className="text-xs py-0 bg-primary/80 text-white">
-                            {specialEd?.label || specialEdId}
-                          </Badge>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
+          {selectedSpecialEd.length > 0 && (
+            <div className="flex items-center">
+              <span className="text-sm mr-1">Special Ed:</span>
+              <div className="flex flex-wrap gap-1">
+                {selectedSpecialEd.map(specialEdId => {
+                  const specialEd = specialEdItems.find(s => s.id === specialEdId);
+                  return (
+                    <Badge key={specialEdId} className="text-xs py-0 bg-primary/80 text-white">
+                      {specialEd?.label || specialEdId}
+                    </Badge>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
-                {selectedArd.length > 0 && (
-                  <div className="flex items-center">
-                    <span className="text-sm mr-1">ARD:</span>
-                    <div className="flex flex-wrap gap-1">
-                      {selectedArd.map(ardId => {
-                        const ard = ardItems.find(a => a.id === ardId);
-                        return (
-                          <Badge key={ardId}  className="text-xs py-0 bg-primary/80 text-white">
-                            {ard?.label || ardId}
-                          </Badge>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
+          {selectedArd.length > 0 && (
+            <div className="flex items-center">
+              <span className="text-sm mr-1">ARD:</span>
+              <div className="flex flex-wrap gap-1">
+                {selectedArd.map(ardId => {
+                  const ard = ardItems.find(a => a.id === ardId);
+                  return (
+                    <Badge key={ardId} className="text-xs py-0 bg-primary/80 text-white">
+                      {ard?.label || ardId}
+                    </Badge>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -1294,10 +1304,10 @@ const GradeDistribution2 = ({
             </div>
           ) : (
             <div className="h-[500px] relative">
-              <AgCharts 
-              options={chartOptions} 
-              ref={chartRef} 
-              style={{ width: '100%', height: '100%' }}
+              <AgCharts
+                options={chartOptions}
+                ref={chartRef}
+                style={{ width: '100%', height: '100%' }}
               />
             </div>
           )}

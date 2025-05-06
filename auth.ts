@@ -122,9 +122,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
 
       }
-      // console.log(dbUser)
-      // @ts-ignore
-      // auth.ts
+
 
 
       session.user = {
