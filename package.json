@@ -41,7 +41,7 @@
     "lucide-react": "^0.396.0",
     "mssql": "^11.0.0",
     "next": "^15.3.1",
-    "next-auth": "^5.0.0-beta.19",
+    "next-auth": "^5.0.0-beta.27",
     "next-themes": "^0.3.0",
     "ngrok": "5.0.0-beta.2",
     "react": "^18",

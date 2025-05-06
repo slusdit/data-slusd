@@ -168,7 +168,7 @@ ORDER BY CN, PD, TERM;`
   }, [open, sc, tn, colField]);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen} className="w-full h-full">
+    <Dialog open={open} onOpenChange={setOpen} className="w-full h-full" title>
       <DialogTrigger className="w-full h-full text-right pr-2 underline hover:text-primary">
         {children}
       </DialogTrigger>
