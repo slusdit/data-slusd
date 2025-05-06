@@ -2,7 +2,8 @@ import { AreaChartComponent } from "@/app/components/charts/AreaChart";
 import dynamic from "next/dynamic";
 import { ComponentType, Suspense } from "react";
 
-export default async function DynamicTest({ params }: { params: { label: string } }) {
+export default async function DynamicTest(props: { params: Promise<{ label: string }> }) {
+  const params = await props.params;
   const { label } = params;
   // console.log(label);
 
