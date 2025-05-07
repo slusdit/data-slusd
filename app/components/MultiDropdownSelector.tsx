@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/popover";
 import { Check, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { FC, ReactNode, MouseEvent, useMemo, useState } from "react";
+import { FC, ReactNode, MouseEvent, useMemo, useState, useEffect } from "react";
 
 interface DropdownItem {
   id: string;
@@ -37,6 +37,8 @@ interface MultiDropdownSelectorProps {
   side?: "top" | "right" | "bottom" | "left";
   align?: "start" | "center" | "end";
   maxDisplayItems?: number;
+  singleSelect?: boolean;
+  itemOrder?: string[];
 }
 
 const MultiDropdownSelector: FC<MultiDropdownSelectorProps> = ({
@@ -52,19 +54,61 @@ const MultiDropdownSelector: FC<MultiDropdownSelectorProps> = ({
   side = "bottom",
   align = "start",
   maxDisplayItems = 3,
+  singleSelect = false,
+  itemOrder,
 }) => {
   const [open, setOpen] = useState(false);
+  const [initialized, setInitialized] = useState(false);
+  
+  const findMostRecentItem = useMemo(() => {
+
+    if (!itemOrder || itemOrder.length === 0 || items.length === 0) return null;
+
+    const availableItemIds = items.map(item => item.id);
+  
+    for (let i = itemOrder.length - 1; i >= 0; i--) {
+      if (availableItemIds.includes(itemOrder[i])) {
+        // console.log("Found match:", itemOrder[i])
+        return itemOrder[i];
+      }
+    }
+    
+    return null;
+  }, [items, itemOrder]);
+  
+  useEffect(() => {
+    if (itemOrder && itemOrder.length > 0) {
+      if (!initialized && values.length === 0 && findMostRecentItem && !disabled) {
+        onChange([findMostRecentItem]);
+        setInitialized(true);
+      } else if (!initialized) {
+        setInitialized(true);
+      }
+    }
+  }, [values, findMostRecentItem, onChange, singleSelect, disabled, initialized, itemOrder]);
   
   const selectedItems = useMemo(() => {
     return items.filter((item) => values.includes(item.id));
   }, [items, values]);
 
   const handleSelect = (itemId: string) => {
-
-    if (values.includes(itemId)) {
-      onChange(values.filter((id) => id !== itemId));
+    // If singleSelect is true, replace the current selection with the new item
+    // unless the item is already selected, in which case deselect it
+    if (singleSelect) {
+      if (values.includes(itemId)) {
+        onChange([]);
+      } else {
+        onChange([itemId]);
+        // Close the dropdown after selecting in single-select mode
+        setOpen(false);
+      }
     } else {
-      onChange([...values, itemId]);
+      // Original multi-select behavior
+      if (values.includes(itemId)) {
+        onChange(values.filter((id) => id !== itemId));
+      } else {
+        onChange([...values, itemId]);
+      }
     }
   };
 
@@ -91,7 +135,6 @@ const MultiDropdownSelector: FC<MultiDropdownSelectorProps> = ({
         {displayItems.map((item) => (
           <Badge 
             key={item.id} 
-            
             className="flex items-center gap-1 px-2 py-0.5 bg-primary/80 text-white"
           >
             {item.label}
