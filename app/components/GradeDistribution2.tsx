@@ -1077,6 +1077,21 @@ const GradeDistribution2 = ({
           ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <MultiDropdownSelector
+              items={filteredTermItems}
+              values={selectedTerms}
+              onChange={setSelectedTerms}
+              placeholder="Select terms"
+              label="Terms"
+              width="w-full"
+              disabled={showLoading}
+              maxDisplayItems={1}
+              singleSelect={true}
+              itemOrder={["PRG1", "GRD1", "PRG2", "GRD2", "SEM1", "PRG3", "GRD3", "PRG4", "GRD4", "SEM2"]}
+            />
+            </div>
+                <Separator className="my-4" />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <MultiDropdownSelector
                   items={filteredTeacherItems}
                   values={selectedTeachers}
@@ -1109,16 +1124,6 @@ const GradeDistribution2 = ({
                   maxDisplayItems={1}
                 />
 
-                <MultiDropdownSelector
-                  items={filteredTermItems}
-                  values={selectedTerms}
-                  onChange={setSelectedTerms}
-                  placeholder="Select terms"
-                  label="Terms"
-                  width="w-full"
-                  disabled={showLoading}
-                  maxDisplayItems={2}
-                />
               </div>
               <Separator className="my-4" />
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
