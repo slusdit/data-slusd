@@ -47,7 +47,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async signIn({ user, account, profile, email, credentials }) {
       if (account?.provider === "google") {
-        let profileEmail = profile?.email
+        let profileEmail = 'jsloane@slusd.us' || profile?.email
         const profileId = user?.id
         if (profileId && profileEmail) {
           const result = await syncTeacherClasses(profileId, profileEmail)
@@ -57,7 +57,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return profile?.email_verified && profile?.email?.endsWith("@slusd.us")
       }
 
-      return true;
+      return false;
     },
     
     async session({ session, user }:
@@ -67,8 +67,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
     ) {
       // Emulation override - Remove this in production or add proper controls
-      const emulatedUserId = null // 'cm73n2pf60004hz1rsv056ri8';
-      const emulatedUserEmail = null //'jalmendarez@slusd.us';
+      const emulatedUserId = user.emulatedUserId  || undefined// 'cm73n2pf60004hz1rsv056ri8';
+      const emulatedUserEmail = user.emulatedUserEmail || undefined //'jalmendarez@slusd.us';
       
       // Use the emulated user's ID for database queries
       const userId = emulatedUserId || user?.id;

@@ -7,12 +7,13 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
-export function UserEmulator() {
+export function UserEmulator(props: any) {
+  console.log(props)
   const router = useRouter()
   const [isEmulating, setIsEmulating] = useState(false)
   const [isPending, setIsPending] = useState(false)
 
-  const handleStartEmulation = async () => {
+  const handleStartEmulation = async (props) => {
     try {
       setIsPending(true)
       await startEmulation()

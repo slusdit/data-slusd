@@ -5,7 +5,7 @@ import { auth } from "@/auth"
 import prisma from "@/lib/db"
 import { revalidatePath } from "next/cache"
 
-export async function startEmulation() {
+export async function startEmulation(emulatedUserId: string, emulatedUserEmail: string) {
   const session = await auth()
   
   if (!session?.user?.roles?.includes('ADMIN') && !session?.user?.roles?.includes('SUPERADMIN')) {
@@ -16,8 +16,8 @@ export async function startEmulation() {
    const result =  await prisma.user.update({
       where: { id: session.user.id },
       data: {
-        emulatedUserId: 'cm73n2pf60004hz1rsv056ri8',
-        emulatedUserEmail: 'jalmendarez@slusd.us',
+        emulatedUserId: emulatedUserId,
+        emulatedUserEmail: emulatedUserEmail,
       },
    })
       

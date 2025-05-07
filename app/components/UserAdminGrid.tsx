@@ -15,6 +15,7 @@ import { useTheme } from "next-themes";
 import { AdminPageUser } from "../admin/page";
 import { Accordion, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { AccordionContent } from "@radix-ui/react-accordion";
+import { UserEmulator } from "./UserEmulator";
 
 const UserAdminGrid = ({
   dataIn,
@@ -141,6 +142,20 @@ const UserAdminGrid = ({
           };
       });
 
+      colDefs = [
+        ...colDefs,
+        {
+          headerName: "Emulate User",
+          field: "emulateUser",
+          cellRenderer: UserEmulator,
+          editable: false,
+          filter: false,
+          sortable: false,
+          minWidth: 150,
+          flex: 0,
+        },
+      ];
+
       let formattedData = data.map((row) =>
         keys.reduce((acc, key) => {
           if (!row[key]) return acc;
@@ -234,32 +249,29 @@ const UserAdminGrid = ({
       <div className="mt-2">
         <Accordion type="single" collapsible>
           <AccordionItem value="Users">
-            <AccordionTrigger className="text-3xl text-foreground">Users
-
-              </AccordionTrigger>
-              <AccordionContent>
-            <Button
-              onClick={onExportToCsv}
-              className="my-2 text-foreground"
-              variant="outline"
+            <AccordionTrigger className="text-3xl text-foreground">Users</AccordionTrigger>
+            <AccordionContent>
+              <Button
+                onClick={onExportToCsv}
+                className="my-2 text-foreground"
+                variant="outline"
               >
-              Export to CSV
-            </Button>
+                Export to CSV
+              </Button>
 
-
-            <AgGridReact
-              theme={themeQuartz}
-              ref={gridRef}
-              rowData={data}
-              columnDefs={colDefs}
-              domLayout="autoHeight"
-              pagination={true}
-              onGridReady={onGridReady}
-              rowSelection="multiple"
-              onSelectionChanged={onSelectionChanged}
-              onCellValueChanged={onCellValueChanged}
+              <AgGridReact
+                theme={themeQuartz}
+                ref={gridRef}
+                rowData={data}
+                columnDefs={colDefs}
+                domLayout="autoHeight"
+                pagination={true}
+                onGridReady={onGridReady}
+                rowSelection="multiple"
+                onSelectionChanged={onSelectionChanged}
+                onCellValueChanged={onCellValueChanged}
               />
-              </AccordionContent>
+            </AccordionContent>
           </AccordionItem>
         </Accordion>
       </div>
