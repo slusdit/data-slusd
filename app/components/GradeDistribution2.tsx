@@ -430,9 +430,9 @@ const GradeDistribution2 = ({
       allItems: { id: string; label: string }[]
     ) => {
       // Get unique values from filtered data
-      const uniqueValues = [...new Set(data.map((item) => String(item[field])))].filter(
-        Boolean
-      );
+      const uniqueValues = [
+        ...new Set(data.map((item) => String(item[field]))),
+      ].filter(Boolean);
 
       // Create set for faster lookups
       const uniqueValuesSet = new Set(uniqueValues);
@@ -459,7 +459,7 @@ const GradeDistribution2 = ({
     setFilteredSchoolItems(
       getUniqueItemsWithSelection(
         schoolFilteredData,
-        "sc",  
+        "sc",
         selectedSchools,
         schoolItems
       )
@@ -1338,6 +1338,16 @@ const GradeDistribution2 = ({
                   disabled={showLoading}
                   maxDisplayItems={2}
                 /> */}
+              <MultiDropdownSelector
+                items={filteredCourseTitleItems}
+                values={selectedCourseTitles}
+                onChange={setSelectedCourseTitles}
+                placeholder="Select Courses"
+                label="Courses"
+                width="w-full"
+                disabled={showLoading}
+                maxDisplayItems={1}
+              />
               </div>
               <Separator className="my-4" />
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -1357,16 +1367,6 @@ const GradeDistribution2 = ({
                   onChange={setSelectedDepartments}
                   placeholder="Select departments"
                   label="Departments"
-                  width="w-full"
-                  disabled={showLoading}
-                  maxDisplayItems={1}
-                />
-                <MultiDropdownSelector
-                  items={filteredCourseTitleItems}
-                  values={selectedCourseTitles}
-                  onChange={setSelectedCourseTitles}
-                  placeholder="Select Courses"
-                  label="Courses"
                   width="w-full"
                   disabled={showLoading}
                   maxDisplayItems={1}
