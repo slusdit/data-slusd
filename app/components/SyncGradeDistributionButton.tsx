@@ -21,6 +21,16 @@ const SyncGradeDistributionButton = () => {
         setIsLoading(true);
         try {
             // await syncGradeDistribution();  // Uncomment if you want to include this function
+            await aggregateTeacherGradeSummaries({ellStatus: 'English Only'});
+            console.log("Syncing grades...");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    const handleSummarySyncReset = async () => {
+        setIsLoading(true);
+        try {
+            // await syncGradeDistribution();  // Uncomment if you want to include this function
             await aggregateTeacherGradeSummaries({});
             console.log("Syncing grades...");
         } finally {
@@ -41,6 +51,12 @@ const SyncGradeDistributionButton = () => {
                 disabled={isLoading}
             >
                 {isLoading ? "Loading..." : "Sync Summary"}
+            </Button>
+            <Button
+                onClick={handleSummarySyncReset}
+                disabled={isLoading}
+            >
+                {isLoading ? "Loading..." : "Sync Summary Reset"}
             </Button>
         </div>
     );
