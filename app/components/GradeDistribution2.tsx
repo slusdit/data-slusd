@@ -24,6 +24,7 @@ import SyncGradeDistributionButton from "./SyncGradeDistributionButton";
 import { Separator } from "@/components/ui/separator";
 import { aggregationFns } from "@tanstack/react-table";
 import { set } from "zod";
+import ExportChartButton from "./ExportChartButton";
 
 const PercentCellRenderer = (props) => {
   const value = props.value;
@@ -1597,6 +1598,13 @@ const GradeDistribution2 = ({
               </div>
             </div>
           )}
+           <div className="flex items-center mb-4 w-full items-right">
+              <ExportChartButton
+                chartRef={chartRef}
+                filename={`grade distribution${selectedCourseTitles.length > 0 ? ' - ' : ''}${selectedCourseTitles.join('-')} - ${selectedTerms.join('-') || 'all'}`}
+                disabled={showLoading || !filteredData.length}
+                  />
+                </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -1609,7 +1617,7 @@ const GradeDistribution2 = ({
                 options={chartOptions}
                 ref={chartRef}
                 style={{ width: "100%", height: "100%" }}
-              />
+                />
             </div>
           )}
         </CardContent>
@@ -1663,13 +1671,13 @@ const GradeDistribution2 = ({
                 loadingOverlayComponentParams={{
                   loadingMessage: "Loading data...",
                 }}
-              />
+                />
             </div>
           )}
         </CardContent>
       </Card>
-    </div>
-  );
+      </div>
+    );
 };
 
 export default GradeDistribution2;
