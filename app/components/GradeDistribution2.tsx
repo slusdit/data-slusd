@@ -110,6 +110,16 @@ const GradeDistribution2 = ({
     { id: string; label: string }[]
   >([]);
 
+  useEffect(() => {
+    if (initialData && initialData.length > 0) {
+      setData(initialData);
+      setFilteredData(initialData);
+    }
+  },[
+    setSelectedEll,
+    // setSelectedSpecialEd,
+    // setSelectedArd,
+  ]);
   const { resolvedTheme } = useTheme();
   const chartRef = useRef(null);
 
@@ -1082,12 +1092,12 @@ const GradeDistribution2 = ({
         bottom: 40,
         left: 40,
       },
-      navigator: {
-        enabled: filteredData.length > 10,
-        height: 30,
-        min: 0,
-        max: 1,
-      },
+      // navigator: {
+      //   enabled: filteredData.length > 10,
+      //   height: 30,
+      //   min: 0,
+      //   max: 1,
+      // },
     }),
     [
       filteredData,
