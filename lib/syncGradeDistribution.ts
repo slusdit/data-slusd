@@ -114,7 +114,7 @@ export async function aggregateTeacherGradeSummaries({
   specialEdStatus,
   ellStatus,
   raceCode,
-  setData,
+  // setData,
 }: {
   schoolYear?: string;
   term?: string;
@@ -126,7 +126,7 @@ export async function aggregateTeacherGradeSummaries({
   specialEdStatus?: string;
   ellStatus?: string;
     raceCode?: string;
-  setData: (data: any) => void;
+  // setData: (data: any) => void;
 }) {
   try {
     // Create conditions for our query
@@ -245,7 +245,7 @@ export async function aggregateTeacherGradeSummaries({
     await prisma.teacherGradeSummary.createMany({
       data: summaryData,
     });
-    setData(summaryData); // Assuming setData is defined in your context
+    // setData(summaryData); // Assuming setData is defined in your context
 
     console.log("Teacher grade summaries aggregated successfully.");
   } catch (error) {
