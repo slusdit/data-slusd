@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { aggregateTeacherGradeSummaries, syncGradeDistribution } from "@/lib/syncGradeDistribution";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 const SyncGradeDistributionButton = () => {
     const [isLoading, setIsLoading] = useState(false);
@@ -10,29 +10,22 @@ const SyncGradeDistributionButton = () => {
     const handleFullSync = async () => {
         setIsLoading(true);
         try {
-            await syncGradeDistribution();  // Uncomment if you want to include this function
-            // await aggregateTeacherGradeSummaries();
-            console.log("Syncing grades...");
+            await syncGradeDistribution();
+            console.log("Syncing grades completed");
+        } catch (error) {
+            console.error("Error syncing grade data:", error);
         } finally {
             setIsLoading(false);
         }
     };
+    
     const handleSummarySync = async () => {
         setIsLoading(true);
         try {
-            // await syncGradeDistribution();  // Uncomment if you want to include this function
-            await aggregateTeacherGradeSummaries({ellStatus: 'English Only'});
-            console.log("Syncing grades...");
-        } finally {
-            setIsLoading(false);
-        }
-    };
-    const handleSummarySyncReset = async () => {
-        setIsLoading(true);
-        try {
-            // await syncGradeDistribution();  // Uncomment if you want to include this function
-            await aggregateTeacherGradeSummaries({});
-            console.log("Syncing grades...");
+            const newData = await aggregateTeacherGradeSummaries({});
+            console.log("Aggregated grade summaries");
+        } catch (error) {
+            console.error("Error aggregating grade summaries:", error);
         } finally {
             setIsLoading(false);
         }
@@ -43,20 +36,16 @@ const SyncGradeDistributionButton = () => {
             <Button
                 onClick={handleFullSync}
                 disabled={isLoading}
+                variant="outline"
             >
-                {isLoading ? "Loading..." : "Sync Grades"}
+                {isLoading ? "Loading..." : "Sync All Grade Data"}
             </Button>
             <Button
                 onClick={handleSummarySync}
                 disabled={isLoading}
+                variant="default"
             >
-                {isLoading ? "Loading..." : "Sync Summary"}
-            </Button>
-            <Button
-                onClick={handleSummarySyncReset}
-                disabled={isLoading}
-            >
-                {isLoading ? "Loading..." : "Sync Summary Reset"}
+                {isLoading ? "Loading..." : "Refresh Data"}
             </Button>
         </div>
     );

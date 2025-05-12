@@ -3,10 +3,9 @@ import { runQuery } from "@/lib/aeries";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import GradeDistribution from "@/app/components/GradeDistribution";
 import prisma from "@/lib/db";
 import GradeDistribution2 from "../components/GradeDistribution2";
-import SyncGradeDistributionButton from "../components/SyncGradeDistributionButton";
+import GradeDistribution3 from "../components/GradeDistribution3";
 
 export default async function GradeDistributionPage() {
     const session = await auth();
@@ -19,17 +18,12 @@ export default async function GradeDistributionPage() {
         },
         distinct: ['ell', 'specialEd', 'ard']
     });
-    console.log("Raw data fetched from the database:", rawData[0]);
-
+    
     const ellOptions = [...new Set(rawData.map(item => item.ell).filter(Boolean))];
-    console.log("Unique ELL options:", ellOptions);
     const specialEdOptions = [...new Set(rawData.map(item => item.specialEd).filter(Boolean))];
-    console.log("Unique Special Ed options:", specialEdOptions);
     const ardOptions = [...new Set(rawData.map(item => item.ard).filter(Boolean))];
-    console.log("Unique ARD options:", ardOptions);
 
     const data = await prisma.teacherGradeSummary.findMany({});
-    console.log("Data fetched from the database:", data[0]);
     
     if (!session) {    
         return (
@@ -40,9 +34,6 @@ export default async function GradeDistributionPage() {
             </div>
         );
     }
-
-    //     session.user.schoolSc,
-    
     
     return (
         <div className="container mx-auto p-4">
@@ -55,10 +46,9 @@ export default async function GradeDistributionPage() {
             <div className="space-y-4">
                 <div>
                     <h1 className="text-3xl font-bold">Grade Distribution</h1>
-                    <p className="text-muted-foreground">Grade Distribution Description</p>
+                    <p className="text-muted-foreground">View and filter grade distributions across teachers, departments, and student demographics</p>
                 </div>
-                {/* <SyncGradeDistributionButton /> */}
-                <GradeDistribution2 
+                <GradeDistribution3 
                     data={data} 
                     studentAttributes={{
                         ellOptions,

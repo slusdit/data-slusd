@@ -114,7 +114,6 @@ export async function aggregateTeacherGradeSummaries({
   specialEdStatus,
   ellStatus,
   raceCode,
-  setData,
 }: {
   schoolYear?: string;
   term?: string;
@@ -125,8 +124,7 @@ export async function aggregateTeacherGradeSummaries({
   grade?: string;
   specialEdStatus?: string;
   ellStatus?: string;
-    raceCode?: string;
-  setData: (data: any) => void;
+  raceCode?: string;
 }) {
   try {
     // Create conditions for our query
@@ -140,7 +138,7 @@ export async function aggregateTeacherGradeSummaries({
       whereConditionsSQL = Prisma.sql`${whereConditionsSQL} AND ell = ${ellStatus}`;
     }
     if (raceCode) {
-      whereConditionsSQL = Prisma.sql`${whereConditionsSQL} AND raceCode = ${raceCode}`;
+      whereConditionsSQL = Prisma.sql`${whereConditionsSQL} AND ard = ${raceCode}`;
     }
     if (schoolYear) {
       whereConditionsSQL = Prisma.sql`${whereConditionsSQL} AND schoolYear = ${schoolYear}`;
@@ -169,20 +167,20 @@ export async function aggregateTeacherGradeSummaries({
     const summaries = await prisma.$queryRaw<
       Array<{
         sc: number;
-        tn: number;
+        tn: string;
         teacherName: string | null;
         department: string | null;
         courseTitle: string | null;
         period: string;
         term: string;
         schoolYear: string;
-        aCount: number;
-        bCount: number;
-        cCount: number;
-        dCount: number;
-        fCount: number;
-        otherCount: number;
-        totalGrades: number;
+        aCount: any; // Using 'any' to handle both number and Decimal
+        bCount: any;
+        cCount: any;
+        dCount: any;
+        fCount: any;
+        otherCount: any;
+        totalGrades: any;
       }>
     >`
       SELECT 
@@ -190,8 +188,8 @@ export async function aggregateTeacherGradeSummaries({
         teacherNumber as tn,
         teacherName,
         departmentCode as department,
-        courseTitle as course,
-
+        courseTitle,
+        period,
         term,
         schoolYear,
         SUM(CASE WHEN mark like 'A%' THEN 1 ELSE 0 END) as aCount,
@@ -203,38 +201,52 @@ export async function aggregateTeacherGradeSummaries({
         COUNT(*) as totalGrades
       FROM GradeDistribution
       ${whereConditionsSQL}
-      GROUP BY sc, teacherNumber, teacherName, departmentCode, courseTitle,  term, schoolYear
+      GROUP BY sc, teacherNumber, teacherName, departmentCode, courseTitle, period, term, schoolYear
       HAVING COUNT(*) > 0
     `;
 
-    // Clear existing summaries
-    await prisma.teacherGradeSummary.deleteMany();
+    // Transform, convert Decimal objects to regular numbers, and format the data
+    const summaryData = summaries.map((summary: any) => {
+      // Helper function to safely convert any value (including Decimal) to Number
+      const toNumber = (value: any): number => {
+        if (value === null || value === undefined) return 0;
+        return Number(value);
+      };
 
-    // Transform and insert summaries
-    const summaryData = summaries.map((summary: any) => ({
-      sc: summary.sc,
-      tn: summary.tn,
-      teacherName: summary.teacherName || "Unknown",
-      department: summary.department || "Unknown",
-      courseTitle: summary.course || "Unknown",
-      period: summary.period,
-      term: summary.term,
-      schoolYear: summary.schoolYear,
-      aCount: summary.aCount,
-      bCount: summary.bCount,
-      cCount: summary.cCount,
-      dCount: summary.dCount,
-      fCount: summary.fCount,
-      otherCount: summary.otherCount,
-      totalGrades: Number(summary.totalGrades),
-      aPercent: (Number(summary.aCount) / Number(summary.totalGrades)) * 100,
-      bPercent: (Number(summary.bCount) / Number(summary.totalGrades)) * 100,
-      cPercent: (Number(summary.cCount) / Number(summary.totalGrades)) * 100,
-      dPercent: (Number(summary.dCount) / Number(summary.totalGrades)) * 100,
-      fPercent: (Number(summary.fCount) / Number(summary.totalGrades)) * 100,
-      otherPercent:
-        (Number(summary.otherCount) / Number(summary.totalGrades)) * 100,
-    }));
+      // First convert all count fields to regular numbers
+      const aCount = toNumber(summary.aCount);
+      const bCount = toNumber(summary.bCount);
+      const cCount = toNumber(summary.cCount);
+      const dCount = toNumber(summary.dCount);
+      const fCount = toNumber(summary.fCount);
+      const otherCount = toNumber(summary.otherCount);
+      const totalGrades = toNumber(summary.totalGrades);
+
+      // Now calculate percentages using the converted numbers
+      return {
+        sc: summary.sc,
+        tn: summary.tn,
+        teacherName: summary.teacherName || "Unknown",
+        department: summary.department || "Unknown",
+        courseTitle: summary.courseTitle || "Unknown",
+        period: summary.period || "",
+        term: summary.term || "",
+        schoolYear: summary.schoolYear || "",
+        aCount: aCount,
+        bCount: bCount,
+        cCount: cCount,
+        dCount: dCount,
+        fCount: fCount,
+        otherCount: otherCount,
+        totalGrades: totalGrades,
+        aPercent: totalGrades > 0 ? (aCount / totalGrades) * 100 : 0,
+        bPercent: totalGrades > 0 ? (bCount / totalGrades) * 100 : 0,
+        cPercent: totalGrades > 0 ? (cCount / totalGrades) * 100 : 0,
+        dPercent: totalGrades > 0 ? (dCount / totalGrades) * 100 : 0,
+        fPercent: totalGrades > 0 ? (fCount / totalGrades) * 100 : 0,
+        otherPercent: totalGrades > 0 ? (otherCount / totalGrades) * 100 : 0,
+      };
+    });
     
     if (summaryData.length > 0) {
       console.log("Summary data example:", summaryData[0]);
@@ -242,13 +254,12 @@ export async function aggregateTeacherGradeSummaries({
       console.log("No summary data found.");
     }
 
-    await prisma.teacherGradeSummary.createMany({
-      data: summaryData,
-    });
-    setData(summaryData); // Assuming setData is defined in your context
-
     console.log("Teacher grade summaries aggregated successfully.");
+    
+    // Return the serialized data
+    return summaryData;
   } catch (error) {
     console.error("Error aggregating teacher grade summaries:", error);
+    throw error;
   }
 }
