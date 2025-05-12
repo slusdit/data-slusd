@@ -31,7 +31,7 @@ export function DataGrid<T extends object>({
   const [gridApi, setGridApi] = useState<GridApi | null>(null);
   const [columnDefs, setColumnDefs] = useState<ColDef[]>(columns);
   const [visibleColumns, setVisibleColumns] = useState<string[]>([]);
-  const agGridTheme = theme === "dark" ? "ag-theme-alpine-dark" : "ag-theme-alpine";
+  const agGridTheme = theme === "dark" ? "ag-theme-quartz-dark" : "ag-theme-quartz";
 
   const defaultColDef = {
     sortable: true,

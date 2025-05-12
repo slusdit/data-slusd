@@ -1,22 +1,27 @@
+"use client";
 
-'use client'
-import React, { useCallback, useMemo, useState } from 'react';
-import { AgGridReact } from 'ag-grid-react';
-import { AgCharts } from 'ag-charts-react';
-import 'ag-grid-community/styles/ag-grid.css';
-import 'ag-grid-community/styles/ag-theme-alpine.css';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useTheme } from 'next-themes';
-import TeacherGradesDialog from './TeacherGradesDialog';
-import { Button } from '@/components/ui/button';
+import React, { useCallback, useMemo, useState, useEffect } from "react";
+import { AgGridReact } from "ag-grid-react";
+import { AgCharts } from "ag-charts-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTheme } from "next-themes";
+import TeacherGradesDialog from "./TeacherGradesDialog";
+import { Button } from "@/components/ui/button";
+import {
+  colorSchemeDarkBlue,
+  SideBarDef,
+  themeQuartz,
+} from "ag-grid-enterprise";
+import { generatePaginationOptions } from "@/lib/utils";
 
 const PercentCellRenderer = (props) => {
   const value = props.value;
   return (
-    <TeacherGradesDialog 
-      teacher={props.data.Teacher}
-      sc={props.data.SC}
-      tn={props.data.TN}
+    <TeacherGradesDialog
+      teacher={props.data?.Teacher ? props.data.Teacher : ""}
+      sc={props.data?.SC ? props.data.SC : ""}
+      tn={props.data?.TN ? props.data.TN : ""}
+      department={props.data?.Department ? props.data.Department : ""}
       params={props}
       colField={props.colDef.field}
     >
@@ -25,11 +30,32 @@ const PercentCellRenderer = (props) => {
   );
 };
 
-const GradeDistribution = ({ data }) => {
-  const [filteredData, setFilteredData] = useState(data);
+const GradeDistribution = ({ data: initialData }) => {
+  const [data, setData] = useState(initialData);
+  const [filteredData, setFilteredData] = useState(initialData);
   const [gridApi, setGridApi] = useState(null);
   const { resolvedTheme } = useTheme();
-  const baseChartTheme = useMemo(() => (resolvedTheme === 'dark' ? 'ag-sheets-dark' : 'ag-sheets'), [resolvedTheme]);
+  const baseChartTheme = useMemo(
+    () => (resolvedTheme === "dark" ? "ag-sheets-dark" : "ag-sheets"),
+    [resolvedTheme]
+  );
+  console.log(initialData);
+  // Generate pagination options based on total data size
+  const paginationPageSizes = useMemo(() => {
+    return generatePaginationOptions(data.length);
+  }, [data.length]);
+
+  const gridThemeClass = useMemo(() => {
+    return resolvedTheme === "dark"
+      ? themeQuartz.withPart(colorSchemeDarkBlue)
+      : themeQuartz;
+  }, [resolvedTheme]);
+
+  // Update internal data when props change
+  useEffect(() => {
+    setData(initialData);
+    setFilteredData(initialData);
+  }, [initialData]);
 
   const exportToCSV = useCallback(() => {
     if (!gridApi) return;
@@ -37,113 +63,224 @@ const GradeDistribution = ({ data }) => {
     const exportParams = {
       skipHeader: false,
       suppressQuotes: true,
-      columnSeparator: ',',
+      columnSeparator: ",",
       onlyFilteredAndSortedData: true,
       processCellCallback: (params) => {
-        if (params.value === null || params.value === undefined) return '';
-        if (typeof params.value === 'number') return params.value;
+        if (params.value === null || params.value === undefined) return "";
+        if (typeof params.value === "number") return params.value;
         return params.value.toString();
       },
-      fileName: `Grade_Distribution_${new Date().toISOString().split('T')[0]}.csv`
+      fileName: `Grade_Distribution_${
+        new Date().toISOString().split("T")[0]
+      }.csv`,
     };
 
     gridApi.exportDataAsCsv(exportParams);
   }, [gridApi]);
 
-  const columnDefs = useMemo(() => [
-    {
-      field: 'Teacher',
-      filter: true,
-      sortable: true,
-      width: 225
-    },
-    {
-      field: 'Department',
-      filter: 'agSetColumnFilter',
-      sortable: true,
-      filterParams: {
-        buttons: ['apply', 'reset'],
-        closeOnApply: true
-      }
-    },
-    {
-      field: 'A%',
-      type: 'numericColumn',
-      cellRenderer: PercentCellRenderer
-    },
-    {
-      field: 'B%',
-      type: 'numericColumn',
-      cellRenderer: PercentCellRenderer
-    },
-    {
-      field: 'C%',
-      type: 'numericColumn',
-      cellRenderer: PercentCellRenderer
-    },
-    { 
-      field: 'D%',
-      type: 'numericColumn',
-      cellRenderer: PercentCellRenderer
-    },
-    { 
-      field: 'F%',
-      type: 'numericColumn',
-      cellRenderer: PercentCellRenderer
-    },
-    { 
-      field: 'Other_Percent',
-      type: 'numericColumn', 
-      headerName: 'Other %',
-      cellRenderer: (props) => `${props.value}%`
-    }
-  ], []);
-
-  const defaultColDef = useMemo(() => ({
-    resizable: true,
-    sortable: true,
-    filter: true
-  }), []);
-
-  const chartOptions = useMemo(() => ({
-    title: { text: 'Grade Distribution by Teacher' },
-    data: filteredData,
-    theme: {
-      baseTheme: baseChartTheme,
-      palette: { 
-        fills: ['#2E86C1','#5DADE2','#F4D03F','#E67E22','#C0392B','#000000'],
-        strokes: ['gray'], 
-      },
-    },
-    series: [
-      { type: 'bar', xKey: 'Teacher', yKey: 'A%', yName: 'A%', stacked: true },
-      { type: 'bar', xKey: 'Teacher', yKey: 'B%', yName: 'B%', stacked: true },
-      { type: 'bar', xKey: 'Teacher', yKey: 'C%', yName: 'C%', stacked: true }, 
-      { type: 'bar', xKey: 'Teacher', yKey: 'D%', yName: 'D%', stacked: true },
-      { type: 'bar', xKey: 'Teacher', yKey: 'F%', yName: 'F%', stacked: true },
-      { type: 'bar', xKey: 'Teacher', yKey: 'Other_Percent', yName: 'Other %', stacked: true }
-    ],
-    axes: [
+  // Column definitions remain the same
+  const columnDefs = useMemo(
+    () => [
       {
-        type: 'category',
-        position: 'bottom',
-        label: {
-          rotation: 45,
+        field: "Teacher",
+        filter: true,
+        sortable: true,
+        floatingFilter: true,
+        flex: 2,
+        pivot: true,
+        enableRowGroup: true,
+      },
+      {
+        field: "Department",
+        sortable: true,
+        filter: true,
+        floatingFilter: true,
+        flex: 1,
+        pivot: true,
+        enableRowGroup: true,
+      },
+      {
+        field: "Term",
+        sortable: true,
+        filter: true,
+        floatingFilter: true,
+        flex: 1,
+        pivot: true,
+        enableRowGroup: true,
+      },
+      {
+        field: "A%",
+        type: "numericColumn",
+        cellRenderer: PercentCellRenderer,
+        filter: "agNumberColumnFilter",
+        floatingFilter: true,
+        flex: 1,
+        pivot: true,
+        enableRowGroup: true,
+        enableValue: true,
+      },
+      {
+        field: "B%",
+        type: "numericColumn",
+        cellRenderer: PercentCellRenderer,
+        filter: "agNumberColumnFilter",
+        floatingFilter: true,
+        flex: 1,
+        pivot: true,
+        enableRowGroup: true,
+        enableValue: true,
+      },
+      {
+        field: "C%",
+        type: "numericColumn",
+        cellRenderer: PercentCellRenderer,
+        filter: "agNumberColumnFilter",
+        floatingFilter: true,
+        flex: 1,
+        pivot: true,
+        enableRowGroup: true,
+        enableValue: true,
+      },
+      {
+        field: "D%",
+        type: "numericColumn",
+        cellRenderer: PercentCellRenderer,
+        filter: "agNumberColumnFilter",
+        floatingFilter: true,
+        flex: 1,
+        pivot: true,
+        enableRowGroup: true,
+        enableValue: true,
+      },
+      {
+        field: "F%",
+        type: "numericColumn",
+        cellRenderer: PercentCellRenderer,
+        filter: "agNumberColumnFilter",
+        floatingFilter: true,
+        flex: 1,
+        pivot: true,
+        enableRowGroup: true,
+        enableValue: true,
+      },
+      {
+        field: "Other_Percent",
+        type: "numericColumn",
+        headerName: "Other %",
+        cellRenderer: (props) => `${props.value}%`,
+        filter: "agNumberColumnFilter",
+        flex: 1,
+        pivot: true,
+        enableRowGroup: true,
+        enableValue: true,
+      },
+    ],
+    []
+  );
+
+  const defaultColDef = useMemo(
+    () => ({
+      resizable: true,
+      sortable: true,
+      filter: true,
+      floatingFilter: true,
+      minWidth: 100,
+    }),
+    []
+  );
+
+  const cellSelection = useMemo(() => {
+    return true;
+  }, []);
+
+  // Chart options configuration
+  const chartOptions = useMemo(
+    () => ({
+      title: { text: "Grade Distribution by Teacher" },
+      data: filteredData,
+      theme: {
+        baseTheme: baseChartTheme,
+        palette: {
+          fills: [
+            "#2E86C1",
+            "#5DADE2",
+            "#F4D03F",
+            "#E67E22",
+            "#C0392B",
+            "#000000",
+          ],
+          strokes: ["gray"],
         },
       },
-      {
-        type: 'number',
-        position: 'left',
-        title: { text: 'Grade Distribution (%)' },
-        min: 0,
-        max: 100
-      }
-    ]
-  }), [filteredData, baseChartTheme]);
+      series: [
+        {
+          type: "bar",
+          xKey: "Teacher",
+          yKey: "A%",
+          yName: "A%",
+          stacked: true,
+        },
+        {
+          type: "bar",
+          xKey: "Teacher",
+          yKey: "B%",
+          yName: "B%",
+          stacked: true,
+        },
+        {
+          type: "bar",
+          xKey: "Teacher",
+          yKey: "C%",
+          yName: "C%",
+          stacked: true,
+        },
+        {
+          type: "bar",
+          xKey: "Teacher",
+          yKey: "D%",
+          yName: "D%",
+          stacked: true,
+        },
+        {
+          type: "bar",
+          xKey: "Teacher",
+          yKey: "F%",
+          yName: "F%",
+          stacked: true,
+        },
+        {
+          type: "bar",
+          xKey: "Teacher",
+          yKey: "Other_Percent",
+          yName: "Other %",
+          stacked: true,
+        },
+      ],
+      axes: [
+        {
+          type: "category",
+          position: "bottom",
+          label: {
+            rotation: 45,
+          },
+        },
+        {
+          type: "number",
+          position: "left",
+          title: { text: "Grade Distribution (%)" },
+          min: 0,
+          max: 100,
+        },
+      ],
+    }),
+    [filteredData, baseChartTheme]
+  );
 
-  const onGridReady = useCallback((params) => {
-    setGridApi(params.api);
-    params.api.sizeColumnsToFit();
+  const onGridSizeChanged = useCallback((params) => {
+    const gridWidth = document.querySelector(".ag-center-cols")?.clientWidth;
+    if (gridWidth) {
+      params.api.sizeColumnsToFit();
+    }
   }, []);
 
   const updateChartData = useCallback((params) => {
@@ -154,51 +291,81 @@ const GradeDistribution = ({ data }) => {
     setFilteredData(sortedData);
   }, []);
 
-  const onFilterChanged = useCallback((params) => {
-    updateChartData(params);
-  }, [updateChartData]);
+  const onFilterChanged = useCallback(
+    (params) => {
+      updateChartData(params);
+    },
+    [updateChartData]
+  );
 
-  const onSortChanged = useCallback((params) => {
-    updateChartData(params);
-  }, [updateChartData]);
+  const onSortChanged = useCallback(
+    (params) => {
+      updateChartData(params);
+    },
+    [updateChartData]
+  );
+
+  const onGridReady = useCallback((params) => {
+    setGridApi(params.api);
+    params.api.sizeColumnsToFit();
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (gridApi) {
+        gridApi.sizeColumnsToFit();
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [gridApi]);
 
   return (
     <div className="w-full space-y-4">
       <Card>
         <CardHeader>
-          {/* <CardTitle>Grade Distribution Chart</CardTitle> */}
+          <CardTitle>Grade Distribution Chart</CardTitle>
         </CardHeader>
         <CardContent>
-          <div style={{ height: '300px' }}>
+          <div className="h-[300px]">
             <AgCharts options={chartOptions} />
           </div>
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader >
-          <CardTitle className='flex flex-row justify-between'>
-            Grade Distribution Data
-
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <CardTitle>Grade Distribution Data</CardTitle>
             <Button
               onClick={exportToCSV}
-              className="bg-primary text-white hover:bg-blue-600  p-2"
-              >
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+            >
               Export to CSV
             </Button>
-              </CardTitle>
+          </div>
         </CardHeader>
         <CardContent>
-          <div style={{ height: '600px' }} className={`ag-theme-alpine${resolvedTheme === 'dark' ? '-dark' : ''} `}>
+          <div className="h-[600px] w-full">
             <AgGridReact
+              theme={gridThemeClass}
               rowData={data}
               columnDefs={columnDefs}
               defaultColDef={defaultColDef}
               onGridReady={onGridReady}
+              onGridSizeChanged={onGridSizeChanged}
               onFilterChanged={onFilterChanged}
               onSortChanged={onSortChanged}
               animateRows={true}
               pagination={true}
+              paginationPageSizeSelector={paginationPageSizes}
+              paginationPageSize={data.length > 20 ? data.length : 20}
+              enableCharts={true}
+              cellSelection={cellSelection}
+              pivotMode={false}
+              pivotPanelShow="onlyWhenPivoting"
+              sideBar={["columns", "filters"]}
             />
           </div>
         </CardContent>

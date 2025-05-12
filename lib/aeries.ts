@@ -200,130 +200,136 @@ export async function runQuery(
   query: string
   //  params: any[] = []
 ) {
-  const session = await auth();
-  const email = session?.user?.email;
-  const queryBlockList = ["drop", "update", "insert", "delete", "modify", "alter", "create"];
-  const queryLower = query?.toLowerCase();
-  if (queryBlockList.some((term) => queryLower?.includes(term))) {
-    throw Error("Dangerous query");
-  }
-
-  // let cleanQuery = query?.replace(/\s+/g, " ").trim();
-
-  // cleanQuery = await removeCommentsFromQuery(cleanQuery);
-  let cleanQuery = await removeCommentsFromQuery(query);
-
-  const pool = await poolPromise;
-  // console.log(query)
-  const request = pool.request();
   try {
-    
-    try {
-      let result;
-      
-      // TEST: Remove email to test @@sc overrice
-      const schoolCode = session?.user?.schools
-      // console.log(session?.user?.schools)
-      // console.log(session?.user)
-      
-      // console.log(schoolCode);
-      // TODO: Prepend @@variables to declarations at the top of the query, rather than search and replace?
-      // Handle @SC variable
-      if (query.includes("@@sc")) {
-        if (schoolCode === "0") {
-          let allSchools:
-          | {
-            sc: string;
-          }[]
-          | string = await prisma.schoolInfo.findMany({
-            select: {
-              sc: true,
-            },
-          });
-          allSchools = allSchools.map((school) => `${school.sc}`).join(",");
-          ;
-          
-          query = query.replace("= @@sc", `in (${allSchools})`);
-          
-        } else {
-          if (typeof schoolCode === "string") {
-            query = query.replace("@@sc", schoolCode);
-          }
-          if (Array.isArray(schoolCode)) {
-            query = query.replace("= @@sc", `in (${schoolCode.join(",")})`); // TODO: make this work with comma separated school codes
-          }
-          // console.log("Query", query);
-        }
-      }
-
-      if (query.includes("@@psc")) {
-        // if (session?.user?.manualSchool) {
-          
-        //   query = query.replace("@@psc", "'"+ session?.user?.manualSchool + "'");
-        // } else {
-
-          query = query.replace("@@psc", "'"+ session?.user?.primarySchool + "'");
-        // }
-
-      }
-      // console.log( session?.user?.activeSchool)
-      // console.log(query.includes("@@asc"))
-      if (query.includes("@@asc")) {
-        // console.log(query.includes("@@asc"))
-        if (typeof session?.user?.activeSchool === "number") {
-          // console.log("Active School", session?.user?.activeSchool)
-          // console.log("Active School", session?.user?.activeSchool === 0)
-          
-        // } else {
-          if (session?.user?.activeSchool === 0) {
-            const schools = await prisma.schoolInfo.findMany({
-              select: {
-                sc: true,
-              },
-            })
-            // console.log(schools)
-            const allSchoolSc = "'" + schools.map((school) => `${school.sc}`).join("', '") + "'";
-            // console.log('Schools', schools, allSchoolSc)
-
-            query = query.replace("= @@asc", `in (${allSchoolSc})`);
-           
-          } else {
-          
-            query = query.replace("@@asc", "'" + session?.user?.activeSchool + "'");           
-          }
-
-          query = query.replace("@@asc", "'"+ session?.user?.primarySchool + "'");
-        }
-
-      }
-      // console.log("Query", query);
-      
-
-      // Handle @TN variable
-      if (query.includes("@tn")) {
-        // TODO: get from session, feed in from auth() call or Aeries query
-      }
-
-      // console.log("Query", query);
-      result = await request.query(query);
-
-      // console.log("SQL result", result.recordset);
-      // await closePool();
-      return result.recordset;
-    } catch (error) {
-      // closePool();
-      console.error("SQL error", error);
-      throw new Error("SQL error", { cause: error });
-      // setError(error)
+    const session = await auth();
+    const email = session?.user?.email;
+    const queryBlockList = ["drop", "update", "insert", "delete", "modify", "alter", "create"];
+    const queryLower = query?.toLowerCase();
+    if (queryBlockList.some((term) => queryLower?.includes(term))) {
+      throw Error("Dangerous query");
     }
-  } catch (err) {
-    console.error("SQL error", err);
+
+    // let cleanQuery = query?.replace(/\s+/g, " ").trim();
+
+    // cleanQuery = await removeCommentsFromQuery(cleanQuery);
+    let cleanQuery = await removeCommentsFromQuery(query);
+
+    const pool = await poolPromise;
     // console.log(query)
-    // console.log({err})
-    
-    // throw  Error("SQL Pool error", { cause: err });
+    const request = pool.request();
+    try {
+
+      try {
+        let result;
+
+        // TEST: Remove email to test @@sc overrice
+        const schoolCode = session?.user?.schools
+        // console.log(session?.user?.schools)
+        // console.log(session?.user)
+
+        // console.log(schoolCode);
+        // TODO: Prepend @@variables to declarations at the top of the query, rather than search and replace?
+        // Handle @SC variable
+        if (query.includes("@@sc")) {
+          if (schoolCode === "0") {
+            let allSchools:
+              | {
+                sc: string;
+              }[]
+              | string = await prisma.schoolInfo.findMany({
+                select: {
+                  sc: true,
+                },
+              });
+            allSchools = allSchools.map((school) => `${school.sc}`).join(",");
+            ;
+
+            query = query.replace("= @@sc", `in (${allSchools})`);
+
+          } else {
+            if (typeof schoolCode === "string") {
+              query = query.replace("@@sc", schoolCode);
+            }
+            if (Array.isArray(schoolCode)) {
+              query = query.replace("= @@sc", `in (${schoolCode.join(",")})`); // TODO: make this work with comma separated school codes
+            }
+            // console.log("Query", query);
+          }
+        }
+
+        if (query.includes("@@psc")) {
+          // if (session?.user?.manualSchool) {
+
+          //   query = query.replace("@@psc", "'"+ session?.user?.manualSchool + "'");
+          // } else {
+
+          query = query.replace("@@psc", "'" + session?.user?.primarySchool + "'");
+          // }
+
+        }
+        // console.log( session?.user?.activeSchool)
+        // console.log(query.includes("@@asc"))
+        if (query.includes("@@asc")) {
+          // console.log(query.includes("@@asc"))
+          if (typeof session?.user?.activeSchool === "number") {
+            // console.log("Active School", session?.user?.activeSchool)
+            // console.log("Active School", session?.user?.activeSchool === 0)
+
+            // } else {
+            if (session?.user?.activeSchool === 0) {
+              const schools = await prisma.schoolInfo.findMany({
+                select: {
+                  sc: true,
+                },
+              })
+              // console.log(schools)
+              const allSchoolSc = "'" + schools.map((school) => `${school.sc}`).join("', '") + "'";
+              // console.log('Schools', schools, allSchoolSc)
+
+              query = query.replace("= @@asc", `in (${allSchoolSc})`);
+
+            } else {
+
+              query = query.replace("@@asc", "'" + session?.user?.activeSchool + "'");
+            }
+
+            query = query.replace("@@asc", "'" + session?.user?.primarySchool + "'");
+          }
+
+        }
+        // console.log("Query", query);
+
+
+        // Handle @TN variable
+        if (query.includes("@tn")) {
+          // TODO: get from session, feed in from auth() call or Aeries query
+        }
+
+        // console.log("Query", query);
+        result = await request.query(query);
+
+        // console.log("SQL result", result.recordset);
+        // await closePool();
+        return result.recordset;
+      } catch (error) {
+        // closePool();
+        console.error("SQL error", error);
+        throw new Error("SQL error", { cause: error });
+        // setError(error)
+      }
+    } catch (err) {
+      console.error("SQL error", err);
+      // console.log(query)
+      // console.log({err})
+
+      // throw  Error("SQL Pool error", { cause: err });
+    }
+  } catch (error) {
+    console.error("Error in runQuery:", error);
+    throw error
   }
 }
+
 
 // Function to close the pool (useful for clean shutdowns)
 export async function closePool() {
@@ -459,10 +465,10 @@ export async function getTeacherSchoolCredentials({
 
     teacherInfo = await Promise.all(schools.map(async (sc) => {
       // console.log(sc)
-      const schoolCredentials =  await getAeriesSchoolTeacher({ sc, id })
+      const schoolCredentials = await getAeriesSchoolTeacher({ sc, id })
       // console.log(schoolCredentials)
       return schoolCredentials
-      
+
     })
     )
   }
