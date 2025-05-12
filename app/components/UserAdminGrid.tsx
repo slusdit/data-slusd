@@ -1,9 +1,10 @@
 "use client";
 import { useRef, useEffect, useMemo, useCallback } from "react";
 import { AgGridReact } from "ag-grid-react";
-import "ag-grid-community/styles/ag-grid.css";
+// import "ag-grid-community/styles/ag-grid.css";
+import { themeQuartz } from 'ag-grid-community';
 import "ag-grid-community/styles/ag-theme-balham.css";
-import "ag-grid-community/styles/ag-theme-alpine.css";
+import "ag-grid-community/styles/ag-theme-quartz.css";
 import AggridChart from "./AggridChart";
 import { Button } from "@/components/ui/button";
 import { GridApi } from "ag-grid-community";
@@ -24,7 +25,7 @@ const UserAdminGrid = ({
 }) => {
   const { theme } = useTheme();
   const agGridTheme =
-    theme === "dark" ? "ag-theme-alpine-dark" : "ag-theme-alpine";
+    theme === "dark" ? "ag-theme-quartz-dark" : "ag-theme-quartz";
   const gridRef = useRef<AgGridReact>(null);
   // console.log({ dataIn });
 
@@ -247,6 +248,7 @@ const UserAdminGrid = ({
 
 
             <AgGridReact
+              theme={themeQuartz}
               ref={gridRef}
               rowData={data}
               columnDefs={colDefs}

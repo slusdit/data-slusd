@@ -5,20 +5,45 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import GradeDistribution from "@/app/components/GradeDistribution";
 import prisma from "@/lib/db";
+import GradeDistribution2 from "../components/GradeDistribution2";
+import SyncGradeDistributionButton from "../components/SyncGradeDistributionButton";
+
 export default async function GradeDistributionPage() {
-    const percentQueryId = process.env.QUERY_ASSESSMENT_GRADE_PERCENTAGE;
     const session = await auth();
 
-    const resultsPercent = await prisma.query.findUnique({ 
-        where: { id: percentQueryId } 
+    const rawData = await prisma.gradeDistribution.findMany({
+        select: {
+            ell: true,
+            specialEd: true,
+            ard: true
+        },
+        distinct: ['ell', 'specialEd', 'ard']
     });
+    console.log("Raw data fetched from the database:", rawData[0]);
 
-    if (!resultsPercent) {
-        return <div>No results found</div>;
+    const ellOptions = [...new Set(rawData.map(item => item.ell).filter(Boolean))];
+    console.log("Unique ELL options:", ellOptions);
+    const specialEdOptions = [...new Set(rawData.map(item => item.specialEd).filter(Boolean))];
+    console.log("Unique Special Ed options:", specialEdOptions);
+    const ardOptions = [...new Set(rawData.map(item => item.ard).filter(Boolean))];
+    console.log("Unique ARD options:", ardOptions);
+
+    const data = await prisma.teacherGradeSummary.findMany({});
+    console.log("Data fetched from the database:", data[0]);
+    
+    if (!session) {    
+        return (
+            <div className="container mx-auto p-4">
+                <h1 className="text-3xl font-bold">Grade Distribution</h1>
+                <p className="text-muted-foreground">Grade Distribution Description</p>
+                <p className="text-red-500">You must be logged in to view this page.</p>
+            </div>
+        );
     }
 
-    const data = await runQuery(resultsPercent.query);
-
+    //     session.user.schoolSc,
+    
+    
     return (
         <div className="container mx-auto p-4">
             <Button variant="link">
@@ -29,11 +54,19 @@ export default async function GradeDistributionPage() {
             
             <div className="space-y-4">
                 <div>
-                    <h1 className="text-3xl font-bold">{resultsPercent.name}</h1>
-                    <p className="text-muted-foreground">{resultsPercent.description}</p>
+                    <h1 className="text-3xl font-bold">Grade Distribution</h1>
+                    <p className="text-muted-foreground">Grade Distribution Description</p>
                 </div>
-
-                <GradeDistribution data={data} />
+                {/* <SyncGradeDistributionButton /> */}
+                <GradeDistribution2 
+                    data={data} 
+                    studentAttributes={{
+                        ellOptions,
+                        specialEdOptions,
+                        ardOptions
+                    }}
+                    session={session}
+                />
             </div>
         </div>
     );

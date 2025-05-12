@@ -26,7 +26,7 @@ const ClassBreakdownModal = ({ isOpen, onClose, data, teacher }) => {
         <DialogHeader>
           <DialogTitle>Grade Distribution by Class - {teacher}</DialogTitle>
         </DialogHeader>
-        <div className="h-[400px] w-full ag-theme-alpine-dark">
+        <div className="h-[400px] w-full ag-theme-quartz-dark">
           <AgGridReact
             rowData={data}
             columnDefs={columnDefs}

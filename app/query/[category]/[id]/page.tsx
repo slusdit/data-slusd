@@ -1,5 +1,3 @@
-import AddQueryForm from "@/app/components/forms/AddQueryForm";
-import FormDialog from "@/app/components/forms/FormDialog";
 import { auth } from "@/auth";
 import { runQuery } from "@/lib/aeries";
 import { ArrowLeft, Home, Plus } from "lucide-react";
@@ -11,7 +9,8 @@ import Link from "next/link";
 import DataTableAgGrid from "@/app/components/DataTableAgGrid";
 import FavoriteStarSwitch from "@/app/components/FavoriteStarSwitch";
 
-export default async function Page({ params }: { params: { id: string, category: string } }) {
+export default async function Page(props: { params: Promise<{ id: string, category: string }> }) {
+  const params = await props.params;
   const session = await auth();
   const id = params.id;
   let urlCategory = params.category.split('%20')[0];
