@@ -40,6 +40,7 @@ interface MultiDropdownSelectorProps {
   singleSelect?: boolean;
   itemOrder?: string[];
   classNameVar?: string;
+  defaultValues?: string[]; 
 }
 
 const MultiDropdownSelector: FC<MultiDropdownSelectorProps> = ({
@@ -58,6 +59,7 @@ const MultiDropdownSelector: FC<MultiDropdownSelectorProps> = ({
   singleSelect = false,
   itemOrder,
   classNameVar,
+  defaultValues = [], 
 }) => {
   const [open, setOpen] = useState(false);
   const [initialized, setInitialized] = useState(false);
@@ -79,15 +81,20 @@ const MultiDropdownSelector: FC<MultiDropdownSelectorProps> = ({
   }, [items, itemOrder]);
   
   useEffect(() => {
-    if (itemOrder && itemOrder.length > 0) {
-      if (!initialized && values.length === 0 && findMostRecentItem && !disabled) {
-        onChange([findMostRecentItem]);
+    if (!initialized) {
+      console.log("defaultValues", defaultValues);
+      // Apply default values if they exist and values array is empty
+      if (defaultValues.length > 0 && values.length === 0 && !disabled) {
+        // If singleSelect is true, only use the first default value
+        const valuesToSet = singleSelect ? [defaultValues[0]] : defaultValues;
+        onChange(valuesToSet);
         setInitialized(true);
-      } else if (!initialized) {
+      } 
+      else {
         setInitialized(true);
       }
     }
-  }, [values, findMostRecentItem, onChange, singleSelect, disabled, initialized, itemOrder]);
+  }, [values, findMostRecentItem, onChange, singleSelect, disabled, initialized, itemOrder, defaultValues]);
   
   const selectedItems = useMemo(() => {
     return items.filter((item) => values.includes(item.id));

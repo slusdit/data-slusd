@@ -43,7 +43,7 @@ export default async function GradeDistributionPage() {
 
     //     session.user.schoolSc,
     
-    
+    console.log("Session data:", session.user.UserSchool[0]);
     return (
         <div className="container mx-auto p-4">
             <Button variant="link">
@@ -60,12 +60,14 @@ export default async function GradeDistributionPage() {
                 {/* <SyncGradeDistributionButton /> */}
                 <GradeDistribution2 
                     data={data} 
+                    session={session}
                     studentAttributes={{
                         ellOptions,
                         specialEdOptions,
                         ardOptions
                     }}
-                    session={session}
+                    activeSchool={session.user.activeSchool.toString()}
+                    user={session.user}
                 />
             </div>
         </div>
