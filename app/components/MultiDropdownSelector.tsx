@@ -39,6 +39,7 @@ interface MultiDropdownSelectorProps {
   maxDisplayItems?: number;
   singleSelect?: boolean;
   itemOrder?: string[];
+  classNameVar?: string;
 }
 
 const MultiDropdownSelector: FC<MultiDropdownSelectorProps> = ({
@@ -56,6 +57,7 @@ const MultiDropdownSelector: FC<MultiDropdownSelectorProps> = ({
   maxDisplayItems = 3,
   singleSelect = false,
   itemOrder,
+  classNameVar,
 }) => {
   const [open, setOpen] = useState(false);
   const [initialized, setInitialized] = useState(false);
@@ -131,7 +133,7 @@ const MultiDropdownSelector: FC<MultiDropdownSelectorProps> = ({
     const remainingCount = selectedItems.length - maxDisplayItems;
 
     return (
-      <div className="flex flex-wrap gap-1">
+      <div className="flex flex-wrap gap-1 ">
         {displayItems.map((item) => (
           <Badge 
             key={item.id} 
@@ -162,10 +164,10 @@ const MultiDropdownSelector: FC<MultiDropdownSelectorProps> = ({
   };
 
   return (
-    <div className="flex items-center space-x-4">
+    <div className="flex items-center space-x-4 ">
       {label && <label className="font-medium text-sm">{label}</label>}
       <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
+        <PopoverTrigger asChild className={classNameVar || ""}>
           <Button
             variant="outline"
             role="combobox"

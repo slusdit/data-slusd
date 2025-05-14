@@ -1497,7 +1497,8 @@ const GradeDistribution2 = ({
           ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <MultiDropdownSelector
+                  <MultiDropdownSelector
+                  
                   items={filteredTermItems}
                   values={selectedTerms}
                   onChange={setSelectedTerms}
@@ -1518,7 +1519,8 @@ const GradeDistribution2 = ({
                     "PRG4",
                     "GRD4",
                     "SEM2",
-                  ]}
+                    ]}
+                    classNameVar={selectedTerms.length === 0 ? "outline outline-red-600 rounded-md" : ""}
                 />
                 <MultiDropdownSelector
                   items={filteredSchoolItems}
@@ -1882,7 +1884,7 @@ const GradeDistribution2 = ({
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle>Please Select a Term</CardTitle>
+            <CardTitle>Please Select a Term to show data</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[500px] flex items-center justify-center"></div>
