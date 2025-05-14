@@ -72,18 +72,50 @@ interface StudentAttributes {
 interface GradeDistribution2Props {
   data: any[];
   isLoading?: boolean;
+  activeSchool: string;
+  user: any;
   studentAttributes?: StudentAttributes;
 }
 
 const GradeDistribution2 = ({
   data: initialData,
   isLoading = false,
+  activeSchool, 
+  user,
   studentAttributes = {
     ellOptions: [],
     specialEdOptions: [],
     ardOptions: [],
   },
 }: GradeDistribution2Props) => {
+  console.log("Active School:", activeSchool);
+  console.log("User:", user);
+  const availibleSchools = user.UserSchool?.map((school: {school:{ id: string; sc: string; name: string; logo: string; }}) => school.school.sc) || [];
+  const allTerms = [
+    "PRG1",
+    "GRD1",
+    "PRG2",
+    "GRD2",
+    "SEM1",
+    "PRG3",
+    "GRD3",
+    "PRG4",
+    "GRD4",
+    "SEM2",
+  ];
+  const acceptedSchools = initialData?.map((item) => String(item.sc)) || [];
+  console.log("~Available Schools:", availibleSchools);
+  console.log("~Accepted Schools:", acceptedSchools);
+  console.log("School Check",!acceptedSchools.includes(availibleSchools))
+  let defaultSchool 
+  if (activeSchool) {
+    if (activeSchool === '0' || !acceptedSchools.includes(activeSchool)) {
+      defaultSchool = []
+    } else {
+      defaultSchool = [activeSchool];
+    }
+   
+  }
   const [data, setData] = useState(initialData || []);
   const [filteredData, setFilteredData] = useState(initialData || []);
   const [gridApi, setGridApi] = useState<GridApi | null>(null);
@@ -92,9 +124,9 @@ const GradeDistribution2 = ({
   const [selectedCourseTitles, setSelectedCourseTitles] = useState<string[]>(
     []
   );
-  const [selectedSchools, setSelectedSchools] = useState<string[]>([]);
+  const [selectedSchools, setSelectedSchools] = useState<string[]>(defaultSchool);
   const [selectedPeriods, setSelectedPeriods] = useState<string[]>([]);
-  const [selectedTerms, setSelectedTerms] = useState<string[]>([]);
+  const [selectedTerms, setSelectedTerms] = useState<string[]>(['GRD3']);
   const [selectedEll, setSelectedEll] = useState<string[]>([]);
   const [selectedSpecialEd, setSelectedSpecialEd] = useState<string[]>([]);
   const [selectedArd, setSelectedArd] = useState<string[]>([]);
@@ -114,6 +146,7 @@ const GradeDistribution2 = ({
   const [filteredEllItems, setFilteredEllItems] = useState<FilteredItem[]>([]);
   const [filteredSpecialEdItems, setFilteredSpecialEdItems] = useState<FilteredItem[]>([]);
   const [filteredArdItems, setFilteredArdItems] = useState<FilteredItem[]>([]);
+
 
   useEffect(() => {
     if (initialData && initialData.length > 0) {
@@ -425,7 +458,7 @@ const GradeDistribution2 = ({
     const ellFilteredData = getFilteredDataExcluding("ell");
     const specialEdFilteredData = getFilteredDataExcluding("specialEd");
     const ardFilteredData = getFilteredDataExcluding("ard");
-
+    console.log("Terms:", termFilteredData)
     // Helper to get unique items and ensure selected values remain in the list
     const getUniqueItemsWithSelection = (
       data: any[],
@@ -1478,7 +1511,7 @@ const GradeDistribution2 = ({
   );
 
   console.log("selectedTerms", selectedTerms);
-
+  console.log("selectedSchools", selectedSchools);
   return (
     <div className="w-full space-y-4 relative">
       {showLoading && <LoadingOverlay />}
@@ -1508,18 +1541,7 @@ const GradeDistribution2 = ({
                   disabled={showLoading}
                   maxDisplayItems={1}
                   singleSelect={true}
-                  itemOrder={[
-                    "PRG1",
-                    "GRD1",
-                    "PRG2",
-                    "GRD2",
-                    "SEM1",
-                    "PRG3",
-                    "GRD3",
-                    "PRG4",
-                    "GRD4",
-                    "SEM2",
-                    ]}
+                  itemOrder={allTerms}
                     classNameVar={selectedTerms.length === 0 ? "outline outline-red-600 rounded-md" : ""}
                 />
                 <MultiDropdownSelector
@@ -1530,7 +1552,8 @@ const GradeDistribution2 = ({
                   label="Schools"
                   width="w-full"
                   disabled={showLoading}
-                  maxDisplayItems={2}
+                    maxDisplayItems={2}
+                    defaultValues={defaultSchool}
                 />
                 <MultiDropdownSelector
                   items={filteredCourseTitleItems}
