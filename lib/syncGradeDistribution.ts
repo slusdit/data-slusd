@@ -113,10 +113,10 @@ export async function aggregateTeacherGradeSummaries({
   grade,
   specialEdStatus,
   ellStatus,
-  raceCode,
+  ardStatus: raceCode,
   courseTitleStatus,
   setData,
-}: {
+} : {
   schoolYear?: string;
   term?: string;
   sc?: number;
@@ -126,76 +126,66 @@ export async function aggregateTeacherGradeSummaries({
   grade?: string;
   specialEdStatus?: string;
   ellStatus?: string;
-  raceCode?: string;
+  ardStatus?: string;
   courseTitleStatus?: string;
-  setData?: (data: any) => void;
+  setData?: (data: any) => void; // Optional callback to set data in the component
 }) {
   try {
-    // Create conditions for our query
-    let whereConditionsSQL = Prisma.sql`WHERE 1=1`;
+    // Create base WHERE clause
+    let whereConditions = Prisma.sql`WHERE 1=1`;
 
     // Add conditions based on props with proper SQL parameter handling
+    if (courseTitleStatus) {
+      whereConditions = Prisma.sql`${whereConditions} AND courseTitle = ${courseTitleStatus}`;
+    }
     if (specialEdStatus) {
-      whereConditionsSQL = Prisma.sql`${whereConditionsSQL} AND specialEd = ${specialEdStatus}`;
+      whereConditions = Prisma.sql`${whereConditions} AND specialEd = ${specialEdStatus}`;
     }
     if (ellStatus) {
-      whereConditionsSQL = Prisma.sql`${whereConditionsSQL} AND ell = ${ellStatus}`;
+      whereConditions = Prisma.sql`${whereConditions} AND ell = ${ellStatus}`;
     }
     if (raceCode) {
-      whereConditionsSQL = Prisma.sql`${whereConditionsSQL} AND raceCode = ${raceCode}`;
+      whereConditions = Prisma.sql`${whereConditions} AND ard = ${raceCode}`;
     }
     if (schoolYear) {
-      whereConditionsSQL = Prisma.sql`${whereConditionsSQL} AND schoolYear = ${schoolYear}`;
+      whereConditions = Prisma.sql`${whereConditions} AND schoolYear = ${schoolYear}`;
     }
     if (grade) {
-      whereConditionsSQL = Prisma.sql`${whereConditionsSQL} AND grade = ${grade}`;
+      whereConditions = Prisma.sql`${whereConditions} AND grade = ${grade}`;
     }
     if (term) {
-      whereConditionsSQL = Prisma.sql`${whereConditionsSQL} AND term = ${term}`;
+      whereConditions = Prisma.sql`${whereConditions} AND term = ${term}`;
     }
-    if (sc) {
-      whereConditionsSQL = Prisma.sql`${whereConditionsSQL} AND sc = ${sc}`;
+    if (sc !== undefined) {
+      whereConditions = Prisma.sql`${whereConditions} AND sc = ${sc}`;
     }
     if (teacherNumber) {
-      whereConditionsSQL = Prisma.sql`${whereConditionsSQL} AND teacherNumber = ${teacherNumber}`;
+      whereConditions = Prisma.sql`${whereConditions} AND teacherNumber = ${teacherNumber}`;
     }
     if (departmentCode) {
-      whereConditionsSQL = Prisma.sql`${whereConditionsSQL} AND departmentCode = ${departmentCode}`;
+      whereConditions = Prisma.sql`${whereConditions} AND departmentCode = ${departmentCode}`;
     }
     if (period) {
-      whereConditionsSQL = Prisma.sql`${whereConditionsSQL} AND period = ${period}`;
-    }
-    if (courseTitleStatus) {
-      // Use exact match for course title
-      whereConditionsSQL = Prisma.sql`${whereConditionsSQL} AND courseTitle = ${courseTitleStatus}`;
-      console.log(`Added course title filter: ${courseTitleStatus}`);
+      whereConditions = Prisma.sql`${whereConditions} AND period = ${period}`;
     }
 
-    console.log("Using parameterized SQL with Prisma.sql for proper escaping");
-    console.log("Filter parameters:", { 
-      schoolYear, term, sc, teacherNumber, departmentCode, 
-      period, grade, specialEdStatus, ellStatus, raceCode, courseTitleStatus 
+    // Log the filters for debugging
+    console.log("Applied filters:", {
+      courseTitleStatus,
+      specialEdStatus,
+      ellStatus,
+      raceCode,
+      schoolYear,
+      grade,
+      term,
+      sc,
+      teacherNumber,
+      departmentCode,
+      period,
     });
 
-    const summaries = await prisma.$queryRaw<
-      Array<{
-        sc: number;
-        tn: number;
-        teacherName: string | null;
-        department: string | null;
-        courseTitle: string | null;
-        period: string;
-        term: string;
-        schoolYear: string;
-        aCount: number;
-        bCount: number;
-        cCount: number;
-        dCount: number;
-        fCount: number;
-        otherCount: number;
-        totalGrades: number;
-      }>
-    >`
+    // Execute the query with the dynamic conditions
+    const summaries = await prisma.$queryRaw`
       SELECT 
         sc,
         teacherNumber as tn,
@@ -212,81 +202,57 @@ export async function aggregateTeacherGradeSummaries({
         SUM(CASE WHEN mark NOT IN ('A', 'B', 'C', 'D', 'F','A+', 'A-', 'B+', 'B-', 'C+', 'C-', 'D+', 'D-', 'F+', 'F-') THEN 1 ELSE 0 END) as otherCount,
         COUNT(*) as totalGrades
       FROM GradeDistribution
-      ${whereConditionsSQL}
+      ${whereConditions}
       GROUP BY sc, teacherNumber, teacherName, departmentCode, courseTitle, term, schoolYear
       HAVING COUNT(*) > 0
     `;
 
-    // Log summary of results
-    console.log(`Query returned ${summaries.length} rows`);
-    if (summaries.length > 0) {
-      const uniqueCourses = [...new Set(summaries.map(s => s.course))].filter(Boolean);
-      console.log(`Unique courses in results: ${uniqueCourses.join(', ')}`);
-    }
-    
-    // Transform and insert summaries
-    const summaryData = summaries.map((summary: any) => ({
-      sc: summary.sc,
+    // Transform the results as before...
+    const summaryData = summaries.map((summary) => ({
+      sc: Number(summary.sc),
       tn: summary.tn,
       teacherName: summary.teacherName || "Unknown",
       department: summary.department || "Unknown",
       courseTitle: summary.course || "Unknown",
-      period: summary.period,
       term: summary.term,
       schoolYear: summary.schoolYear,
-      aCount: summary.aCount,
-      bCount: summary.bCount,
-      cCount: summary.cCount,
-      dCount: summary.dCount,
-      fCount: summary.fCount,
-      otherCount: summary.otherCount,
+      aCount: Number(summary.aCount),
+      bCount: Number(summary.bCount),
+      cCount: Number(summary.cCount),
+      dCount: Number(summary.dCount),
+      fCount: Number(summary.fCount),
+      otherCount: Number(summary.otherCount),
       totalGrades: Number(summary.totalGrades),
-      aPercent: (Number(summary.aCount) / Number(summary.totalGrades)) * 100,
-      bPercent: (Number(summary.bCount) / Number(summary.totalGrades)) * 100,
-      cPercent: (Number(summary.cCount) / Number(summary.totalGrades)) * 100,
-      dPercent: (Number(summary.dCount) / Number(summary.totalGrades)) * 100,
-      fPercent: (Number(summary.fCount) / Number(summary.totalGrades)) * 100,
-      otherPercent:
-      (Number(summary.otherCount) / Number(summary.totalGrades)) * 100,
+      aPercent: Number(
+        (Number(summary.aCount) / Number(summary.totalGrades)) * 100
+      ),
+      bPercent: Number(
+        (Number(summary.bCount) / Number(summary.totalGrades)) * 100
+      ),
+      cPercent: Number(
+        (Number(summary.cCount) / Number(summary.totalGrades)) * 100
+      ),
+      dPercent: Number(
+        (Number(summary.dCount) / Number(summary.totalGrades)) * 100
+      ),
+      fPercent: Number(
+        (Number(summary.fCount) / Number(summary.totalGrades)) * 100
+      ),
+      otherPercent: Number(
+        (Number(summary.otherCount) / Number(summary.totalGrades)) * 100
+      ),
     }));
-    
+
     if (summaryData.length > 0) {
       console.log("Summary data example:", summaryData[0]);
+      return summaryData;
     } else {
       console.log("No summary data found.");
     }
-    const dbData = summaryData.map(item => ({
-      ...item,
-      // Ensure all numeric fields are properly converted for database storage
-      sc: Number(item.sc),
-      aCount: Number(item.aCount),
-      bCount: Number(item.bCount),
-      cCount: Number(item.cCount),
-      dCount: Number(item.dCount),
-      fCount: Number(item.fCount),
-      otherCount: Number(item.otherCount),
-      totalGrades: Number(item.totalGrades),
-      aPercent: Number(item.aPercent),
-      bPercent: Number(item.bPercent),
-      cPercent: Number(item.cPercent),
-      dPercent: Number(item.dPercent),
-      fPercent: Number(item.fPercent),
-      otherPercent: Number(item.otherPercent),
-    }));
-
-    // If setData function is provided, call it with the processed data
-    // if (typeof setData === 'function') {
-    //   setData(dbData);
-    // }
 
     console.log("Teacher grade summaries aggregated successfully.");
-    return dbData;
   } catch (error) {
     console.error("Error aggregating teacher grade summaries:", error);
-    // Return empty array in case of error
-    if (typeof setData === 'function') {
-      setData([]);
-    }
-    return [];
+    throw error; // Rethrow to allow caller to handle
   }
 }

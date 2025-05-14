@@ -55,13 +55,13 @@ const TeacherCellRenderer = (props) => {
       sc={props.data?.sc}
       tn={props.data?.teacherNumber}
       department={props.data?.department}
-      term={props.data?.term}           // Optional: filter by term
-      courseTitle={props.data?.course}  // Optional: filter by course
+      term={props.data?.term} // Optional: filter by term
+      courseTitle={props.data?.course} // Optional: filter by course
     >
       {value}
     </TeacherStudentGradesDialog>
   );
-}
+};
 
 interface StudentAttributes {
   ellOptions?: string[];
@@ -103,7 +103,7 @@ const GradeDistribution2 = ({
   // New state variables for filtered dropdown options
   type FilteredItem = {
     id: string;
-    label: string
+    label: string;
   };
   const [filteredSchoolItems, setFilteredSchoolItems] = useState<FilteredItem[]>([]);
   const [filteredPeriodItems, setFilteredPeriodItems] = useState<FilteredItem[]>([]);
@@ -301,7 +301,7 @@ const GradeDistribution2 = ({
   const specialEdItems = useMemo(() => {
     const options =
       studentAttributes.specialEdOptions &&
-        studentAttributes.specialEdOptions.length > 0
+      studentAttributes.specialEdOptions.length > 0
         ? studentAttributes.specialEdOptions
         : ["Y", "N"];
 
@@ -539,31 +539,24 @@ const GradeDistribution2 = ({
       // Create filter parameters for aggregateTeacherGradeSummaries
       const filterParams = {
         term: selectedTerms.length > 0 ? selectedTerms[0] : undefined,
-        teacherNumber: selectedTeachers.length > 0
-          ? getTeacherNumberFromName(selectedTeachers[0])
-          : undefined,
-        departmentCode: selectedDepartments.length > 0
-          ? selectedDepartments[0]
-          : undefined,
-        sc: selectedSchools.length > 0
-          ? parseInt(selectedSchools[0])
-          : undefined,
-        period: selectedPeriods.length > 0
-          ? selectedPeriods[0]
-          : undefined,
-        ellStatus: selectedEll.length > 0
-          ? selectedEll[0]
-          : undefined,
-        specialEdStatus: selectedSpecialEd.length > 0
-          ? selectedSpecialEd[0]
-          : undefined,
-        ardStatus: selectedArd.length > 0
-          ? selectedArd[0]
-          : undefined,
-        courseTitleStatus: selectedCourseTitles.length > 0
-          ? selectedCourseTitles[0]
-          : undefined
+        teacherNumber:
+          selectedTeachers.length > 0
+            ? getTeacherNumberFromName(selectedTeachers[0])
+            : undefined,
+        departmentCode:
+          selectedDepartments.length > 0 ? selectedDepartments[0] : undefined,
+        sc:
+          selectedSchools.length > 0 ? parseInt(selectedSchools[0]) : undefined,
+        period: selectedPeriods.length > 0 ? selectedPeriods[0] : undefined,
+        ellStatus: selectedEll.length > 0 ? selectedEll[0] : undefined,
+        specialEdStatus:
+          selectedSpecialEd.length > 0 ? selectedSpecialEd[0] : undefined,
+        ardStatus: selectedArd.length > 0 ? selectedArd[0] : undefined,
+        courseTitleStatus:
+          selectedCourseTitles.length > 0 ? selectedCourseTitles[0] : undefined,
       };
+      console.log("Selected ARD", selectedArd)
+      console.log("Filter Parameters:", filterParams);
 
       // Call the server function and get the returned data
       const newData = await aggregateTeacherGradeSummaries(filterParams);
@@ -575,43 +568,53 @@ const GradeDistribution2 = ({
 
         // Rebuild dropdown items from the NEW data
         // Generate new items for each dropdown
-        const newTeacherItems = Array.from(new Set(newData.map(item => item.teacherName)))
+        const newTeacherItems = Array.from(
+          new Set(newData.map((item) => item.teacherName))
+        )
           .filter(Boolean)
           .sort((a, b) => a.localeCompare(b))
-          .map(teacher => ({
+          .map((teacher) => ({
             id: teacher,
-            label: teacher
+            label: teacher,
           }));
 
-        const newDepartmentItems = Array.from(new Set(newData.map(item => item.department)))
+        const newDepartmentItems = Array.from(
+          new Set(newData.map((item) => item.department))
+        )
           .filter(Boolean)
           .sort((a, b) => a.localeCompare(b))
-          .map(dept => ({
+          .map((dept) => ({
             id: dept,
-            label: dept
+            label: dept,
           }));
 
-        const newSchoolItems = Array.from(new Set(newData.map(item => String(item.sc))))
+        const newSchoolItems = Array.from(
+          new Set(newData.map((item) => String(item.sc)))
+        )
           .filter(Boolean)
-          .map(school => ({
+          .map((school) => ({
             id: school,
-            label: school
+            label: school,
           }));
 
-        const newCourseTitleItems = Array.from(new Set(newData.map(item => item.courseTitle)))
+        const newCourseTitleItems = Array.from(
+          new Set(newData.map((item) => item.courseTitle))
+        )
           .filter(Boolean)
           .sort((a, b) => a.localeCompare(b))
-          .map(course => ({
+          .map((course) => ({
             id: course,
-            label: course
+            label: course,
           }));
 
-        const newTermItems = Array.from(new Set(newData.map(item => item.term)))
+        const newTermItems = Array.from(
+          new Set(newData.map((item) => item.term))
+        )
           .filter(Boolean)
           .sort()
-          .map(term => ({
+          .map((term) => ({
             id: term,
-            label: term
+            label: term,
           }));
 
         // Update dropdown options
@@ -624,33 +627,37 @@ const GradeDistribution2 = ({
         // Keep the current selected values (important!)
         // But only if they still exist in the new data
         if (selectedTeachers.length > 0) {
-          const validTeachers = selectedTeachers.filter(teacher =>
-            newTeacherItems.some(item => item.id === teacher));
+          const validTeachers = selectedTeachers.filter((teacher) =>
+            newTeacherItems.some((item) => item.id === teacher)
+          );
           if (validTeachers.length !== selectedTeachers.length) {
             setSelectedTeachers(validTeachers);
           }
         }
 
         if (selectedDepartments.length > 0) {
-          const validDepartments = selectedDepartments.filter(dept =>
-            newDepartmentItems.some(item => item.id === dept));
+          const validDepartments = selectedDepartments.filter((dept) =>
+            newDepartmentItems.some((item) => item.id === dept)
+          );
           if (validDepartments.length !== selectedDepartments.length) {
             setSelectedDepartments(validDepartments);
           }
         }
 
         if (selectedSchools.length > 0) {
-          const validSchools = selectedSchools.filter(school =>
-            newSchoolItems.some(item => item.id === school));
+          const validSchools = selectedSchools.filter((school) =>
+            newSchoolItems.some((item) => item.id === school)
+          );
           if (validSchools.length !== selectedSchools.length) {
             setSelectedSchools(validSchools);
           }
         }
 
         if (selectedCourseTitles.length > 0) {
-          const validCourses = selectedCourseTitles.filter(course =>
-            newCourseTitleItems.some(item =>
-              item.id.toLowerCase().trim() === course.toLowerCase().trim()
+          const validCourses = selectedCourseTitles.filter((course) =>
+            newCourseTitleItems.some(
+              (item) =>
+                item.id.toLowerCase().trim() === course.toLowerCase().trim()
             )
           );
           if (validCourses.length !== selectedCourseTitles.length) {
@@ -659,8 +666,9 @@ const GradeDistribution2 = ({
         }
 
         if (selectedTerms.length > 0) {
-          const validTerms = selectedTerms.filter(term =>
-            newTermItems.some(item => item.id === term));
+          const validTerms = selectedTerms.filter((term) =>
+            newTermItems.some((item) => item.id === term)
+          );
           if (validTerms.length !== selectedTerms.length) {
             setSelectedTerms(validTerms);
           }
@@ -683,7 +691,7 @@ const GradeDistribution2 = ({
         setSelectedTerms([]);
       }
     } catch (error) {
-      console.error('Error syncing data with filters:', error);
+      console.error("Error syncing data with filters:", error);
     } finally {
       setIsProcessing(false);
     }
@@ -696,6 +704,7 @@ const GradeDistribution2 = ({
     selectedPeriods,
     selectedEll,
     selectedSpecialEd,
+    selectedArd,
     getTeacherNumberFromName,
   ]);
 
@@ -790,10 +799,15 @@ const GradeDistribution2 = ({
 
   // Watch for specific ELL filter changes and trigger server-side refresh
   useEffect(() => {
-    if (selectedEll.length > 0) {
+    if (selectedEll.length > 0 || selectedSpecialEd.length > 0 || selectedArd.length > 0) {
+      // console.log("Special Ed",selectedSpecialEd)
       syncDataWithFilters();
     }
-  }, [selectedEll, syncDataWithFilters]);
+  }, [
+    selectedEll, 
+    selectedSpecialEd, 
+    selectedArd,
+    syncDataWithFilters]);
 
   const exportToCSV = useCallback(() => {
     if (!gridApi) return;
@@ -832,8 +846,9 @@ const GradeDistribution2 = ({
           // Convert other values to string
           return params.value.toString();
         },
-        fileName: `Grade_Distribution_${new Date().toISOString().split("T")[0]
-          }.csv`,
+        fileName: `Grade_Distribution_${
+          new Date().toISOString().split("T")[0]
+        }.csv`,
       };
 
       gridApi.exportDataAsCsv(exportParams);
@@ -1071,7 +1086,7 @@ const GradeDistribution2 = ({
         setData: (newData: any[]) => {
           setData(newData);
           setFilteredData(newData);
-        }
+        },
       });
 
       // Also reset the grid filters if the grid API is available
@@ -1124,7 +1139,7 @@ const GradeDistribution2 = ({
             setData(newData);
             setFilteredData(newData);
           }
-        }
+        },
       });
     }
   }, [initialData, isLoading]);
@@ -1133,35 +1148,39 @@ const GradeDistribution2 = ({
   const chartOptions = useMemo(
     () => ({
       title: {
-        text: `Grade Distribution by Teacher${selectedDepartments.length === 1
+        text: `Grade Distribution by Teacher${
+          selectedDepartments.length === 1
             ? ` - ${selectedDepartments[0]}`
             : selectedDepartments.length > 1
-              ? ` - Multiple Departments`
-              : ""
-          }${selectedCourseTitles.length === 1
+            ? ` - Multiple Departments`
+            : ""
+        }${
+          selectedCourseTitles.length === 1
             ? ` for ${selectedCourseTitles[0]}`
             : selectedCourseTitles.length > 1
-              ? ` for Multiple Courses`
-              : ""
-          }${selectedTerms.length === 1
+            ? ` for Multiple Courses`
+            : ""
+        }${
+          selectedTerms.length === 1
             ? ` (${selectedTerms[0]})`
             : selectedTerms.length > 1
-              ? ` (Multiple Terms)`
-              : ""
-          }${selectedEll.length > 0 ||
-            selectedSpecialEd.length > 0 ||
-            selectedArd.length > 0
-            ? " [" +
-            [
-              selectedEll.length > 0 ? "ELL" : "",
-              selectedSpecialEd.length > 0 ? "SpecialEd" : "",
-              selectedArd.length > 0 ? "ARD" : "",
-            ]
-              .filter(Boolean)
-              .join("/") +
-            " Students]"
+            ? ` (Multiple Terms)`
             : ""
-          }`,
+        }${
+          selectedEll.length > 0 ||
+          selectedSpecialEd.length > 0 ||
+          selectedArd.length > 0
+            ? " [" +
+              [
+                selectedEll.length > 0 ? "ELL" : "",
+                selectedSpecialEd.length > 0 ? "SpecialEd" : "",
+                selectedArd.length > 0 ? "ARD" : "",
+              ]
+                .filter(Boolean)
+                .join("/") +
+              " Students]"
+            : ""
+        }`,
       },
       data: data,
       theme: {
@@ -1295,15 +1314,15 @@ const GradeDistribution2 = ({
           selectedDepartments.length === 1
             ? ` - ${selectedDepartments[0]}`
             : selectedDepartments.length > 1
-              ? ` - Multiple Departments`
-              : "";
+            ? ` - Multiple Departments`
+            : "";
 
         const termSection =
           selectedTerms.length === 1
             ? ` (${selectedTerms[0]})`
             : selectedTerms.length > 1
-              ? ` (Multiple Terms)`
-              : "";
+            ? ` (Multiple Terms)`
+            : "";
 
         const studentFilters = [];
         if (selectedEll.length > 0) studentFilters.push("ELL");
@@ -1361,7 +1380,7 @@ const GradeDistribution2 = ({
           setData: (newData: any[]) => {
             setData(newData);
             setFilteredData(newData);
-          }
+          },
         };
 
         if (model.teacherName) {
@@ -1443,7 +1462,7 @@ const GradeDistribution2 = ({
           }
         }
 
-        aggregateTeacherGradeSummaries(filterProps);
+        aggregateTeacherGradeSummaries({ ...filterProps });
       } catch (error) {
         console.error("Error aggregating based on grid filters:", error);
       }
@@ -1458,7 +1477,7 @@ const GradeDistribution2 = ({
     [updateChartData]
   );
 
-  console.log("selectedTerms", selectedTerms)
+  console.log("selectedTerms", selectedTerms);
 
   return (
     <div className="w-full space-y-4 relative">
@@ -1554,6 +1573,7 @@ const GradeDistribution2 = ({
                   placeholder="Select ELL status"
                   label="ELL Status"
                   width="w-full"
+                  singleSelect={true}
                   disabled={showLoading || filteredEllItems.length === 0}
                   maxDisplayItems={1}
                 />
@@ -1564,6 +1584,7 @@ const GradeDistribution2 = ({
                   placeholder="Select Special Ed status"
                   label="Special Ed Status"
                   width="w-full"
+                  singleSelect={true}
                   disabled={showLoading || filteredSpecialEdItems.length === 0}
                   maxDisplayItems={1}
                 />
@@ -1574,6 +1595,7 @@ const GradeDistribution2 = ({
                   placeholder="Select Race / Ethnicity"
                   label="Race / Ethnicity"
                   width="w-full"
+                  singleSelect={true}
                   disabled={showLoading || filteredArdItems.length === 0}
                   maxDisplayItems={1}
                 />
@@ -1603,7 +1625,6 @@ const GradeDistribution2 = ({
       </Card>
       {selectedTerms.length > 0 ? (
         <>
-
           <Card>
             <CardHeader>
               <CardTitle>Grade Distribution Chart</CardTitle>
@@ -1612,7 +1633,9 @@ const GradeDistribution2 = ({
                   <span className="text-sm mr-1">Teachers:</span>
                   <div className="flex flex-wrap gap-1">
                     {selectedTeachers.map((teacherId) => {
-                      const teacher = teacherItems.find((t) => t.id === teacherId);
+                      const teacher = teacherItems.find(
+                        (t) => t.id === teacherId
+                      );
                       return (
                         <Badge
                           key={teacherId}
@@ -1776,7 +1799,11 @@ const GradeDistribution2 = ({
               <div className="flex items-center mb-4 w-full items-right">
                 <ExportChartButton
                   chartRef={chartRef}
-                  filename={`grade distribution${selectedCourseTitles.length > 0 ? ' - ' : ''}${selectedCourseTitles.join('-')} - ${selectedTerms.join('-') || 'all'}`}
+                  filename={`grade distribution${
+                    selectedCourseTitles.length > 0 ? " - " : ""
+                  }${selectedCourseTitles.join("-")} - ${
+                    selectedTerms.join("-") || "all"
+                  }`}
                   disabled={showLoading || !filteredData.length}
                 />
               </div>
@@ -1852,16 +1879,16 @@ const GradeDistribution2 = ({
             </CardContent>
           </Card>
         </>
-      ) : (<Card>
-        <CardHeader>
-          <CardTitle>Please Select a Term</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[500px] flex items-center justify-center">
-
-          </div>
-        </CardContent>
-      </Card>)}
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>Please Select a Term</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[500px] flex items-center justify-center"></div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
