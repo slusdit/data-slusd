@@ -4,7 +4,7 @@ import { runQuery } from "@/lib/aeries";
 import { colorSchemeDarkBlue, themeQuartz } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import { useTheme } from "next-themes";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 const TeacherGradesDialog = ({
   children,
@@ -26,6 +26,7 @@ const TeacherGradesDialog = ({
   const [gradeData, setGradeData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const { theme } = useTheme();
   const mark = colField.toUpperCase().substring(0, 1);
   //   console.log(params.rowModel.rowsToDisplay);
@@ -166,10 +167,40 @@ ORDER BY CN, PD, TERM;`
       fetchData();
     }
   }, [open, sc, tn, colField]);
+  const exportToCSV = useCallback(() => {
+    if (!gridApi) return;
 
+    setExporting(true);
+
+    try {
+      const exportParams = {
+        skipHeader: false,
+        suppressQuotes: true,
+        columnSeparator: ",",
+        onlyFilteredAndSortedData: true,
+        processCellCallback: (params) => {
+          // Handle null or undefined values
+          if (params.value === null || params.value === undefined) return "";
+
+          // Return numbers as is
+          if (typeof params.value === "number") return params.value;
+
+          // Convert other values to string
+          return params.value.toString();
+        },
+        fileName: `${teacher}_${mark}_Grades_${new Date().toISOString().split("T")[0]}.csv`,
+      };
+
+      gridApi.exportDataAsCsv(exportParams);
+    } catch (error) {
+      console.error("Error exporting CSV:", error);
+    } finally {
+      setExporting(false);
+    }
+  }, [gridApi, teacher, mark]);
   return (
     <Dialog open={open} onOpenChange={setOpen} className="w-full h-full" title>
-      <DialogTrigger className="w-full h-full text-right pr-2 underline hover:text-primary">
+      <DialogTrigger className="w-full h-full pr-2 underline hover:text-primary">
         {children}
       </DialogTrigger>
       <DialogContent className="max-w-fit">
@@ -201,3 +232,7 @@ ORDER BY CN, PD, TERM;`
 };
 
 export default TeacherGradesDialog;
+function setExporting(arg0: boolean) {
+  throw new Error("Function not implemented.");
+}
+
