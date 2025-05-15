@@ -26,11 +26,15 @@ import { aggregationFns } from "@tanstack/react-table";
 import { set } from "zod";
 import ExportChartButton from "./ExportChartButton";
 import TeacherStudentGradesDialog from "./TeacherStudentGradesDialog";
+import ExportCsvButton from "./ExportCsvButton";
+import { User } from "@prisma/client";
+import { SessionUser } from "@/auth";
+import { log } from "console";
 
 const PercentCellRenderer = (props) => {
   const value = props.value;
   if (value === null || value === undefined) return "0%";
-
+  return value.toFixed(0) + "%";
   return (
     <TeacherGradesDialog
       teacher={props.data?.teacherName || ""}
@@ -45,24 +49,6 @@ const PercentCellRenderer = (props) => {
   );
 };
 
-const TeacherCellRenderer = (props) => {
-  const value = props.value;
-  if (value === null || value === undefined) return "Unknown Teacher";
-
-  return (
-    <TeacherStudentGradesDialog
-      teacher={props.data?.teacher}
-      sc={props.data?.sc}
-      tn={props.data?.teacherNumber}
-      department={props.data?.department}
-      term={props.data?.term} // Optional: filter by term
-      courseTitle={props.data?.course} // Optional: filter by course
-    >
-      {value}
-    </TeacherStudentGradesDialog>
-  );
-};
-
 interface StudentAttributes {
   ellOptions?: string[];
   specialEdOptions?: string[];
@@ -73,14 +59,14 @@ interface GradeDistribution2Props {
   data: any[];
   isLoading?: boolean;
   activeSchool: string;
-  user: any;
+  user: SessionUser;
   studentAttributes?: StudentAttributes;
 }
 
 const GradeDistribution2 = ({
   data: initialData,
   isLoading = false,
-  activeSchool, 
+  activeSchool,
   user,
   studentAttributes = {
     ellOptions: [],
@@ -88,9 +74,14 @@ const GradeDistribution2 = ({
     ardOptions: [],
   },
 }: GradeDistribution2Props) => {
-  console.log("Active School:", activeSchool);
-  console.log("User:", user);
-  const availibleSchools = user.UserSchool?.map((school: {school:{ id: string; sc: string; name: string; logo: string; }}) => school.school.sc) || [];
+  // console.log("Active School:", activeSchool);
+  // console.log("User:", user);
+  const availibleSchools =
+    user.UserSchool?.map(
+      (school: {
+        school: { id: string; sc: string; name: string; logo: string };
+      }) => school.school.sc
+    ) || [];
   const allTerms = [
     "PRG1",
     "GRD1",
@@ -104,17 +95,16 @@ const GradeDistribution2 = ({
     "SEM2",
   ];
   const acceptedSchools = initialData?.map((item) => String(item.sc)) || [];
-  console.log("~Available Schools:", availibleSchools);
-  console.log("~Accepted Schools:", acceptedSchools);
-  console.log("School Check",!acceptedSchools.includes(availibleSchools))
-  let defaultSchool 
+  // console.log("Available Schools:", availibleSchools);
+  // console.log("Accepted Schools:", acceptedSchools);
+  // console.log("School Check", !acceptedSchools.includes(availibleSchools));
+  let defaultSchool;
   if (activeSchool) {
-    if (activeSchool === '0' || !acceptedSchools.includes(activeSchool)) {
-      defaultSchool = []
+    if (activeSchool === "0" || !acceptedSchools.includes(activeSchool)) {
+      defaultSchool = [];
     } else {
       defaultSchool = [activeSchool];
     }
-   
   }
   const [data, setData] = useState(initialData || []);
   const [filteredData, setFilteredData] = useState(initialData || []);
@@ -124,9 +114,10 @@ const GradeDistribution2 = ({
   const [selectedCourseTitles, setSelectedCourseTitles] = useState<string[]>(
     []
   );
-  const [selectedSchools, setSelectedSchools] = useState<string[]>(defaultSchool);
+  const [selectedSchools, setSelectedSchools] =
+    useState<string[]>(defaultSchool);
   const [selectedPeriods, setSelectedPeriods] = useState<string[]>([]);
-  const [selectedTerms, setSelectedTerms] = useState<string[]>(['GRD3']);
+  const [selectedTerms, setSelectedTerms] = useState<string[]>(["GRD3"]);
   const [selectedEll, setSelectedEll] = useState<string[]>([]);
   const [selectedSpecialEd, setSelectedSpecialEd] = useState<string[]>([]);
   const [selectedArd, setSelectedArd] = useState<string[]>([]);
@@ -137,17 +128,53 @@ const GradeDistribution2 = ({
     id: string;
     label: string;
   };
-  const [filteredSchoolItems, setFilteredSchoolItems] = useState<FilteredItem[]>([]);
-  const [filteredPeriodItems, setFilteredPeriodItems] = useState<FilteredItem[]>([]);
-  const [filteredTeacherItems, setFilteredTeacherItems] = useState<FilteredItem[]>([]);
-  const [filteredDepartmentItems, setFilteredDepartmentItems] = useState<FilteredItem[]>([]);
-  const [filteredCourseTitleItems, setFilteredCourseTitleItems] = useState<FilteredItem[]>([]);
-  const [filteredTermItems, setFilteredTermItems] = useState<FilteredItem[]>([]);
+  const [filteredSchoolItems, setFilteredSchoolItems] = useState<
+    FilteredItem[]
+  >([]);
+  const [filteredPeriodItems, setFilteredPeriodItems] = useState<
+    FilteredItem[]
+  >([]);
+  const [filteredTeacherItems, setFilteredTeacherItems] = useState<
+    FilteredItem[]
+  >([]);
+  const [filteredDepartmentItems, setFilteredDepartmentItems] = useState<
+    FilteredItem[]
+  >([]);
+  const [filteredCourseTitleItems, setFilteredCourseTitleItems] = useState<
+    FilteredItem[]
+  >([]);
+  const [filteredTermItems, setFilteredTermItems] = useState<FilteredItem[]>(
+    []
+  );
   const [filteredEllItems, setFilteredEllItems] = useState<FilteredItem[]>([]);
-  const [filteredSpecialEdItems, setFilteredSpecialEdItems] = useState<FilteredItem[]>([]);
+  const [filteredSpecialEdItems, setFilteredSpecialEdItems] = useState<
+    FilteredItem[]
+  >([]);
   const [filteredArdItems, setFilteredArdItems] = useState<FilteredItem[]>([]);
+  const createTeacherCellRenderer = () => {
+    return (props) => {
+      const value = props.value;
+      if (value === null || value === undefined) return "Unknown Teacher";
 
-
+      return (
+        <TeacherStudentGradesDialog
+          teacher={props.data?.teacherName}
+          sc={props.data?.sc}
+          tn={props.data?.tn}
+          department={props.data?.department}
+          term={props.data?.term}
+          courseTitle={props.data?.courseTitle}
+          ellStatus={selectedEll[0]}
+          specialEdStatus={selectedSpecialEd[0]}
+          ardStatus={selectedArd[0]}
+        >
+          <span className="text-blue-500 hover:text-blue-700 hover:underline">
+            {value}
+          </span>
+        </TeacherStudentGradesDialog>
+      );
+    };
+  };
   useEffect(() => {
     if (initialData && initialData.length > 0) {
       setData(initialData);
@@ -266,7 +293,7 @@ const GradeDistribution2 = ({
       label: period,
     }));
   }, [initialData]);
-
+  console.log("UserSchool", user.UserSchool);
   const schoolItems = useMemo(() => {
     if (!initialData || initialData.length === 0) return [];
 
@@ -274,6 +301,14 @@ const GradeDistribution2 = ({
       ...new Set(initialData.map((item) => String(item.sc))),
     ].filter(Boolean);
 
+    const userSchools = user.UserSchool.map((school) => {
+      return {
+        sc: school.school.sc,
+        label: school.school.name,
+        logo: school.school.logo,
+      }
+    });
+    console.log("schools2", userSchools)
     return uniqueSchools.map((school) => ({
       id: school,
       label: school,
@@ -458,7 +493,7 @@ const GradeDistribution2 = ({
     const ellFilteredData = getFilteredDataExcluding("ell");
     const specialEdFilteredData = getFilteredDataExcluding("specialEd");
     const ardFilteredData = getFilteredDataExcluding("ard");
-    console.log("Terms:", termFilteredData)
+    console.log("Terms:", termFilteredData);
     // Helper to get unique items and ensure selected values remain in the list
     const getUniqueItemsWithSelection = (
       data: any[],
@@ -588,7 +623,7 @@ const GradeDistribution2 = ({
         courseTitleStatus:
           selectedCourseTitles.length > 0 ? selectedCourseTitles[0] : undefined,
       };
-      console.log("Selected ARD", selectedArd)
+      console.log("Selected ARD", selectedArd);
       console.log("Filter Parameters:", filterParams);
 
       // Call the server function and get the returned data
@@ -832,15 +867,15 @@ const GradeDistribution2 = ({
 
   // Watch for specific ELL filter changes and trigger server-side refresh
   useEffect(() => {
-    if (selectedEll.length > 0 || selectedSpecialEd.length > 0 || selectedArd.length > 0) {
+    if (
+      selectedEll.length > 0 ||
+      selectedSpecialEd.length > 0 ||
+      selectedArd.length > 0
+    ) {
       // console.log("Special Ed",selectedSpecialEd)
       syncDataWithFilters();
     }
-  }, [
-    selectedEll, 
-    selectedSpecialEd, 
-    selectedArd,
-    syncDataWithFilters]);
+  }, [selectedEll, selectedSpecialEd, selectedArd, syncDataWithFilters]);
 
   const exportToCSV = useCallback(() => {
     if (!gridApi) return;
@@ -897,7 +932,7 @@ const GradeDistribution2 = ({
     () => [
       {
         field: "sc",
-        headerName: "School Code",
+        headerName: "School",
         filter: true,
         sortable: true,
         floatingFilter: true,
@@ -906,9 +941,20 @@ const GradeDistribution2 = ({
         enableRowGroup: true,
       },
       {
+        field: "tn",
+        headerName: "Teacher Number",
+        filter: true,
+        sortable: true,
+        floatingFilter: true,
+        flex: 2,
+        pivot: true,
+        enableRowGroup: true,
+        hide: true,
+      },
+      {
         field: "teacherName",
         headerName: "Teacher",
-        cellRenderer: TeacherCellRenderer,
+        cellRenderer: createTeacherCellRenderer(),
         filter: true,
         sortable: true,
         floatingFilter: true,
@@ -1049,7 +1095,7 @@ const GradeDistribution2 = ({
         enableValue: true,
       },
     ],
-    []
+    [selectedEll, selectedSpecialEd, selectedArd]
   );
 
   const defaultColDef = useMemo(
@@ -1515,7 +1561,8 @@ const GradeDistribution2 = ({
   return (
     <div className="w-full space-y-4 relative">
       {showLoading && <LoadingOverlay />}
-      <SyncGradeDistributionButton />
+      {user.admin && <SyncGradeDistributionButton />}
+
       <Card>
         <CardHeader>
           <CardTitle>Filters</CardTitle>
@@ -1530,8 +1577,7 @@ const GradeDistribution2 = ({
           ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                  <MultiDropdownSelector
-                  
+                <MultiDropdownSelector
                   items={filteredTermItems}
                   values={selectedTerms}
                   onChange={setSelectedTerms}
@@ -1542,7 +1588,11 @@ const GradeDistribution2 = ({
                   maxDisplayItems={1}
                   singleSelect={true}
                   itemOrder={allTerms}
-                    classNameVar={selectedTerms.length === 0 ? "outline outline-red-600 rounded-md" : ""}
+                  classNameVar={
+                    selectedTerms.length === 0
+                      ? "outline outline-red-600 rounded-md"
+                      : ""
+                  }
                 />
                 <MultiDropdownSelector
                   items={filteredSchoolItems}
@@ -1552,8 +1602,9 @@ const GradeDistribution2 = ({
                   label="Schools"
                   width="w-full"
                   disabled={showLoading}
-                    maxDisplayItems={2}
-                    defaultValues={defaultSchool}
+                  maxDisplayItems={2}
+                  // defaultValues={defaultSchool}
+                  schoolValues={user.UserSchools}
                 />
                 <MultiDropdownSelector
                   items={filteredCourseTitleItems}
@@ -1653,174 +1704,182 @@ const GradeDistribution2 = ({
           <Card>
             <CardHeader>
               <CardTitle>Grade Distribution Chart</CardTitle>
-              {selectedTeachers.length > 0 && (
-                <div className="flex items-center">
-                  <span className="text-sm mr-1">Teachers:</span>
-                  <div className="flex flex-wrap gap-1">
-                    {selectedTeachers.map((teacherId) => {
-                      const teacher = teacherItems.find(
-                        (t) => t.id === teacherId
-                      );
-                      return (
-                        <Badge
-                          key={teacherId}
-                          className="text-xs py-0 bg-primary/80 text-white"
-                        >
-                          {teacher?.label || teacherId}
-                        </Badge>
-                      );
-                    })}
+              <div className="">
+                {selectedTeachers.length > 0 && (
+                  <div className="flex items-center">
+                    <span className="text-sm mr-1">Teachers:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedTeachers.map((teacherId) => {
+                        const teacher = teacherItems.find(
+                          (t) => t.id === teacherId
+                        );
+                        return (
+                          <Badge
+                            key={teacherId}
+                            className="text-xs py-0 bg-primary/80 text-white"
+                          >
+                            {teacher?.label || teacherId}
+                          </Badge>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              )}
-              {selectedDepartments.length > 0 && (
-                <div className="flex items-center">
-                  <span className="text-sm mr-1">Departments:</span>
-                  <div className="flex flex-wrap gap-1">
-                    {selectedDepartments.map((deptId) => {
-                      const dept = departmentItems.find((d) => d.id === deptId);
-                      return (
-                        <Badge
-                          key={deptId}
-                          className="text-xs py-0 bg-primary/80 text-white"
-                        >
-                          {dept?.label || deptId}
-                        </Badge>
-                      );
-                    })}
+                )}
+                {selectedDepartments.length > 0 && (
+                  <div className="flex items-center">
+                    <span className="text-sm mr-1">Departments:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedDepartments.map((deptId) => {
+                        const dept = departmentItems.find(
+                          (d) => d.id === deptId
+                        );
+                        return (
+                          <Badge
+                            key={deptId}
+                            className="text-xs py-0 bg-primary/80 text-white"
+                          >
+                            {dept?.label || deptId}
+                          </Badge>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              )}
-              {selectedCourseTitles.length > 0 && (
-                <div className="flex items-center">
-                  <span className="text-sm mr-1">Courses:</span>
-                  <div className="flex flex-wrap gap-1">
-                    {selectedCourseTitles.map((courseId) => {
-                      const course = courseTitleItems.find(
-                        (c) => c.id === courseId
-                      );
-                      return (
-                        <Badge
-                          key={courseId}
-                          className="text-xs py-0 bg-primary/80 text-white"
-                        >
-                          {course?.label || courseId}
-                        </Badge>
-                      );
-                    })}
+                )}
+                {selectedCourseTitles.length > 0 && (
+                  <div className="flex items-center">
+                    <span className="text-sm mr-1">Courses:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedCourseTitles.map((courseId) => {
+                        const course = courseTitleItems.find(
+                          (c) => c.id === courseId
+                        );
+                        return (
+                          <Badge
+                            key={courseId}
+                            className="text-xs py-0 bg-primary/80 text-white"
+                          >
+                            {course?.label || courseId}
+                          </Badge>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              )}
-              {selectedTerms.length > 0 && (
-                <div className="flex items-center">
-                  <span className="text-sm mr-1">Terms:</span>
-                  <div className="flex flex-wrap gap-1">
-                    {selectedTerms.map((termId) => {
-                      const term = termItems.find((t) => t.id === termId);
-                      return (
-                        <Badge
-                          key={termId}
-                          className="text-xs py-0 bg-primary/80 text-white"
-                        >
-                          {term?.label || termId}
-                        </Badge>
-                      );
-                    })}
+                )}
+                {selectedTerms.length > 0 && (
+                  <div className="flex items-center">
+                    <span className="text-sm mr-1">Terms:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedTerms.map((termId) => {
+                        const term = termItems.find((t) => t.id === termId);
+                        return (
+                          <Badge
+                            key={termId}
+                            className="text-xs py-0 bg-primary/80 text-white"
+                          >
+                            {term?.label || termId}
+                          </Badge>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              )}
-              {selectedSchools.length > 0 && (
-                <div className="flex items-center">
-                  <span className="text-sm mr-1">Schools:</span>
-                  <div className="flex flex-wrap gap-1">
-                    {selectedSchools.map((schoolId) => {
-                      const school = schoolItems.find((s) => s.id === schoolId);
-                      return (
-                        <Badge
-                          key={schoolId}
-                          className="text-xs py-0 bg-primary/80 text-white"
-                        >
-                          {school?.label || schoolId}
-                        </Badge>
-                      );
-                    })}
+                )}
+                {selectedSchools.length > 0 && (
+                  <div className="flex items-center">
+                    <span className="text-sm mr-1">Schools:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedSchools.map((schoolId) => {
+                        const school = schoolItems.find(
+                          (s) => s.id === schoolId
+                        );
+                        return (
+                          <Badge
+                            key={schoolId}
+                            className="text-xs py-0 bg-primary/80 text-white"
+                          >
+                            {school?.label || schoolId}
+                          </Badge>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              )}
-              {selectedPeriods.length > 0 && (
-                <div className="flex items-center">
-                  <span className="text-sm mr-1">Periods:</span>
-                  <div className="flex flex-wrap gap-1">
-                    {selectedPeriods.map((periodId) => {
-                      const period = periodItems.find((p) => p.id === periodId);
-                      return (
-                        <Badge
-                          key={periodId}
-                          className="text-xs py-0 bg-primary/80 text-white"
-                        >
-                          {period?.label || periodId}
-                        </Badge>
-                      );
-                    })}
+                )}
+                {selectedPeriods.length > 0 && (
+                  <div className="flex items-center">
+                    <span className="text-sm mr-1">Periods:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedPeriods.map((periodId) => {
+                        const period = periodItems.find(
+                          (p) => p.id === periodId
+                        );
+                        return (
+                          <Badge
+                            key={periodId}
+                            className="text-xs py-0 bg-primary/80 text-white"
+                          >
+                            {period?.label || periodId}
+                          </Badge>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              )}
-              {selectedEll.length > 0 && (
-                <div className="flex items-center">
-                  <span className="text-sm mr-1">ELL:</span>
-                  <div className="flex flex-wrap gap-1">
-                    {selectedEll.map((ellId) => {
-                      const ell = ellItems.find((e) => e.id === ellId);
-                      return (
-                        <Badge
-                          key={ellId}
-                          className="text-xs py-0 bg-primary/80 text-white"
-                        >
-                          {ell?.label || ellId}
-                        </Badge>
-                      );
-                    })}
+                )}
+                {selectedEll.length > 0 && (
+                  <div className="flex items-center">
+                    <span className="text-sm mr-1">ELL:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedEll.map((ellId) => {
+                        const ell = ellItems.find((e) => e.id === ellId);
+                        return (
+                          <Badge
+                            key={ellId}
+                            className="text-xs py-0 bg-primary/80 text-white"
+                          >
+                            {ell?.label || ellId}
+                          </Badge>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              )}
-              {selectedSpecialEd.length > 0 && (
-                <div className="flex items-center">
-                  <span className="text-sm mr-1">Special Ed:</span>
-                  <div className="flex flex-wrap gap-1">
-                    {selectedSpecialEd.map((specialEdId) => {
-                      const specialEd = specialEdItems.find(
-                        (s) => s.id === specialEdId
-                      );
-                      return (
-                        <Badge
-                          key={specialEdId}
-                          className="text-xs py-0 bg-primary/80 text-white"
-                        >
-                          {specialEd?.label || specialEdId}
-                        </Badge>
-                      );
-                    })}
+                )}
+                {selectedSpecialEd.length > 0 && (
+                  <div className="flex items-center">
+                    <span className="text-sm mr-1">Special Ed:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedSpecialEd.map((specialEdId) => {
+                        const specialEd = specialEdItems.find(
+                          (s) => s.id === specialEdId
+                        );
+                        return (
+                          <Badge
+                            key={specialEdId}
+                            className="text-xs py-0 bg-primary/80 text-white"
+                          >
+                            {specialEd?.label || specialEdId}
+                          </Badge>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              )}
-              {selectedArd.length > 0 && (
-                <div className="flex items-center">
-                  <span className="text-sm mr-1">ARD:</span>
-                  <div className="flex flex-wrap gap-1">
-                    {selectedArd.map((ardId) => {
-                      const ard = ardItems.find((a) => a.id === ardId);
-                      return (
-                        <Badge
-                          key={ardId}
-                          className="text-xs py-0 bg-primary/80 text-white"
-                        >
-                          {ard?.label || ardId}
-                        </Badge>
-                      );
-                    })}
+                )}
+                {selectedArd.length > 0 && (
+                  <div className="flex items-center">
+                    <span className="text-sm mr-1">ARD:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedArd.map((ardId) => {
+                        const ard = ardItems.find((a) => a.id === ardId);
+                        return (
+                          <Badge
+                            key={ardId}
+                            className="text-xs py-0 bg-primary/80 text-white"
+                          >
+                            {ard?.label || ardId}
+                          </Badge>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
               <div className="flex items-center mb-4 w-full items-right">
                 <ExportChartButton
                   chartRef={chartRef}
@@ -1851,8 +1910,12 @@ const GradeDistribution2 = ({
           </Card>
           <Card>
             <CardHeader>
+              <CardTitle>Grade Distribution Data</CardTitle>
+              {/* <ExportCsvButton 
+                data={filteredData}
+                showLoading={showLoading}
+              /> */}
               <div className="flex justify-between items-center">
-                <CardTitle>Grade Distribution Data</CardTitle>
                 <Button
                   onClick={exportToCSV}
                   className="bg-primary text-primary-foreground hover:bg-primary/90"

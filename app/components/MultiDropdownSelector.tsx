@@ -17,6 +17,7 @@ import {
 import { Check, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { FC, ReactNode, MouseEvent, useMemo, useState, useEffect } from "react";
+import { UserSchoolWithDetails } from "./SchoolPicker";
 
 interface DropdownItem {
   id: string;
@@ -41,6 +42,7 @@ interface MultiDropdownSelectorProps {
   itemOrder?: string[];
   classNameVar?: string;
   defaultValues?: string[]; 
+  schoolValues?: UserSchoolWithDetails[];
 }
 
 const MultiDropdownSelector: FC<MultiDropdownSelectorProps> = ({
@@ -60,6 +62,7 @@ const MultiDropdownSelector: FC<MultiDropdownSelectorProps> = ({
   itemOrder,
   classNameVar,
   defaultValues = [], 
+  schoolValues
 }) => {
   const [open, setOpen] = useState(false);
   const [initialized, setInitialized] = useState(false);
@@ -84,7 +87,7 @@ const MultiDropdownSelector: FC<MultiDropdownSelectorProps> = ({
     if (!initialized) {
       console.log("defaultValues", defaultValues);
       // Apply default values if they exist and values array is empty
-      if (defaultValues.length > 0 && values.length === 0 && !disabled) {
+      if (defaultValues.length > 0 && values.length === 0 && !disabled && !schoolValues) {
         // If singleSelect is true, only use the first default value
         const valuesToSet = singleSelect ? [defaultValues[0]] : defaultValues;
         onChange(valuesToSet);
