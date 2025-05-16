@@ -17,12 +17,15 @@ import {
 import { Check, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { FC, ReactNode, MouseEvent, useMemo, useState, useEffect } from "react";
-import { UserSchoolWithDetails } from "./SchoolPicker";
+import UserSchoolWithDetails from "./SchoolPicker";
+import Image from "next/image";
 
+// Updated interface to include logo
 interface DropdownItem {
   id: string;
   label: string;
   icon?: ReactNode;
+  logo?: string;  // Added logo property
 }
 
 interface MultiDropdownSelectorProps {
@@ -68,14 +71,12 @@ const MultiDropdownSelector: FC<MultiDropdownSelectorProps> = ({
   const [initialized, setInitialized] = useState(false);
   
   const findMostRecentItem = useMemo(() => {
-
     if (!itemOrder || itemOrder.length === 0 || items.length === 0) return null;
 
     const availableItemIds = items.map(item => item.id);
   
     for (let i = itemOrder.length - 1; i >= 0; i--) {
       if (availableItemIds.includes(itemOrder[i])) {
-        // console.log("Found match:", itemOrder[i])
         return itemOrder[i];
       }
     }
@@ -97,7 +98,7 @@ const MultiDropdownSelector: FC<MultiDropdownSelectorProps> = ({
         setInitialized(true);
       }
     }
-  }, [values, findMostRecentItem, onChange, singleSelect, disabled, initialized, itemOrder, defaultValues]);
+  }, [values, findMostRecentItem, onChange, singleSelect, disabled, initialized, itemOrder, defaultValues, schoolValues]);
   
   const selectedItems = useMemo(() => {
     return items.filter((item) => values.includes(item.id));
@@ -134,6 +135,7 @@ const MultiDropdownSelector: FC<MultiDropdownSelectorProps> = ({
     onChange(values.filter((id) => id !== itemId));
   };
 
+  // Updated to show logos in badges
   const displayBadges = () => {
     if (selectedItems.length === 0) {
       return null;
@@ -143,12 +145,22 @@ const MultiDropdownSelector: FC<MultiDropdownSelectorProps> = ({
     const remainingCount = selectedItems.length - maxDisplayItems;
 
     return (
-      <div className="flex flex-wrap gap-1 ">
+      <div className="flex flex-wrap gap-1">
         {displayItems.map((item) => (
           <Badge 
             key={item.id} 
             className="flex items-center gap-1 px-2 py-0.5 bg-primary/80 text-white"
           >
+            {/* Added logo to badge if available */}
+            {item.logo && (
+              <div className="h-4 w-4 mr-1 relative overflow-hidden rounded-sm">
+                <img 
+                  src={item.logo} 
+                  alt={`${item.label} logo`} 
+                  className="h-full w-full object-contain"
+                />
+              </div>
+            )}
             {item.label}
             <X 
               className="h-3 w-3 cursor-pointer opacity-70 hover:opacity-100" 
@@ -167,14 +179,28 @@ const MultiDropdownSelector: FC<MultiDropdownSelectorProps> = ({
     if (selectedItems.length === 0) {
       return <span className="text-muted-foreground">{placeholder}</span>;
     } else if (selectedItems.length === 1) {
-      return selectedItems[0].label;
+      return (
+        <div className="flex items-center">
+          {/* Added logo to single item display if available */}
+          {selectedItems[0].logo && (
+            <div className="h-5 w-5 mr-2 relative overflow-hidden rounded-sm">
+              <img 
+                src={selectedItems[0].logo} 
+                alt={`${selectedItems[0].label} logo`} 
+                className="h-full w-full object-contain"
+              />
+            </div>
+          )}
+          <span>{selectedItems[0].label}</span>
+        </div>
+      );
     } else {
       return `${selectedItems.length} items selected`;
     }
   };
 
   return (
-    <div className="flex items-center space-x-4 ">
+    <div className="flex items-center space-x-4">
       {label && <label className="font-medium text-sm">{label}</label>}
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild className={classNameVar || ""}>
@@ -213,7 +239,18 @@ const MultiDropdownSelector: FC<MultiDropdownSelectorProps> = ({
                     onSelect={() => handleSelect(item.id)}
                   >
                     <div className="flex items-center flex-1">
-                      {item.icon && <span className="mr-2">{item.icon}</span>}
+                      {/* Added logo rendering in dropdown items */}
+                      {item.logo ? (
+                        <div className="h-5 w-5 mr-2 relative overflow-hidden rounded-sm">
+                          <img 
+                            src={item.logo} 
+                            alt={`${item.label} logo`}
+                            className="h-full w-full object-contain"
+                          />
+                        </div>
+                      ) : item.icon ? (
+                        <span className="mr-2">{item.icon}</span>
+                      ) : null}
                       <span>{item.label}</span>
                     </div>
                     {values.includes(item.id) && (
