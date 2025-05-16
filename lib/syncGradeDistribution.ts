@@ -37,10 +37,10 @@ export async function syncGradeDistribution() {
   }
 
   try {
-    console.log("Fetching data from SQL Server...");
+    // // console.log("Fetching data from SQL Server...");
     const rawData = (await runQuery(resultsPercent.query)) as RawGradeData[];
 
-    console.log(`Processing ${rawData.length} records...`);
+    // // console.log(`Processing ${rawData.length} records...`);
 
     // Delete existing data for the current school year to avoid duplicates
     const schoolYears = Array.from(
@@ -51,7 +51,7 @@ export async function syncGradeDistribution() {
       await prisma.gradeDistribution.deleteMany({
         where: { schoolYear },
       });
-      console.log(`Cleared existing data for school year: ${schoolYear}`);
+      // // console.log(`Cleared existing data for school year: ${schoolYear}`);
     }
 
     // Transform and insert data
@@ -76,8 +76,8 @@ export async function syncGradeDistribution() {
       ell: record.ELL,
       ard: record.ARD,
     }));
-    console.log(`Transformed data for ${transformedData.length} records.`);
-    console.log(`${transformedData[0]}`);
+    // // console.log(`Transformed data for ${transformedData.length} records.`);
+    // // console.log(`${transformedData[0]}`);
     // Batch insert for better performance
     const batchSize = 5000;
     for (let i = 0; i < transformedData.length; i += batchSize) {
@@ -86,14 +86,14 @@ export async function syncGradeDistribution() {
         data: batch,
         skipDuplicates: true,
       });
-      console.log(
-        `Inserted batch ${i / batchSize + 1}/${Math.ceil(
-          transformedData.length / batchSize
-        )}`
-      );
+      // // console.log(
+      //   `Inserted batch ${i / batchSize + 1}/${Math.ceil(
+      //     transformedData.length / batchSize
+      //   )}`
+      // );
     }
 
-    console.log("Grade distribution sync completed successfully.");
+    // console.log("Grade distribution sync completed successfully.");
 
     // Optionally, aggregate data for faster queries
     // await aggregateTeacherGradeSummaries({});
@@ -170,19 +170,19 @@ export async function aggregateTeacherGradeSummaries({
     }
 
     // Log the filters for debugging
-    console.log("Applied filters:", {
-      courseTitleStatus,
-      specialEdStatus,
-      ellStatus,
-      raceCode,
-      schoolYear,
-      grade,
-      term,
-      sc,
-      teacherNumber,
-      departmentCode,
-      period,
-    });
+    // console.log("Applied filters:", {
+    //   courseTitleStatus,
+    //   specialEdStatus,
+    //   ellStatus,
+    //   raceCode,
+    //   schoolYear,
+    //   grade,
+    //   term,
+    //   sc,
+    //   teacherNumber,
+    //   departmentCode,
+    //   period,
+    // });
 
     // Execute the query with the dynamic conditions
     const summaries = await prisma.$queryRaw`
@@ -244,13 +244,13 @@ export async function aggregateTeacherGradeSummaries({
     }));
 
     if (summaryData.length > 0) {
-      console.log("Summary data example:", summaryData[0]);
+      // console.log("Summary data example:", summaryData[0]);
       return summaryData;
     } else {
-      console.log("No summary data found.");
+      // console.log("No summary data found.");
     }
 
-    console.log("Teacher grade summaries aggregated successfully.");
+    // console.log("Teacher grade summaries aggregated successfully.");
   } catch (error) {
     console.error("Error aggregating teacher grade summaries:", error);
     throw error; // Rethrow to allow caller to handle
