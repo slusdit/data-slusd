@@ -5,7 +5,6 @@ import { AgGridReact } from "ag-grid-react";
 import { AgCharts } from "ag-charts-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTheme } from "next-themes";
-import TeacherGradesDialog from "./TeacherGradesDialog";
 import { Button } from "@/components/ui/button";
 import {
   colorSchemeDarkBlue,
@@ -27,7 +26,7 @@ import { set } from "zod";
 import ExportChartButton from "./ExportChartButton";
 import TeacherStudentGradesDialog from "./TeacherStudentGradesDialog";
 import ExportCsvButton from "./ExportCsvButton";
-import { User } from "@prisma/client";
+import { User, UserSchool } from "@prisma/client";
 import { SessionUser } from "@/auth";
 import { log } from "console";
 
@@ -295,25 +294,42 @@ const GradeDistribution2 = ({
   }, [initialData]);
 
   const schoolItems = useMemo(() => {
-    if (!initialData || initialData.length === 0) return [];
+  if (!initialData || initialData.length === 0) return [];
 
-    const uniqueSchools = [
-      ...new Set(initialData.map((item) => String(item.sc))),
-    ].filter(Boolean);
 
-    const userSchools = user.UserSchool.map((school) => {
-      return {
-        sc: school.school.sc,
-        label: school.school.name,
-        logo: school.school.logo,
-      }
-    });
+  const uniqueSchools = [
+    ...new Set(initialData.map((item) => String(item.sc))),
+  ].filter(Boolean);
+  
+  console.log("Unique Schools", uniqueSchools);
+  
 
-    return uniqueSchools.map((school) => ({
-      id: school,
-      label: school,
-    }));
-  }, [initialData]);
+  const userSchools = user.UserSchool.map((school) => {
+    return {
+      sc: school.school.sc,
+      label: school.school.name,
+      logo: school.school.logo,
+    }
+  });
+  
+  console.log("User Schools", userSchools);
+  
+
+  const filteredSchools = userSchools.filter((school) => {
+    return uniqueSchools.includes(school.sc);
+  });
+  
+  console.log("Filtered Schools", filteredSchools);
+  
+
+  return filteredSchools.map((school) => ({
+    id: school.sc,       
+    label: school.label,
+    logo: school.logo,
+
+  }));
+  
+}, [initialData, user.UserSchool]);
 
   const courseTitleItems = useMemo(() => {
     if (!initialData || initialData.length === 0) return [];
@@ -1559,6 +1575,7 @@ const GradeDistribution2 = ({
 
   // console.log("selectedTerms", selectedTerms);
   // console.log("selectedSchools", selectedSchools);
+  console.log("filteredSchoolItems", filteredSchoolItems);
   return (
     <div className="w-full space-y-4 relative">
       {showLoading && <LoadingOverlay />}
@@ -1597,6 +1614,7 @@ const GradeDistribution2 = ({
                 />
                 <MultiDropdownSelector
                   items={filteredSchoolItems}
+                  // items={user.UserSchools}
                   values={selectedSchools}
                   onChange={setSelectedSchools}
                   placeholder="Select schools"
@@ -1797,7 +1815,10 @@ const GradeDistribution2 = ({
                             key={schoolId}
                             className="text-xs py-0 bg-primary/80 text-white"
                           >
-                            {school?.label || schoolId}
+                            { <img 
+                              src={school.logo} 
+                              alt={`${school.label} logo`} 
+                              className="h-4 w-4 mr-1 relative overflow-hidden rounded-sm" />} {school?.label || schoolId}
                           </Badge>
                         );
                       })}

@@ -52,7 +52,7 @@ const TeacherStudentGradesDialog = ({
       : themeQuartz;
   }, [resolvedTheme]);
   
-  console.log("Props received:", { sc, tn, term, courseTitle, ellStatus, specialEdStatus, ardStatus });
+  // console.log("Props received:", { sc, tn, term, courseTitle, ellStatus, specialEdStatus, ardStatus });
   
   // Define column definitions for student-level grade data
   const columnDefs = useMemo(
@@ -254,24 +254,23 @@ const TeacherStudentGradesDialog = ({
 
       const fetchData = async () => {
         try {
-          console.log("Fetching data with params:", {
-            sc,
-            tn,
-            term,
-            courseTitle,
-          });
+          // console.log("Fetching data with params:", {
+          //   sc,
+          //   tn,
+          //   term,
+          //   courseTitle,
+          // });
 
-          // First, check if there's any data in the table (for debugging)
-          const dataCheck = await checkGradeDistributionData();
-          console.log("Database check result:", dataCheck);
+          // check if there's any data in the table (for debugging)
+          // const dataCheck = await checkGradeDistributionData();
+          // console.log("Database check result:", dataCheck);
 
-          // Call the server action to get the data
           const result = await getStudentGrades(sc, tn, term, courseTitle, ellStatus, specialEdStatus, ardStatus);
-          console.log(
-            "Student grade data retrieved:",
-            result?.length || 0,
-            "records"
-          );
+          // console.log(
+          //   "Student grade data retrieved:",
+          //   result?.length || 0,
+          //   "records"
+          // );
 
           setGradeData(Array.isArray(result) ? result : []);
         } catch (error) {
