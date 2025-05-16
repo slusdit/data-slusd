@@ -328,7 +328,7 @@ const TeacherStudentGradesDialog = ({
             </DialogTitle>
             <Button
               onClick={exportToCSV}
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
+              className="bg-primary mr-6 text-primary-foreground hover:bg-primary/90"
               disabled={loading || exporting || !gradeData?.length}
             >
               {exporting ? (

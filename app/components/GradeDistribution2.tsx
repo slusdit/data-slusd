@@ -293,7 +293,7 @@ const GradeDistribution2 = ({
       label: period,
     }));
   }, [initialData]);
-  console.log("UserSchool", user.UserSchool);
+
   const schoolItems = useMemo(() => {
     if (!initialData || initialData.length === 0) return [];
 
@@ -308,7 +308,7 @@ const GradeDistribution2 = ({
         logo: school.school.logo,
       }
     });
-    console.log("schools2", userSchools)
+
     return uniqueSchools.map((school) => ({
       id: school,
       label: school,
@@ -493,7 +493,7 @@ const GradeDistribution2 = ({
     const ellFilteredData = getFilteredDataExcluding("ell");
     const specialEdFilteredData = getFilteredDataExcluding("specialEd");
     const ardFilteredData = getFilteredDataExcluding("ard");
-    console.log("Terms:", termFilteredData);
+    // console.log("Terms:", termFilteredData);
     // Helper to get unique items and ensure selected values remain in the list
     const getUniqueItemsWithSelection = (
       data: any[],
@@ -599,7 +599,7 @@ const GradeDistribution2 = ({
     // specialEdItems,
     // ardItems,
   ]);
-  console.log("Selected Course Titles:", selectedCourseTitles);
+  // console.log("Selected Course Titles:", selectedCourseTitles);
   // Fetch and update data based on filters, especially ELL filter
   const syncDataWithFilters = useCallback(async () => {
     setIsProcessing(true);
@@ -623,8 +623,8 @@ const GradeDistribution2 = ({
         courseTitleStatus:
           selectedCourseTitles.length > 0 ? selectedCourseTitles[0] : undefined,
       };
-      console.log("Selected ARD", selectedArd);
-      console.log("Filter Parameters:", filterParams);
+      // console.log("Selected ARD", selectedArd);
+      // console.log("Filter Parameters:", filterParams);
 
       // Call the server function and get the returned data
       const newData = await aggregateTeacherGradeSummaries(filterParams);
@@ -1266,12 +1266,12 @@ const GradeDistribution2 = ({
         baseTheme: baseChartTheme,
         palette: {
           fills: [
-            "#2E86C1", // A - Blue
-            "#5DADE2", // B - Light Blue
-            "#F4D03F", // C - Yellow
-            "#E67E22", // D - Orange
-            "#C0392B", // F - Red
             "#7F8C8D", // Other - Gray
+            "#C0392B", // F - Red
+            "#E67E22", // D - Orange
+            "#F4D03F", // C - Yellow
+            "#5DADE2", // B - Light Blue
+            "#2E86C1", // A - Blue
           ],
           strokes: ["gray"],
         },
@@ -1280,32 +1280,8 @@ const GradeDistribution2 = ({
         {
           type: "bar",
           xKey: "teacherName",
-          yKey: "aPercent",
-          yName: "A%",
-          stacked: true,
-          tooltip: { renderer: CustomTooltip },
-        },
-        {
-          type: "bar",
-          xKey: "teacherName",
-          yKey: "bPercent",
-          yName: "B%",
-          stacked: true,
-          tooltip: { renderer: CustomTooltip },
-        },
-        {
-          type: "bar",
-          xKey: "teacherName",
-          yKey: "cPercent",
-          yName: "C%",
-          stacked: true,
-          tooltip: { renderer: CustomTooltip },
-        },
-        {
-          type: "bar",
-          xKey: "teacherName",
-          yKey: "dPercent",
-          yName: "D%",
+          yKey: "otherPercent",
+          yName: "Other%",
           stacked: true,
           tooltip: { renderer: CustomTooltip },
         },
@@ -1320,8 +1296,33 @@ const GradeDistribution2 = ({
         {
           type: "bar",
           xKey: "teacherName",
-          yKey: "otherPercent",
-          yName: "Other%",
+          yKey: "dPercent",
+          yName: "D%",
+          stacked: true,
+          tooltip: { renderer: CustomTooltip },
+        },
+        
+        {
+          type: "bar",
+          xKey: "teacherName",
+          yKey: "cPercent",
+          yName: "C%",
+          stacked: true,
+          tooltip: { renderer: CustomTooltip },
+        },
+        {
+          type: "bar",
+          xKey: "teacherName",
+          yKey: "bPercent",
+          yName: "B%",
+          stacked: true,
+          tooltip: { renderer: CustomTooltip },
+        },
+        {
+          type: "bar",
+          xKey: "teacherName",
+          yKey: "aPercent",
+          yName: "A%",
           stacked: true,
           tooltip: { renderer: CustomTooltip },
         },
@@ -1556,8 +1557,8 @@ const GradeDistribution2 = ({
     [updateChartData]
   );
 
-  console.log("selectedTerms", selectedTerms);
-  console.log("selectedSchools", selectedSchools);
+  // console.log("selectedTerms", selectedTerms);
+  // console.log("selectedSchools", selectedSchools);
   return (
     <div className="w-full space-y-4 relative">
       {showLoading && <LoadingOverlay />}
