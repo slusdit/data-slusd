@@ -1885,7 +1885,7 @@ const GradeDistribution2 = ({
                 )}
                 {selectedArd.length > 0 && (
                   <div className="flex items-center">
-                    <span className="text-sm mr-1">ARD:</span>
+                    <span className="text-sm mr-1">Race/Ethnicity:</span>
                     <div className="flex flex-wrap gap-1">
                       {selectedArd.map((ardId) => {
                         const ard = ardItems.find((a) => a.id === ardId);
