@@ -17,11 +17,15 @@ import {
 import { Check, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { FC, ReactNode, MouseEvent, useMemo, useState, useEffect } from "react";
+import UserSchoolWithDetails from "./SchoolPicker";
+import Image from "next/image";
 
+// Updated interface to include logo
 interface DropdownItem {
   id: string;
   label: string;
   icon?: ReactNode;
+  logo?: string;  // Added logo property
 }
 
 interface MultiDropdownSelectorProps {
@@ -39,6 +43,9 @@ interface MultiDropdownSelectorProps {
   maxDisplayItems?: number;
   singleSelect?: boolean;
   itemOrder?: string[];
+  classNameVar?: string;
+  defaultValues?: string[]; 
+  schoolValues?: UserSchoolWithDetails[];
 }
 
 const MultiDropdownSelector: FC<MultiDropdownSelectorProps> = ({
@@ -56,19 +63,20 @@ const MultiDropdownSelector: FC<MultiDropdownSelectorProps> = ({
   maxDisplayItems = 3,
   singleSelect = false,
   itemOrder,
+  classNameVar,
+  defaultValues = [], 
+  schoolValues
 }) => {
   const [open, setOpen] = useState(false);
   const [initialized, setInitialized] = useState(false);
   
   const findMostRecentItem = useMemo(() => {
-
     if (!itemOrder || itemOrder.length === 0 || items.length === 0) return null;
 
     const availableItemIds = items.map(item => item.id);
   
     for (let i = itemOrder.length - 1; i >= 0; i--) {
       if (availableItemIds.includes(itemOrder[i])) {
-        // console.log("Found match:", itemOrder[i])
         return itemOrder[i];
       }
     }
@@ -77,15 +85,20 @@ const MultiDropdownSelector: FC<MultiDropdownSelectorProps> = ({
   }, [items, itemOrder]);
   
   useEffect(() => {
-    if (itemOrder && itemOrder.length > 0) {
-      if (!initialized && values.length === 0 && findMostRecentItem && !disabled) {
-        onChange([findMostRecentItem]);
+    if (!initialized) {
+      console.log("defaultValues", defaultValues);
+      // Apply default values if they exist and values array is empty
+      if (defaultValues.length > 0 && values.length === 0 && !disabled && !schoolValues) {
+        // If singleSelect is true, only use the first default value
+        const valuesToSet = singleSelect ? [defaultValues[0]] : defaultValues;
+        onChange(valuesToSet);
         setInitialized(true);
-      } else if (!initialized) {
+      } 
+      else {
         setInitialized(true);
       }
     }
-  }, [values, findMostRecentItem, onChange, singleSelect, disabled, initialized, itemOrder]);
+  }, [values, findMostRecentItem, onChange, singleSelect, disabled, initialized, itemOrder, defaultValues, schoolValues]);
   
   const selectedItems = useMemo(() => {
     return items.filter((item) => values.includes(item.id));
@@ -122,6 +135,7 @@ const MultiDropdownSelector: FC<MultiDropdownSelectorProps> = ({
     onChange(values.filter((id) => id !== itemId));
   };
 
+  // Updated to show logos in badges
   const displayBadges = () => {
     if (selectedItems.length === 0) {
       return null;
@@ -137,6 +151,16 @@ const MultiDropdownSelector: FC<MultiDropdownSelectorProps> = ({
             key={item.id} 
             className="flex items-center gap-1 px-2 py-0.5 bg-primary/80 text-white"
           >
+            {/* Added logo to badge if available */}
+            {item.logo && (
+              <div className="h-4 w-4 mr-1 relative overflow-hidden rounded-sm">
+                <img 
+                  src={item.logo} 
+                  alt={`${item.label} logo`} 
+                  className="h-full w-full object-contain"
+                />
+              </div>
+            )}
             {item.label}
             <X 
               className="h-3 w-3 cursor-pointer opacity-70 hover:opacity-100" 
@@ -155,7 +179,21 @@ const MultiDropdownSelector: FC<MultiDropdownSelectorProps> = ({
     if (selectedItems.length === 0) {
       return <span className="text-muted-foreground">{placeholder}</span>;
     } else if (selectedItems.length === 1) {
-      return selectedItems[0].label;
+      return (
+        <div className="flex items-center">
+          {/* Added logo to single item display if available */}
+          {selectedItems[0].logo && (
+            <div className="h-5 w-5 mr-2 relative overflow-hidden rounded-sm">
+              <img 
+                src={selectedItems[0].logo} 
+                alt={`${selectedItems[0].label} logo`} 
+                className="h-full w-full object-contain"
+              />
+            </div>
+          )}
+          <span>{selectedItems[0].label}</span>
+        </div>
+      );
     } else {
       return `${selectedItems.length} items selected`;
     }
@@ -165,7 +203,7 @@ const MultiDropdownSelector: FC<MultiDropdownSelectorProps> = ({
     <div className="flex items-center space-x-4">
       {label && <label className="font-medium text-sm">{label}</label>}
       <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
+        <PopoverTrigger asChild className={classNameVar || ""}>
           <Button
             variant="outline"
             role="combobox"
@@ -201,7 +239,18 @@ const MultiDropdownSelector: FC<MultiDropdownSelectorProps> = ({
                     onSelect={() => handleSelect(item.id)}
                   >
                     <div className="flex items-center flex-1">
-                      {item.icon && <span className="mr-2">{item.icon}</span>}
+                      {/* Added logo rendering in dropdown items */}
+                      {item.logo ? (
+                        <div className="h-5 w-5 mr-2 relative overflow-hidden rounded-sm">
+                          <img 
+                            src={item.logo} 
+                            alt={`${item.label} logo`}
+                            className="h-full w-full object-contain"
+                          />
+                        </div>
+                      ) : item.icon ? (
+                        <span className="mr-2">{item.icon}</span>
+                      ) : null}
                       <span>{item.label}</span>
                     </div>
                     {values.includes(item.id) && (
