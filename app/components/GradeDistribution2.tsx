@@ -5,7 +5,6 @@ import { AgGridReact } from "ag-grid-react";
 import { AgCharts } from "ag-charts-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTheme } from "next-themes";
-import TeacherGradesDialog from "./TeacherGradesDialog";
 import { Button } from "@/components/ui/button";
 import {
   colorSchemeDarkBlue,
@@ -25,11 +24,16 @@ import { Separator } from "@/components/ui/separator";
 import { aggregationFns } from "@tanstack/react-table";
 import { set } from "zod";
 import ExportChartButton from "./ExportChartButton";
+import TeacherStudentGradesDialog from "./TeacherStudentGradesDialog";
+import ExportCsvButton from "./ExportCsvButton";
+import { User, UserSchool } from "@prisma/client";
+import { SessionUser } from "@/auth";
+import { log } from "console";
 
 const PercentCellRenderer = (props) => {
   const value = props.value;
   if (value === null || value === undefined) return "0%";
-
+  return value.toFixed(0) + "%";
   return (
     <TeacherGradesDialog
       teacher={props.data?.teacherName || ""}
@@ -53,18 +57,54 @@ interface StudentAttributes {
 interface GradeDistribution2Props {
   data: any[];
   isLoading?: boolean;
+  activeSchool: string;
+  user: SessionUser;
   studentAttributes?: StudentAttributes;
 }
 
 const GradeDistribution2 = ({
   data: initialData,
   isLoading = false,
+  activeSchool,
+  user,
   studentAttributes = {
     ellOptions: [],
     specialEdOptions: [],
     ardOptions: [],
   },
 }: GradeDistribution2Props) => {
+  // console.log("Active School:", activeSchool);
+  // console.log("User:", user);
+  const availibleSchools =
+    user.UserSchool?.map(
+      (school: {
+        school: { id: string; sc: string; name: string; logo: string };
+      }) => school.school.sc
+    ) || [];
+  const allTerms = [
+    "PRG1",
+    "GRD1",
+    "PRG2",
+    "GRD2",
+    "SEM1",
+    "PRG3",
+    "GRD3",
+    "PRG4",
+    "GRD4",
+    "SEM2",
+  ];
+  const acceptedSchools = initialData?.map((item) => String(item.sc)) || [];
+  // console.log("Available Schools:", availibleSchools);
+  // console.log("Accepted Schools:", acceptedSchools);
+  // console.log("School Check", !acceptedSchools.includes(availibleSchools));
+  let defaultSchool;
+  if (activeSchool) {
+    if (activeSchool === "0" || !acceptedSchools.includes(activeSchool)) {
+      defaultSchool = [];
+    } else {
+      defaultSchool = [activeSchool];
+    }
+  }
   const [data, setData] = useState(initialData || []);
   const [filteredData, setFilteredData] = useState(initialData || []);
   const [gridApi, setGridApi] = useState<GridApi | null>(null);
@@ -73,53 +113,74 @@ const GradeDistribution2 = ({
   const [selectedCourseTitles, setSelectedCourseTitles] = useState<string[]>(
     []
   );
-  const [selectedSchools, setSelectedSchools] = useState<string[]>([]);
+  const [selectedSchools, setSelectedSchools] =
+    useState<string[]>(defaultSchool);
   const [selectedPeriods, setSelectedPeriods] = useState<string[]>([]);
-  const [selectedTerms, setSelectedTerms] = useState<string[]>([]);
+  const [selectedTerms, setSelectedTerms] = useState<string[]>(["GRD3"]);
   const [selectedEll, setSelectedEll] = useState<string[]>([]);
   const [selectedSpecialEd, setSelectedSpecialEd] = useState<string[]>([]);
   const [selectedArd, setSelectedArd] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
 
   // New state variables for filtered dropdown options
+  type FilteredItem = {
+    id: string;
+    label: string;
+  };
   const [filteredSchoolItems, setFilteredSchoolItems] = useState<
-    { id: string; label: string }[]
+    FilteredItem[]
   >([]);
   const [filteredPeriodItems, setFilteredPeriodItems] = useState<
-    { id: string; label: string }[]
+    FilteredItem[]
   >([]);
   const [filteredTeacherItems, setFilteredTeacherItems] = useState<
-    { id: string; label: string }[]
+    FilteredItem[]
   >([]);
   const [filteredDepartmentItems, setFilteredDepartmentItems] = useState<
-    { id: string; label: string }[]
+    FilteredItem[]
   >([]);
   const [filteredCourseTitleItems, setFilteredCourseTitleItems] = useState<
-    { id: string; label: string }[]
+    FilteredItem[]
   >([]);
-  const [filteredTermItems, setFilteredTermItems] = useState<
-    { id: string; label: string }[]
-  >([]);
-  const [filteredEllItems, setFilteredEllItems] = useState<
-    { id: string; label: string }[]
-  >([]);
+  const [filteredTermItems, setFilteredTermItems] = useState<FilteredItem[]>(
+    []
+  );
+  const [filteredEllItems, setFilteredEllItems] = useState<FilteredItem[]>([]);
   const [filteredSpecialEdItems, setFilteredSpecialEdItems] = useState<
-    { id: string; label: string }[]
+    FilteredItem[]
   >([]);
-  const [filteredArdItems, setFilteredArdItems] = useState<
-    { id: string; label: string }[]
-  >([]);
+  const [filteredArdItems, setFilteredArdItems] = useState<FilteredItem[]>([]);
+  const createTeacherCellRenderer = () => {
+    return (props) => {
+      const value = props.value;
+      if (value === null || value === undefined) return "Unknown Teacher";
 
+      return (
+        <TeacherStudentGradesDialog
+          teacher={props.data?.teacherName}
+          sc={props.data?.sc}
+          tn={props.data?.tn}
+          department={props.data?.department}
+          term={props.data?.term}
+          courseTitle={props.data?.courseTitle}
+          ellStatus={selectedEll[0]}
+          specialEdStatus={selectedSpecialEd[0]}
+          ardStatus={selectedArd[0]}
+        >
+          <span className="text-blue-500 hover:text-blue-700 hover:underline">
+            {value}
+          </span>
+        </TeacherStudentGradesDialog>
+      );
+    };
+  };
   useEffect(() => {
     if (initialData && initialData.length > 0) {
       setData(initialData);
       setFilteredData(initialData);
     }
-  },[
-    setSelectedEll,
-    // setSelectedSpecialEd,
-    // setSelectedArd,
-  ]);
+  }, [initialData]);
+
   const { resolvedTheme } = useTheme();
   const chartRef = useRef(null);
 
@@ -233,17 +294,42 @@ const GradeDistribution2 = ({
   }, [initialData]);
 
   const schoolItems = useMemo(() => {
-    if (!initialData || initialData.length === 0) return [];
+  if (!initialData || initialData.length === 0) return [];
 
-    const uniqueSchools = [
-      ...new Set(initialData.map((item) => String(item.sc))),
-    ].filter(Boolean);
 
-    return uniqueSchools.map((school) => ({
-      id: school,
-      label: school,
-    }));
-  }, [initialData]);
+  const uniqueSchools = [
+    ...new Set(initialData.map((item) => String(item.sc))),
+  ].filter(Boolean);
+  
+  console.log("Unique Schools", uniqueSchools);
+  
+
+  const userSchools = user.UserSchool.map((school) => {
+    return {
+      sc: school.school.sc,
+      label: school.school.name,
+      logo: school.school.logo,
+    }
+  });
+  
+  console.log("User Schools", userSchools);
+  
+
+  const filteredSchools = userSchools.filter((school) => {
+    return uniqueSchools.includes(school.sc);
+  });
+  
+  console.log("Filtered Schools", filteredSchools);
+  
+
+  return filteredSchools.map((school) => ({
+    id: school.sc,       
+    label: school.label,
+    logo: school.logo,
+
+  }));
+  
+}, [initialData, user.UserSchool]);
 
   const courseTitleItems = useMemo(() => {
     if (!initialData || initialData.length === 0) return [];
@@ -344,15 +430,6 @@ const GradeDistribution2 = ({
     periodItems,
   ]);
 
-  // Update internal data when props change
-  useEffect(() => {
-    if (!initialData || initialData.length === 0) return;
-    if (initialData) {
-      setData(initialData);
-      setFilteredData(initialData);
-    }
-  }, [initialData]);
-
   // Helper function to get filtered data excluding a specific filter
   const getFilteredDataExcluding = useCallback(
     (excludeFilter: string) => {
@@ -432,7 +509,7 @@ const GradeDistribution2 = ({
     const ellFilteredData = getFilteredDataExcluding("ell");
     const specialEdFilteredData = getFilteredDataExcluding("specialEd");
     const ardFilteredData = getFilteredDataExcluding("ard");
-
+    // console.log("Terms:", termFilteredData);
     // Helper to get unique items and ensure selected values remain in the list
     const getUniqueItemsWithSelection = (
       data: any[],
@@ -512,8 +589,6 @@ const GradeDistribution2 = ({
       )
     );
 
-    console.log(selectedEll, ellItems, ellFilteredData, "ellItems");
-
     // Keep the original behavior for the Y/N fields as in your original example
     // by not applying filtering to these fields
     setFilteredEllItems(ellItems);
@@ -521,6 +596,190 @@ const GradeDistribution2 = ({
     setFilteredArdItems(ardItems);
   }, [
     getFilteredDataExcluding,
+    // selectedTeachers,
+    // selectedDepartments,
+    // selectedCourseTitles,
+    // selectedTerms,
+    // selectedSchools,
+    // selectedPeriods,
+    // selectedEll,
+    // selectedSpecialEd,
+    // selectedArd,
+    // teacherItems,
+    // departmentItems,
+    // courseTitleItems,
+    // termItems,
+    // schoolItems,
+    // periodItems,
+    // ellItems,
+    // specialEdItems,
+    // ardItems,
+  ]);
+  // console.log("Selected Course Titles:", selectedCourseTitles);
+  // Fetch and update data based on filters, especially ELL filter
+  const syncDataWithFilters = useCallback(async () => {
+    setIsProcessing(true);
+    try {
+      // Create filter parameters for aggregateTeacherGradeSummaries
+      const filterParams = {
+        term: selectedTerms.length > 0 ? selectedTerms[0] : undefined,
+        teacherNumber:
+          selectedTeachers.length > 0
+            ? getTeacherNumberFromName(selectedTeachers[0])
+            : undefined,
+        departmentCode:
+          selectedDepartments.length > 0 ? selectedDepartments[0] : undefined,
+        sc:
+          selectedSchools.length > 0 ? parseInt(selectedSchools[0]) : undefined,
+        period: selectedPeriods.length > 0 ? selectedPeriods[0] : undefined,
+        ellStatus: selectedEll.length > 0 ? selectedEll[0] : undefined,
+        specialEdStatus:
+          selectedSpecialEd.length > 0 ? selectedSpecialEd[0] : undefined,
+        ardStatus: selectedArd.length > 0 ? selectedArd[0] : undefined,
+        courseTitleStatus:
+          selectedCourseTitles.length > 0 ? selectedCourseTitles[0] : undefined,
+      };
+      // console.log("Selected ARD", selectedArd);
+      // console.log("Filter Parameters:", filterParams);
+
+      // Call the server function and get the returned data
+      const newData = await aggregateTeacherGradeSummaries(filterParams);
+
+      // Update state with the returned data
+      if (newData && newData.length > 0) {
+        setData(newData);
+        setFilteredData(newData);
+
+        // Rebuild dropdown items from the NEW data
+        // Generate new items for each dropdown
+        const newTeacherItems = Array.from(
+          new Set(newData.map((item) => item.teacherName))
+        )
+          .filter(Boolean)
+          .sort((a, b) => a.localeCompare(b))
+          .map((teacher) => ({
+            id: teacher,
+            label: teacher,
+          }));
+
+        const newDepartmentItems = Array.from(
+          new Set(newData.map((item) => item.department))
+        )
+          .filter(Boolean)
+          .sort((a, b) => a.localeCompare(b))
+          .map((dept) => ({
+            id: dept,
+            label: dept,
+          }));
+
+        const newSchoolItems = Array.from(
+          new Set(newData.map((item) => String(item.sc)))
+        )
+          .filter(Boolean)
+          .map((school) => ({
+            id: school,
+            label: school,
+          }));
+
+        const newCourseTitleItems = Array.from(
+          new Set(newData.map((item) => item.courseTitle))
+        )
+          .filter(Boolean)
+          .sort((a, b) => a.localeCompare(b))
+          .map((course) => ({
+            id: course,
+            label: course,
+          }));
+
+        const newTermItems = Array.from(
+          new Set(newData.map((item) => item.term))
+        )
+          .filter(Boolean)
+          .sort()
+          .map((term) => ({
+            id: term,
+            label: term,
+          }));
+
+        // Update dropdown options
+        setFilteredTeacherItems(newTeacherItems);
+        setFilteredDepartmentItems(newDepartmentItems);
+        setFilteredSchoolItems(newSchoolItems);
+        setFilteredCourseTitleItems(newCourseTitleItems);
+        setFilteredTermItems(newTermItems);
+
+        // Keep the current selected values (important!)
+        // But only if they still exist in the new data
+        if (selectedTeachers.length > 0) {
+          const validTeachers = selectedTeachers.filter((teacher) =>
+            newTeacherItems.some((item) => item.id === teacher)
+          );
+          if (validTeachers.length !== selectedTeachers.length) {
+            setSelectedTeachers(validTeachers);
+          }
+        }
+
+        if (selectedDepartments.length > 0) {
+          const validDepartments = selectedDepartments.filter((dept) =>
+            newDepartmentItems.some((item) => item.id === dept)
+          );
+          if (validDepartments.length !== selectedDepartments.length) {
+            setSelectedDepartments(validDepartments);
+          }
+        }
+
+        if (selectedSchools.length > 0) {
+          const validSchools = selectedSchools.filter((school) =>
+            newSchoolItems.some((item) => item.id === school)
+          );
+          if (validSchools.length !== selectedSchools.length) {
+            setSelectedSchools(validSchools);
+          }
+        }
+
+        if (selectedCourseTitles.length > 0) {
+          const validCourses = selectedCourseTitles.filter((course) =>
+            newCourseTitleItems.some(
+              (item) =>
+                item.id.toLowerCase().trim() === course.toLowerCase().trim()
+            )
+          );
+          if (validCourses.length !== selectedCourseTitles.length) {
+            setSelectedCourseTitles(validCourses);
+          }
+        }
+
+        if (selectedTerms.length > 0) {
+          const validTerms = selectedTerms.filter((term) =>
+            newTermItems.some((item) => item.id === term)
+          );
+          if (validTerms.length !== selectedTerms.length) {
+            setSelectedTerms(validTerms);
+          }
+        }
+      } else {
+        // Handle empty data
+        setData([]);
+        setFilteredData([]);
+        // Clear dropdown options but keep ELL items
+        setFilteredTeacherItems([]);
+        setFilteredDepartmentItems([]);
+        setFilteredSchoolItems([]);
+        setFilteredCourseTitleItems([]);
+        setFilteredTermItems([]);
+        // Clear selections except ELL
+        setSelectedTeachers([]);
+        setSelectedDepartments([]);
+        setSelectedSchools([]);
+        setSelectedCourseTitles([]);
+        setSelectedTerms([]);
+      }
+    } catch (error) {
+      console.error("Error syncing data with filters:", error);
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [
     selectedTeachers,
     selectedDepartments,
     selectedCourseTitles,
@@ -530,18 +789,10 @@ const GradeDistribution2 = ({
     selectedEll,
     selectedSpecialEd,
     selectedArd,
-    teacherItems,
-    departmentItems,
-    courseTitleItems,
-    termItems,
-    schoolItems,
-    periodItems,
-    ellItems,
-    specialEdItems,
-    ardItems,
+    getTeacherNumberFromName,
   ]);
 
-  // Update effect for handling filter changes
+  // Effect to apply filters and update data
   useEffect(() => {
     if (!initialData || isLoading) return;
 
@@ -582,8 +833,13 @@ const GradeDistribution2 = ({
         result = result.filter((item) => selectedPeriods.includes(item.period));
       }
 
+      // When ELL filter changes, we want to trigger server-side filtering
       if (selectedEll.length > 0) {
+        // First apply client-side filtering
         result = result.filter((item) => selectedEll.includes(item.ell));
+
+        // Then trigger server-side data refresh with current filters
+        syncDataWithFilters();
       }
 
       if (selectedSpecialEd.length > 0) {
@@ -602,23 +858,6 @@ const GradeDistribution2 = ({
 
       // Update dropdown options based on current filters
       updateDropdownOptions();
-
-      // Run the aggregation function with the current filters
-      aggregateTeacherGradeSummaries({
-        term: selectedTerms.length > 0 ? selectedTerms[0] : undefined,
-        teacherNumber:
-          selectedTeachers.length > 0
-            ? getTeacherNumberFromName(selectedTeachers[0])
-            : undefined,
-        departmentCode:
-          selectedDepartments.length > 0 ? selectedDepartments[0] : undefined,
-        sc:
-          selectedSchools.length > 0 ? parseInt(selectedSchools[0]) : undefined,
-        period: selectedPeriods.length > 0 ? selectedPeriods[0] : undefined,
-        ellStatus: selectedEll.length > 0 ? selectedEll[0] : undefined,
-        specialEdStatus:
-          selectedSpecialEd.length > 0 ? selectedSpecialEd[0] : undefined,
-      });
     } catch (error) {
       console.error("Error filtering data:", error);
     } finally {
@@ -639,7 +878,20 @@ const GradeDistribution2 = ({
     isLoading,
     getTeacherNumberFromName,
     updateDropdownOptions,
+    syncDataWithFilters,
   ]);
+
+  // Watch for specific ELL filter changes and trigger server-side refresh
+  useEffect(() => {
+    if (
+      selectedEll.length > 0 ||
+      selectedSpecialEd.length > 0 ||
+      selectedArd.length > 0
+    ) {
+      // console.log("Special Ed",selectedSpecialEd)
+      syncDataWithFilters();
+    }
+  }, [selectedEll, selectedSpecialEd, selectedArd, syncDataWithFilters]);
 
   const exportToCSV = useCallback(() => {
     if (!gridApi) return;
@@ -696,7 +948,7 @@ const GradeDistribution2 = ({
     () => [
       {
         field: "sc",
-        headerName: "School Code",
+        headerName: "School",
         filter: true,
         sortable: true,
         floatingFilter: true,
@@ -705,8 +957,20 @@ const GradeDistribution2 = ({
         enableRowGroup: true,
       },
       {
+        field: "tn",
+        headerName: "Teacher Number",
+        filter: true,
+        sortable: true,
+        floatingFilter: true,
+        flex: 2,
+        pivot: true,
+        enableRowGroup: true,
+        hide: true,
+      },
+      {
         field: "teacherName",
         headerName: "Teacher",
+        cellRenderer: createTeacherCellRenderer(),
         filter: true,
         sortable: true,
         floatingFilter: true,
@@ -847,7 +1111,7 @@ const GradeDistribution2 = ({
         enableValue: true,
       },
     ],
-    []
+    [selectedEll, selectedSpecialEd, selectedArd]
   );
 
   const defaultColDef = useMemo(
@@ -913,7 +1177,12 @@ const GradeDistribution2 = ({
       setFilteredPeriodItems(periodItems);
 
       // Run the aggregation with no filters when resetting
-      aggregateTeacherGradeSummaries({});
+      aggregateTeacherGradeSummaries({
+        setData: (newData: any[]) => {
+          setData(newData);
+          setFilteredData(newData);
+        },
+      });
 
       // Also reset the grid filters if the grid API is available
       if (gridApi) {
@@ -959,7 +1228,14 @@ const GradeDistribution2 = ({
   // Initial aggregation on component mount
   useEffect(() => {
     if (initialData && initialData.length > 0 && !isLoading) {
-      aggregateTeacherGradeSummaries({});
+      aggregateTeacherGradeSummaries({
+        setData: (newData: any[]) => {
+          if (newData && newData.length > 0) {
+            setData(newData);
+            setFilteredData(newData);
+          }
+        },
+      });
     }
   }, [initialData, isLoading]);
 
@@ -1001,17 +1277,17 @@ const GradeDistribution2 = ({
             : ""
         }`,
       },
-      data: filteredData,
+      data: data,
       theme: {
         baseTheme: baseChartTheme,
         palette: {
           fills: [
-            "#2E86C1", // A - Blue
-            "#5DADE2", // B - Light Blue
-            "#F4D03F", // C - Yellow
-            "#E67E22", // D - Orange
-            "#C0392B", // F - Red
             "#7F8C8D", // Other - Gray
+            "#C0392B", // F - Red
+            "#E67E22", // D - Orange
+            "#F4D03F", // C - Yellow
+            "#5DADE2", // B - Light Blue
+            "#2E86C1", // A - Blue
           ],
           strokes: ["gray"],
         },
@@ -1020,32 +1296,8 @@ const GradeDistribution2 = ({
         {
           type: "bar",
           xKey: "teacherName",
-          yKey: "aPercent",
-          yName: "A%",
-          stacked: true,
-          tooltip: { renderer: CustomTooltip },
-        },
-        {
-          type: "bar",
-          xKey: "teacherName",
-          yKey: "bPercent",
-          yName: "B%",
-          stacked: true,
-          tooltip: { renderer: CustomTooltip },
-        },
-        {
-          type: "bar",
-          xKey: "teacherName",
-          yKey: "cPercent",
-          yName: "C%",
-          stacked: true,
-          tooltip: { renderer: CustomTooltip },
-        },
-        {
-          type: "bar",
-          xKey: "teacherName",
-          yKey: "dPercent",
-          yName: "D%",
+          yKey: "otherPercent",
+          yName: "Other%",
           stacked: true,
           tooltip: { renderer: CustomTooltip },
         },
@@ -1060,8 +1312,33 @@ const GradeDistribution2 = ({
         {
           type: "bar",
           xKey: "teacherName",
-          yKey: "otherPercent",
-          yName: "Other%",
+          yKey: "dPercent",
+          yName: "D%",
+          stacked: true,
+          tooltip: { renderer: CustomTooltip },
+        },
+        
+        {
+          type: "bar",
+          xKey: "teacherName",
+          yKey: "cPercent",
+          yName: "C%",
+          stacked: true,
+          tooltip: { renderer: CustomTooltip },
+        },
+        {
+          type: "bar",
+          xKey: "teacherName",
+          yKey: "bPercent",
+          yName: "B%",
+          stacked: true,
+          tooltip: { renderer: CustomTooltip },
+        },
+        {
+          type: "bar",
+          xKey: "teacherName",
+          yKey: "aPercent",
+          yName: "A%",
           stacked: true,
           tooltip: { renderer: CustomTooltip },
         },
@@ -1111,6 +1388,7 @@ const GradeDistribution2 = ({
       CustomTooltip,
     ]
   );
+
   const updateChartData = useCallback(
     (params) => {
       setIsProcessing(true);
@@ -1194,7 +1472,12 @@ const GradeDistribution2 = ({
       // This captures filters applied directly in the grid
       try {
         const model = params.api.getFilterModel();
-        const filterProps = {};
+        const filterProps = {
+          setData: (newData: any[]) => {
+            setData(newData);
+            setFilteredData(newData);
+          },
+        };
 
         if (model.teacherName) {
           // For complex grid filter models, we may need to extract values differently
@@ -1227,6 +1510,7 @@ const GradeDistribution2 = ({
             filterProps.term = terms[0];
           }
         }
+
         if (model.sc) {
           const schools =
             model.sc.values || (model.sc.filter ? [model.sc.filter] : []);
@@ -1274,7 +1558,7 @@ const GradeDistribution2 = ({
           }
         }
 
-        aggregateTeacherGradeSummaries(filterProps);
+        aggregateTeacherGradeSummaries({ ...filterProps });
       } catch (error) {
         console.error("Error aggregating based on grid filters:", error);
       }
@@ -1288,10 +1572,15 @@ const GradeDistribution2 = ({
     },
     [updateChartData]
   );
+
+  // console.log("selectedTerms", selectedTerms);
+  // console.log("selectedSchools", selectedSchools);
+  console.log("filteredSchoolItems", filteredSchoolItems);
   return (
     <div className="w-full space-y-4 relative">
       {showLoading && <LoadingOverlay />}
-      <SyncGradeDistributionButton />
+      {user.admin && <SyncGradeDistributionButton />}
+
       <Card>
         <CardHeader>
           <CardTitle>Filters</CardTitle>
@@ -1316,21 +1605,16 @@ const GradeDistribution2 = ({
                   disabled={showLoading}
                   maxDisplayItems={1}
                   singleSelect={true}
-                  itemOrder={[
-                    "PRG1",
-                    "GRD1",
-                    "PRG2",
-                    "GRD2",
-                    "SEM1",
-                    "PRG3",
-                    "GRD3",
-                    "PRG4",
-                    "GRD4",
-                    "SEM2",
-                  ]}
+                  itemOrder={allTerms}
+                  classNameVar={
+                    selectedTerms.length === 0
+                      ? "outline outline-red-600 rounded-md"
+                      : ""
+                  }
                 />
                 <MultiDropdownSelector
                   items={filteredSchoolItems}
+                  // items={user.UserSchools}
                   values={selectedSchools}
                   onChange={setSelectedSchools}
                   placeholder="Select schools"
@@ -1338,27 +1622,19 @@ const GradeDistribution2 = ({
                   width="w-full"
                   disabled={showLoading}
                   maxDisplayItems={2}
+                  // defaultValues={defaultSchool}
+                  schoolValues={user.UserSchools}
                 />
-                {/* <MultiDropdownSelector
-                  items={filteredPeriodItems}
-                  values={selectedPeriods}
-                  onChange={setSelectedPeriods}
-                  placeholder="Select periods"
-                  label="Periods"
+                <MultiDropdownSelector
+                  items={filteredCourseTitleItems}
+                  values={selectedCourseTitles}
+                  onChange={setSelectedCourseTitles}
+                  placeholder="Select Courses"
+                  label="Courses"
                   width="w-full"
                   disabled={showLoading}
-                  maxDisplayItems={2}
-                /> */}
-              <MultiDropdownSelector
-                items={filteredCourseTitleItems}
-                values={selectedCourseTitles}
-                onChange={setSelectedCourseTitles}
-                placeholder="Select Courses"
-                label="Courses"
-                width="w-full"
-                disabled={showLoading}
-                maxDisplayItems={1}
-              />
+                  maxDisplayItems={1}
+                />
               </div>
               <Separator className="my-4" />
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -1392,6 +1668,7 @@ const GradeDistribution2 = ({
                   placeholder="Select ELL status"
                   label="ELL Status"
                   width="w-full"
+                  singleSelect={true}
                   disabled={showLoading || filteredEllItems.length === 0}
                   maxDisplayItems={1}
                 />
@@ -1402,6 +1679,7 @@ const GradeDistribution2 = ({
                   placeholder="Select Special Ed status"
                   label="Special Ed Status"
                   width="w-full"
+                  singleSelect={true}
                   disabled={showLoading || filteredSpecialEdItems.length === 0}
                   maxDisplayItems={1}
                 />
@@ -1412,6 +1690,7 @@ const GradeDistribution2 = ({
                   placeholder="Select Race / Ethnicity"
                   label="Race / Ethnicity"
                   width="w-full"
+                  singleSelect={true}
                   disabled={showLoading || filteredArdItems.length === 0}
                   maxDisplayItems={1}
                 />
@@ -1439,255 +1718,289 @@ const GradeDistribution2 = ({
           )}
         </CardContent>
       </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Grade Distribution Chart</CardTitle>
-          {selectedTeachers.length > 0 && (
-            <div className="flex items-center">
-              <span className="text-sm mr-1">Teachers:</span>
-              <div className="flex flex-wrap gap-1">
-                {selectedTeachers.map((teacherId) => {
-                  const teacher = teacherItems.find((t) => t.id === teacherId);
-                  return (
-                    <Badge
-                      key={teacherId}
-                      className="text-xs py-0 bg-primary/80 text-white"
-                    >
-                      {teacher?.label || teacherId}
-                    </Badge>
-                  );
-                })}
+      {selectedTerms.length > 0 ? (
+        <>
+          <Card>
+            <CardHeader>
+              <CardTitle>Grade Distribution Chart</CardTitle>
+              <div className="">
+                {selectedTeachers.length > 0 && (
+                  <div className="flex items-center">
+                    <span className="text-sm mr-1">Teachers:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedTeachers.map((teacherId) => {
+                        const teacher = teacherItems.find(
+                          (t) => t.id === teacherId
+                        );
+                        return (
+                          <Badge
+                            key={teacherId}
+                            className="text-xs py-0 bg-primary/80 text-white"
+                          >
+                            {teacher?.label || teacherId}
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                {selectedDepartments.length > 0 && (
+                  <div className="flex items-center">
+                    <span className="text-sm mr-1">Departments:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedDepartments.map((deptId) => {
+                        const dept = departmentItems.find(
+                          (d) => d.id === deptId
+                        );
+                        return (
+                          <Badge
+                            key={deptId}
+                            className="text-xs py-0 bg-primary/80 text-white"
+                          >
+                            {dept?.label || deptId}
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                {selectedCourseTitles.length > 0 && (
+                  <div className="flex items-center">
+                    <span className="text-sm mr-1">Courses:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedCourseTitles.map((courseId) => {
+                        const course = courseTitleItems.find(
+                          (c) => c.id === courseId
+                        );
+                        return (
+                          <Badge
+                            key={courseId}
+                            className="text-xs py-0 bg-primary/80 text-white"
+                          >
+                            {course?.label || courseId}
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                {selectedTerms.length > 0 && (
+                  <div className="flex items-center">
+                    <span className="text-sm mr-1">Terms:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedTerms.map((termId) => {
+                        const term = termItems.find((t) => t.id === termId);
+                        return (
+                          <Badge
+                            key={termId}
+                            className="text-xs py-0 bg-primary/80 text-white"
+                          >
+                            {term?.label || termId}
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                {selectedSchools.length > 0 && (
+                  <div className="flex items-center">
+                    <span className="text-sm mr-1">Schools:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedSchools.map((schoolId) => {
+                        const school = schoolItems.find(
+                          (s) => s.id === schoolId
+                        );
+                        return (
+                          <Badge
+                            key={schoolId}
+                            className="text-xs py-0 bg-primary/80 text-white"
+                          >
+                            { <img 
+                              src={school.logo} 
+                              alt={`${school.label} logo`} 
+                              className="h-4 w-4 mr-1 relative overflow-hidden rounded-sm" />} {school?.label || schoolId}
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                {selectedPeriods.length > 0 && (
+                  <div className="flex items-center">
+                    <span className="text-sm mr-1">Periods:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedPeriods.map((periodId) => {
+                        const period = periodItems.find(
+                          (p) => p.id === periodId
+                        );
+                        return (
+                          <Badge
+                            key={periodId}
+                            className="text-xs py-0 bg-primary/80 text-white"
+                          >
+                            {period?.label || periodId}
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                {selectedEll.length > 0 && (
+                  <div className="flex items-center">
+                    <span className="text-sm mr-1">ELL:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedEll.map((ellId) => {
+                        const ell = ellItems.find((e) => e.id === ellId);
+                        return (
+                          <Badge
+                            key={ellId}
+                            className="text-xs py-0 bg-primary/80 text-white"
+                          >
+                            {ell?.label || ellId}
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                {selectedSpecialEd.length > 0 && (
+                  <div className="flex items-center">
+                    <span className="text-sm mr-1">Special Ed:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedSpecialEd.map((specialEdId) => {
+                        const specialEd = specialEdItems.find(
+                          (s) => s.id === specialEdId
+                        );
+                        return (
+                          <Badge
+                            key={specialEdId}
+                            className="text-xs py-0 bg-primary/80 text-white"
+                          >
+                            {specialEd?.label || specialEdId}
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                {selectedArd.length > 0 && (
+                  <div className="flex items-center">
+                    <span className="text-sm mr-1">Race/Ethnicity:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedArd.map((ardId) => {
+                        const ard = ardItems.find((a) => a.id === ardId);
+                        return (
+                          <Badge
+                            key={ardId}
+                            className="text-xs py-0 bg-primary/80 text-white"
+                          >
+                            {ard?.label || ardId}
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-          )}
-          {selectedDepartments.length > 0 && (
-            <div className="flex items-center">
-              <span className="text-sm mr-1">Departments:</span>
-              <div className="flex flex-wrap gap-1">
-                {selectedDepartments.map((deptId) => {
-                  const dept = departmentItems.find((d) => d.id === deptId);
-                  return (
-                    <Badge
-                      key={deptId}
-                      className="text-xs py-0 bg-primary/80 text-white"
-                    >
-                      {dept?.label || deptId}
-                    </Badge>
-                  );
-                })}
+              <div className="flex items-center mb-4 w-full items-right">
+                <ExportChartButton
+                  chartRef={chartRef}
+                  filename={`grade distribution${
+                    selectedCourseTitles.length > 0 ? " - " : ""
+                  }${selectedCourseTitles.join("-")} - ${
+                    selectedTerms.join("-") || "all"
+                  }`}
+                  disabled={showLoading || !filteredData.length}
+                />
               </div>
-            </div>
-          )}
-          {selectedCourseTitles.length > 0 && (
-            <div className="flex items-center">
-              <span className="text-sm mr-1">Courses:</span>
-              <div className="flex flex-wrap gap-1">
-                {selectedCourseTitles.map((courseId) => {
-                  const course = courseTitleItems.find(
-                    (c) => c.id === courseId
-                  );
-                  return (
-                    <Badge
-                      key={courseId}
-                      className="text-xs py-0 bg-primary/80 text-white"
-                    >
-                      {course?.label || courseId}
-                    </Badge>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-          {selectedTerms.length > 0 && (
-            <div className="flex items-center">
-              <span className="text-sm mr-1">Terms:</span>
-              <div className="flex flex-wrap gap-1">
-                {selectedTerms.map((termId) => {
-                  const term = termItems.find((t) => t.id === termId);
-                  return (
-                    <Badge
-                      key={termId}
-                      className="text-xs py-0 bg-primary/80 text-white"
-                    >
-                      {term?.label || termId}
-                    </Badge>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-          {selectedSchools.length > 0 && (
-            <div className="flex items-center">
-              <span className="text-sm mr-1">Schools:</span>
-              <div className="flex flex-wrap gap-1">
-                {selectedSchools.map((schoolId) => {
-                  const school = schoolItems.find((s) => s.id === schoolId);
-                  return (
-                    <Badge
-                      key={schoolId}
-                      className="text-xs py-0 bg-primary/80 text-white"
-                    >
-                      {school?.label || schoolId}
-                    </Badge>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-          {selectedPeriods.length > 0 && (
-            <div className="flex items-center">
-              <span className="text-sm mr-1">Periods:</span>
-              <div className="flex flex-wrap gap-1">
-                {selectedPeriods.map((periodId) => {
-                  const period = periodItems.find((p) => p.id === periodId);
-                  return (
-                    <Badge
-                      key={periodId}
-                      className="text-xs py-0 bg-primary/80 text-white"
-                    >
-                      {period?.label || periodId}
-                    </Badge>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-          {selectedEll.length > 0 && (
-            <div className="flex items-center">
-              <span className="text-sm mr-1">ELL:</span>
-              <div className="flex flex-wrap gap-1">
-                {selectedEll.map((ellId) => {
-                  const ell = ellItems.find((e) => e.id === ellId);
-                  return (
-                    <Badge
-                      key={ellId}
-                      className="text-xs py-0 bg-primary/80 text-white"
-                    >
-                      {ell?.label || ellId}
-                    </Badge>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-          {selectedSpecialEd.length > 0 && (
-            <div className="flex items-center">
-              <span className="text-sm mr-1">Special Ed:</span>
-              <div className="flex flex-wrap gap-1">
-                {selectedSpecialEd.map((specialEdId) => {
-                  const specialEd = specialEdItems.find(
-                    (s) => s.id === specialEdId
-                  );
-                  return (
-                    <Badge
-                      key={specialEdId}
-                      className="text-xs py-0 bg-primary/80 text-white"
-                    >
-                      {specialEd?.label || specialEdId}
-                    </Badge>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-          {selectedArd.length > 0 && (
-            <div className="flex items-center">
-              <span className="text-sm mr-1">ARD:</span>
-              <div className="flex flex-wrap gap-1">
-                {selectedArd.map((ardId) => {
-                  const ard = ardItems.find((a) => a.id === ardId);
-                  return (
-                    <Badge
-                      key={ardId}
-                      className="text-xs py-0 bg-primary/80 text-white"
-                    >
-                      {ard?.label || ardId}
-                    </Badge>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-           <div className="flex items-center mb-4 w-full items-right">
-              <ExportChartButton
-                chartRef={chartRef}
-                filename={`grade distribution${selectedCourseTitles.length > 0 ? ' - ' : ''}${selectedCourseTitles.join('-')} - ${selectedTerms.join('-') || 'all'}`}
-                disabled={showLoading || !filteredData.length}
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="h-[300px] flex items-center justify-center">
+                  <Skeleton className="h-[250px] w-full" />
+                </div>
+              ) : (
+                <div className="h-[500px] relative">
+                  <AgCharts
+                    options={chartOptions}
+                    ref={chartRef}
+                    style={{ width: "100%", height: "100%" }}
                   />
                 </div>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="h-[300px] flex items-center justify-center">
-              <Skeleton className="h-[250px] w-full" />
-            </div>
-          ) : (
-            <div className="h-[500px] relative">
-              <AgCharts
-                options={chartOptions}
-                ref={chartRef}
-                style={{ width: "100%", height: "100%" }}
-                />
-            </div>
-          )}
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>Grade Distribution Data</CardTitle>
-            <Button
-              onClick={exportToCSV}
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
-              disabled={showLoading || !data?.length}
-            >
-              {showLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Exporting...
-                </>
-              ) : (
-                "Export to CSV"
               )}
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="h-[600px] w-full">
-              <Skeleton className="h-full w-full" />
-            </div>
-          ) : (
-            <div className="h-[600px] w-full relative">
-              <AgGridReact
-                theme={gridThemeClass}
-                rowData={data}
-                columnDefs={columnDefs}
-                defaultColDef={defaultColDef}
-                onGridReady={onGridReady}
-                onGridSizeChanged={onGridSizeChanged}
-                onFilterChanged={onFilterChanged}
-                onSortChanged={onSortChanged}
-                animateRows={true}
-                pagination={true}
-                paginationPageSizeSelector={paginationPageSizes}
-                paginationPageSize={data?.length > 20 ? data.length : 20}
-                enableCharts={true}
-                cellSelection={true}
-                pivotMode={false}
-                pivotPanelShow="onlyWhenPivoting"
-                // sideBar={["columns", "filters"]}
-                loadingOverlayComponent="Loading..."
-                loadingOverlayComponentParams={{
-                  loadingMessage: "Loading data...",
-                }}
-                />
-            </div>
-          )}
-        </CardContent>
-      </Card>
-      </div>
-    );
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Grade Distribution Data</CardTitle>
+              {/* <ExportCsvButton 
+                data={filteredData}
+                showLoading={showLoading}
+              /> */}
+              <div className="flex justify-between items-center">
+                <Button
+                  onClick={exportToCSV}
+                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+                  disabled={showLoading || !data?.length}
+                >
+                  {showLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Exporting...
+                    </>
+                  ) : (
+                    "Export to CSV"
+                  )}
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="h-[600px] w-full">
+                  <Skeleton className="h-full w-full" />
+                </div>
+              ) : (
+                <div className="h-[600px] w-full relative">
+                  <AgGridReact
+                    theme={gridThemeClass}
+                    rowData={filteredData}
+                    columnDefs={columnDefs}
+                    defaultColDef={defaultColDef}
+                    onGridReady={onGridReady}
+                    onGridSizeChanged={onGridSizeChanged}
+                    onFilterChanged={onFilterChanged}
+                    onSortChanged={onSortChanged}
+                    animateRows={true}
+                    pagination={true}
+                    paginationPageSizeSelector={paginationPageSizes}
+                    paginationPageSize={data?.length > 20 ? data.length : 20}
+                    enableCharts={true}
+                    cellSelection={true}
+                    pivotMode={false}
+                    pivotPanelShow="onlyWhenPivoting"
+                    // sideBar={["columns", "filters"]}
+                    loadingOverlayComponent="Loading..."
+                    loadingOverlayComponentParams={{
+                      loadingMessage: "Loading data...",
+                    }}
+                  />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>Please Select a Term to show data</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[500px] flex items-center justify-center"></div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
 };
 
 export default GradeDistribution2;
