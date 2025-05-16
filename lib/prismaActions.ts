@@ -82,11 +82,11 @@ export async function getStudentGrades(
       ORDER BY term, period, courseTitle, studentId
     `;
 
-    console.log("Executing query:", query, "with params:", params);
+    // console.log("Executing query:", query, "with params:", params);
 
     const result = await prisma.$queryRawUnsafe(query, ...params);
 
-    console.log(`Query returned ${result?.length || 0} records`);
+    // console.log(`Query returned ${result?.length || 0} records`);
     return result;
   } catch (error) {
     console.error("Database error in server action:", error);
