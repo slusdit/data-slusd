@@ -1,8 +1,8 @@
-# SLUSD Data v2.0
+# SLUSD Data
 
 ## Frontend
 
-NextJS 14 server using Prisma ORM is running on [https://data.slusd.us](https://data.slusd.us)
+NextJS 15 web app using Prisma ORM is running on [https://data.slusd.us](https://data.slusd.us)
 
 Requires `.env` file in the root directory with the following values
 
