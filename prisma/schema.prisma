@@ -222,6 +222,7 @@ model GradeDistribution {
   specialEd     String?
   ell           String?  // English Language Learner
   ard           String?  // American Race/Ethnicity
+  dli           String?  // Dual Language Student
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   
