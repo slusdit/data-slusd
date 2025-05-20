@@ -23,6 +23,7 @@ interface RawGradeData {
   SpecialEd: string;
   ELL: string;
   ARD: string;
+  DLI: string;
 }
 
 export async function syncGradeDistribution() {
