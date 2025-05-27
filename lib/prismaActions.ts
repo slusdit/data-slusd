@@ -14,12 +14,13 @@ export async function getStudentGrades(
   tn: string,
   term?: string,
   courseTitle?: string,
+  genderStatus?: string,
   ellStatus?: string,
   specialEdStatus?: string,
   ardStatus?: string
 ) {
   try {
-    console.log("Server action called with:", { sc, tn, term, courseTitle, ellStatus, specialEdStatus, ardStatus });
+    console.log("Server action called with:", { sc, tn, term, courseTitle, genderStatus, ellStatus, specialEdStatus, ardStatus });
 
     // Use Prisma's $queryRaw to execute raw SQL safely with parameter binding
     // This approach prevents SQL injection
@@ -58,6 +59,10 @@ export async function getStudentGrades(
       whereConditions.push("ard = ?");
       params.push(ardStatus);
     }
+    if (genderStatus) {
+      whereConditions.push("gender = ?");
+      params.push(genderStatus);
+    }
 
     const whereClause = whereConditions.join(" AND ");
 
@@ -67,6 +72,7 @@ export async function getStudentGrades(
         studentNumber, 
         grade, 
         period,
+        gender,
         departmentCode, 
         courseNumber, 
         courseTitle,

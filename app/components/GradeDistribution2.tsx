@@ -34,18 +34,6 @@ const PercentCellRenderer = (props) => {
   const value = props.value;
   if (value === null || value === undefined) return "0%";
   return value.toFixed(0) + "%";
-  return (
-    <TeacherGradesDialog
-      teacher={props.data?.teacherName || ""}
-      sc={props.data?.sc || ""}
-      tn={props.data?.tn || ""}
-      department={props.data?.department || ""}
-      params={props}
-      colField={props.colDef.field}
-    >
-      {value.toFixed(1)}%
-    </TeacherGradesDialog>
-  );
 };
 
 interface StudentAttributes {
@@ -73,8 +61,6 @@ const GradeDistribution2 = ({
     ardOptions: [],
   },
 }: GradeDistribution2Props) => {
-  // console.log("Active School:", activeSchool);
-  // console.log("User:", user);
   const availibleSchools =
     user.UserSchool?.map(
       (school: {
@@ -94,9 +80,7 @@ const GradeDistribution2 = ({
     "SEM2",
   ];
   const acceptedSchools = initialData?.map((item) => String(item.sc)) || [];
-  // console.log("Available Schools:", availibleSchools);
-  // console.log("Accepted Schools:", acceptedSchools);
-  // console.log("School Check", !acceptedSchools.includes(availibleSchools));
+
   let defaultSchool;
   if (activeSchool) {
     if (activeSchool === "0" || !acceptedSchools.includes(activeSchool)) {
@@ -122,7 +106,7 @@ const GradeDistribution2 = ({
   const [selectedArd, setSelectedArd] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // New state variables for filtered dropdown options
+  // State variables for filtered dropdown options
   type FilteredItem = {
     id: string;
     label: string;
@@ -294,42 +278,36 @@ const GradeDistribution2 = ({
   }, [initialData]);
 
   const schoolItems = useMemo(() => {
-  if (!initialData || initialData.length === 0) return [];
+    if (!initialData || initialData.length === 0) return [];
 
+    const uniqueSchools = [
+      ...new Set(initialData.map((item) => String(item.sc))),
+    ].filter(Boolean);
 
-  const uniqueSchools = [
-    ...new Set(initialData.map((item) => String(item.sc))),
-  ].filter(Boolean);
-  
-  console.log("Unique Schools", uniqueSchools);
-  
+    console.log("Unique Schools", uniqueSchools);
 
-  const userSchools = user.UserSchool.map((school) => {
-    return {
-      sc: school.school.sc,
-      label: school.school.name,
-      logo: school.school.logo,
-    }
-  });
-  
-  console.log("User Schools", userSchools);
-  
+    const userSchools = user.UserSchool.map((school) => {
+      return {
+        sc: school.school.sc,
+        label: school.school.name,
+        logo: school.school.logo,
+      };
+    });
 
-  const filteredSchools = userSchools.filter((school) => {
-    return uniqueSchools.includes(school.sc);
-  });
-  
-  console.log("Filtered Schools", filteredSchools);
-  
+    console.log("User Schools", userSchools);
 
-  return filteredSchools.map((school) => ({
-    id: school.sc,       
-    label: school.label,
-    logo: school.logo,
+    const filteredSchools = userSchools.filter((school) => {
+      return uniqueSchools.includes(school.sc);
+    });
 
-  }));
-  
-}, [initialData, user.UserSchool]);
+    console.log("Filtered Schools", filteredSchools);
+
+    return filteredSchools.map((school) => ({
+      id: school.sc,
+      label: school.label,
+      logo: school.logo,
+    }));
+  }, [initialData, user.UserSchool]);
 
   const courseTitleItems = useMemo(() => {
     if (!initialData || initialData.length === 0) return [];
@@ -497,9 +475,9 @@ const GradeDistribution2 = ({
     ]
   );
 
-  // Helper function to update dropdown options based on filtered data
+
   const updateDropdownOptions = useCallback(() => {
-    // Get filtered data excluding each respective filter
+
     const teacherFilteredData = getFilteredDataExcluding("teachers");
     const departmentFilteredData = getFilteredDataExcluding("departments");
     const courseFilteredData = getFilteredDataExcluding("courses");
@@ -1317,7 +1295,7 @@ const GradeDistribution2 = ({
           stacked: true,
           tooltip: { renderer: CustomTooltip },
         },
-        
+
         {
           type: "bar",
           xKey: "teacherName",
@@ -1815,10 +1793,14 @@ const GradeDistribution2 = ({
                             key={schoolId}
                             className="text-xs py-0 bg-primary/80 text-white"
                           >
-                            { <img 
-                              src={school.logo} 
-                              alt={`${school.label} logo`} 
-                              className="h-4 w-4 mr-1 relative overflow-hidden rounded-sm" />} {school?.label || schoolId}
+                            {
+                              <img
+                                src={school.logo}
+                                alt={`${school.label} logo`}
+                                className="h-4 w-4 mr-1 relative overflow-hidden rounded-sm"
+                              />
+                            }{" "}
+                            {school?.label || schoolId}
                           </Badge>
                         );
                       })}
