@@ -7,6 +7,8 @@ import GradeDistribution from "@/app/components/GradeDistribution";
 import prisma from "@/lib/db";
 import GradeDistribution2 from "../components/GradeDistribution2";
 import SyncGradeDistributionButton from "../components/SyncGradeDistributionButton";
+import GradeDistribution3 from "../components/GradeDistribution3";
+import { aggregateTeacherGradeSummaries } from "@/lib/syncGradeDistribution";
 
 export default async function GradeDistributionPage() {
     const session = await auth();
@@ -28,7 +30,7 @@ export default async function GradeDistributionPage() {
     const ardOptions = [...new Set(rawData.map(item => item.ard).filter(Boolean))];
     console.log("Unique ARD options:", ardOptions);
 
-    const data = await prisma.teacherGradeSummary.findMany({});
+    const data = await aggregateTeacherGradeSummaries({})
     console.log("Data fetched from the database:", data[0]);
     
     if (!session) {    
@@ -58,7 +60,7 @@ export default async function GradeDistributionPage() {
                     <p className="text-muted-foreground">Grade Distribution Description</p>
                 </div>
                 {/* <SyncGradeDistributionButton /> */}
-                <GradeDistribution2 
+                <GradeDistribution3 
                     data={data} 
                     session={session}
                     studentAttributes={{
@@ -69,6 +71,17 @@ export default async function GradeDistributionPage() {
                     activeSchool={session.user.activeSchool.toString()}
                     user={session.user}
                 />
+                {/* <GradeDistribution2 
+                    data={data} 
+                    session={session}
+                    studentAttributes={{
+                        ellOptions,
+                        specialEdOptions,
+                        ardOptions
+                    }}
+                    activeSchool={session.user.activeSchool.toString()}
+                    user={session.user}
+                /> */}
             </div>
         </div>
     );

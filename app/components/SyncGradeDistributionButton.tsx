@@ -44,19 +44,19 @@ const SyncGradeDistributionButton = () => {
                 onClick={handleFullSync}
                 disabled={isLoading}
             >
-                {isLoading ? "Loading..." : "Sync Grades"}
+                {isLoading ? "Loading..." : "Import Grades"}
             </Button>
-            <Button
+            {/* <Button
                 onClick={handleSummarySync}
                 disabled={isLoading}
             >
                 {isLoading ? "Loading..." : "Sync Summary"}
-            </Button>
+            </Button> */}
             <Button
                 onClick={handleSummarySyncReset}
                 disabled={isLoading}
             >
-                {isLoading ? "Loading..." : "Sync Summary Reset"}
+                {isLoading ? "Loading..." : "Recalculate Summary"}
             </Button>
         </div>
     );

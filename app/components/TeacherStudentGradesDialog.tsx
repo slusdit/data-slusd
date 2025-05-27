@@ -23,6 +23,7 @@ const TeacherStudentGradesDialog = ({
   department,
   term,
   courseTitle,
+  genderStatus,
   ellStatus,
   specialEdStatus,
   ardStatus,
@@ -31,13 +32,15 @@ const TeacherStudentGradesDialog = ({
   teacher: string;
   sc: number;
   tn: string; // Match the type with the server action parameter
-  department: string;
-  term?: string;
-  courseTitle?: string;
+    department: string;
+    term?: string;
+    courseTitle?: string;
+    genderStatus?: string;
   ellStatus?: string;
   specialEdStatus?: string;
   ardStatus?: string;
-}) => {
+  }) => {
+  console.log("Gender Status2:", genderStatus);
   const [gradeData, setGradeData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -45,6 +48,18 @@ const TeacherStudentGradesDialog = ({
   const [open, setOpen] = useState(false);
   const [gridApi, setGridApi] = useState<GridApi | null>(null);
   const { resolvedTheme } = useTheme();
+  console.log("TeacherStudentGradesDialog props:", {
+    teacher,
+    sc,
+    tn,
+    department,
+    term,
+    courseTitle,
+    genderStatus,
+    ellStatus,
+    specialEdStatus,
+    ardStatus,
+  });
 
   const gridThemeClass = useMemo(() => {
     return resolvedTheme === "dark"
@@ -80,6 +95,14 @@ const TeacherStudentGradesDialog = ({
         sortable: true,
         flex: 1,
         minWidth: 125,
+      },
+      {
+        field: "gender",
+        headerName: "Gender",
+        filter: true,
+        sortable: true,
+        flex: 1,
+        minWidth: 75,
       },
       {
         field: "studentNumber",
@@ -265,7 +288,7 @@ const TeacherStudentGradesDialog = ({
           // const dataCheck = await checkGradeDistributionData();
           // console.log("Database check result:", dataCheck);
 
-          const result = await getStudentGrades(sc, tn, term, courseTitle, ellStatus, specialEdStatus, ardStatus);
+          const result = await getStudentGrades(sc, tn, term, courseTitle, genderStatus, ellStatus, specialEdStatus, ardStatus);
           // console.log(
           //   "Student grade data retrieved:",
           //   result?.length || 0,

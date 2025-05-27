@@ -10,6 +10,7 @@ interface RawGradeData {
   ID: string;
   SN: string;
   GR: string;
+  GN: string;
   PD: string;
   DEPT_CODE: string;
   DC: string;
@@ -36,11 +37,13 @@ export async function syncGradeDistribution() {
       "Query is undefined. Please ensure the query is properly configured."
     );
   }
+  console.log("Starting grade distribution sync...");
 
   try {
     // // console.log("Fetching data from SQL Server...");
-    const rawData = (await runQuery(resultsPercent.query)) as RawGradeData[];
-
+  const rawData = (await runQuery(resultsPercent.query)) as RawGradeData[];
+  console.log(`Fetched ${rawData.length} records from SQL Server.`);
+  console.log(`Sample record:`, rawData[0]);
     // // console.log(`Processing ${rawData.length} records...`);
 
     // Delete existing data for the current school year to avoid duplicates
@@ -63,6 +66,7 @@ export async function syncGradeDistribution() {
       studentId: record.ID[0].toString(),
       studentNumber: record.SN[0].toString(),
       grade: record.GR.toString(),
+      gender: record.GN.toString(),
       period: record.PD.toString(),
       departmentCode: record.DEPT_CODE,
       divisionCode: record.DC,
@@ -87,16 +91,16 @@ export async function syncGradeDistribution() {
         data: batch,
         skipDuplicates: true,
       });
-      // // console.log(
-      //   `Inserted batch ${i / batchSize + 1}/${Math.ceil(
-      //     transformedData.length / batchSize
-      //   )}`
-      // );
+      console.log(
+        `Inserted batch ${i / batchSize + 1}/${Math.ceil(
+          transformedData.length / batchSize
+        )}`
+      );
     }
 
-    // console.log("Grade distribution sync completed successfully.");
+    console.log("Grade distribution sync completed successfully.");
 
-    // Optionally, aggregate data for faster queries
+
     // await aggregateTeacherGradeSummaries({});
   } catch (error) {
     console.error("Error syncing grade distribution:", error);
@@ -111,6 +115,7 @@ export async function aggregateTeacherGradeSummaries({
   teacherNumber,
   departmentCode,
   period,
+  genderStatus,
   grade,
   specialEdStatus,
   ellStatus,
@@ -124,13 +129,27 @@ export async function aggregateTeacherGradeSummaries({
   teacherNumber?: string;
   departmentCode?: string;
   period?: string;
+  genderStatus?: string;
   grade?: string;
   specialEdStatus?: string;
   ellStatus?: string;
   ardStatus?: string;
   courseTitleStatus?: string;
   setData?: (data: any) => void; // Optional callback to set data in the component
-}) {
+  }) {
+  console.log("Test", {  schoolYear,
+    term,
+    sc,
+    teacherNumber,
+    departmentCode,
+    period,
+    genderStatus,
+    grade,
+    specialEdStatus,
+    ellStatus,
+    ardStatus: raceCode,
+    courseTitleStatus,
+    setData });
   try {
     // Create base WHERE clause
     let whereConditions = Prisma.sql`WHERE 1=1`;
@@ -166,8 +185,11 @@ export async function aggregateTeacherGradeSummaries({
     if (departmentCode) {
       whereConditions = Prisma.sql`${whereConditions} AND departmentCode = ${departmentCode}`;
     }
-    if (period) {
-      whereConditions = Prisma.sql`${whereConditions} AND period = ${period}`;
+    // if (period) {
+    //   whereConditions = Prisma.sql`${whereConditions} AND period = ${period}`;
+    // }
+    if (genderStatus) {
+      whereConditions = Prisma.sql`${whereConditions} AND gender = ${genderStatus}`;
     }
 
     // Log the filters for debugging
@@ -187,7 +209,27 @@ export async function aggregateTeacherGradeSummaries({
 
     // Execute the query with the dynamic conditions
     const summaries = await prisma.$queryRaw`
-      SELECT 
+          SELECT 
+        sc,
+        teacherNumber as tn,
+        teacherName,
+        departmentCode as department,
+        courseTitle as course,
+        term,
+        schoolYear,
+        SUM(CASE WHEN mark like 'A%' THEN 1 ELSE 0 END) as aCount,
+        SUM(CASE WHEN mark like 'B%' THEN 1 ELSE 0 END) as bCount,
+        SUM(CASE WHEN mark like 'C%' THEN 1 ELSE 0 END) as cCount,
+        SUM(CASE WHEN mark like 'D%' THEN 1 ELSE 0 END) as dCount,
+        SUM(CASE WHEN mark like 'F%' THEN 1 ELSE 0 END) as fCount,
+        SUM(CASE WHEN mark NOT IN ('A', 'B', 'C', 'D', 'F','A+', 'A-', 'B+', 'B-', 'C+', 'C-', 'D+', 'D-', 'F+', 'F-') THEN 1 ELSE 0 END) as otherCount,    
+        COUNT(*) as totalGrades
+      FROM GradeDistribution
+      ${whereConditions}
+      GROUP BY sc, teacherNumber, teacherName, departmentCode, courseTitle, term, schoolYear
+      HAVING COUNT(*) > 0
+    `;
+    console.log("raw query",`SELECT 
         sc,
         teacherNumber as tn,
         teacherName,
@@ -203,11 +245,11 @@ export async function aggregateTeacherGradeSummaries({
         SUM(CASE WHEN mark NOT IN ('A', 'B', 'C', 'D', 'F','A+', 'A-', 'B+', 'B-', 'C+', 'C-', 'D+', 'D-', 'F+', 'F-') THEN 1 ELSE 0 END) as otherCount,
         COUNT(*) as totalGrades
       FROM GradeDistribution
-      ${whereConditions}
+      ${whereConditions.strings.join(" ")}
       GROUP BY sc, teacherNumber, teacherName, departmentCode, courseTitle, term, schoolYear
-      HAVING COUNT(*) > 0
-    `;
-
+      HAVING COUNT(*) > 0`)
+    
+    console.log("Where conditions:", whereConditions);
     // Transform the results as before...
     const summaryData = summaries.map((summary) => ({
       sc: Number(summary.sc),
