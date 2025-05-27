@@ -3,11 +3,11 @@ import { runQuery } from "@/lib/aeries";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import GradeDistribution from "@/app/components/GradeDistribution";
+// import GradeDistribution from "@/app/components/GradeDistribution";
 import prisma from "@/lib/db";
-import GradeDistribution2 from "../components/GradeDistribution2";
+
 import SyncGradeDistributionButton from "../components/SyncGradeDistributionButton";
-import GradeDistribution3 from "../components/GradeDistribution3";
+import GradeDistribution from "../components/GradeDistribution";
 import { aggregateTeacherGradeSummaries } from "@/lib/syncGradeDistribution";
 
 export default async function GradeDistributionPage() {
@@ -56,11 +56,11 @@ export default async function GradeDistributionPage() {
             
             <div className="space-y-4">
                 <div>
-                    <h1 className="text-3xl font-bold">Grade Distribution</h1>
-                    <p className="text-muted-foreground">Grade Distribution Description</p>
+                    <h1 className="text-3xl font-bold">Grade Distribution by Course</h1>
+                    <p className="text-muted-foreground">Please select a Term and Course to view data</p>
                 </div>
                 {/* <SyncGradeDistributionButton /> */}
-                <GradeDistribution3 
+                <GradeDistribution 
                     data={data} 
                     session={session}
                     studentAttributes={{
