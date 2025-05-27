@@ -35,18 +35,7 @@ const PercentCellRenderer = (props) => {
   const value = props.value;
   if (value === null || value === undefined) return "0%";
   return value.toFixed(0) + "%";
-  return (
-    <TeacherGradesDialog
-      teacher={props.data?.teacherName || ""}
-      sc={props.data?.sc || ""}
-      tn={props.data?.tn || ""}
-      department={props.data?.department || ""}
-      params={props}
-      colField={props.colDef.field}
-    >
-      {value.toFixed(1)}%
-    </TeacherGradesDialog>
-  );
+
 };
 
 interface StudentAttributes {
@@ -1270,28 +1259,17 @@ const GradeDistribution = ({
             </div>
           ) : (
             <>
-              <h1 className="mb-2 font-bold font underline w-full text-center">
+              <h1 className="mb-2 -mt-6 font-bold font underline w-full text-center">
                 School Filters
               </h1>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <MultiDropdownSelector
-                  items={filteredSchoolItems}
-                  values={selectedSchools}
-                  onChange={setSelectedSchools}
-                  placeholder="Select schools"
-                  label="Schools"
-                  width="w-2/3"
-                  disabled={showLoading}
-                  maxDisplayItems={1}
-                  schoolValues={user.UserSchool}
-                />
+              <div className="flex grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <MultiDropdownSelector
                   items={filteredTermItems}
                   values={selectedTerms}
                   onChange={setSelectedTerms}
                   placeholder="Select terms"
                   label="Terms"
-                  width="w-1/2"
+                  // width="w-1/2"
                   disabled={showLoading}
                   maxDisplayItems={1}
                   singleSelect={true}
@@ -1303,6 +1281,17 @@ const GradeDistribution = ({
                   }
                 />
                 <MultiDropdownSelector
+                  items={filteredSchoolItems}
+                  values={selectedSchools}
+                  onChange={setSelectedSchools}
+                  placeholder="Select schools"
+                  label="Schools"
+                  // width="w-2/3"
+                  disabled={showLoading}
+                  maxDisplayItems={2}
+                  schoolValues={user.UserSchool}
+                />
+                <MultiDropdownSelector
                   items={filteredCourseTitleItems}
                   values={selectedCourseTitles}
                   onChange={setSelectedCourseTitles}
@@ -1310,14 +1299,19 @@ const GradeDistribution = ({
                   label="Courses"
                   width="w-full"
                   disabled={showLoading}
-                  maxDisplayItems={2}
+                    maxDisplayItems={3}
+                    classNameVar={
+                      selectedCourseTitles.length === 0
+                        ? "outline outline-red-600 rounded-md"
+                        : ""
+                    }
                 />
               </div>
               <Separator className="my-4" />
               <h1 className="mb-2 font-bold underline w-full text-center">
                 Class and Teacher Filters
               </h1>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <MultiDropdownSelector
                   items={filteredTeacherItems}
                   values={selectedTeachers}
@@ -1326,7 +1320,7 @@ const GradeDistribution = ({
                   label="Teachers"
                   width="w-full"
                   disabled={showLoading}
-                  maxDisplayItems={2}
+                  maxDisplayItems={5}
                 />
                 <MultiDropdownSelector
                   items={filteredDepartmentItems}
@@ -1336,7 +1330,7 @@ const GradeDistribution = ({
                   label="Departments"
                   width="w-full"
                   disabled={showLoading}
-                  maxDisplayItems={1}
+                  maxDisplayItems={3}
                 />
               </div>
               <Separator className="my-4" />
@@ -1389,6 +1383,7 @@ const GradeDistribution = ({
                   maxDisplayItems={1}
                 />
               </div>
+                  <Separator className="my-4" />
               <div className="mt-4 flex flex-wrap items-center gap-2">
                 <div className="ml-auto">
                   <Button
@@ -1412,7 +1407,7 @@ const GradeDistribution = ({
           )}
         </CardContent>
       </Card>
-      {selectedTerms.length > 0 ? (
+      {selectedTerms.length > 0 && selectedCourseTitles.length > 0 ? (
         <>
           <Card>
             <CardHeader>
@@ -1502,7 +1497,7 @@ const GradeDistribution = ({
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle>Please Select a Term to show data</CardTitle>
+            <CardTitle>Please Select a Term and at least one Course to show data</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[500px] flex items-center justify-center"></div>
