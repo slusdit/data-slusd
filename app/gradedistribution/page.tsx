@@ -59,7 +59,6 @@ export default async function GradeDistributionPage() {
                     <h1 className="text-3xl font-bold">Grade Distribution by Course</h1>
                     <p className="text-muted-foreground">Please select a Term and Course to view data</p>
                 </div>
-                {/* <SyncGradeDistributionButton /> */}
                 <GradeDistribution 
                     data={data} 
                     session={session}
@@ -71,17 +70,7 @@ export default async function GradeDistributionPage() {
                     activeSchool={session.user.activeSchool.toString()}
                     user={session.user}
                 />
-                {/* <GradeDistribution2 
-                    data={data} 
-                    session={session}
-                    studentAttributes={{
-                        ellOptions,
-                        specialEdOptions,
-                        ardOptions
-                    }}
-                    activeSchool={session.user.activeSchool.toString()}
-                    user={session.user}
-                /> */}
+                
             </div>
         </div>
     );

@@ -45,7 +45,7 @@ interface StudentAttributes {
   genderOptions?: string[];
 }
 
-interface GradeDistribution3Props {
+interface GradeDistributionProps {
   data: any[];
   isLoading?: boolean;
   activeSchool: string;
@@ -64,7 +64,7 @@ const GradeDistribution = ({
     ardOptions: [],
     genderOptions: [],
   },
-}: GradeDistribution3Props) => {
+}: GradeDistributionProps) => {
   const availibleSchools =
     user.UserSchool?.map(
       (school: {
