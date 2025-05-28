@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState, useEffect, useRef } from "react";
+import { useCallback, useMemo, useState, useEffect, useRef, SetStateAction } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { AgCharts } from "ag-charts-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -601,27 +601,27 @@ const GradeDistribution = ({
         setFilteredData(newData);
 
         const newTeacherItems = Array.from(
-          new Set(newData.map((item) => item.teacherName))
+          new Set(newData.map((item: { teacherName: any; }) => item.teacherName))
         )
           .filter(Boolean)
           .sort((a, b) => a.localeCompare(b))
           .map((teacher) => ({ id: teacher, label: teacher }));
 
         const newDepartmentItems = Array.from(
-          new Set(newData.map((item) => item.department))
+          new Set(newData.map((item: { department: any; }) => item.department))
         )
           .filter(Boolean)
           .sort((a, b) => a.localeCompare(b))
           .map((dept) => ({ id: dept, label: dept }));
 
         const newSchoolItems = Array.from(
-          new Set(newData.map((item) => String(item.sc)))
+          new Set(newData.map((item: { sc: any; }) => String(item.sc)))
         )
           .filter(Boolean)
           .map((school) => ({ id: school, label: school }));
 
         const newCourseTitleItems = Array.from(
-          new Set(newData.map((item) => item.courseTitle))
+          new Set(newData.map((item: { courseTitle: any; }) => item.courseTitle))
         )
           .filter(Boolean)
           .sort((a, b) => a.localeCompare(b))
@@ -1237,21 +1237,21 @@ const GradeDistribution = ({
   );
 
   const updateChartData = useCallback((params) => {
-    const sortedData = [];
-    params.api.forEachNodeAfterFilterAndSort((node) => {
+    const sortedData: SetStateAction<any[]> = [];
+    params.api.forEachNodeAfterFilterAndSort((node: { data: any; }) => {
       sortedData.push(node.data);
     });
     setFilteredData(sortedData);
   }, []);
 
   const onFilterChanged = useCallback(
-    (params) => {
+    (params: any) => {
       updateChartData(params);
     },
     [updateChartData]
   );
   const onSortChanged = useCallback(
-    (params) => {
+    (params: any) => {
       updateChartData(params);
     },
     [updateChartData]
@@ -1367,7 +1367,7 @@ const GradeDistribution = ({
                   onChange={setSelectedGender}
                   placeholder="Select Gender"
                   label="Gender"
-                  width="w-1/2"
+                  width="w-full"
                   singleSelect={true}
                   disabled={showLoading || filteredGenderItems.length === 0}
                   maxDisplayItems={1}
