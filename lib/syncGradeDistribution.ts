@@ -40,11 +40,9 @@ export async function syncGradeDistribution() {
   console.log("Starting grade distribution sync...");
 
   try {
-    // // console.log("Fetching data from SQL Server...");
+
   const rawData = (await runQuery(resultsPercent.query)) as RawGradeData[];
   console.log(`Fetched ${rawData.length} records from SQL Server.`);
-  console.log(`Sample record:`, rawData[0]);
-    // // console.log(`Processing ${rawData.length} records...`);
 
     // Delete existing data for the current school year to avoid duplicates
     const schoolYears = Array.from(
@@ -55,7 +53,6 @@ export async function syncGradeDistribution() {
       await prisma.gradeDistribution.deleteMany({
         where: { schoolYear },
       });
-      // // console.log(`Cleared existing data for school year: ${schoolYear}`);
     }
 
     // Transform and insert data
@@ -81,9 +78,6 @@ export async function syncGradeDistribution() {
       ell: record.ELL,
       ard: record.ARD,
     }));
-    // // console.log(`Transformed data for ${transformedData.length} records.`);
-    // // console.log(`${transformedData[0]}`);
-    // Batch insert for better performance
     const batchSize = 5000;
     for (let i = 0; i < transformedData.length; i += batchSize) {
       const batch = transformedData.slice(i, i + batchSize);
@@ -137,19 +131,19 @@ export async function aggregateTeacherGradeSummaries({
   courseTitleStatus?: string;
   setData?: (data: any) => void; // Optional callback to set data in the component
   }) {
-  console.log("Test", {  schoolYear,
-    term,
-    sc,
-    teacherNumber,
-    departmentCode,
-    period,
-    genderStatus,
-    grade,
-    specialEdStatus,
-    ellStatus,
-    ardStatus: raceCode,
-    courseTitleStatus,
-    setData });
+  // console.log("Test", {  schoolYear,
+  //   term,
+  //   sc,
+  //   teacherNumber,
+  //   departmentCode,
+  //   period,
+  //   genderStatus,
+  //   grade,
+  //   specialEdStatus,
+  //   ellStatus,
+  //   ardStatus: raceCode,
+  //   courseTitleStatus,
+  //   setData });
   try {
     // Create base WHERE clause
     let whereConditions = Prisma.sql`WHERE 1=1`;
@@ -229,27 +223,26 @@ export async function aggregateTeacherGradeSummaries({
       GROUP BY sc, teacherNumber, teacherName, departmentCode, courseTitle, term, schoolYear
       HAVING COUNT(*) > 0
     `;
-    console.log("raw query",`SELECT 
-        sc,
-        teacherNumber as tn,
-        teacherName,
-        departmentCode as department,
-        courseTitle as course,
-        term,
-        schoolYear,
-        SUM(CASE WHEN mark like 'A%' THEN 1 ELSE 0 END) as aCount,
-        SUM(CASE WHEN mark like 'B%' THEN 1 ELSE 0 END) as bCount,
-        SUM(CASE WHEN mark like 'C%' THEN 1 ELSE 0 END) as cCount,
-        SUM(CASE WHEN mark like 'D%' THEN 1 ELSE 0 END) as dCount,
-        SUM(CASE WHEN mark like 'F%' THEN 1 ELSE 0 END) as fCount,
-        SUM(CASE WHEN mark NOT IN ('A', 'B', 'C', 'D', 'F','A+', 'A-', 'B+', 'B-', 'C+', 'C-', 'D+', 'D-', 'F+', 'F-') THEN 1 ELSE 0 END) as otherCount,
-        COUNT(*) as totalGrades
-      FROM GradeDistribution
-      ${whereConditions.strings.join(" ")}
-      GROUP BY sc, teacherNumber, teacherName, departmentCode, courseTitle, term, schoolYear
-      HAVING COUNT(*) > 0`)
+    // console.log("raw query",`SELECT
+    //     sc,
+    //     teacherNumber as tn,
+    //     teacherName,
+    //     departmentCode as department,
+    //     courseTitle as course,
+    //     term,
+    //     schoolYear,
+    //     SUM(CASE WHEN mark like 'A%' THEN 1 ELSE 0 END) as aCount,
+    //     SUM(CASE WHEN mark like 'B%' THEN 1 ELSE 0 END) as bCount,
+    //     SUM(CASE WHEN mark like 'C%' THEN 1 ELSE 0 END) as cCount,
+    //     SUM(CASE WHEN mark like 'D%' THEN 1 ELSE 0 END) as dCount,
+    //     SUM(CASE WHEN mark like 'F%' THEN 1 ELSE 0 END) as fCount,
+    //     SUM(CASE WHEN mark NOT IN ('A', 'B', 'C', 'D', 'F','A+', 'A-', 'B+', 'B-', 'C+', 'C-', 'D+', 'D-', 'F+', 'F-') THEN 1 ELSE 0 END) as otherCount,
+    //     COUNT(*) as totalGrades
+    //   FROM GradeDistribution
+    //   ${whereConditions.strings.join(" ")}
+    //   GROUP BY sc, teacherNumber, teacherName, departmentCode, courseTitle, term, schoolYear
+    //   HAVING COUNT(*) > 0`)
     
-    console.log("Where conditions:", whereConditions);
     // Transform the results as before...
     const summaryData = summaries.map((summary) => ({
       sc: Number(summary.sc),
@@ -287,10 +280,9 @@ export async function aggregateTeacherGradeSummaries({
     }));
 
     if (summaryData.length > 0) {
-      // console.log("Summary data example:", summaryData[0]);
       return summaryData;
     } else {
-      // console.log("No summary data found.");
+      return null
     }
 
     // console.log("Teacher grade summaries aggregated successfully.");
