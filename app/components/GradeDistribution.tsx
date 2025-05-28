@@ -1299,7 +1299,7 @@ const GradeDistribution = ({
 
                 <div className="col-span-5">
                   <MultiDropdownSelector
-                    items={filteredSchoolItems}
+                    items={schoolItems}
                     values={selectedSchools}
                     onChange={setSelectedSchools}
                     placeholder="Select schools"
