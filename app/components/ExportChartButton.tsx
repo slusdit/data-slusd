@@ -95,7 +95,7 @@ const ExportChartButton = ({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button 
-          variant="outline" 
+
           size="sm"
           className="flex items-center gap-2"
           disabled={disabled || isExporting}

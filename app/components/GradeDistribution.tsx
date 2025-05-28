@@ -17,25 +17,17 @@ import MultiDropdownSelector from "./MultiDropdownSelector";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2 } from "lucide-react";
-// Import the aggregateTeacherGradeSummaries function
 import { aggregateTeacherGradeSummaries } from "@/lib/syncGradeDistribution";
 import SyncGradeDistributionButton from "./SyncGradeDistributionButton";
 import { Separator } from "@/components/ui/separator";
-import { aggregationFns } from "@tanstack/react-table";
-import { set } from "zod";
 import ExportChartButton from "./ExportChartButton";
 import TeacherStudentGradesDialog from "./TeacherStudentGradesDialog";
-import ExportCsvButton from "./ExportCsvButton";
-import { User, UserSchool } from "@prisma/client";
 import { SessionUser } from "@/auth";
-import { log } from "console";
-import { Title } from "chart.js";
 
-const PercentCellRenderer = (props) => {
+const PercentCellRenderer = (props: { value: number }) => {
   const value = props.value;
   if (value === null || value === undefined) return "0%";
   return value.toFixed(0) + "%";
-
 };
 
 interface StudentAttributes {
@@ -45,7 +37,7 @@ interface StudentAttributes {
   genderOptions?: string[];
 }
 
-interface GradeDistributionProps {
+interface GradeDistribution3Props {
   data: any[];
   isLoading?: boolean;
   activeSchool: string;
@@ -64,7 +56,7 @@ const GradeDistribution = ({
     ardOptions: [],
     genderOptions: [],
   },
-}: GradeDistributionProps) => {
+}: GradeDistribution3Props) => {
   const availibleSchools =
     user.UserSchool?.map(
       (school: {
@@ -100,8 +92,9 @@ const GradeDistribution = ({
   const [selectedCourseTitles, setSelectedCourseTitles] = useState<string[]>(
     []
   );
-  const [selectedSchools, setSelectedSchools] =
-    useState<string[]>(defaultSchool);
+  const [selectedSchools, setSelectedSchools] = useState<string[]>(
+    defaultSchool || []
+  );
   const [selectedPeriods, setSelectedPeriods] = useState<string[]>([]);
   const [selectedTerms, setSelectedTerms] = useState<string[]>(["GRD3"]);
   const [selectedEll, setSelectedEll] = useState<string[]>([]);
@@ -144,15 +137,25 @@ const GradeDistribution = ({
   >([]);
 
   const createTeacherCellRenderer = () => {
-    return (props) => {
+    return (props: {
+      value: string | null | undefined;
+      data: {
+        teacherName?: string;
+        sc?: string;
+        tn?: string;
+        department?: string;
+        term?: string;
+        courseTitle?: string;
+      };
+    }) => {
       const value = props.value;
       if (value === null || value === undefined) return "Unknown Teacher";
       return (
         <TeacherStudentGradesDialog
-          teacher={props.data?.teacherName}
-          sc={props.data?.sc}
-          tn={props.data?.tn}
-          department={props.data?.department}
+          teacher={props.data?.teacherName ?? ""}
+          sc={props.data?.sc !== undefined ? Number(props.data.sc) : 0}
+          tn={props.data?.tn ?? ""}
+          department={props.data?.department ?? ""}
           term={props.data?.term}
           courseTitle={props.data?.courseTitle}
           ellStatus={selectedEll[0]}
@@ -194,7 +197,7 @@ const GradeDistribution = ({
   }, [resolvedTheme]);
 
   const getTeacherNumberFromName = useCallback(
-    (teacherName) => {
+    (teacherName: string) => {
       if (!initialData || initialData.length === 0) return undefined;
 
       const teacher = initialData.find(
@@ -205,24 +208,27 @@ const GradeDistribution = ({
     [initialData]
   );
 
-  const CustomTooltip = useCallback((params) => {
-    const { datum, xKey, yKey, yName } = params;
+  const CustomTooltip = useCallback(
+    (params: { datum: any; xKey: any; yKey: any; yName: any }) => {
+      const { datum, xKey, yKey, yName } = params;
 
-    if (!datum) return null;
+      if (!datum) return null;
 
-    const grade = yName.replace("%", "");
-    const countField = `${grade.toLowerCase()}Count`;
-    const percentField = `${grade.toLowerCase()}Percent`;
+      const grade = yName.replace("%", "");
+      const countField = `${grade.toLowerCase()}Count`;
+      const percentField = `${grade.toLowerCase()}Percent`;
 
-    const count = datum[countField] || 0;
-    const percent = datum[percentField]
-      ? Number(datum[percentField]).toFixed(1)
-      : "0.0";
-    const totalStudents = datum.totalGrades || 0;
+      const count = datum[countField] || 0;
+      const percent = datum[percentField]
+        ? Number(datum[percentField]).toFixed(1)
+        : "0.0";
+      const totalStudents = datum.totalGrades || 0;
 
-    return {
-      title: `${datum.teacherName} - ${datum.courseTitle || "Unknown Course"}`,
-      content: `
+      return {
+        title: `${datum.teacherName} - ${
+          datum.courseTitle || "Unknown Course"
+        }`,
+        content: `
         <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
           <strong>${grade} Grade:</strong> <span>${percent}%</span>
         </div>
@@ -233,8 +239,10 @@ const GradeDistribution = ({
           <span>Total Students:</span> <span>${totalStudents}</span>
         </div>
       `,
-    };
-  }, []);
+      };
+    },
+    []
+  );
 
   const teacherItems = useMemo(() => {
     if (!initialData || initialData.length === 0) return [];
@@ -1121,7 +1129,13 @@ const GradeDistribution = ({
                   : "",
                 selectedArd.length > 0 ? `Race: ${selectedArd.join(", ")}` : "",
                 selectedGender.length > 0
-                  ? `Gender: ${selectedGender.includes('M') ? 'Male' : selectedGender.includes('F') ? 'Female' : 'Other'}`
+                  ? `Gender: ${
+                      selectedGender.includes("M")
+                        ? "Male"
+                        : selectedGender.includes("F")
+                        ? "Female"
+                        : "Other"
+                    }`
                   : "",
               ]
                 .filter(Boolean)
@@ -1262,56 +1276,74 @@ const GradeDistribution = ({
               <h1 className="mb-2 -mt-6 font-bold font underline w-full text-center">
                 School Filters
               </h1>
-              <div className="flex grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <MultiDropdownSelector
-                  items={filteredTermItems}
-                  values={selectedTerms}
-                  onChange={setSelectedTerms}
-                  placeholder="Select terms"
-                  label="Terms"
-                  // width="w-1/2"
-                  disabled={showLoading}
-                  maxDisplayItems={1}
-                  singleSelect={true}
-                  itemOrder={allTerms}
-                  classNameVar={
-                    selectedTerms.length === 0
-                      ? "outline outline-red-600 rounded-md"
-                      : ""
-                  }
-                />
-                <MultiDropdownSelector
-                  items={filteredSchoolItems}
-                  values={selectedSchools}
-                  onChange={setSelectedSchools}
-                  placeholder="Select schools"
-                  label="Schools"
-                  // width="w-2/3"
-                  disabled={showLoading}
-                  maxDisplayItems={2}
-                  schoolValues={user.UserSchool}
-                />
-                <MultiDropdownSelector
-                  items={filteredCourseTitleItems}
-                  values={selectedCourseTitles}
-                  onChange={setSelectedCourseTitles}
-                  placeholder="Select Courses"
-                  label="Courses"
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-4 items-center">
+                <div className="col-span-2">
+                  <MultiDropdownSelector
+                    items={filteredTermItems}
+                    values={selectedTerms}
+                    onChange={setSelectedTerms}
+                    placeholder="Select terms"
+                    label="Terms"
+                    // width="w-1/2"
+                    disabled={showLoading}
+                    maxDisplayItems={1}
+                    singleSelect={true}
+                    itemOrder={allTerms}
+                    classNameVar={
+                      selectedTerms.length === 0
+                        ? "outline outline-red-600 rounded-md"
+                        : ""
+                    }
+                  />
+                </div>
+
+                <div className="col-span-5">
+                  <MultiDropdownSelector
+                    items={filteredSchoolItems}
+                    values={selectedSchools}
+                    onChange={setSelectedSchools}
+                    placeholder="Select schools"
+                    label="Schools"
+                    // width="w-2/3"
+                    disabled={showLoading}
+                    maxDisplayItems={2}
+                    schoolValues={user.UserSchool}
+                  />
+                </div>
+                  <div className="col-span-5">
+                    <MultiDropdownSelector
+                  items={filteredDepartmentItems}
+                  values={selectedDepartments}
+                  onChange={setSelectedDepartments}
+                  placeholder="Select departments"
+                  label="Departments"
                   width="w-full"
                   disabled={showLoading}
+                  maxDisplayItems={3}
+                />
+                  
+                </div>
+              </div>
+              <Separator className="my-4" />
+              <h1 className="mb-2 font-bold underline w-full text-center">
+                Course and Teacher Filters
+              </h1>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <MultiDropdownSelector
+                    items={filteredCourseTitleItems}
+                    values={selectedCourseTitles}
+                    onChange={setSelectedCourseTitles}
+                    placeholder="Select Courses"
+                    label="Courses"
+                    width="w-full"
+                    disabled={showLoading}
                     maxDisplayItems={3}
                     classNameVar={
                       selectedCourseTitles.length === 0
                         ? "outline outline-red-600 rounded-md"
                         : ""
                     }
-                />
-              </div>
-              <Separator className="my-4" />
-              <h1 className="mb-2 font-bold underline w-full text-center">
-                Class and Teacher Filters
-              </h1>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  />
                 <MultiDropdownSelector
                   items={filteredTeacherItems}
                   values={selectedTeachers}
@@ -1322,16 +1354,7 @@ const GradeDistribution = ({
                   disabled={showLoading}
                   maxDisplayItems={5}
                 />
-                <MultiDropdownSelector
-                  items={filteredDepartmentItems}
-                  values={selectedDepartments}
-                  onChange={setSelectedDepartments}
-                  placeholder="Select departments"
-                  label="Departments"
-                  width="w-full"
-                  disabled={showLoading}
-                  maxDisplayItems={3}
-                />
+                
               </div>
               <Separator className="my-4" />
               <h1 className="mb-2 font-bold underline w-full text-center">
@@ -1383,7 +1406,7 @@ const GradeDistribution = ({
                   maxDisplayItems={1}
                 />
               </div>
-                  <Separator className="my-4" />
+              <Separator className="my-4" />
               <div className="mt-4 flex flex-wrap items-center gap-2">
                 <div className="ml-auto">
                   <Button
@@ -1497,11 +1520,10 @@ const GradeDistribution = ({
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle>Please Select a Term and at least one Course to show data</CardTitle>
+            <CardTitle className="text-center">
+              Please Select a Term and at least one Course to show data
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="h-[500px] flex items-center justify-center"></div>
-          </CardContent>
         </Card>
       )}
     </div>
