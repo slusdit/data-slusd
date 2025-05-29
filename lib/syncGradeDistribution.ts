@@ -211,11 +211,11 @@ export async function aggregateTeacherGradeSummaries({
         courseTitle as course,
         term,
         schoolYear,
-        SUM(CASE WHEN mark like 'A%' THEN 1 ELSE 0 END) as aCount,
-        SUM(CASE WHEN mark like 'B%' THEN 1 ELSE 0 END) as bCount,
-        SUM(CASE WHEN mark like 'C%' THEN 1 ELSE 0 END) as cCount,
-        SUM(CASE WHEN mark like 'D%' THEN 1 ELSE 0 END) as dCount,
-        SUM(CASE WHEN mark like 'F%' THEN 1 ELSE 0 END) as fCount,
+        SUM(CASE WHEN mark in ('A','A+','A-') THEN 1 ELSE 0 END) as aCount,
+        SUM(CASE WHEN mark in ('B','B+','B-') THEN 1 ELSE 0 END) as bCount,
+        SUM(CASE WHEN mark in ('C','C+','C-')  THEN 1 ELSE 0 END) as cCount,
+        SUM(CASE WHEN mark in ('D','D+','D-') THEN 1 ELSE 0 END) as dCount,
+        SUM(CASE WHEN mark in ('F','F+','F-') THEN 1 ELSE 0 END) as fCount,
         SUM(CASE WHEN mark NOT IN ('A', 'B', 'C', 'D', 'F','A+', 'A-', 'B+', 'B-', 'C+', 'C-', 'D+', 'D-', 'F+', 'F-') THEN 1 ELSE 0 END) as otherCount,    
         COUNT(*) as totalGrades
       FROM GradeDistribution
