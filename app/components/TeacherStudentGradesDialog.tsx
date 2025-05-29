@@ -373,7 +373,7 @@ const gradeSummary = useMemo(() => {
             {gradeSummary && (
               <div className="flex gap-2 flex-wrap">
                 <Badge className="bg-blue-600">A: {gradeSummary.A}</Badge>
-                <Badge className="bg-green-600">B: {gradeSummary.B}</Badge>
+                <Badge className="bg-[#5DADE2]">B: {gradeSummary.B}</Badge>
                 <Badge className="bg-yellow-500">C: {gradeSummary.C}</Badge>
                 <Badge className="bg-orange-500">D: {gradeSummary.D}</Badge>
                 <Badge className="bg-red-600">F: {gradeSummary.F}</Badge>

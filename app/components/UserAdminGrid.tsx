@@ -28,11 +28,11 @@ const UserRoleEditor = forwardRef((props: ICellEditorParams & { availableRoles: 
   const [selectedValues, setSelectedValues] = React.useState<string[]>([]);
   const [isInitialized, setIsInitialized] = React.useState(false);
 
-  // Initialize with current values
+  // Initialize with current values 
   useEffect(() => {
     if (!isInitialized && props.data?.userRole) {
       const currentRoles = Array.isArray(props.data.userRole) 
-        ? props.data.userRole.map((ur: any) => ur.role?.role || ur.role || ur)
+        ? props.data.userRole.map((role: any) => role.role || role)
         : [];
       setSelectedValues(currentRoles);
       setIsInitialized(true);
@@ -70,16 +70,16 @@ const UserRoleEditor = forwardRef((props: ICellEditorParams & { availableRoles: 
       // Update database
       await updateUser(updateData, "User Roles");
       
-      // Update local data to match the structure expected by the grid
+      // UPDATED: Update local data to match userRole structure (direct Role objects)
       const roleObjects = values.map(roleName => {
         const role = props.availableRoles.find(r => r.role === roleName);
         return role ? {
-          userId: props.data.id,
-          roleId: role.id,
-          role: role
+          id: role.id,
+          role: role.role
         } : null;
       }).filter(Boolean);
       
+      // Update the userRole field (lowercase) instead of UserRole
       props.data.userRole = roleObjects;
       
       // Update grid display
@@ -165,16 +165,23 @@ const SchoolEditor = forwardRef((props: ICellEditorParams & { availableSchools: 
   const [selectedValues, setSelectedValues] = React.useState<string[]>([]);
   const [isInitialized, setIsInitialized] = React.useState(false);
 
-  // Initialize with current values
+  // Initialize with current values - UPDATED to use school (lowercase) for consistency
   useEffect(() => {
-    if (!isInitialized && props.data?.UserSchool) {
-      const currentSchools = Array.isArray(props.data.UserSchool) 
-        ? props.data.UserSchool.map((us: any) => us.school?.name || us.name || us)
+    if (!isInitialized && (props.data?.UserSchool || props.data?.school)) {
+      // Handle both UserSchool junction table and school direct relation
+      const schoolData = props.data?.school || props.data?.UserSchool;
+      const currentSchools = Array.isArray(schoolData) 
+        ? schoolData.map((item: any) => {
+            // If it's from UserSchool junction table
+            if (item.school) return item.school.name;
+            // If it's direct school relation
+            return item.name;
+          })
         : [];
       setSelectedValues(currentSchools);
       setIsInitialized(true);
     }
-  }, [props.data?.UserSchool, isInitialized]);
+  }, [props.data?.UserSchool, props.data?.school, isInitialized]);
 
   const getValue = () => selectedValues;
 
@@ -207,23 +214,30 @@ const SchoolEditor = forwardRef((props: ICellEditorParams & { availableSchools: 
       // Update database
       await updateUser(updateData, "School Access");
       
-      // Update local data to match the structure expected by the grid
+      // UPDATED: Update local data to match school structure (direct SchoolInfo objects)
       const schoolObjects = values.map(schoolName => {
         const school = props.availableSchools.find(s => s.name === schoolName);
         return school ? {
-          userId: props.data.id,
-          schoolSc: school.id,
-          school: school
+          id: school.id,
+          name: school.name,
+          sc: school.sc
         } : null;
       }).filter(Boolean);
       
-      props.data.UserSchool = schoolObjects;
+      // Update both possible fields for compatibility
+      props.data.school = schoolObjects;
+      props.data.UserSchool = schoolObjects.map(school => ({
+        userId: props.data.id,
+        schoolSc: school.id,
+        school: school
+      }));
       
       // Update grid display
       if (props.api) {
         const rowNode = props.api.getRowNode(props.data.id.toString());
         if (rowNode) {
-          rowNode.setDataValue('UserSchool', schoolObjects);
+          rowNode.setDataValue('UserSchool', props.data.UserSchool);
+          rowNode.setDataValue('school', schoolObjects);
           props.api.refreshCells({
             force: true,
             rowNodes: [rowNode],
@@ -531,8 +545,8 @@ const UserAdminGrid = ({
     dataIn.forEach(user => {
       if (user.userRole && Array.isArray(user.userRole)) {
         user.userRole.forEach((role: any) => {
-          if (role.role?.role) uniqueRoles.add(role.role.role);
-          else if (role.role) uniqueRoles.add(role.role);
+          if (role.role) uniqueRoles.add(role.role);
+          else if (typeof role === 'string') uniqueRoles.add(role);
         });
       }
     });
@@ -823,7 +837,7 @@ const UserAdminGrid = ({
           },
         };
       }
-      // UserRole field - USE CUSTOM EDITOR
+      // UPDATED: userRole field - USE CUSTOM EDITOR
       else if (key === "userRole") {
         return {
           field: "User Roles",
@@ -847,17 +861,10 @@ const UserAdminGrid = ({
           width: 250,
           maxWidth: 250,
           minWidth: 150,
-          valueGetter: (params: { data: { userRole: Array<{ role: { role: string } | string; id: string }> } }) => {
+          // UPDATED: Simplified valueGetter for direct Role objects
+          valueGetter: (params: { data: { userRole: Array<{ role: string; id: string }> } }) => {
             if (!params.data.userRole || !Array.isArray(params.data.userRole)) return [];
-            return params.data.userRole.map(userRole => {
-              // Handle both nested role objects and direct role strings
-              if (typeof userRole.role === 'object' && userRole.role.role) {
-                return userRole.role.role;
-              } else if (typeof userRole.role === 'string') {
-                return userRole.role;
-              }
-              return userRole.role || userRole;
-            });
+            return params.data.userRole.map(role => role.role);
           },
           valueFormatter: (params: { value: string[] }) => {
             if (!params.value || !Array.isArray(params.value)) return '';
@@ -966,54 +973,6 @@ const UserAdminGrid = ({
         };
       }
     });
-
-    // Add action columns (similar to QueryAdminGrid's delete button)
-    // colDefs = [
-    //   ...colDefs,
-    //   {
-    //     field: "actions",
-    //     headerName: "Actions",
-    //     resizable: true,
-    //     sortable: false,
-    //     filter: false,
-    //     floatingFilter: false,
-    //     editable: false,
-    //     autoSize: true,
-    //     minWidth: 120,
-    //     cellStyle: { whiteSpace: "normal" },
-    //     cellRenderer: (params: { data: any }) => (
-    //       <div className="flex gap-2">
-    //         <Button
-    //           size="sm"
-    //           variant="outline"
-    //           onClick={() => {
-    //             // Add functionality to view user details
-    //             console.log('View user:', params.data);
-    //             toast.info(`Viewing user: ${params.data.name}`);
-    //           }}
-    //         >
-    //           View
-    //         </Button>
-    //         <Button
-    //           className="bg-yellow-500 text-white hover:bg-yellow-600"
-    //           size="sm"
-    //           onClick={() => {
-    //             // Add functionality to reset user password or send reset email
-    //             const confirmReset = window.confirm(
-    //               `Send password reset email to ${params.data.email}?`
-    //             );
-    //             if (confirmReset) {
-    //               // Implement password reset functionality
-    //               toast.success(`Password reset email sent to ${params.data.email}`);
-    //             }
-    //           }}
-    //         >
-    //           Reset
-    //         </Button>
-    //       </div>
-    //     ),
-    //   },
-    // ];
 
     let formattedData = data.map((row) =>
       keys.reduce((acc, key) => {
@@ -1145,65 +1104,63 @@ const UserAdminGrid = ({
         }
       `}</style>
       <div className="mt-2">
- 
-              <div className="flex justify-between mb-4">
-                <div className="flex gap-2">
-                  <Button
-                    onClick={onExportToCsv}
-                    className="text-foreground"
-                    variant="outline"
-                  >
-                    Export to CSV
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      if (gridRef.current?.api) {
-                        gridRef.current.api.selectAll();
-                      }
-                    }}
-                    variant="outline"
-                  >
-                    Select All
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      if (gridRef.current?.api) {
-                        gridRef.current.api.deselectAll();
-                      }
-                    }}
-                    variant="outline"
-                  >
-                    Clear Selection
-                  </Button>
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  Total Users: {data?.length || 0} | 
-                  Roles Available: {rolesList.length} | 
-                  Schools Available: {schoolsList.length}
-                </div>
-              </div>
+        <div className="flex justify-between mb-4">
+          <div className="flex gap-2">
+            <Button
+              onClick={onExportToCsv}
+              className="text-foreground"
+              variant="outline"
+            >
+              Export to CSV
+            </Button>
+            <Button
+              onClick={() => {
+                if (gridRef.current?.api) {
+                  gridRef.current.api.selectAll();
+                }
+              }}
+              variant="outline"
+            >
+              Select All
+            </Button>
+            <Button
+              onClick={() => {
+                if (gridRef.current?.api) {
+                  gridRef.current.api.deselectAll();
+                }
+              }}
+              variant="outline"
+            >
+              Clear Selection
+            </Button>
+          </div>
+          <div className="text-sm text-muted-foreground">
+            Total Users: {data?.length || 0} | 
+            Roles Available: {rolesList.length} | 
+            Schools Available: {schoolsList.length}
+          </div>
+        </div>
 
-              <div className="h-full w-full">
-                <AgGridReact
-                  theme={themeQuartz}
-                  ref={gridRef}
-                  rowData={data}
-                  columnDefs={colDefs}
-                  domLayout="autoHeight"
-                  pagination={true}
-                  paginationPageSize={50}
-                  paginationPageSizeSelector={[25, 50, 100, 200]}
-                  onGridReady={onGridReady}
-                  rowSelection="multiple"
-                  onSelectionChanged={onSelectionChanged}
-                  onCellValueChanged={onCellValueChanged}
-                  suppressRowClickSelection={true}
-                  rowMultiSelectWithClick={true}
-                  enableRangeSelection={true}
-                  animateRows={true}
-                />
-              </div>
-
+        <div className="h-full w-full">
+          <AgGridReact
+            theme={themeQuartz}
+            ref={gridRef}
+            rowData={data}
+            columnDefs={colDefs}
+            domLayout="autoHeight"
+            pagination={true}
+            paginationPageSize={50}
+            paginationPageSizeSelector={[25, 50, 100, 200]}
+            onGridReady={onGridReady}
+            rowSelection="multiple"
+            onSelectionChanged={onSelectionChanged}
+            onCellValueChanged={onCellValueChanged}
+            suppressRowClickSelection={true}
+            rowMultiSelectWithClick={true}
+            enableRangeSelection={true}
+            animateRows={true}
+          />
+        </div>
       </div>
     </div>
   );
