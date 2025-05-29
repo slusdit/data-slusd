@@ -89,21 +89,21 @@ Built with direct connection to Aeries database using config in `/lib/aeries.ts`
 - [ ] [Ideas from Thom](https://docs.google.com/spreadsheets/d/1sciIq4W_Z122uuzMvqx6YvsvNEHl2CpDHn_FQvHyh6g/edit?usp=sharing) - Site Admin "Home Dashboard"
 
 - [ ] Admin dashboard
-  - [ ] Add queries
+  - [x] Add queries
   - [ ] Add categories
   - [ ] Add roles
   - [ ] Impersonate user view
 - [ ] Query output
-  - [ ] Move data fetch to external async function to try and fix `loading.tsx` from not loading
-  - [ ] Move from `table` to `datatable`
+  - [x] Move data fetch to external async function to try and fix `loading.tsx` from not loading
+  - [x] Move from `table` to `datatable`
     - [x] Add Sorting
     - [X] Add Column Sorting
     - [x] Add row selection
   - [x] Add export options
     - [x] to csv
     - [x] to xlsx
-- [ ] Add Query form
-  - [ ] Add edit mode
+- [x] Add Query form
+  - [x] Add edit mode
   - [ ] run query to validate before submit
     - [ ] Disable `Add+` button until after `Validate` button is clicked and successful.
   - [x] find way to remove comments (stored as single line in DB) `Should be working`
