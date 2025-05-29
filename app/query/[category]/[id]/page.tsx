@@ -10,7 +10,7 @@ import DataTableAgGrid from "@/app/components/DataTableAgGrid";
 import FavoriteStarSwitch from "@/app/components/FavoriteStarSwitch";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 // Types
 interface PageProps {
@@ -49,24 +49,17 @@ const decodeCategory = (category: string): string => {
 };
 
 // Components
-const PageHeader = ({ 
-  result, 
-  id, 
-  session 
-}: { 
-  result: QueryResult; 
-  id: string; 
-  session: any; 
+const PageHeader = ({
+  result,
+  id,
+  session,
+}: {
+  result: QueryResult;
+  id: string;
+  session: any;
 }) => (
   <div className="items-left w-full">
-    <Button variant="link" className="p-0 h-auto">
-      <Link href="/" className="hover:underline text-primary flex items-center">
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Home
-      </Link>
-    </Button>
-    
-    <div className="flex justify-between w-full mt-4">
+    <div className="flex justify-between w-full">
       <h1 className="text-3xl font-bold">{result.name}</h1>
       <FavoriteStarSwitch queryId={id} user={session?.user} />
     </div>
@@ -91,7 +84,8 @@ const EmptyState = ({ result }: { result: QueryResult }) => (
     </div>
     <h2 className="text-xl font-semibold mb-2">No Results Found</h2>
     <p className="text-muted-foreground max-w-md">
-      The query "{result.name}" returned no data. Try adjusting your parameters or check back later.
+      The query "{result.name}" returned no data. Try adjusting your parameters
+      or check back later.
     </p>
   </div>
 );
@@ -126,7 +120,7 @@ export default async function Page({ params }: PageProps) {
   try {
     const { id, category } = await params;
     const urlCategory = decodeCategory(category);
-    
+
     // Validate ID format (basic validation)
     if (!id || id.length < 1) {
       notFound();
@@ -137,29 +131,33 @@ export default async function Page({ params }: PageProps) {
     // Parallel data fetching for better performance
     const [result, categories, queries] = await Promise.all([
       prisma.query.findUnique({ where: { id } }),
-      session?.user ? prisma.queryCategory.findMany({
-        include: {
-          queries: true,
-          roles: true,
-        },
-      }) : null,
-      session?.user ? prisma.query.findMany({
-        select: {
-          id: true,
-          name: true,
-          description: true,
-          hiddenCols: true,
-          chartTypeKey: true,
-          chartXKey: true,
-          chartYKey: true,
-          category: {
+      session?.user
+        ? prisma.queryCategory.findMany({
+            include: {
+              queries: true,
+              roles: true,
+            },
+          })
+        : null,
+      session?.user
+        ? prisma.query.findMany({
             select: {
               id: true,
-              value: true,
+              name: true,
+              description: true,
+              hiddenCols: true,
+              chartTypeKey: true,
+              chartXKey: true,
+              chartYKey: true,
+              category: {
+                select: {
+                  id: true,
+                  value: true,
+                },
+              },
             },
-          },
-        },
-      }) : null,
+          })
+        : null,
     ]);
 
     // Handle not found
@@ -171,7 +169,9 @@ export default async function Page({ params }: PageProps) {
     if (!session?.user) {
       return (
         <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
-          <h2 className="text-xl font-semibold mb-2">Authentication Required</h2>
+          <h2 className="text-xl font-semibold mb-2">
+            Authentication Required
+          </h2>
           <p className="text-muted-foreground mb-4">
             Please sign in to view this content.
           </p>
@@ -192,8 +192,10 @@ export default async function Page({ params }: PageProps) {
         <div className="space-y-6">
           <PageHeader result={result} id={id} session={session} />
           <QueryDescription description={result.description} />
-          <ErrorFallback 
-            error={new Error("Failed to execute query. Please try again later.")} 
+          <ErrorFallback
+            error={
+              new Error("Failed to execute query. Please try again later.")
+            }
           />
         </div>
       );
@@ -205,7 +207,7 @@ export default async function Page({ params }: PageProps) {
     const headerSection = (
       <>
         <PageHeader result={result} id={id} session={session} />
-        
+
         <div className="my-6">
           <Suspense fallback={<LoadingSkeleton />}>
             <QuerySheet
@@ -219,7 +221,7 @@ export default async function Page({ params }: PageProps) {
             />
           </Suspense>
         </div>
-        
+
         <QueryDescription description={result.description} />
       </>
     );
@@ -228,42 +230,126 @@ export default async function Page({ params }: PageProps) {
     if (data.length === 0) {
       return (
         <div className="container mx-auto px-4 py-6">
-          {headerSection}
-          <EmptyState result={result} />
+          <div className="flex flex-col w-full">
+          <div className="flex justify-left mt-2 mb-1">
+            <Button variant="link" className="p-0 h-auto ">
+              <Link
+                href="/"
+                className="hover:underline text-primary flex items-center"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Home
+              </Link>
+            </Button>
+          </div>
+          <Card className="mt-4">
+            <CardHeader>
+              <PageHeader result={result} id={id} session={session} />
+
+              <div className="my-6">
+                <Suspense fallback={<LoadingSkeleton />}>
+                  <QuerySheet
+                    categories={categories as Category[]}
+                    queries={queries as QueryWithCategory[]}
+                    database={process.env.DB_DATABASE as string}
+                    roles={session.user.roles}
+                    user={session.user}
+                    accordion
+                    defaultExpandedAccordion={urlCategory}
+                  />
+                </Suspense>
+              </div>
+
+              <div className="my-4">
+                <label
+                  htmlFor="description"
+                  className="block text-sm font-medium mb-2"
+                >
+                  Description:
+                </label>
+                <div id="description" className="text-muted-foreground">
+                  {result.description || "No description available."}
+                </div>
+              </div>
+            </CardHeader>
+
+            <CardContent>
+              <EmptyState result={result} />
+            </CardContent>
+          </Card>
+        </div>
+          
         </div>
       );
     }
 
     // Render with data
     return (
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-4 py-2">
         <div className="flex flex-col w-full">
-          <div className="mt-6">
-          {headerSection}
-          
-            <CardContent>
-
-            <Suspense fallback={<LoadingSkeleton />}>
-              <DataTableAgGrid
-                data={data}
-                id={id}
-                showChart={result.chart}
-                chartTitle={result.name}
-                chartXKey={result.chartXKey}
-                chartYKey={result.chartYKey}
-                chartTypeKey={result.chartTypeKey}
-                chartStackKey={result.chartStackKey}
-                hiddenColumns={hiddenColumns}
-                title={result.name}
-                chartSeriesOverride={result.chartSeriesOverride}
-              />
-            </Suspense>
-                </CardContent>
+          <div className="flex justify-left mt-2 mb-1">
+            <Button variant="link" className="p-0 h-auto ">
+              <Link
+                href="/"
+                className="hover:underline text-primary flex items-center"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Home
+              </Link>
+            </Button>
           </div>
+          <Card className="mt-4">
+            <CardHeader>
+              <PageHeader result={result} id={id} session={session} />
+
+              <div className="my-6">
+                <Suspense fallback={<LoadingSkeleton />}>
+                  <QuerySheet
+                    categories={categories as Category[]}
+                    queries={queries as QueryWithCategory[]}
+                    database={process.env.DB_DATABASE as string}
+                    roles={session.user.roles}
+                    user={session.user}
+                    accordion
+                    defaultExpandedAccordion={urlCategory}
+                  />
+                </Suspense>
+              </div>
+
+              <div className="my-4">
+                <label
+                  htmlFor="description"
+                  className="block text-sm font-medium mb-2"
+                >
+                  Description:
+                </label>
+                <div id="description" className="text-muted-foreground">
+                  {result.description || "No description available."}
+                </div>
+              </div>
+            </CardHeader>
+
+            <CardContent>
+              <Suspense fallback={<LoadingSkeleton />}>
+                <DataTableAgGrid
+                  data={data}
+                  id={id}
+                  showChart={result.chart}
+                  chartTitle={result.name}
+                  chartXKey={result.chartXKey}
+                  chartYKey={result.chartYKey}
+                  chartTypeKey={result.chartTypeKey}
+                  chartStackKey={result.chartStackKey}
+                  hiddenColumns={hiddenColumns}
+                  title={result.name}
+                  chartSeriesOverride={result.chartSeriesOverride}
+                />
+              </Suspense>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
-
   } catch (error) {
     console.error("Page error:", error);
     return <ErrorFallback error={error as Error} />;
