@@ -57,12 +57,7 @@ const GradeDistribution = ({
     genderOptions: [],
   },
 }: GradeDistribution3Props) => {
-  const availibleSchools =
-    user.UserSchool?.map(
-      (school: {
-        school: { id: string; sc: string; name: string; logo: string };
-      }) => school.school.sc
-    ) || [];
+
   const allTerms = [
     "PRG1",
     "GRD1",

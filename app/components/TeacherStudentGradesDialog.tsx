@@ -310,30 +310,35 @@ const TeacherStudentGradesDialog = ({
   }, [open, sc, tn, term, courseTitle]);
 
   // Calculate summary statistics
-  const gradeSummary = useMemo(() => {
-    if (!gradeData || gradeData.length === 0) return null;
+const gradeSummary = useMemo(() => {
+  if (!gradeData || gradeData.length === 0) return null;
 
-    const grades = {
-      A: 0,
-      B: 0,
-      C: 0,
-      D: 0,
-      F: 0,
-      Other: 0,
-      Total: gradeData.length,
-    };
+  const grades = {
+    A: 0,
+    B: 0,
+    C: 0,
+    D: 0,
+    F: 0,
+    Other: 0,
+    Total: gradeData.length,
+  };
 
-    gradeData.forEach((student) => {
-      const mark = student.mark?.charAt(0) || "Other";
-      if (["A", "B", "C", "D", "F"].includes(mark)) {
-        grades[mark]++;
-      } else {
-        grades.Other++;
-      }
-    });
+  gradeData.forEach((student) => {
+    const mark = student.mark || "";
+    
+    // Check if the grade matches standard format (letter + optional +/-)
+    const standardGradeMatch = mark.match(/^([ABCDF])[+-]?$/);
+    
+    if (standardGradeMatch) {
+      const baseLetter = standardGradeMatch[1];
+      grades[baseLetter]++;
+    } else {
+      grades.Other++;
+    }
+  });
 
-    return grades;
-  }, [gradeData]);
+  return grades;
+}, [gradeData]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen} className="w-full h-full">

@@ -21,17 +21,17 @@ export default async function GradeDistributionPage() {
         },
         distinct: ['ell', 'specialEd', 'ard']
     });
-    console.log("Raw data fetched from the database:", rawData[0]);
+    // console.log("Raw data fetched from the database:", rawData[0]);
 
     const ellOptions = [...new Set(rawData.map(item => item.ell).filter(Boolean))];
-    console.log("Unique ELL options:", ellOptions);
+    // console.log("Unique ELL options:", ellOptions);
     const specialEdOptions = [...new Set(rawData.map(item => item.specialEd).filter(Boolean))];
-    console.log("Unique Special Ed options:", specialEdOptions);
+    // console.log("Unique Special Ed options:", specialEdOptions);
     const ardOptions = [...new Set(rawData.map(item => item.ard).filter(Boolean))];
-    console.log("Unique ARD options:", ardOptions);
+    // console.log("Unique ARD options:", ardOptions);
 
     const data = await aggregateTeacherGradeSummaries({})
-    console.log("Data fetched from the database:", data[0]);
+    // console.log("Data fetched from the database:", data[0]);
     
     if (!session) {    
         return (
@@ -45,7 +45,7 @@ export default async function GradeDistributionPage() {
 
     //     session.user.schoolSc,
     
-    console.log("Session data:", session.user.UserSchool[0]);
+    // console.log("Session data:", session.user.UserSchool[0]);
     return (
         <div className="container mx-auto p-4">
             <Button variant="link">
