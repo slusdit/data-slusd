@@ -9,6 +9,7 @@ import { QueryCategory, ROLE } from "@prisma/client";
 import { QueryWithCategory } from "./QueryBar";
 import { auth } from "@/auth";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 
 const Sidebar = async({
@@ -44,9 +45,9 @@ const Sidebar = async({
                 session?.user?.roles?.includes("SUPERADMIN")) && 
                 (
                     <>
-                        <div className="flex justify-center">
+                        <Button asChild className="flex justify-center">
                             <Link href="/gradedistribution" className="text-primary px-4 py-2">Grade Distribution</Link>
-                        </div>
+                        </Button>
                         <Separator className="my-4 w-full" />
                     </>
 

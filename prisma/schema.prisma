@@ -208,6 +208,7 @@ model GradeDistribution {
   studentId     String   // Student ID
   studentNumber String   // Student Number (SN)
   grade         String?  // GR
+  gender       String?  // GE
   period        String?  // PD
   departmentCode String? // DEPT_CODE
   course        String? // CO (Not used)
@@ -222,6 +223,7 @@ model GradeDistribution {
   specialEd     String?
   ell           String?  // English Language Learner
   ard           String?  // American Race/Ethnicity
+  dli           String?  // Dual Language Student
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   
@@ -232,37 +234,37 @@ model GradeDistribution {
 }
 
 // Optional: Create a view or calculated table for aggregated grade distributions
-model TeacherGradeSummary {
-  id            String   @id @default(cuid())
-  sc            Int
-  tn            String
-  teacherName   String
-  department    String
-  courseTitle   String?
-  courseNumber  String?
-  period        String?
-  term          String
-  schoolYear    String
-  aCount        Int
-  bCount        Int
-  cCount        Int
-  dCount        Int
-  fCount        Int
-  otherCount    Int
-  totalGrades   Int
-  aPercent      Float
-  bPercent      Float
-  cPercent      Float
-  dPercent      Float
-  fPercent      Float
-  otherPercent  Float
+// model TeacherGradeSummary {
+//   id            String   @id @default(cuid())
+//   sc            Int
+//   tn            String
+//   teacherName   String
+//   department    String
+//   courseTitle   String?
+//   courseNumber  String?
+//   // period        String?
+//   term          String
+//   schoolYear    String
+//   aCount        Int
+//   bCount        Int
+//   cCount        Int
+//   dCount        Int
+//   fCount        Int
+//   otherCount    Int
+//   totalGrades   Int
+//   aPercent      Float
+//   bPercent      Float
+//   cPercent      Float
+//   dPercent      Float
+//   fPercent      Float
+//   otherPercent  Float
   
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+//   createdAt     DateTime @default(now())
+//   updatedAt     DateTime @updatedAt
   
-  @@index([sc, tn, term])
-  @@index([schoolYear, sc])
-}
+//   @@index([sc, tn, term])
+//   @@index([schoolYear, sc])
+// }
 
 enum ROLE {
   USER

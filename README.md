@@ -1,30 +1,39 @@
-# SLUSD Data v2.0
+# SLUSD Data
 
 ## Frontend
 
-NextJS 14 server using Prisma ORM is running on [https://data.slusd.us](https://data.slusd.us)
+NextJS 15 web app using Prisma ORM is running on [https://data.slusd.us](https://data.slusd.us)
 
 Requires `.env` file in the root directory with the following values
 
 ```.env
 # Prisma
-DATABASE_URL="mysql://YOUR_DB_USERNAME:YOUR_DB_PASSWORD@DB_IP:3306/YOUR_DATABASE_SCHEMA_NAME"
+DATABASE_URL="mysql://username:password@host:port/database"
 
 # Google OAuth for Auth.js
-AUTH_GOOGLE_ID='' # From Google Cloud Console
-AUTH_GOOGLE_SECRET='' # From Google Cloud Console
+AUTH_GOOGLE_ID=your_google_oauth_client_id
+AUTH_GOOGLE_SECRET=your_google_oauth_client_secret
 
-# Auth.js Setip
-AUTH_SECRET="" # Random string
-NEXTAUTH_SECRET="" # Random string
-NEXTAUTH_URL='http://localhost:3000' # Change to domain if exposed on web
-JWT_SIGNING_PRIVATE_KEY='' # Random string if using JWT auth
+# Auth.js setup
+AUTH_SECRET='your_auth_secret_key'
+NEXTAUTH_SECRET='your_nextauth_secret'
+NEXTAUTH_URL='http://localhost:3000'
 
 # Aeries connection
-DB_USER='' # Aeries Read-only user
-DB_PASSWORD='' # Aeries Read-only password
-DB_SERVER='' # Aeries host name
-DB_DATABASE='' # Target Aeries Database
+DB_USER=your_db_username
+DB_PASSWORD=your_db_password
+DB_SERVER=your_db_server
+DB_DATABASE=your_database_name
+
+# Aeries API
+AERIES_API_KEY=your_aeries_api_key
+NEXT_PUBLIC_AERIES_URL=https://your-aeries-instance.domain.com/Aeries.Net
+
+# Changing queries
+QUERY_ASSESSMENT_GRADE_PERCENTAGE=your_query_id
+
+# AG Grid License
+NEXT_PUBLIC_AG_GRID_LICENSE_KEY=your_ag_grid_license_key
 
 ```
 
@@ -76,6 +85,7 @@ Open [https:#data.slusd.us](https:#data.slusd.us) or URL with your browser to se
 Built with direct connection to Aeries database using config in `/lib/aeries.ts`
 
 ## To Do
+
 - [ ] [Ideas from Thom](https://docs.google.com/spreadsheets/d/1sciIq4W_Z122uuzMvqx6YvsvNEHl2CpDHn_FQvHyh6g/edit?usp=sharing) - Site Admin "Home Dashboard"
 
 - [ ] Admin dashboard

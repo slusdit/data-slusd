@@ -66,6 +66,8 @@ export default async function AdminPage() {
     },
   });
 
+  const roles = await prisma.role.findMany()
+
   const users = await prisma.user.findMany({
     select: {
       id: true,
@@ -109,7 +111,11 @@ export default async function AdminPage() {
       {/* <QueryBar queries={queries}/>
             <AddClassToUserButton /> */}
       {/* <pre>{JSON.stringify(queries, null, 2)}</pre> */}
-      <UserAdminGrid dataIn={users} />
+      <UserAdminGrid
+        dataIn={users}
+        availableRoles={roles}
+        availableQueries={queries}
+      />
       <div className="my-4">
       <Separator />
       </div>

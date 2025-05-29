@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { aggregateTeacherGradeSummaries, syncGradeDistribution } from "@/lib/syncGradeDistribution";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 const SyncGradeDistributionButton = () => {
     const [isLoading, setIsLoading] = useState(false);
@@ -44,20 +44,20 @@ const SyncGradeDistributionButton = () => {
                 onClick={handleFullSync}
                 disabled={isLoading}
             >
-                {isLoading ? "Loading..." : "Sync Grades"}
+                {isLoading ? "Loading..." : "Import Grades"}
             </Button>
-            <Button
+            {/* <Button
                 onClick={handleSummarySync}
                 disabled={isLoading}
             >
                 {isLoading ? "Loading..." : "Sync Summary"}
-            </Button>
-            <Button
+            </Button> */}
+            {/* <Button
                 onClick={handleSummarySyncReset}
                 disabled={isLoading}
             >
-                {isLoading ? "Loading..." : "Sync Summary Reset"}
-            </Button>
+                {isLoading ? "Loading..." : "Recalculate Summary"}
+            </Button> */}
         </div>
     );
 };

@@ -23,6 +23,7 @@ const TeacherStudentGradesDialog = ({
   department,
   term,
   courseTitle,
+  genderStatus,
   ellStatus,
   specialEdStatus,
   ardStatus,
@@ -31,13 +32,15 @@ const TeacherStudentGradesDialog = ({
   teacher: string;
   sc: number;
   tn: string; // Match the type with the server action parameter
-  department: string;
-  term?: string;
-  courseTitle?: string;
+    department: string;
+    term?: string;
+    courseTitle?: string;
+    genderStatus?: string;
   ellStatus?: string;
   specialEdStatus?: string;
   ardStatus?: string;
-}) => {
+  }) => {
+  console.log("Gender Status2:", genderStatus);
   const [gradeData, setGradeData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -45,6 +48,18 @@ const TeacherStudentGradesDialog = ({
   const [open, setOpen] = useState(false);
   const [gridApi, setGridApi] = useState<GridApi | null>(null);
   const { resolvedTheme } = useTheme();
+  console.log("TeacherStudentGradesDialog props:", {
+    teacher,
+    sc,
+    tn,
+    department,
+    term,
+    courseTitle,
+    genderStatus,
+    ellStatus,
+    specialEdStatus,
+    ardStatus,
+  });
 
   const gridThemeClass = useMemo(() => {
     return resolvedTheme === "dark"
@@ -80,6 +95,14 @@ const TeacherStudentGradesDialog = ({
         sortable: true,
         flex: 1,
         minWidth: 125,
+      },
+      {
+        field: "gender",
+        headerName: "Gender",
+        filter: true,
+        sortable: true,
+        flex: 1,
+        minWidth: 75,
       },
       {
         field: "studentNumber",
@@ -265,7 +288,7 @@ const TeacherStudentGradesDialog = ({
           // const dataCheck = await checkGradeDistributionData();
           // console.log("Database check result:", dataCheck);
 
-          const result = await getStudentGrades(sc, tn, term, courseTitle, ellStatus, specialEdStatus, ardStatus);
+          const result = await getStudentGrades(sc, tn, term, courseTitle, genderStatus, ellStatus, specialEdStatus, ardStatus);
           // console.log(
           //   "Student grade data retrieved:",
           //   result?.length || 0,
@@ -287,30 +310,35 @@ const TeacherStudentGradesDialog = ({
   }, [open, sc, tn, term, courseTitle]);
 
   // Calculate summary statistics
-  const gradeSummary = useMemo(() => {
-    if (!gradeData || gradeData.length === 0) return null;
+const gradeSummary = useMemo(() => {
+  if (!gradeData || gradeData.length === 0) return null;
 
-    const grades = {
-      A: 0,
-      B: 0,
-      C: 0,
-      D: 0,
-      F: 0,
-      Other: 0,
-      Total: gradeData.length,
-    };
+  const grades = {
+    A: 0,
+    B: 0,
+    C: 0,
+    D: 0,
+    F: 0,
+    Other: 0,
+    Total: gradeData.length,
+  };
 
-    gradeData.forEach((student) => {
-      const mark = student.mark?.charAt(0) || "Other";
-      if (["A", "B", "C", "D", "F"].includes(mark)) {
-        grades[mark]++;
-      } else {
-        grades.Other++;
-      }
-    });
+  gradeData.forEach((student) => {
+    const mark = student.mark || "";
+    
+    // Check if the grade matches standard format (letter + optional +/-)
+    const standardGradeMatch = mark.match(/^([ABCDF])[+-]?$/);
+    
+    if (standardGradeMatch) {
+      const baseLetter = standardGradeMatch[1];
+      grades[baseLetter]++;
+    } else {
+      grades.Other++;
+    }
+  });
 
-    return grades;
-  }, [gradeData]);
+  return grades;
+}, [gradeData]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen} className="w-full h-full">
@@ -345,7 +373,7 @@ const TeacherStudentGradesDialog = ({
             {gradeSummary && (
               <div className="flex gap-2 flex-wrap">
                 <Badge className="bg-blue-600">A: {gradeSummary.A}</Badge>
-                <Badge className="bg-green-600">B: {gradeSummary.B}</Badge>
+                <Badge className="bg-[#5DADE2]">B: {gradeSummary.B}</Badge>
                 <Badge className="bg-yellow-500">C: {gradeSummary.C}</Badge>
                 <Badge className="bg-orange-500">D: {gradeSummary.D}</Badge>
                 <Badge className="bg-red-600">F: {gradeSummary.F}</Badge>

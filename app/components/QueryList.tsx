@@ -41,7 +41,7 @@ const QueryList = ({
         <Accordion
           type="multiple"
           className="flex flex-col gap-1 w-full mb-8 "
-          defaultValue={defaultExpandedAccordion || []}
+          defaultValue={defaultExpandedAccordion ? [defaultExpandedAccordion] : []}
         >
           {user.favorites.length > 0 && (
             <AccordionItem key="favorites" className="" value="Favorites">
@@ -114,8 +114,8 @@ const QueryList = ({
 
                 if (
                   (categoryRoles &&
-                    user.roles.some((role) => categoryRoles.includes(role))) ||
-                  user.roles.includes("SUPERADMIN") ||
+                    userRoles.some((role) => categoryRoles.includes(role))) ||
+                  userRoles.includes("SUPERADMIN") ||
                   categoryRoles?.length === 0
                   // || category.label.toLowerCase() === 'favorites'
                 ) {
