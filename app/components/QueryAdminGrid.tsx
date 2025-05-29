@@ -474,7 +474,7 @@ const QueryAdminGrid = ({
       <div className="flex justify-between mb-2">
         <div className="text-3xl text-foreground font-semibold">Queries</div>
         <div className="flex space-x-2">
-          <FormDialog triggerMessage="Add Query" icon={<Plus className="w-4 h-4" />}>
+          <FormDialog triggerMessage="Add Query" icon={<Plus className="w-full h-4" />}>
             <AddQueryForm session={session} categories={categories} />
           </FormDialog>
 

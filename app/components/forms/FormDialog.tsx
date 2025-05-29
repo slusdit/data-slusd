@@ -28,7 +28,7 @@ export default function FormDialog({
                     {icon}
                 </Button>
             </DialogTrigger>
-            <DialogContent className={`${className}`}>
+            <DialogContent >
                 <DialogTitle>{title ?? ''}</DialogTitle>
                 {children}
                 <DialogFooter >
