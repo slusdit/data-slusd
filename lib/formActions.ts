@@ -9,10 +9,10 @@ const prisma = new PrismaClient()
 export async function addQuery(values: z.infer<typeof queryFormSchema>) {
   // values.query = values.query.split("\n").map((line) => "\"" + line + "\"").join("\n");
 
-  // try {
+  try {
   const result = await prisma.query.upsert({
     where: {
-      id: values.id || "" // Use an empty string or some other unique identifier
+      name: values.id // Use 'name' or another unique field as the identifier
     },
     update: {
       query: values.query,
@@ -45,10 +45,10 @@ export async function addQuery(values: z.infer<typeof queryFormSchema>) {
   // console.log({result})
     
   return true
-  // } catch (error) {
-  //   console.error("Error upserting query:", error)
-  //   return error
-  // }
+  } catch (error) {
+    console.error("Error upserting query:", error)
+    return error
+  }
 }
 
 export async function updateQuery(data: any, field: string) {
@@ -70,54 +70,39 @@ export async function updateQuery(data: any, field: string) {
   // }
 };
 
-// Improved updateUser function with better error handling
+// UPDATED: Improved updateUser function with better handling of many-to-many relationships
 export async function updateUser(data: any, field: string) {
   console.log(`Updating user ${data.id} - Field: ${field}`, data);
   
   try {
     if (field === "User Roles") {
-      // First, delete existing UserRole records
-      await prisma.userRole.deleteMany({
-        where: { userId: data.id }
+      // UPDATED: Use the userRole many-to-many relationship instead of manual junction table management
+      await prisma.user.update({
+        where: { id: data.id },
+        data: {
+          userRole: {
+            set: data.userRoleIds?.map((roleId: string) => ({ id: roleId })) || []
+          }
+        }
       });
-      
-      // Then create new UserRole records if any roles are provided
-      if (data.userRoleIds?.length > 0) {
-        await prisma.userRole.createMany({
-          data: data.userRoleIds.map((roleId: string) => ({
-            userId: data.id,
-            roleId: roleId
-          })),
-          skipDuplicates: true // Add this to avoid duplicate key errors
-        });
-      }
       
       console.log(`Updated user roles for user ${data.id}: ${data.userRoleIds?.length || 0} roles`);
     } 
     else if (field === "School Access") {
-      // First, delete existing UserSchool records
-      await prisma.userSchool.deleteMany({
-        where: { userId: data.id }
+      // UPDATED: Use the school many-to-many relationship instead of manual junction table management
+      await prisma.user.update({
+        where: { id: data.id },
+        data: {
+          school: {
+            set: data.schoolIds?.map((schoolId: string) => ({ id: schoolId })) || []
+          }
+        }
       });
-      
-      // Then create new UserSchool records if any schools are provided
-      if (data.schoolIds?.length > 0) {
-        await prisma.userSchool.createMany({
-          data: data.schoolIds.map((schoolId: string) => ({
-            userId: data.id,
-            schoolSc: schoolId
-          })),
-          skipDuplicates: true // Add this to avoid duplicate key errors
-        });
-      }
       
       console.log(`Updated school access for user ${data.id}: ${data.schoolIds?.length || 0} schools`);
     }
     else if (field === "Favorites") {
       // Handle favorites relationship - this is a many-to-many through the favorites field
-      // Based on your schema, User has favorites Query[] @relation("id")
-      
-      // Update the user's favorites by connecting/disconnecting queries
       await prisma.user.update({
         where: { id: data.id },
         data: {
