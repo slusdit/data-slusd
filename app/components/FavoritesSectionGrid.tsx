@@ -1,10 +1,8 @@
 "use client";
 
 import { SessionUser } from "@/auth";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { getQueryData } from "@/lib/getQuery";
-import Link from "next/link";
 import { use, useEffect, useMemo, useState } from "react";
 import FavoriteCard from "./FavoriteCard";
 import { useTheme } from "next-themes";
@@ -43,20 +41,6 @@ const FavoritesSectionGrid = ({ user }: { user: SessionUser }) => {
       </Card>
     );
   }
-  // if (user.activeSchool == 0) {
-  //   return (
-  //     <Card className="w-full p-2 mr-4 justify-center flex flex-col h-full">
-  //       <h1 className="text-3xl font-weight-800 mb-5 text-center">
-  //         Welcome {user?.name}
-  //       </h1>
-  //       {/* Main section for district users */}
-
-  //       <div className="grid grid-cols-1 h-lg w-md items-center">
-  //         District View
-  //       </div>
-  //     </Card>
-  //   );
-  // }
   return (
     // <Card className="w-full p-2 mr-4 justify-center flex flex-col h-full">
     <Card className="w-full p-2 mr-4 justify-center flex flex-col h-full shadow-md ">
