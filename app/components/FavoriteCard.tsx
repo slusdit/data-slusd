@@ -89,6 +89,7 @@ const FavoriteCard = ({
 
                 <CardContent>
                     {loading || !chartOptions ? (
+                        
                         <Skeleton className="text-center grid place-items-center h-[300px]">
                             Loading...
                         </Skeleton>
