@@ -42,7 +42,9 @@ export default async function GradeDistributionPage() {
             </div>
         );
     }
-    const defaultTerm = await getHighestIndexTermFromDatabase()
+
+    const termFilter = (session?.user?.activeSchool > 10) ? session?.user?.activeSchool : undefined;
+    const defaultTerm = await getHighestIndexTermFromDatabase({ sc: termFilter })
     console.log("Default Term:", defaultTerm);
     //     session.user.schoolSc,
     

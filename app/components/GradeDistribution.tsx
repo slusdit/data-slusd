@@ -17,7 +17,7 @@ import MultiDropdownSelector from "./MultiDropdownSelector";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2 } from "lucide-react";
-import { aggregateTeacherGradeSummaries, getHighestIndexTermFromDatabaseConcise } from "@/lib/syncGradeDistribution";
+import { aggregateTeacherGradeSummaries, getHighestIndexTermFromDatabase } from "@/lib/syncGradeDistribution";
 import SyncGradeDistributionButton from "./SyncGradeDistributionButton";
 import { Separator } from "@/components/ui/separator";
 import ExportChartButton from "./ExportChartButton";
