@@ -12,7 +12,7 @@ export async function addQuery(values: z.infer<typeof queryFormSchema>) {
   try {
   const result = await prisma.query.upsert({
     where: {
-      name: values.id // Use 'name' or another unique field as the identifier
+      name: values.name // Use 'name' or another unique field as the identifier
     },
     update: {
       query: values.query,

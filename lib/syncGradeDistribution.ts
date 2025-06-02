@@ -291,3 +291,131 @@ export async function aggregateTeacherGradeSummaries({
     throw error; // Rethrow to allow caller to handle
   }
 }
+
+const allTerms = [
+  "PRG1",
+  "GRD1", 
+  "PRG2",
+  "GRD2",
+  "SEM1",
+  "PRG3",
+  "GRD3",
+  "PRG4", 
+  "GRD4",
+  "SEM2",
+];
+
+// Function to get the term with the highest index from unique database terms
+export async function getHighestIndexTermFromDatabase(filters?: {
+  schoolYear?: string;
+  sc?: number;
+  studentId?: string;
+  teacherNumber?: string;
+}) {
+  try {
+    // Build the where clause based on provided filters
+    const whereClause: any = {};
+    if (filters?.schoolYear) whereClause.schoolYear = filters.schoolYear;
+    if (filters?.sc) whereClause.sc = filters.sc;
+    if (filters?.studentId) whereClause.studentId = filters.studentId;
+    if (filters?.teacherNumber) whereClause.teacherNumber = filters.teacherNumber;
+
+    // Get unique terms from the database
+    const uniqueTermsResult = await prisma.gradeDistribution.findMany({
+      where: whereClause,
+      select: {
+        term: true
+      },
+      distinct: ['term']
+    });
+
+    // Extract just the term strings
+    const uniqueTerms = uniqueTermsResult.map(result => result.term);
+
+    // Filter to only include terms that exist in both arrays
+    const validTerms = uniqueTerms.filter(term => allTerms.includes(term));
+
+    if (validTerms.length === 0) {
+      return null;
+    }
+
+    // Find the term with the highest index in allTerms
+    let highestIndexTerm = validTerms[0];
+    let highestIndex = allTerms.indexOf(validTerms[0]);
+
+    for (const term of validTerms) {
+      const termIndex = allTerms.indexOf(term);
+      if (termIndex > highestIndex) {
+        highestIndex = termIndex;
+        highestIndexTerm = term;
+      }
+    }
+
+    return {
+      term: highestIndexTerm,
+      index: highestIndex,
+      allValidTerms: validTerms.sort((a, b) => allTerms.indexOf(a) - allTerms.indexOf(b))
+    };
+
+  } catch (error) {
+    console.error('Error finding highest index term:', error);
+    throw error;
+  }
+}
+
+// Alternative: More concise version using array methods
+export async function getHighestIndexTermFromDatabaseConcise(filters?: {
+  schoolYear?: string;
+  sc?: number;
+  studentId?: string;
+  teacherNumber?: string;
+}) {
+  try {
+    const whereClause: any = {};
+    if (filters?.schoolYear) whereClause.schoolYear = filters.schoolYear;
+    if (filters?.sc) whereClause.sc = filters.sc;
+    if (filters?.studentId) whereClause.studentId = filters.studentId;
+    if (filters?.teacherNumber) whereClause.teacherNumber = filters.teacherNumber;
+
+    // Get unique terms
+    const uniqueTermsResult = await prisma.gradeDistribution.findMany({
+      where: whereClause,
+      select: { term: true },
+      distinct: ['term']
+    });
+
+    const uniqueTerms = uniqueTermsResult.map(result => result.term);
+    
+    // Find terms that exist in both arrays and get the one with highest index
+    const validTermsWithIndices = uniqueTerms
+      .filter(term => allTerms.includes(term))
+      .map(term => ({ term, index: allTerms.indexOf(term) }))
+      .sort((a, b) => b.index - a.index); // Sort by index descending
+
+    return validTermsWithIndices.length > 0 ? validTermsWithIndices[0] : null;
+
+  } catch (error) {
+    console.error('Error finding highest index term:', error);
+    throw error;
+  }
+}
+
+// Usage examples:
+// 
+// // Get highest index term from all records
+// const result = await getHighestIndexTermFromDatabase();
+// // Returns: { term: "SEM2", index: 9, allValidTerms: ["PRG1", "GRD1", ...] }
+//
+// // Get highest index term for specific school year
+// const result = await getHighestIndexTermFromDatabase({ 
+//   schoolYear: "2023-24" 
+// });
+//
+// // Get highest index term for specific student
+// const result = await getHighestIndexTermFromDatabase({ 
+//   studentId: "12345" 
+// });
+//
+// // Using the concise version
+// const result = await getHighestIndexTermFromDatabaseConcise();
+// // Returns: { term: "SEM2", index: 9 } or null
