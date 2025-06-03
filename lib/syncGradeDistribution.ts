@@ -222,6 +222,7 @@ export async function aggregateTeacherGradeSummaries({
       ${whereConditions}
       GROUP BY sc, teacherNumber, teacherName, departmentCode, courseTitle, term, schoolYear
       HAVING COUNT(*) > 0
+      ORDER BY sc, teacherName
     `;
     // console.log("raw query",`SELECT
     //     sc,
@@ -244,7 +245,7 @@ export async function aggregateTeacherGradeSummaries({
     //   HAVING COUNT(*) > 0`)
     
     // Transform the results as before...
-    const summaryData = summaries.map((summary) => ({
+    const summaryData =  summaries.map((summary) => ({
       sc: Number(summary.sc),
       tn: summary.tn,
       teacherName: summary.teacherName || "Unknown",
