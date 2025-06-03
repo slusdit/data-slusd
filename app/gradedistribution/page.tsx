@@ -45,10 +45,7 @@ export default async function GradeDistributionPage() {
 
     const termFilter = (session?.user?.activeSchool > 10) ? session?.user?.activeSchool : undefined;
     const defaultTerm = await getHighestIndexTermFromDatabase({ sc: termFilter })
-    console.log("Default Term:", defaultTerm);
-    //     session.user.schoolSc,
-    
-    // console.log("Session data:", session.user.UserSchool[0]);
+
     return (
         <div className="container mx-auto p-4">
             <Button variant="link">
