@@ -102,6 +102,30 @@ export async function syncGradeDistribution() {
   }
 }
 
+    export type GradeSummary = {
+      course: string;
+      sc: number;
+      tn: string;
+      teacherName: string;
+      department: string;
+      courseTitle: string;
+      term: string;
+      schoolYear: string;
+      aCount: number;
+      bCount: number;
+      cCount: number;
+      dCount: number;
+      fCount: number;
+      otherCount: number;
+      totalGrades: number;
+      aPercent: number;
+      bPercent: number;
+      cPercent: number;
+      dPercent: number;
+      fPercent: number;
+      otherPercent: number;
+    }
+
 export async function aggregateTeacherGradeSummaries({
   schoolYear,
   term,
@@ -202,8 +226,9 @@ export async function aggregateTeacherGradeSummaries({
     // });
 
     // Execute the query with the dynamic conditions
-    const summaries = await prisma.$queryRaw`
-          SELECT 
+
+    const summaries: GradeSummary[] = await prisma.$queryRaw`
+        SELECT 
         sc,
         teacherNumber as tn,
         teacherName,
