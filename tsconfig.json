@@ -1,6 +1,10 @@
 {
   "compilerOptions": {
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -18,10 +22,26 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"],
-      "@": ["./components", "./pages", "./app"]
-    }
+      "@/*": [
+        "./*"
+      ],
+      "@": [
+        "./components",
+        "./pages",
+        "./app"
+      ]
+    },
+    "target": "ES2017"
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "app/components/GradeDistributoin.tsx.old", "app/gradedistribution/page.tsx.old"],
-  "exclude": ["node_modules"]
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "app/components/GradeDistributoin.tsx.old",
+    "app/gradedistribution/page.tsx.old"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

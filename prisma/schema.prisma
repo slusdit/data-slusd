@@ -217,6 +217,7 @@ enum ROLE {
   COUNSELOR
   NURSE
   LIBRARIAN
+  IEPUPLOAD
 
   
 }
