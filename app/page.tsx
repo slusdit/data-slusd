@@ -52,21 +52,6 @@ export default async function Home() {
   // console.log(categories);
 }
 
-  // console.log(session?.user.favorites)
-
-  // const activeSchool = await prisma.schoolInfo.findUnique({
-  //   where: {
-  //     sc: session?.user?.activeSchool?.toString(),
-  //   },
-  // });
-
-  // let attendanceData;
-  // if (activeSchool.sc !== '0') {
-  //   attendanceData = await getQueryData({
-  //     queryLabel: "daily-attendance-school",
-  //   });   
-  // } 
- 
 
   return (
     <>

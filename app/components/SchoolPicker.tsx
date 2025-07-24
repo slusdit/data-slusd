@@ -18,7 +18,7 @@ import { SchoolInfo } from "@prisma/client";
 import { useState, useEffect, useTransition } from "react";
 import { updateActiveSchool } from "@/lib/signinMiddleware";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
 type UserSchoolWithDetails = {
   userId: string;
@@ -32,13 +32,15 @@ const SchoolPicker = ({
   label = null
 }: {
   schools: UserSchoolWithDetails[];
-    initialSchool?: string | null;
-    label?: string | null;
+  initialSchool?: string | null;
+  label?: string | null;
 }) => {
   const [open, setOpen] = useState(false);
   const [selectedSchool, setSelectedSchool] = useState<SchoolInfo | null>(null);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     if (initialSchool && schools.find((s) => s.school.sc === initialSchool.toString())) {
@@ -47,14 +49,21 @@ const SchoolPicker = ({
     }
   }, [initialSchool, schools]);
 
-  const handleSchoolChange = (value: string) => {
+  const refreshCurrentPage = () => {
+    const params = new URLSearchParams(searchParams);
+    params.set('_t', Date.now().toString());
+    router.replace(`${pathname}?${params.toString()}`);
+  };
+
+  const handleSchoolChange = async (value: string) => {
     const newSelectedSchool = schools.find((s) => s.school.sc === value)?.school || null;
     if (newSelectedSchool) {
       setSelectedSchool(newSelectedSchool);
       startTransition(async () => {
         try {
+          // Update the active school in the database
           await updateActiveSchool(schools[0].userId, Number(newSelectedSchool.sc));
-          router.refresh();
+          refreshCurrentPage();
         } catch (error) {
           console.error('Error updating active school:', error);
           // Handle error (e.g., show an error message to the user)
@@ -118,6 +127,5 @@ const SchoolPicker = ({
     </div>
   );
 };
-
 
 export default SchoolPicker;

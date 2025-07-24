@@ -4,6 +4,7 @@ import { ROLE } from "@prisma/client"
 import { Button } from "@/components/ui/button"
 import { AlertTriangle, Home, XOctagon } from "lucide-react"
 import { SignIn } from "./GoogleSignIn"
+import Image from "next/image"
 
 type Role = {
   adminRoles: ROLE[]
@@ -25,8 +26,9 @@ const UnauthorizedButton = ({
     <div className="flex">
       {home &&
         <div className="flex-col text-center m-auto mt-10 rounded-lg place-content-center">
-          <div className="text-xl font-weight-800 mb-5">
-            Welcome to SLUSD Data 2.0! <br />
+          <Image src="/logos/slusd-logo.png" alt="logo" width={300} height={300} className="" />
+          <div className="text-xl font-weight-800 my-5">
+            Welcome to SLUSD Data! <br />
             Please sign in.
           </div>
           <LoginButton user={null} />

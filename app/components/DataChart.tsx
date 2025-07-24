@@ -7,12 +7,10 @@ interface DataChartProps {
 }
 
 export function DataChart({ chartOptions, theme = 'light' }: DataChartProps) {
-    console.log(chartOptions);
-    console.log(theme);
+
   const agTheme = "ag-polychroma";
-    const themeClass = theme === "dark" ? "ag-theme-alpine-dark" : "ag-theme-alpine";
-    
-    console.log
+    const themeClass = theme === "dark" ? "ag-theme-quartz-dark" : "ag-theme-quartz";
+
 
   return (
     <div className={`${themeClass} w-full h-full border-b-2 border-muted/20 pb-4`}>

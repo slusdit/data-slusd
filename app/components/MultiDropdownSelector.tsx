@@ -1,0 +1,270 @@
+"use client";
+
+import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Check, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { FC, ReactNode, MouseEvent, useMemo, useState, useEffect } from "react";
+import UserSchoolWithDetails from "./SchoolPicker";
+import Image from "next/image";
+
+// Updated interface to include logo
+interface DropdownItem {
+  id: string;
+  label: string;
+  icon?: ReactNode;
+  logo?: string;  // Added logo property
+}
+
+interface MultiDropdownSelectorProps {
+  items: DropdownItem[];
+  values: string[];
+  onChange: (values: string[]) => void;
+  placeholder?: string;
+  label?: string;
+  searchPlaceholder?: string;
+  emptyMessage?: string;
+  disabled?: boolean;
+  width?: string;
+  side?: "top" | "right" | "bottom" | "left";
+  align?: "start" | "center" | "end";
+  maxDisplayItems?: number;
+  singleSelect?: boolean;
+  itemOrder?: string[];
+  classNameVar?: string;
+  defaultValues?: string[]; 
+  schoolValues?: UserSchoolWithDetails[];
+}
+
+const MultiDropdownSelector: FC<MultiDropdownSelectorProps> = ({
+  items,
+  values = [],
+  onChange,
+  placeholder = "Select items",
+  label,
+  searchPlaceholder = "Search...",
+  emptyMessage = "No results found.",
+  disabled = false,
+  width = "w-full",
+  side = "bottom",
+  align = "start",
+  maxDisplayItems = 3,
+  singleSelect = false,
+  itemOrder,
+  classNameVar,
+  defaultValues = [], 
+  schoolValues
+}) => {
+  const [open, setOpen] = useState(false);
+  const [initialized, setInitialized] = useState(false);
+  
+  const findMostRecentItem = useMemo(() => {
+    if (!itemOrder || itemOrder.length === 0 || items.length === 0) return null;
+
+    const availableItemIds = items.map(item => item.id);
+  
+    for (let i = itemOrder.length - 1; i >= 0; i--) {
+      if (availableItemIds.includes(itemOrder[i])) {
+        return itemOrder[i];
+      }
+    }
+    
+    return null;
+  }, [items, itemOrder]);
+  
+  useEffect(() => {
+    if (!initialized) {
+      console.log("defaultValues", defaultValues);
+      // Apply default values if they exist and values array is empty
+      if (defaultValues.length > 0 && values.length === 0 && !disabled && !schoolValues) {
+        // If singleSelect is true, only use the first default value
+        const valuesToSet = singleSelect ? [defaultValues[0]] : defaultValues;
+        onChange(valuesToSet);
+        setInitialized(true);
+      } 
+      else {
+        setInitialized(true);
+      }
+    }
+  }, [values, findMostRecentItem, onChange, singleSelect, disabled, initialized, itemOrder, defaultValues, schoolValues]);
+  
+  const selectedItems = useMemo(() => {
+    return items.filter((item) => values.includes(item.id));
+  }, [items, values]);
+
+  const handleSelect = (itemId: string) => {
+    // If singleSelect is true, replace the current selection with the new item
+    // unless the item is already selected, in which case deselect it
+    if (singleSelect) {
+      if (values.includes(itemId)) {
+        onChange([]);
+      } else {
+        onChange([itemId]);
+        // Close the dropdown after selecting in single-select mode
+        setOpen(false);
+      }
+    } else {
+      // Original multi-select behavior
+      if (values.includes(itemId)) {
+        onChange(values.filter((id) => id !== itemId));
+      } else {
+        onChange([...values, itemId]);
+      }
+    }
+  };
+
+  const handleClearAll = (e: MouseEvent) => {
+    e.stopPropagation();
+    onChange([]);
+  };
+
+  const handleRemoveItem = (itemId: string, e: MouseEvent) => {
+    e.stopPropagation();
+    onChange(values.filter((id) => id !== itemId));
+  };
+
+  // Updated to show logos in badges
+  const displayBadges = () => {
+    if (selectedItems.length === 0) {
+      return null;
+    }
+
+    const displayItems = selectedItems.slice(0, maxDisplayItems);
+    const remainingCount = selectedItems.length - maxDisplayItems;
+
+    return (
+      <div className="flex flex-wrap gap-1">
+        {displayItems.map((item) => (
+          <Badge 
+            key={item.id} 
+            className="flex items-center gap-1 px-2 py-0.5 bg-primary/80 text-white"
+          >
+            {/* Added logo to badge if available */}
+            {item.logo && (
+              <div className="h-4 w-4 mr-1 relative overflow-hidden rounded-sm">
+                <img 
+                  src={item.logo} 
+                  alt={`${item.label} logo`} 
+                  className="h-full w-full object-contain"
+                />
+              </div>
+            )}
+            {item.label}
+            <X 
+              className="h-3 w-3 cursor-pointer opacity-70 hover:opacity-100" 
+              onClick={(e) => handleRemoveItem(item.id, e)} 
+            />
+          </Badge>
+        ))}
+        {remainingCount > 0 && (
+          <Badge variant="secondary">+{remainingCount} more</Badge>
+        )}
+      </div>
+    );
+  };
+
+  const displayText = () => {
+    if (selectedItems.length === 0) {
+      return <span className="text-muted-foreground">{placeholder}</span>;
+    } else if (selectedItems.length === 1) {
+      return (
+        <div className="flex items-center">
+          {/* Added logo to single item display if available */}
+          {selectedItems[0].logo && (
+            <div className="h-5 w-5 mr-2 relative overflow-hidden rounded-sm">
+              <img 
+                src={selectedItems[0].logo} 
+                alt={`${selectedItems[0].label} logo`} 
+                className="h-full w-full object-contain"
+              />
+            </div>
+          )}
+          <span>{selectedItems[0].label}</span>
+        </div>
+      );
+    } else {
+      return `${selectedItems.length} items selected`;
+    }
+  };
+
+  return (
+    <div className="flex items-center space-x-4">
+      {label && <label className="font-medium text-sm">{label}</label>}
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild className={classNameVar || ""}>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className={`${width} justify-between relative min-h-10`}
+            disabled={disabled}
+          >
+            <div className="flex items-center justify-between w-full">
+              <div className="flex-1 text-left overflow-hidden">
+                {selectedItems.length > 0 && selectedItems.length <= maxDisplayItems
+                  ? displayBadges()
+                  : displayText()}
+              </div>
+              {selectedItems.length > 0 && (
+                <X
+                  className="h-4 w-4 shrink-0 opacity-50 hover:opacity-100 ml-2 cursor-pointer"
+                  onClick={handleClearAll}
+                />
+              )}
+            </div>
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="p-0 min-w-[200px]" side={side} align={align}>
+          <Command>
+            <CommandInput placeholder={searchPlaceholder} />
+            <CommandList>
+              <CommandEmpty>{emptyMessage}</CommandEmpty>
+              <CommandGroup>
+                {items.map((item) => (
+                  <CommandItem
+                    key={item.id}
+                    value={item.id}
+                    onSelect={() => handleSelect(item.id)}
+                  >
+                    <div className="flex items-center flex-1">
+                      {/* Added logo rendering in dropdown items */}
+                      {item.logo ? (
+                        <div className="h-5 w-5 mr-2 relative overflow-hidden rounded-sm">
+                          <img 
+                            src={item.logo} 
+                            alt={`${item.label} logo`}
+                            className="h-full w-full object-contain"
+                          />
+                        </div>
+                      ) : item.icon ? (
+                        <span className="mr-2">{item.icon}</span>
+                      ) : null}
+                      <span>{item.label}</span>
+                    </div>
+                    {values.includes(item.id) && (
+                      <Check className="ml-2 h-4 w-4 shrink-0" />
+                    )}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+};
+
+export default MultiDropdownSelector;

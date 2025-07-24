@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import LoginButton from "./LoginButton";
 import { Button } from "@/components/ui/button";
 import { SignIn } from "./GoogleSignIn";
@@ -73,7 +74,8 @@ export default async function MainHeader({ session }: { session: Session | null 
             variant="link"
             className="text-xl text-mainTitle-foreground font-bold hover"
           >
-            <Link href="/">Data V2.0</Link>
+            <Link href="/">
+            <Image src="/logos/slusd-logo.png" alt="logo" width={35} height={35} className="mr-2" />SLUSD Data</Link>
           </Button>
         </div>
         {schoolInfo && 
