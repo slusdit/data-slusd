@@ -77,9 +77,18 @@ export default function AddQueryForm({
   dialogState,
 }: Props) {
   const createdBy = session.user?.email?.toString();
-  const { query, name, description, categoryId, chart, chartStackKey, hiddenCols, chartYKey, chartXKey, chartTypeKey } =
-    pageValues || {};
-
+  const {
+    query,
+    name,
+    description,
+    categoryId,
+    chart,
+    chartStackKey,
+    hiddenCols,
+    chartYKey,
+    chartXKey,
+    chartTypeKey,
+  } = pageValues || {};
 
   // if (pageValues) {
 
@@ -112,7 +121,6 @@ export default function AddQueryForm({
     // console.log('values', {values})
     try {
       // TODO: validate SQL, try running it?
-
     } catch (e) {
       console.error(e);
       toast.error(`Error running query \n Error: ${e}`);
@@ -132,127 +140,130 @@ export default function AddQueryForm({
   }
 
   return (
-    <Form {...form} >
-      <form onSubmit={form.handleSubmit(onSubmit, onError)} className="space-y-8">
-        <div className="flex gap-4">
-          <div className="w-full" >
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Query Name</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="..."
-
-                      type="text"
-                      {...field} />
-                  </FormControl>
-                  <FormDescription>Simple query name</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit(onSubmit, onError)}
+        className="space-y-8"
+      >
+        <div className="">
+          <div className="flex gap-4 flex-col">
+            <div className="w-full">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Query Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="..." type="text" {...field} />
+                    </FormControl>
+                    <FormDescription>Simple query name</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div>
+              <FormField
+                control={form.control}
+                name="categoryId"
+                render={({ field }) => (
+                  <FormItem className="min-w-48 w-[100%]">
+                    <FormLabel>Query Category</FormLabel>
+                    <FormControl className="w-full">
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="w-full"
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Test" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            {categories.map((category) => (
+                              <SelectItem key={category.id} value={category.id}>
+                                {category.label}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </div>
-          <div >
-            <FormField
-              control={form.control}
-              name="categoryId"
-              render={({ field }) => (
-                <FormItem className="min-w-48 w-[100%]">
-                  <FormLabel>Query Category</FormLabel>
-                  <FormControl className="w-full">
-                    <Select onValueChange={field.onChange} defaultValue={field.value} className="w-full">
-                      <SelectTrigger >
-                        <SelectValue placeholder="Test" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
 
-                          {categories.map((category) => (
-                            <SelectItem key={category.id} value={category.id}>
-                              {category.label}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="..."
+                    className="resize-none"
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription>Detailed query description</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-              )}
-            />
-          </div>
+          <FormField
+            control={form.control}
+            name="query"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Query</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="SELECT TOP 10 * FROM STU"
+                    className="resize-none"
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription>
+                  {" "}
+                  SQL Query
+                  <small>
+                    <br />
+                    `@@asc` - User's current active school
+                  </small>
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="hiddenCols"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Hidden Columns</FormLabel>
+                <FormControl>
+                  <Input placeholder="..." type="text" {...field} />
+                </FormControl>
+                <FormDescription>
+                  Comma separated list of columns to hide on the result page
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
-
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="..."
-                  className="resize-none"
-                  {...field}
-                />
-              </FormControl>
-              <FormDescription>Detailed query description</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="query"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Query</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="SELECT TOP 10 * FROM STU"
-                  className="resize-none"
-                  {...field}
-                />
-              </FormControl>
-              <FormDescription> SQL Query
-                <small>
-                  <br />
-                  `@@asc` - User's current active school
-                </small>
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="hiddenCols"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Hidden Columns</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="..."
-
-                  type="text"
-                  {...field} />
-              </FormControl>
-              <FormDescription>Comma separated list of columns to hide on the result page</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
         <div className="border-2 border-primary/30 rounded p-2">
-          <div className="text-xl underline text-center w-full pb-3">Chart Options</div>
+          <div className="text-xl underline text-center w-full pb-3">
+            Chart Options
+          </div>
           <div className="grid grid-cols-12 gap-4 p-2 ">
-
             <div className="col-span-6">
-
               <FormField
                 control={form.control}
                 name="chart"
@@ -260,7 +271,9 @@ export default function AddQueryForm({
                   <FormItem className="flex flex-row items-center justify-between rounded-lg  ">
                     <div className="space-y-2 space-x-2">
                       <FormLabel>Chart?</FormLabel>
-                      <FormDescription>Add a chart to the result page?</FormDescription>
+                      <FormDescription>
+                        Add a chart to the result page?
+                      </FormDescription>
                     </div>
                     <FormControl>
                       <Switch
@@ -274,14 +287,16 @@ export default function AddQueryForm({
             </div>
 
             <div className="col-span-6">
-
               <FormField
                 control={form.control}
                 name="chartTypeKey"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Chart Type</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue />
@@ -299,13 +314,10 @@ export default function AddQueryForm({
                 )}
               />
             </div>
-
           </div>
 
           <div className="grid grid-cols-12 gap-4">
-
             <div className="col-span-6">
-
               <FormField
                 control={form.control}
                 name="chartXKey"
@@ -313,13 +325,11 @@ export default function AddQueryForm({
                   <FormItem>
                     <FormLabel>Chart X Key</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="DT, SC, etc..."
-
-                        type=""
-                        {...field} />
+                      <Input placeholder="DT, SC, etc..." type="" {...field} />
                     </FormControl>
-                    <FormDescription>Column to use for the X-Axis</FormDescription>
+                    <FormDescription>
+                      Column to use for the X-Axis
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -327,7 +337,6 @@ export default function AddQueryForm({
             </div>
 
             <div className="col-span-6">
-
               <FormField
                 control={form.control}
                 name="chartYKey"
@@ -337,17 +346,18 @@ export default function AddQueryForm({
                     <FormControl>
                       <Input
                         placeholder="TK,K,1,2,3,4,5..."
-
                         type=""
-                        {...field} />
+                        {...field}
+                      />
                     </FormControl>
-                    <FormDescription>Comma separated values for items in the Y-axis</FormDescription>
+                    <FormDescription>
+                      Comma separated values for items in the Y-axis
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
-
           </div>
 
           <FormField
@@ -357,7 +367,9 @@ export default function AddQueryForm({
               <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                 <div className="space-y-0.5">
                   <FormLabel>Stacked Chart?</FormLabel>
-                  <FormDescription>Is the Y-Axis information stacked</FormDescription>
+                  <FormDescription>
+                    Is the Y-Axis information stacked
+                  </FormDescription>
                 </div>
                 <FormControl>
                   <Switch
@@ -369,10 +381,6 @@ export default function AddQueryForm({
             )}
           />
         </div>
-
-
-
-
 
         <Button type="submit">
           {submitTitle ?? "Add"}

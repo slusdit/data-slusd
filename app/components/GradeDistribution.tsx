@@ -17,7 +17,7 @@ import MultiDropdownSelector from "./MultiDropdownSelector";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2 } from "lucide-react";
-import { aggregateTeacherGradeSummaries } from "@/lib/syncGradeDistribution";
+import { aggregateTeacherGradeSummaries, getHighestIndexTermFromDatabase } from "@/lib/syncGradeDistribution";
 import SyncGradeDistributionButton from "./SyncGradeDistributionButton";
 import { Separator } from "@/components/ui/separator";
 import ExportChartButton from "./ExportChartButton";
@@ -37,11 +37,12 @@ interface StudentAttributes {
   genderOptions?: string[];
 }
 
-interface GradeDistribution3Props {
+interface GradeDistributionProps {
   data: any[];
   isLoading?: boolean;
   activeSchool: string;
   user: SessionUser;
+  defaultTerm?: string[];
   studentAttributes?: StudentAttributes;
 }
 
@@ -50,13 +51,14 @@ const GradeDistribution = ({
   isLoading = false,
   activeSchool,
   user,
+  defaultTerm = [],
   studentAttributes = {
     ellOptions: [],
     specialEdOptions: [],
     ardOptions: [],
     genderOptions: [],
   },
-}: GradeDistribution3Props) => {
+}: GradeDistributionProps) => {
 
   const allTerms = [
     "PRG1",
@@ -70,6 +72,7 @@ const GradeDistribution = ({
     "GRD4",
     "SEM2",
   ];
+  
   const acceptedSchools = initialData?.map((item) => String(item.sc)) || [];
   let defaultSchool;
   if (activeSchool) {
@@ -91,7 +94,7 @@ const GradeDistribution = ({
     defaultSchool || []
   );
   const [selectedPeriods, setSelectedPeriods] = useState<string[]>([]);
-  const [selectedTerms, setSelectedTerms] = useState<string[]>(["GRD3"]);
+  const [selectedTerms, setSelectedTerms] = useState<string[]>(defaultTerm);
   const [selectedEll, setSelectedEll] = useState<string[]>([]);
   const [selectedSpecialEd, setSelectedSpecialEd] = useState<string[]>([]);
   const [selectedArd, setSelectedArd] = useState<string[]>([]);

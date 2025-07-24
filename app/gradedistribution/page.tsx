@@ -8,7 +8,7 @@ import prisma from "@/lib/db";
 
 import SyncGradeDistributionButton from "../components/SyncGradeDistributionButton";
 import GradeDistribution from "../components/GradeDistribution";
-import { aggregateTeacherGradeSummaries } from "@/lib/syncGradeDistribution";
+import { aggregateTeacherGradeSummaries, getHighestIndexTermFromDatabase } from "@/lib/syncGradeDistribution";
 
 export default async function GradeDistributionPage() {
     const session = await auth();
@@ -43,9 +43,9 @@ export default async function GradeDistributionPage() {
         );
     }
 
-    //     session.user.schoolSc,
-    
-    // console.log("Session data:", session.user.UserSchool[0]);
+    const termFilter = (session?.user?.activeSchool > 10) ? session?.user?.activeSchool : undefined;
+    const defaultTerm = await getHighestIndexTermFromDatabase({ sc: termFilter })
+
     return (
         <div className="container mx-auto p-4">
             <Button variant="link">
@@ -62,6 +62,7 @@ export default async function GradeDistributionPage() {
                 <GradeDistribution 
                     data={data} 
                     session={session}
+                    defaultTerm={[defaultTerm.term]}
                     studentAttributes={{
                         ellOptions,
                         specialEdOptions,

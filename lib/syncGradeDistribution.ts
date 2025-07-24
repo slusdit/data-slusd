@@ -102,6 +102,30 @@ export async function syncGradeDistribution() {
   }
 }
 
+    export type GradeSummary = {
+      course: string;
+      sc: number;
+      tn: string;
+      teacherName: string;
+      department: string;
+      courseTitle: string;
+      term: string;
+      schoolYear: string;
+      aCount: number;
+      bCount: number;
+      cCount: number;
+      dCount: number;
+      fCount: number;
+      otherCount: number;
+      totalGrades: number;
+      aPercent: number;
+      bPercent: number;
+      cPercent: number;
+      dPercent: number;
+      fPercent: number;
+      otherPercent: number;
+    }
+
 export async function aggregateTeacherGradeSummaries({
   schoolYear,
   term,
@@ -202,8 +226,9 @@ export async function aggregateTeacherGradeSummaries({
     // });
 
     // Execute the query with the dynamic conditions
-    const summaries = await prisma.$queryRaw`
-          SELECT 
+
+    const summaries: GradeSummary[] = await prisma.$queryRaw`
+        SELECT 
         sc,
         teacherNumber as tn,
         teacherName,
@@ -222,6 +247,7 @@ export async function aggregateTeacherGradeSummaries({
       ${whereConditions}
       GROUP BY sc, teacherNumber, teacherName, departmentCode, courseTitle, term, schoolYear
       HAVING COUNT(*) > 0
+      ORDER BY sc, teacherName
     `;
     // console.log("raw query",`SELECT
     //     sc,
@@ -244,7 +270,7 @@ export async function aggregateTeacherGradeSummaries({
     //   HAVING COUNT(*) > 0`)
     
     // Transform the results as before...
-    const summaryData = summaries.map((summary) => ({
+    const summaryData =  summaries.map((summary) => ({
       sc: Number(summary.sc),
       tn: summary.tn,
       teacherName: summary.teacherName || "Unknown",
@@ -289,5 +315,54 @@ export async function aggregateTeacherGradeSummaries({
   } catch (error) {
     console.error("Error aggregating teacher grade summaries:", error);
     throw error; // Rethrow to allow caller to handle
+  }
+}
+
+const allTerms = [
+  "PRG1",
+  "GRD1", 
+  "PRG2",
+  "GRD2",
+  "SEM1",
+  "PRG3",
+  "GRD3",
+  "PRG4", 
+  "GRD4",
+  "SEM2",
+];
+
+export async function getHighestIndexTermFromDatabase(filters?: {
+  schoolYear?: string;
+  sc?: number;
+  studentId?: string;
+  teacherNumber?: string;
+}) {
+  try {
+    const whereClause: any = {};
+    if (filters?.schoolYear) whereClause.schoolYear = filters.schoolYear;
+    if (filters?.sc) whereClause.sc = filters.sc;
+    if (filters?.studentId) whereClause.studentId = filters.studentId;
+    if (filters?.teacherNumber) whereClause.teacherNumber = filters.teacherNumber;
+
+    // Get unique terms
+    const uniqueTermsResult = await prisma.gradeDistribution.findMany({
+      where: whereClause,
+      select: { term: true },
+      distinct: ['term']
+    });
+
+    const uniqueTerms = uniqueTermsResult.map(result => result.term);
+    
+    // Find terms that exist in both arrays and get the one with highest index
+    const validTermsWithIndices = uniqueTerms
+      .filter(term => allTerms.includes(term))
+      .map(term => ({ term, index: allTerms.indexOf(term) }))
+      .sort((a, b) => b.index - a.index); // Sort by index descending
+
+    return validTermsWithIndices.length > 0 ? validTermsWithIndices[0] : null;
+
+  } catch (error) {
+    console.error('Error finding highest index term:', error);
+    throw error;
   }
 }
