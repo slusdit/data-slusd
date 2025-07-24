@@ -9,6 +9,7 @@ export default async function SchoolLayout(
 ) {
   const params = await props.params;
 
+
   const {
     children
   } = props;
@@ -16,6 +17,7 @@ export default async function SchoolLayout(
   // const session = await serverAuth()
   const session = await auth()
   const sc = session?.user?.activeSchool
+  console.log('userSchools: ', )
 
   if (sc?.toString() !== params.sc && sc != 0) {
     return (
