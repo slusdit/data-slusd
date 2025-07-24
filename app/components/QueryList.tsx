@@ -1,6 +1,6 @@
 "use client";
 // import { QueryCategory, Session, User } from "@prisma/client";
-import { User } from "@prisma/client";
+import { User as PrismaUser } from "@prisma/client";
 import Link from "next/link";
 import { QueryWithCategory } from "./QueryBar";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -18,6 +18,21 @@ import {
 } from "@/components/ui/tooltip";
 import { createFactory } from "react";
 
+type FavoriteQuery = {
+  id: string;
+  name: string;
+  description?: string;
+  category?: {
+    label: string;
+    value: string;
+  };
+};
+
+interface UserWithFavorites extends PrismaUser {
+  favorites: FavoriteQuery[];
+  roles: string[];
+}
+
 const QueryList = ({
   roles: userRoles,
   queries,
@@ -31,7 +46,7 @@ const QueryList = ({
   queries: QueryWithCategory[];
   categories: QueryWithCategory[];
   email: string;
-  user: User;
+  user: UserWithFavorites;
   defaultExpandedAccordion?: string;
   accordion?: boolean;
 }) => {
@@ -43,7 +58,7 @@ const QueryList = ({
           className="flex flex-col gap-1 w-full mb-8 "
           defaultValue={defaultExpandedAccordion || []}
         >
-          {user.favorites.length > 0 && (
+          {user?.favorites && user.favorites.length > 0 && (
             <AccordionItem key="favorites" className="" value="Favorites">
               <AccordionTrigger className={` text-xl font-bold pr-4`}>
                 <div className="flex-grow text-left ml-4">Favorites</div>

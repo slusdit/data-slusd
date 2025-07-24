@@ -32,7 +32,7 @@ const FavoritesSectionGrid = ({ user }: { user: SessionUser }) => {
     };
     fetchData();
   }, []);
-  if (user.favorites.length == 0) {
+  if (user && user?.favorites?.length == 0) {
     return (
       <Card className="w-full p-2 mr-4 justify-center flex flex-col h-full ">
         <CardTitle className="mb-5 text-center">Welcome {user?.name}</CardTitle>
@@ -43,31 +43,25 @@ const FavoritesSectionGrid = ({ user }: { user: SessionUser }) => {
       </Card>
     );
   }
-  // if (user.activeSchool == 0) {
-  //   return (
-  //     <Card className="w-full p-2 mr-4 justify-center flex flex-col h-full">
-  //       <h1 className="text-3xl font-weight-800 mb-5 text-center">
-  //         Welcome {user?.name}
-  //       </h1>
-  //       {/* Main section for district users */}
 
-  //       <div className="grid grid-cols-1 h-lg w-md items-center">
-  //         District View
-  //       </div>
-  //     </Card>
-  //   );
-  // }
   return (
     // <Card className="w-full p-2 mr-4 justify-center flex flex-col h-full">
     <Card className="w-full p-2 mr-4 justify-center flex flex-col h-full shadow-md ">
       <CardTitle className="mb-5 text-center">Welcome {user?.name}</CardTitle>
 
       <CardContent className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 h-lg w-md gap-4 items-center">
-        {user.favorites.map((query) => {
-          if (query.chart) {
-            return <FavoriteCard key={query.id} query={query} user={user} theme={theme} />;
-          }
-        })}
+        {((user && !user.favorites) || (user && user.favorites.length === 0)) ? (
+          <div className="grid grid-cols-1 h-lg w-md items-center">
+            Add reports to your favorites to view them here
+          </div>
+        ) : (user &&
+          user.favorites.map((query) => {
+            if (query.chart) {
+              return <FavoriteCard key={query.id} query={query} user={user} theme={theme} />;
+            }
+            return null;
+          })
+        )}
       </CardContent>
     </Card>
   );
