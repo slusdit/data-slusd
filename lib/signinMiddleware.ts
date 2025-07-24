@@ -148,7 +148,7 @@ export async function updateActiveSchool(userId: string, activeSchool: number) {
             activeSchool
         }
     })
-    const headersList = headers()
+    const headersList = await headers()
     const referer = headersList.get('referer')
     const currentPath = referer ? new URL(referer).pathname : '/'
     // console.log('Redirecting to:', currentPath)

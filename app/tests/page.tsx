@@ -3,6 +3,7 @@ import RenewSchools from "../components/RenewSchools";
 import { AeriesSimpleStaff, AeriesSimpleTeacher, getAeriesStaff, getTeacherSchoolCredentials } from "@/lib/aeries";
 import prisma from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import ChartTest from "./ChartTest";
 
 
 export default async function Page() {
@@ -135,16 +136,17 @@ export default async function Page() {
     return (
         <div>
             <h1>Tests</h1>
+            <ChartTest />
             {/* <RenewSchools fecthFunction={getAeriesStaff}    aeriesApiKey={process.env.AERIES_API_KEY} /> */}
-            <div className="text-blue font-bold">{displayResult}</div>
-            <div className="font-bold underline mt-8">aeriesPermissions</div>
-            <pre>{JSON.stringify(aeriesPermissions, null, 2)}</pre>
-            <div className="font-bold underline mt-8">aeriesClasses</div>
-            <pre>{JSON.stringify(aeriesClasses, null, 2)}</pre>
-            <div className="font-bold underline mt-8">currentClasses</div>
-            <pre>{JSON.stringify(currentClasses, null, 2)}</pre>
-            <div className="font-bold underline mt-8">Session.User</div>
-            <pre>{JSON.stringify(session?.user, null, 2)}</pre>
+            {/* <div className="text-blue font-bold">{displayResult}</div> */}
+            {/* <div className="font-bold underline mt-8">aeriesPermissions</div> */}
+            {/* <pre>{JSON.stringify(aeriesPermissions, null, 2)}</pre> */}
+            {/* <div className="font-bold underline mt-8">aeriesClasses</div> */}
+            {/* <pre>{JSON.stringify(aeriesClasses, null, 2)}</pre> */}
+            {/* <div className="font-bold underline mt-8">currentClasses</div> */}
+            {/* <pre>{JSON.stringify(currentClasses, null, 2)}</pre> */}
+            {/* <div className="font-bold underline mt-8">Session.User</div> */}
+            {/* <pre>{JSON.stringify(session?.user, null, 2)}</pre> */}
 
         </div>
     );

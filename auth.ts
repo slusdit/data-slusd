@@ -3,7 +3,7 @@ import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import prisma from "./lib/db";
 import { getAllSchools, getPrimarySchool, syncTeacherClasses } from "./lib/signinMiddleware";
-import { Class, ROLE, SchoolInfo, User } from "@prisma/client";
+import { Class, Query, ROLE, SchoolInfo, User } from "@prisma/client";
 import { AeriesSimpleTeacher } from "./lib/aeries";
 
 
@@ -16,6 +16,13 @@ export interface SessionUser extends User {
   primarySchool: number | null;
   activeSchool: number;
   psl: number;
+  UserSchool: Array<{
+    school: {
+      sc: string;
+      name: string;
+      logo?: string;
+    };
+  }>;
 }
 
 async function getSchools({
@@ -122,9 +129,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
 
       }
-      // console.log(dbUser)
-      // @ts-ignore
-      // auth.ts
+
 
 
       session.user = {

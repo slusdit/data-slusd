@@ -42,3 +42,5 @@ yarn-error.log*
 #backend
 backend/venv
 
+test.*
+tests/

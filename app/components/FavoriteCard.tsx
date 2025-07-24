@@ -5,78 +5,41 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { QueryWithCategory } from "./QueryBar";
-import { runQuery } from "@/lib/aeries";
 import { SessionUser } from "@/auth";
-import DataTableAgGrid from "./DataTableAgGrid";
 import { DataChart } from "./DataChart";
-import { createChartOptions } from "@/lib/chartOptions";
-import { Loader } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTheme } from "next-themes";
 
 const FavoriteCard = ({
     query,
     user, 
-    theme 
+    theme,
+    data = [],
+    chartOptions = null,
+    loading = true,
+    error = null
 }: {
     query: QueryWithCategory;
-    user: SessionUser
-    theme?: string
+    user: SessionUser;
+    theme?: string;
+    data?: any[];
+    chartOptions?: any;
+    loading?: boolean;
+    error?: string | null;
 }) => {
-    const [data, setData] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [chartOptions, setChartOptions] = useState(null); // Change to null initially
-    // const { theme } = useTheme();
-    console.log(theme)
     if (!theme) {
-        const { theme: providerTheme } = useTheme()
-       theme = providerTheme
+        const { theme: providerTheme } = useTheme();
+        theme = providerTheme;
     }
 
     const [agGridTheme, setAgGridTheme] = useState(
-        theme === "dark" ? "ag-theme-alpine-dark" : "ag-theme-alpine"
-        // theme ||  useTheme()
+        theme === "dark" ? "ag-theme-quartz-dark" : "ag-theme-quartz"
     );
 
-    // Separate effect for theme changes
+    // Update theme when it changes
     useEffect(() => {
-        setAgGridTheme(theme === "dark" ? "ag-theme-alpine-dark" : "ag-theme-alpine");
+        setAgGridTheme(theme === "dark" ? "ag-theme-quartz-dark" : "ag-theme-quartz");
     }, [theme]);
-
-    // Main data fetching effect
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                setLoading(true);
-                const response = await runQuery(query.query);
-                setData(response);
-                
-                // Create chart options after data is set
-                const chartOpt = await createChartOptions({
-                    chartTitle: query.name,
-                    chartXKey: query.chartXKey,
-                    chartYKey: query.chartYKey,
-                    chartTypeKey: query.chartTypeKey,
-                    rowData: response, // Use response directly
-                    visibleColumns: query.hiddenCols?.split(",") || [],
-                    chartStackKey: query.chartStackKey || false,
-                    aggFunction: "sum",
-                    theme: theme,
-                });
-                
-                setChartOptions(chartOpt);
-                console.log(chartOpt)
-            } catch (error) {
-                console.error("Error fetching data:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        if (query) {
-            fetchData();
-        }
-    }, [query, theme]); // Add theme as dependency
 
     return (       
         <Card className="w-full p-2 mr-4 justify-center flex flex-col h-full shadow-md" key={query.id}>
@@ -91,7 +54,7 @@ const FavoriteCard = ({
                 <CardContent>
                     {loading || !chartOptions ? (
                         <Skeleton className="text-center grid place-items-center h-[300px]">
-                            Loading...
+                            {error ? `Error: ${error}` : "Loading..."}
                         </Skeleton>
                     ) : (
                         <DataChart chartOptions={chartOptions} theme={theme} />
