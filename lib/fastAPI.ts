@@ -44,17 +44,23 @@ export async function apiAuth() {
 export async function uploadIEP(files: File[], authToken: string) {
     const myHeaders = new Headers();
     myHeaders.append("Authorization", `Bearer ${authToken}`);
+    // Don't set Content-Type manually - let the browser set it with the boundary for multipart/form-data
 
-    const raw = JSON.stringify({
-    "file": files
-  });
+    // Create FormData instead of JSON
+    const formData = new FormData();
+    
+    // Add each file to the FormData
+    files.forEach((file, index) => {
+      formData.append('file', file); // Use 'files' as the field name (adjust if your API expects different)
+    });
 
-  const requestOptions: RequestInit = {
-    method: "POST",
-    headers: myHeaders,
-    body: raw,
-    redirect: "follow",
+    const requestOptions: RequestInit = {
+      method: "POST",
+      headers: myHeaders,
+      body: formData, // Use FormData instead of JSON
+      redirect: "follow",
     };
+    
     try {
         const response = await fetch(
         `${process.env.NEXT_PUBLIC_FAST_API_URL}/sped/uploadIepAtAGlance/`,
