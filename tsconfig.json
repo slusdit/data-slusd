@@ -40,7 +40,7 @@
     ".next/types/**/*.ts",
     "app/components/GradeDistributoin.tsx.old",
     "app/gradedistribution/page.tsx.old"
-, "app/query/[category]/[id]/loading.tsx.old"  ],
+  ],
   "exclude": [
     "node_modules"
   ]

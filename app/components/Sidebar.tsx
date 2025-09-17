@@ -52,6 +52,18 @@ const Sidebar = async({
                     </>
 
                 )}
+            {(
+                session?.user?.roles?.includes("IEPUPLOAD") ||
+                session?.user?.roles?.includes("SUPERADMIN")) &&
+                (
+                    <>
+                        <div className="flex justify-center">
+                        <Link href="sped/uploadIEP" className="text-primary px-4 py-2">IEP Upload</Link>
+                        </div>
+                        <Separator className="my-4 w-full" />
+                    </>
+
+                )}
             <h2 className="font-bold text-center text-lg underline">Reports</h2>
             {session?.user?.queryEdit && (
                 <div className="flex justify-center">
