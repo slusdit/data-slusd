@@ -2,6 +2,7 @@
   "name": "data-slusd",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
@@ -37,6 +38,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
+    "dotenv": "^16.5.0",
     "json-as-xlsx": "^2.5.6",
     "lucide-react": "^0.396.0",
     "mssql": "^11.0.0",
@@ -65,6 +67,7 @@
     "postcss": "^8",
     "prisma": "^6.8.2",
     "tailwindcss": "^3.4.1",
+    "tsx": "^4.20.3",
     "typescript": "^5"
   }
 }
