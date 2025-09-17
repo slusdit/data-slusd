@@ -57,9 +57,9 @@ const Sidebar = async({
                 session?.user?.roles?.includes("SUPERADMIN")) &&
                 (
                     <>
-                        <div className="flex justify-center">
+                        <Button asChild className="flex justify-center">
                         <Link href="sped/uploadIEP" className="text-primary px-4 py-2">IEP Upload</Link>
-                        </div>
+                        </Button>
                         <Separator className="my-4 w-full" />
                     </>
 
