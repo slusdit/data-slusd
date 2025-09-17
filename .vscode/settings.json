@@ -1,0 +1,22 @@
+{
+    "sqltools.connections": [
+        {
+            "connectionTimeout": 15,
+            "mssqlOptions": {
+                "appName": "SQLTools",
+                "useUTC": true,
+                "encrypt": false,
+                "trustServerCertificate": false
+            },
+            "previewLimit": 50,
+            "server": "do-db1",
+            "port": 1433,
+            "driver": "MSSQL",
+            "name": "Aeries 2024-45",
+            "group": "Aeries",
+            "database": "DST24000SLUSD",
+            "username": "dmellonssa",
+            "password": "4BUTt5RlsG2W9taMfwnSa2"
+        }
+    ]
+}
