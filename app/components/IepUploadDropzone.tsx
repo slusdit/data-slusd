@@ -1,8 +1,8 @@
 'use client';
 import { Dropzone, DropzoneContent, DropzoneEmptyState } from '@/components/ui/shadcn-io/dropzone';
 import { useEffect, useState } from 'react';
-import axios from 'axios';
-import { apiAuth } from '@/lib/fastAPI';
+import { apiAuth, uploadIEP } from '@/lib/fastAPI';
+
 
 const IepDropzone = () => {
   const [files, setFiles] = useState<File[] | undefined>();
@@ -15,7 +15,6 @@ const IepDropzone = () => {
         const authResponse = await apiAuth();
         const token = authResponse.token;
         setAuthToken(token);
-        console.log('Auth Token:', token);
       } catch (error) {
         console.error('Error fetching auth token:', error);
       }
@@ -30,8 +29,8 @@ const IepDropzone = () => {
     
     // Now you can use the authToken here if needed
     if (authToken) {
-      console.log('Auth token is available for upload:', authToken);
-      // Add your file upload logic here
+      const uploadResponse = uploadIEP(files, authToken);
+      console.log('Upload response:', uploadResponse);
     }
   };
 

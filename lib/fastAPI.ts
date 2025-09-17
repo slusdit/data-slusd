@@ -25,7 +25,7 @@ export async function apiAuth() {
     }
 
     const result = await response.text();
-    console.log('API Response:', result);
+
     
     // Parse the response to return the token
     try {
@@ -39,4 +39,34 @@ export async function apiAuth() {
     console.error("API Auth error:", error);
     throw error;
   }
+}
+
+export async function uploadIEP(files: File[], authToken: string) {
+    const myHeaders = new Headers();
+    myHeaders.append("Authorization", `Bearer ${authToken}`);
+
+    const raw = JSON.stringify({
+    "file": files
+  });
+
+  const requestOptions: RequestInit = {
+    method: "POST",
+    headers: myHeaders,
+    body: raw,
+    redirect: "follow",
+    };
+    try {
+        const response = await fetch(
+        `${process.env.NEXT_PUBLIC_FAST_API_URL}/sped/uploadIepAtAGlance/`,
+        requestOptions
+        );
+        if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+        const result = await response.text();
+        return result;
+    } catch (error) {
+        console.error("API upload error:", error);
+        throw error;
+    }
 }
