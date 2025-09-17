@@ -1,34 +1,46 @@
 'use client';
-// import { Dropzone, DropzoneContent, DropzoneEmptyState } from '@/components/ui/kibo-ui/dropzone';
 import { Dropzone, DropzoneContent, DropzoneEmptyState } from '@/components/ui/shadcn-io/dropzone';
 import { useEffect, useState } from 'react';
-// Import post from a suitable HTTP library, e.g. axios or fetch wrapper
 import axios from 'axios';
+import { apiAuth } from '@/lib/fastAPI';
 
 const IepDropzone = () => {
   const [files, setFiles] = useState<File[] | undefined>();
-  const handleDrop = (files: File[]) => {
-    console.log(files);
-    useEffect(() => {
-      const fetchAuthToken = async () => {
-        const authToken = await axios.post(`${process.env.NEXT_PUBLIC_FAST_API_URL}/api/token`,
-          {
-            username: process.env.NEXT_PUBLIC_FAST_API_USER,
-            password: process.env.NEXT_PUBLIC_FAST_API_PASSWORD,
-          }
+  const [authToken, setAuthToken] = useState<string | null>(null);
 
-        ).then((res) => res.data);
-        console.log('Auth Token:', authToken);
-      };
-      fetchAuthToken();
-    }, []);
+  // Move useEffect to the top level of the component
+  useEffect(() => {
+    const fetchAuthToken = async () => {
+      try {
+        const authResponse = await apiAuth();
+        const token = authResponse.token;
+        setAuthToken(token);
+        console.log('Auth Token:', token);
+      } catch (error) {
+        console.error('Error fetching auth token:', error);
+      }
+    };
+    
+    fetchAuthToken();
+  }, []);
+
+  const handleDrop = (files: File[]) => {
+    console.log('Files dropped:', files);
+    setFiles(files);
+    
+    // Now you can use the authToken here if needed
+    if (authToken) {
+      console.log('Auth token is available for upload:', authToken);
+      // Add your file upload logic here
+    }
   };
+
   return (
     <Dropzone
-      accept={{ 'PDF/*': [] }}
+      accept={{ 'application/pdf': [] }}
       maxFiles={10}
-      maxSize={1024 * 1024 * 10}
-      minSize={1024}
+      maxSize={1024 * 1024 * 10} // 10MB
+      minSize={1024} // 1KB
       onDrop={handleDrop}
       onError={console.error}
       src={files}
@@ -38,4 +50,5 @@ const IepDropzone = () => {
     </Dropzone>
   );
 };
+
 export default IepDropzone;
