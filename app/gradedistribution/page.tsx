@@ -45,6 +45,7 @@ export default async function GradeDistributionPage() {
 
     const termFilter = (session?.user?.activeSchool > 10) ? session?.user?.activeSchool : undefined;
     const defaultTerm = await getHighestIndexTermFromDatabase({ sc: termFilter })
+    const sentTerm = await defaultTerm?.term ? defaultTerm.term : "SEM1"
 
     return (
         <div className="container mx-auto p-4">
@@ -62,7 +63,7 @@ export default async function GradeDistributionPage() {
                 <GradeDistribution 
                     data={data} 
                     session={session}
-                    defaultTerm={[defaultTerm.term]}
+                    defaultTerm={[sentTerm]}
                     studentAttributes={{
                         ellOptions,
                         specialEdOptions,
