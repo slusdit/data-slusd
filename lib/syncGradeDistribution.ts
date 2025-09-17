@@ -3,7 +3,7 @@ import prisma from "./db";
 import { runQuery } from "./aeries";
 import { Prisma } from "@prisma/client";
 
-interface RawGradeData {
+export interface RawGradeData {
   SOURCE: string;
   "School Year": string;
   SC: [number, number];
@@ -39,6 +39,9 @@ export async function syncGradeDistribution() {
   }
   console.log("Starting grade distribution sync...");
 
+  const dbName = await runQuery('select DB_NAME() [db_name]')
+  console.log(`Current ${dbName.length} database: ${dbName?.map((db) => db.db_name)[0]}`);
+
   try {
 
   const rawData = (await runQuery(resultsPercent.query)) as RawGradeData[];
@@ -55,30 +58,45 @@ export async function syncGradeDistribution() {
       });
     }
 
+    console.log('Raw Data Sample', rawData[0])
+
     // Transform and insert data
-    const transformedData = rawData.map((record) => ({
-      source: record.SOURCE,
-      schoolYear: record["School Year"],
-      sc: record.SC[0],
-      studentId: record.ID[0].toString(),
-      studentNumber: record.SN[0].toString(),
-      grade: record.GR.toString(),
-      gender: record.GN.toString(),
-      period: record.PD.toString(),
-      departmentCode: record.DEPT_CODE,
-      divisionCode: record.DC,
-      courseNumber: record.CN.toString(),
-      courseTitle: record.CO,
-      teacherNumber: record.TN.toString(),
-      section: record.SE.toString(),
-      term: record.TERM,
-      mark: record.MARK,
-      teacherName: record.TE,
-      specialEd: record.SpecialEd,
-      ell: record.ELL,
-      ard: record.ARD,
-    }));
+    let transformedData: any[] = [];
+    try {
+      
+      transformedData = rawData.map((record) => {
+        
+        return {
+          source: record.SOURCE,
+          schoolYear: record["School Year"],
+          sc: record.SC[0],
+          studentId: record.ID[0].toString(),
+          studentNumber: record.SN[0].toString(),
+          grade: record.GR.toString(),
+          gender: record.GN.toString(),
+          period: record.PD.toString(),
+          departmentCode: record.DEPT_CODE,
+          divisionCode: record.DC,
+          courseNumber: record.CN.toString(),
+          courseTitle: record.CO,
+          teacherNumber: record.TN.toString(),
+          section: record.SE.toString(),
+          term: record.TERM,
+          mark: record.MARK,
+          teacherName: record.TE,
+          specialEd: record.SpecialEd,
+          ell: record.ELL,
+          ard: record.ARD,
+        };
+      });
+    } catch (error) {
+      console.error("Error transforming data:", error);
+      throw error;
+    }
+
+    console.log(`Transformed data from ${rawData.length} records to ${transformedData.length} records.`);
     const batchSize = 5000;
+    console.log(`Transformed data into ${transformedData.length} records.`);
     for (let i = 0; i < transformedData.length; i += batchSize) {
       const batch = transformedData.slice(i, i + batchSize);
       await prisma.gradeDistribution.createMany({
