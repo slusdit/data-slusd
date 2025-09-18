@@ -7,6 +7,8 @@ import {
 import { useEffect, useState } from "react";
 import { apiAuth, uploadIEP } from "@/lib/fastAPI";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
 
 // Define TypeScript interfaces for the response
 interface ExtractedDoc {
@@ -89,20 +91,25 @@ const IepDropzone = () => {
         let parsedResponse: UploadResponse;
         try {
           // Check if uploadResponse is already an object or a string
-          if (typeof uploadResponse === 'string') {
+          if (typeof uploadResponse === "string") {
             parsedResponse = JSON.parse(uploadResponse);
-          } else if (typeof uploadResponse === 'object' && uploadResponse !== null) {
+          } else if (
+            typeof uploadResponse === "object" &&
+            uploadResponse !== null
+          ) {
             parsedResponse = uploadResponse as UploadResponse;
           } else {
-            throw new Error('Invalid response format');
+            throw new Error("Invalid response format");
           }
-          
+
           console.log("Parsed response:", parsedResponse);
           setUploadResult(parsedResponse);
         } catch (parseError) {
-          console.error('Failed to parse upload response:', parseError);
-          console.error('Upload response was:', uploadResponse);
-          throw new Error(`Invalid response format from server: ${parseError.message}`);
+          console.error("Failed to parse upload response:", parseError);
+          console.error("Upload response was:", uploadResponse);
+          throw new Error(
+            `Invalid response format from server: ${parseError.message}`
+          );
         }
       } catch (error) {
         console.error("Upload failed:", error);
@@ -125,21 +132,72 @@ const IepDropzone = () => {
 
   const parseErrorObject = (error: any) => {
     try {
-      if (typeof error === 'string') {
+      if (typeof error === "string") {
         // Try to parse JSON string
         const parsed = JSON.parse(error);
-        if (parsed && typeof parsed === 'object') {
+        if (parsed && typeof parsed === "object") {
           return parsed;
         }
         return { message: error };
-      } else if (typeof error === 'object' && error !== null) {
+      } else if (typeof error === "object" && error !== null) {
         return error;
       }
       return { message: String(error) };
     } catch {
       // If parsing fails, treat as plain message
-      return { message: typeof error === 'string' ? error : String(error) };
+      return { message: typeof error === "string" ? error : String(error) };
     }
+  };
+
+  const downloadErrorsAsExcel = () => {
+    if (!uploadResult?.errors || uploadResult.errors.length === 0) {
+      return;
+    }
+
+    // Parse all errors into structured data
+    const errorData = uploadResult.errors.map((error, index) => {
+      const parsedError = parseErrorObject(error);
+      return {
+        Row: index + 1,
+        "Student ID": parsedError.stu_id || "N/A",
+        "IEP Date": parsedError.iep_date || "N/A",
+        "Error Message": parsedError.message || "Unknown error",
+      };
+    });
+
+    // Create CSV content
+    const headers = ["Row", "Student ID", "IEP Date", "Error Message"];
+    const csvContent = [
+      headers.join(","),
+      ...errorData.map((row) =>
+        headers
+          .map((header) => {
+            const value = row[header] || "";
+            // Escape commas and quotes in CSV
+            return typeof value === "string" &&
+              (value.includes(",") || value.includes('"'))
+              ? `"${value.replace(/"/g, '""')}"`
+              : value;
+          })
+          .join(",")
+      ),
+    ].join("\n");
+
+    // Create and download the file
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+
+    // Generate filename with timestamp
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, "-");
+    link.setAttribute("download", `IEP_Upload_Errors_${timestamp}.csv`);
+
+    // Trigger download
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -221,7 +279,20 @@ const IepDropzone = () => {
           {/* Display errors if any */}
           {uploadResult.errors && uploadResult.errors.length > 0 && (
             <div className="p-4 bg-red-50 border border-red-200 rounded-md">
-              <p className="text-sm text-red-700 font-semibold mb-3">Processing Errors:</p>
+              <div className="flex justify-between items-center mb-3">
+                <p className="text-sm text-red-700 font-semibold">
+                  Processing Errors:
+                </p>
+                <Button
+                  onClick={downloadErrorsAsExcel}
+                  variant="outline"
+                  size="sm"
+                  className="text-red-700 border-red-300 hover:bg-red-100"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download Errors
+                </Button>
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse border border-red-300 bg-white rounded-lg shadow-sm">
                   <thead>
@@ -243,13 +314,13 @@ const IepDropzone = () => {
                       return (
                         <tr key={index} className="hover:bg-red-50">
                           <td className="border border-red-300 px-3 py-2 text-sm text-red-900">
-                            {parsedError.stu_id || 'N/A'}
+                            {parsedError.stu_id || "N/A"}
                           </td>
                           <td className="border border-red-300 px-3 py-2 text-sm text-red-900">
-                            {parsedError.iep_date || 'N/A'}
+                            {parsedError.iep_date || "N/A"}
                           </td>
                           <td className="border border-red-300 px-3 py-2 text-sm text-red-900">
-                            {parsedError.message || 'Unknown error'}
+                            {parsedError.message || "Unknown error"}
                           </td>
                         </tr>
                       );
@@ -257,19 +328,40 @@ const IepDropzone = () => {
                   </tbody>
                 </table>
                 <p className="text-xs text-red-600 mt-2">
-                  {uploadResult.errors.length} error{uploadResult.errors.length !== 1 ? 's' : ''} encountered during processing
+                  {uploadResult.errors.length} error
+                  {uploadResult.errors.length !== 1 ? "s" : ""} encountered
+                  during processing
                 </p>
               </div>
             </div>
           )}
 
-          {/* IEP Documents Table */}
+          {/* IEP Documents Table - Only show successful uploads */}
           {uploadResult.extracted_docs &&
             uploadResult.extracted_docs.length > 0 && (
               <div className="overflow-x-auto">
                 <h3 className="text-lg font-semibold mb-3">
-                  Processed IEP Documents
+                  Uploaded IEP Documents
                 </h3>
+                {(() => {
+                  // Calculate successful uploads count
+                  const errorStudentIds = new Set();
+                  if (uploadResult.errors) {
+                    uploadResult.errors.forEach((error) => {
+                      const parsedError = parseErrorObject(error);
+                      if (parsedError.stu_id) {
+                        errorStudentIds.add(parsedError.stu_id);
+                      }
+                    });
+                  }
+                  const successfulCount = uploadResult.extracted_docs.filter(
+                    (doc) => !errorStudentIds.has(doc.stu_id)
+                  ).length;
+
+                  return `${successfulCount} document${
+                    successfulCount !== 1 ? "s" : ""
+                  } successfully uploaded`;
+                })()}
                 <table className="w-full border-collapse border border-gray-300 bg-white rounded-lg shadow-sm">
                   <thead>
                     <tr className="bg-gray-50">
@@ -288,27 +380,43 @@ const IepDropzone = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {uploadResult.extracted_docs.map((doc, index) => (
-                      <tr key={index} className="hover:bg-gray-50">
-                        <td className="border border-gray-300 px-4 py-2 text-sm text-gray-900">
-                          {String(doc.stu_id)}
-                        </td>
-                        <td className="border border-gray-300 px-4 py-2 text-sm text-gray-900">
-                          {String(doc.iep_date)}
-                        </td>
-                        <td className="border border-gray-300 px-4 py-2 text-sm text-gray-900">
-                          {String(doc.pages)}
-                        </td>
-                        <td className="border border-gray-300 px-4 py-2 text-sm text-gray-900 break-all">
-                          {String(doc.file)}
-                        </td>
-                      </tr>
-                    ))}
+                    {(() => {
+                      // Get error student IDs to filter them out
+                      const errorStudentIds = new Set();
+                      if (uploadResult.errors) {
+                        uploadResult.errors.forEach((error) => {
+                          const parsedError = parseErrorObject(error);
+                          if (parsedError.stu_id) {
+                            errorStudentIds.add(parsedError.stu_id);
+                          }
+                        });
+                      }
+
+                      // Filter out documents that had errors
+                      const successfulDocs = uploadResult.extracted_docs.filter(
+                        (doc) => !errorStudentIds.has(doc.stu_id)
+                      );
+
+                      return successfulDocs.map((doc, index) => (
+                        <tr key={index} className="hover:bg-gray-50">
+                          <td className="border border-gray-300 px-4 py-2 text-sm text-gray-900">
+                            {String(doc.stu_id)}
+                          </td>
+                          <td className="border border-gray-300 px-4 py-2 text-sm text-gray-900">
+                            {String(doc.iep_date)}
+                          </td>
+                          <td className="border border-gray-300 px-4 py-2 text-sm text-gray-900">
+                            {String(doc.pages)}
+                          </td>
+                          <td className="border border-gray-300 px-4 py-2 text-sm text-gray-900 break-all">
+                            {String(doc.file)}
+                          </td>
+                        </tr>
+                      ));
+                    })()}
                   </tbody>
                 </table>
-                <p className="text-xs text-gray-500 mt-2">
-                  Total documents processed: {uploadResult.total_documents}
-                </p>
+                <p className="text-xs text-gray-500 mt-2"></p>
               </div>
             )}
         </div>
