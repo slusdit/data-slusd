@@ -1,40 +1,30 @@
+// lib/fastAPI.ts - Updated to use Next.js API routes as proxy
+
 export async function apiAuth() {
-  const myHeaders = new Headers();
-  myHeaders.append("Content-Type", "application/json");
-
-  const raw = JSON.stringify({
-    username: process.env.NEXT_PUBLIC_FAST_API_USER,
-    password: process.env.NEXT_PUBLIC_FAST_API_PASSWORD,
-  });
-
   const requestOptions: RequestInit = {
     method: "POST",
-    headers: myHeaders,
-    body: raw,
-    redirect: "follow",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      username: process.env.NEXT_PUBLIC_FAST_API_USER,
+      password: process.env.NEXT_PUBLIC_FAST_API_PASSWORD,
+    }),
   };
 
   try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_FAST_API_URL}/token/`,
-      requestOptions
-    );
+    console.log("Authenticating through Next.js API proxy...");
+    
+    // Use your Next.js API route instead of direct FastAPI call
+    const response = await fetch("/api/fastapi/token", requestOptions);
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
     }
 
-    const result = await response.text();
-
-    
-    // Parse the response to return the token
-    try {
-      const parsedResult = JSON.parse(result);
-      return parsedResult;
-    } catch (parseError) {
-      // If response is not JSON, return as text
-      return { token: result };
-    }
+    const result = await response.json();
+    console.log("Authentication successful");
+    return result;
   } catch (error) {
     console.error("API Auth error:", error);
     throw error;
@@ -42,37 +32,36 @@ export async function apiAuth() {
 }
 
 export async function uploadIEP(files: File[], authToken: string) {
-    const myHeaders = new Headers();
-    myHeaders.append("Authorization", `Bearer ${authToken}`);
-    // Don't set Content-Type manually - let the browser set it with the boundary for multipart/form-data
+  const formData = new FormData();
+  
+  // Add each file to the FormData
+  files.forEach((file) => {
+    formData.append('file', file);
+  });
 
-    // Create FormData instead of JSON
-    const formData = new FormData();
+  const requestOptions: RequestInit = {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${authToken}`,
+    },
+    body: formData,
+  };
+  
+  try {
+    console.log("Uploading through Next.js API proxy...");
     
-    // Add each file to the FormData
-    files.forEach((file, index) => {
-      formData.append('file', file); // Use 'files' as the field name (adjust if your API expects different)
-    });
-
-    const requestOptions: RequestInit = {
-      method: "POST",
-      headers: myHeaders,
-      body: formData, // Use FormData instead of JSON
-      redirect: "follow",
-    };
+    // Use your Next.js API route instead of direct FastAPI call
+    const response = await fetch("/api/fastapi/upload", requestOptions);
     
-    try {
-        const response = await fetch(
-        `${process.env.NEXT_PUBLIC_FAST_API_URL}/sped/uploadIepAtAGlance/`,
-        requestOptions
-        );
-        if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
     }
-        const result = await response.text();
-        return result;
-    } catch (error) {
-        console.error("API upload error:", error);
-        throw error;
-    }
+    
+    const result = await response.json();
+    console.log("Upload successful");
+    return result;
+  } catch (error) {
+    console.error("API upload error:", error);
+    throw error;
+  }
 }
