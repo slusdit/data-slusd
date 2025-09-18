@@ -3,10 +3,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FileText, Upload, CheckCircle, AlertTriangle, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import BackButton from "@/app/components/BackButton";
 
 const uploadIEP = () => {
   return (
     <div className="container mx-auto px-4 py-6 max-w-5xl">
+      <BackButton />
       {/* Page Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-4">
