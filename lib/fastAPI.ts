@@ -13,7 +13,7 @@ export async function apiAuth() {
   };
 
   try {
-    console.log("Authenticating through Next.js API proxy...");
+    // console.log("Authenticating through Next.js API proxy...");
     
     // Use your Next.js API route instead of direct FastAPI call
     const response = await fetch("/api/fastapi/token", requestOptions);
@@ -23,7 +23,7 @@ export async function apiAuth() {
     }
 
     const result = await response.json();
-    console.log("Authentication successful");
+    // console.log("Authentication successful");
     return result;
   } catch (error) {
     console.error("API Auth error:", error);
@@ -48,7 +48,7 @@ export async function uploadIEP(files: File[], authToken: string) {
   };
   
   try {
-    console.log("Uploading through Next.js API proxy...");
+    // console.log("Uploading through Next.js API proxy...");
     
     // Use your Next.js API route instead of direct FastAPI call
     const response = await fetch("/api/fastapi/upload", requestOptions);
@@ -58,7 +58,7 @@ export async function uploadIEP(files: File[], authToken: string) {
     }
     
     const result = await response.json();
-    console.log("Upload successful");
+    // console.log("Upload successful");
     return result;
   } catch (error) {
     console.error("API upload error:", error);
