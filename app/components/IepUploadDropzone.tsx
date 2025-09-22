@@ -97,7 +97,7 @@ const IepDropzone = () => {
             typeof uploadResponse === "object" &&
             uploadResponse !== null
           ) {
-            parsedResponse = uploadResponse.result as UploadResponse;
+            parsedResponse = uploadResponse as UploadResponse;
           } else {
             throw new Error("Invalid response format");
           }
@@ -245,9 +245,7 @@ const IepDropzone = () => {
           <p className="text-sm text-red-600">{uploadError}</p>
         </div>
       )}
-      <>
-      {uploadResult}
-      </>
+     
       {uploadResult && (
         <div className="mt-6 space-y-4 w-full max-w-4xl">
           {/* Success Message */}
