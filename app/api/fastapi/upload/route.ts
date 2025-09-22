@@ -25,8 +25,8 @@ export async function POST(request: NextRequest) {
       throw new Error(`FastAPI error: ${response.status}`);
     }
 
-    const data = await response.text();
-    return NextResponse.json({ result: data });
+    const data = await response.json();
+    return NextResponse.json(data);
   } catch (error) {
     console.error('Upload proxy error:', error);
     return NextResponse.json(
