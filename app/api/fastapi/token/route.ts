@@ -4,10 +4,14 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(request: NextRequest) {
   console.log('Available env vars:', {
   FAST_API_URL: process.env.FAST_API_URL,
-  NEXT_PUBLIC_FAST_API_URL: process.env.NEXT_PUBLIC_FAST_API_URL
-});
+  // NEXT_PUBLIC_FAST_API_URL: process.env.NEXT_PUBLIC_FAST_API_URL
+  });
+  const body = {
+    "username": process.env.FAST_API_USER,
+    "password": process.env.FAST_API_PASSWORD
+  }
+  console.log("Body received in token route", JSON.stringify(body));
   try {
-    const body = await request.json();
     const urlBase = process.env.FAST_API_URL;
     console.log("FastAPI URL:", urlBase);
     const response = await fetch(`${urlBase}/token/`, {
