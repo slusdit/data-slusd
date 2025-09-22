@@ -2,6 +2,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
+  console.log('Available env vars:', {
+  FAST_API_URL: process.env.FAST_API_URL,
+  NEXT_PUBLIC_FAST_API_URL: process.env.NEXT_PUBLIC_FAST_API_URL
+});
   try {
     const body = await request.json();
     const urlBase = process.env.FAST_API_URL;
