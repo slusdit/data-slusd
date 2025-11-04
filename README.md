@@ -4,6 +4,14 @@
 
 NextJS 15 web app using Prisma ORM is running on [https://data.slusd.us](https://data.slusd.us)
 
+### Example District Homepage
+
+![SLUSD Data Homepage Screenshot](./images/district-homepage.png)
+
+### Example Elementary Homepage
+
+![SLUSD Data Homepage Screenshot](./images/elementary-homepage.png)
+
 Requires `.env` file in the root directory with the following values
 
 ```.env

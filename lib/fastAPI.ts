@@ -3,8 +3,8 @@ export async function apiAuth() {
   myHeaders.append("Content-Type", "application/json");
 
   const raw = JSON.stringify({
-    username: process.env.NEXT_PUBLIC_FAST_API_USER,
-    password: process.env.NEXT_PUBLIC_FAST_API_PASSWORD,
+    username: process.env.FAST_API_USER,
+    password: process.env.FAST_API_PASSWORD,
   });
 
   const requestOptions: RequestInit = {
@@ -16,7 +16,7 @@ export async function apiAuth() {
 
   try {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_FAST_API_URL}/token/`,
+      `${process.env.FAST_API_URL}/token/`,
       requestOptions
     );
 
@@ -63,7 +63,7 @@ export async function uploadIEP(files: File[], authToken: string) {
     
     try {
         const response = await fetch(
-        `${process.env.NEXT_PUBLIC_FAST_API_URL}/sped/uploadIepAtAGlance/`,
+        `${process.env.FAST_API_URL}/sped/uploadIepAtAGlance/`,
         requestOptions
         );
         if (!response.ok) {
