@@ -208,7 +208,7 @@ const QueryList = ({
                   >
                     <TooltipTrigger asChild>
                       <Link
-                        href={`/query/${category.value}/${query.id}`}
+                        href={`/query/${query.category?.value || query.category?.label?.toLowerCase() || 'general'}/${query.id}`}
                         className=""
                       >
                         {query.name}

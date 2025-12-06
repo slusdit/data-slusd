@@ -21,8 +21,14 @@ model User {
   primarySchool Int?
   psl           Int?            @unique
   activeSchool  Int             @default(0)
-  manualSchool  Int?  
-  favorites     Query[]         @relation("id")       
+  manualSchool  Int?
+  emulatingId   String?         // ID of user being emulated (null = not emulating)
+  // Manual overrides for access control
+  blockedSchools  String?       @db.Text // Comma-separated school codes to block (overrides Aeries)
+  addedSchools    String?       @db.Text // Comma-separated school codes to add (supplements Aeries)
+  blockedRoles    String?       @db.Text // Comma-separated roles to block
+  addedRoles      String?       @db.Text // Comma-separated roles to add
+  favorites     Query[]         @relation("id")
   Account       Account?
   Authenticator Authenticator[]
   Session       Session[]
@@ -227,10 +233,19 @@ model GradeDistribution {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   
-  // Consider adding an index for faster queries
+  // Indexes for faster queries
   @@index([sc, teacherNumber, term, mark])
   @@index([schoolYear, sc])
   @@index([studentId, term])
+  // Smaller composite indexes for demographic filter queries
+  @@index([sc, ell, term])
+  @@index([sc, specialEd, term])
+  @@index([sc, ard, term])
+  @@index([sc, gender, term])
+  // Index for course-based queries
+  @@index([sc, term, courseTitle])
+  // Index for department-based queries
+  @@index([sc, term, departmentCode])
 }
 
 // Optional: Create a view or calculated table for aggregated grade distributions
@@ -289,8 +304,8 @@ enum ROLE {
   INTERVENTIONS
   IEPUPLOAD
   SPED
-
-  
+  AIQUERY
+  QUERYEDITOR
 }
 
 enum CHARTTYPE {
@@ -301,4 +316,89 @@ enum CHARTTYPE {
   BUBBLE
   PIE
   DONUT
+}
+
+// AI Query Builder Fragment Models
+model AIFragment {
+  id           String              @id @default(cuid())
+  fragmentId   String              @unique // e.g., "students_base", "school_jefferson"
+  name         String              // Display name
+  description  String              @db.Text
+  snippet      String              @db.Text // SQL snippet
+  type         FragmentType        // base, filter, join, aggregation, order, column
+  categoryId   String
+  subcategory  String
+  tables       String              @default("[]") // JSON array of table names
+  dependencies String              @default("[]") // JSON array of fragment IDs this depends on
+  conflicts    String              @default("[]") // JSON array of fragment IDs this conflicts with
+  parameters   String              @default("[]") // JSON array of parameter definitions
+  outputColumns String             @default("[]") // JSON array of output column names
+  tags         String              @default("[]") // JSON array of search tags
+  isActive     Boolean             @default(true)
+  sortOrder    Int                 @default(0)
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  category     AIFragmentCategory  @relation(fields: [categoryId], references: [id])
+
+  @@index([categoryId])
+  @@index([type])
+  @@index([isActive])
+}
+
+model AIFragmentCategory {
+  id          String       @id @default(cuid())
+  name        String       @unique // e.g., "base_queries", "school_filters"
+  displayName String       // e.g., "Base Queries", "School Filters"
+  description String?      @db.Text
+  sortOrder   Int          @default(0)
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  fragments   AIFragment[]
+}
+
+enum FragmentType {
+  base
+  filter
+  join
+  aggregation
+  order
+  column
+}
+
+// CTE (Common Table Expression) queries for AI Query Builder
+// These are reusable WITH clauses that can be joined to main queries
+model AICteQuery {
+  id            String   @id @default(cuid())
+  cteId         String   @unique // e.g., "sped_students", "ell_current"
+  name          String   // Display name e.g., "Special Education Students"
+  description   String   @db.Text // English description of what this CTE returns
+  cteSql        String   @db.Text // The actual CTE SQL (WITH clause content)
+  joinColumn    String   // Column to join on, e.g., "ID" (student ID)
+  outputColumns String   @db.Text // JSON array of column definitions with names and descriptions
+  tables        String   @default("[]") // JSON array of Aeries tables used
+  tags          String   @default("[]") // JSON array for search/categorization
+  isActive      Boolean  @default(true)
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([isActive])
+}
+
+// Column metadata for documenting Aeries tables
+model AeriesColumnMeta {
+  id           String   @id @default(cuid())
+  tableName    String   // e.g., "STU", "CSE", "PGM"
+  columnName   String   // e.g., "SC", "GR", "SP"
+  displayName  String   // e.g., "School Code", "Grade", "Special Ed Flag"
+  description  String?  @db.Text // Longer description
+  dataType     String?  // e.g., "INT", "VARCHAR", "DATE"
+  exampleValues String? // e.g., "Y, N" or "2, 3, 4 (school codes)"
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([tableName, columnName])
+  @@index([tableName])
 }

@@ -1,48 +1,57 @@
 import Link from "next/link";
 import Image from "next/image";
-import LoginButton from "./LoginButton";
+import UserMenu from "./UserMenu";
 import { Button } from "@/components/ui/button";
-import { SignIn } from "./GoogleSignIn";
-import { SignOut } from "./GoogleSignOut";
-import GoogleAuthButton from "./GoogleAuthButton";
-import { auth } from "@/auth";
-import { PrismaClient, QueryCategory } from "@prisma/client";
+import { auth, SessionUser } from "@/auth";
+import { QueryCategory } from "@prisma/client";
 import type { Session } from "next-auth";
-import QueryBar, { QueryWithCategory } from "./QueryBar";
-import { NavigationMenuDemo } from "./NavMenuDemo";
+import { QueryWithCategory } from "./QueryBar";
 import prisma from "@/lib/db";
-import SchoolPicker from "./SchoolPicker";
 import ActiveSchool from "./ActiveSchool";
-
-// const prisma = new PrismaClient();
+import ReportsDropdown from "./ReportsDropdown";
 
 export default async function MainHeader({ session }: { session: Session | null }) {
-
-  // const queries: QueryWithCategory[] = await prisma.query.findMany({
-  //   select: {
-      
-  //       id: true,
-  //       name: true,
-  //       description: true,
-        
-      
-  //     category: {
-  //       select: {
-  //         id: true,
-  //         label: true,
-  //         value: true
-  //       }
-  //     },
-  //   }
-  // })
   let schoolInfo;
+  let categories: (QueryCategory & { roles: { role: string }[] })[] = [];
+  let queries: QueryWithCategory[] = [];
+
   if (session?.user) {
-  schoolInfo = await prisma.schoolInfo.findUnique({
-    where: {
-      sc: session?.user?.activeSchool.toString()
-    }
-  })
-} 
+    // Fetch school info, categories, and queries in parallel
+    const [schoolResult, categoriesResult, queriesResult] = await Promise.all([
+      prisma.schoolInfo.findUnique({
+        where: {
+          sc: session?.user?.activeSchool.toString()
+        }
+      }),
+      prisma.queryCategory.findMany({
+        include: {
+          roles: {
+            select: { role: true }
+          }
+        },
+        orderBy: { sort: "asc" }
+      }),
+      prisma.query.findMany({
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          category: {
+            select: {
+              id: true,
+              label: true,
+              value: true
+            }
+          },
+        },
+        orderBy: { name: "asc" }
+      })
+    ]);
+
+    schoolInfo = schoolResult;
+    categories = categoriesResult;
+    queries = queriesResult;
+  } 
 
   // console.log(session.user)
   return (
@@ -67,37 +76,57 @@ export default async function MainHeader({ session }: { session: Session | null 
           border-title-foreground/60
           `}
       >
-        <div>
-
+        {/* Left section: Logo */}
+        <div className="flex items-center">
           <Button
             asChild
             variant="link"
             className="text-xl text-mainTitle-foreground font-bold hover"
           >
             <Link href="/">
-            <Image src="/logos/slusd-logo.png" alt="logo" width={35} height={35} className="mr-2" />SLUSD Data</Link>
+              <Image src="/logos/slusd-logo.png" alt="logo" width={35} height={35} className="mr-2" />
+              SLUSD Data
+            </Link>
           </Button>
+
+          {/* Reports dropdown - desktop only */}
+          {session?.user && (
+            <div className="hidden md:block ml-2">
+              <ReportsDropdown
+                categories={categories}
+                queries={queries}
+                user={{
+                  favorites: (session.user as SessionUser).favorites || [],
+                  roles: (session.user as SessionUser).roles || [],
+                  email: session.user.email || "",
+                  queryEdit: (session.user as SessionUser).queryEdit,
+                }}
+              />
+            </div>
+          )}
         </div>
-        {schoolInfo && 
-        <ActiveSchool activeSchool={schoolInfo} /> 
-        // <SchoolPicker schools={session?.user?.UserSchool} initialSchool={session?.user?.activeSchool}/>
-        }
-       
-        <div
-          className="w-full justify-end md:flex md:items-center md:w-auto"
-          id="menu"
-        >
-          <ul
-            className="
-                    text-base 
-                    text-title-foreground
-                    md:flex
-                    md:pt-0"
-          >
-          </ul>
-          <div className="py-3 px-4 ">
-            <LoginButton user={session?.user} />
-          </div>
+
+        {/* Center section: Active School (clickable if user has multiple schools) */}
+        {schoolInfo && (
+          <ActiveSchool
+            activeSchool={schoolInfo}
+            userSchools={(session?.user as SessionUser)?.UserSchool}
+            userId={(session?.user as SessionUser)?.id}
+          />
+        )}
+
+        {/* Right section: User menu */}
+        <div className="flex items-center pr-2">
+          <UserMenu
+            user={session?.user ? {
+              id: (session.user as SessionUser).id,
+              name: session.user.name,
+              email: session.user.email,
+              image: session.user.image,
+              admin: (session.user as SessionUser).admin,
+              roles: (session.user as SessionUser).roles,
+            } : null}
+          />
         </div>
       </nav>
     </header>

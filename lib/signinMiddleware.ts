@@ -6,11 +6,93 @@ import { revalidatePath } from "next/cache";
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { auth } from "@/auth";
+import { ROLE } from "@prisma/client";
 
 type GetAllSchoolsReturn = {
     primarySchool: number
     psl: number
     allSchools: number[]
+}
+
+// Map Aeries job titles to Data Dashboard roles
+const TITLE_TO_ROLE_MAP: Record<string, ROLE> = {
+    'teacher': ROLE.TEACHER,
+    'principal': ROLE.PRINCIPAL,
+    'assistant principal': ROLE.PRINCIPAL,
+    'vice principal': ROLE.PRINCIPAL,
+    'counselor': ROLE.COUNSELOR,
+    'nurse': ROLE.NURSE,
+    'librarian': ROLE.LIBRARIAN,
+    'director': ROLE.DIRECTOR,
+    'superintendent': ROLE.SUPERADMIN,
+    'assistant superintendent': ROLE.DIRECTOR,
+}
+
+/**
+ * Determines the appropriate role based on Aeries job title
+ */
+function getRoleFromTitle(title: string): ROLE {
+    const normalizedTitle = title.toLowerCase().trim()
+
+    // Check for exact matches first
+    if (TITLE_TO_ROLE_MAP[normalizedTitle]) {
+        return TITLE_TO_ROLE_MAP[normalizedTitle]
+    }
+
+    // Check for partial matches (e.g., "Elementary Teacher" contains "teacher")
+    for (const [key, role] of Object.entries(TITLE_TO_ROLE_MAP)) {
+        if (normalizedTitle.includes(key)) {
+            return role
+        }
+    }
+
+    // Default to STAFF for any recognized employee, USER for unknown
+    return ROLE.STAFF
+}
+
+/**
+ * Syncs user roles from Aeries based on their job title
+ * This ensures permissions are kept up-to-date with Aeries data
+ */
+export async function syncUserRolesFromAeries(userId: string, aeriesTitle: string, primarySchool: number) {
+    const baseRole = getRoleFromTitle(aeriesTitle)
+
+    // Find or create the role record for this base role
+    let roleRecord = await prisma.role.findFirst({
+        where: { role: baseRole }
+    })
+
+    if (!roleRecord) {
+        roleRecord = await prisma.role.create({
+            data: { role: baseRole }
+        })
+    }
+
+    // Check if user already has this role
+    const existingUserRole = await prisma.userRole.findFirst({
+        where: {
+            userId,
+            roleId: roleRecord.id
+        }
+    })
+
+    if (!existingUserRole) {
+        // Add the role to the user
+        await prisma.userRole.create({
+            data: {
+                userId,
+                roleId: roleRecord.id
+            }
+        })
+    }
+
+    // Update the user's primaryRole field
+    await prisma.user.update({
+        where: { id: userId },
+        data: { primaryRole: baseRole }
+    })
+
+    return baseRole
 }
 
 
@@ -125,14 +207,13 @@ export async function getAllSchools(profileEmail: string) {
         where: {
             email: profileEmail
         },
-
     })
-    // console.log({ user })
-    // console.log({ results })
-    if (user && !user?.primarySchool) {
-        // console.log(profileEmail)
-        const ret = await updateSchools(profileEmail, results)
-        // console.log(ret)
+
+    // Always update schools on sign-in to ensure permissions are current
+    // Previously only updated when primarySchool was null, which meant returning users
+    // never got their school assignments refreshed from Aeries
+    if (user) {
+        await updateSchools(profileEmail, results)
     }
     return results
 
@@ -181,9 +262,14 @@ export async function syncTeacherClasses(profileId: string, profileEmail: string
     if (!aeriesPermissions) {
         return null
     }
-    // console.log(aeriesPermissions)
 
-    if (aeriesPermissions.title.toLowerCase() === 'teacher') {
+    // Sync user roles based on Aeries job title
+    // This auto-assigns TEACHER, PRINCIPAL, COUNSELOR, etc. based on their Aeries title
+    await syncUserRolesFromAeries(profileId, aeriesPermissions.title, aeriesPermissions.primarySchool)
+
+    // Check if user is a teacher and sync their classes
+    const titleLower = aeriesPermissions.title.toLowerCase()
+    if (titleLower === 'teacher' || titleLower.includes('teacher')) {
         aeriesClasses = await getTeacherSchoolCredentials({ id: aeriesPermissions.id, schools: aeriesPermissions.schoolPermissions, })
 
     }

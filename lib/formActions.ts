@@ -73,9 +73,40 @@ export async function updateQuery(data: any, field: string) {
 // UPDATED: Improved updateUser function with better handling of many-to-many relationships
 export async function updateUser(data: any, field: string) {
   console.log(`Updating user ${data.id} - Field: ${field}`, data);
-  
+
   try {
-    if (field === "User Roles") {
+    if (field === "User") {
+      // Handle full user update from the edit dialog
+      // Update basic fields and many-to-many relationships
+      await prisma.user.update({
+        where: { id: data.id },
+        data: {
+          name: data.name,
+          admin: data.admin,
+          queryEdit: data.queryEdit,
+          primaryRole: data.primaryRole,
+          // Manual overrides
+          blockedSchools: data.blockedSchools,
+          addedSchools: data.addedSchools,
+          blockedRoles: data.blockedRoles,
+          addedRoles: data.addedRoles,
+          // Update roles relationship
+          userRole: {
+            set: data.userRoleIds?.map((roleId: string) => ({ id: roleId })) || []
+          },
+          // Update schools relationship through UserSchool
+          UserSchool: {
+            deleteMany: {},
+            create: data.schoolIds?.map((schoolId: string) => ({
+              schoolSc: schoolId
+            })) || []
+          }
+        }
+      });
+
+      console.log(`Updated user ${data.id} with all fields`);
+    }
+    else if (field === "User Roles") {
       // UPDATED: Use the userRole many-to-many relationship instead of manual junction table management
       await prisma.user.update({
         where: { id: data.id },
@@ -85,9 +116,9 @@ export async function updateUser(data: any, field: string) {
           }
         }
       });
-      
+
       console.log(`Updated user roles for user ${data.id}: ${data.userRoleIds?.length || 0} roles`);
-    } 
+    }
     else if (field === "School Access") {
       // UPDATED: Use the school many-to-many relationship instead of manual junction table management
       await prisma.user.update({
@@ -98,7 +129,7 @@ export async function updateUser(data: any, field: string) {
           }
         }
       });
-      
+
       console.log(`Updated school access for user ${data.id}: ${data.schoolIds?.length || 0} schools`);
     }
     else if (field === "Favorites") {
@@ -111,21 +142,21 @@ export async function updateUser(data: any, field: string) {
           }
         }
       });
-      
+
       console.log(`Updated favorites for user ${data.id}: ${data.favoriteIds?.length || 0} queries`);
     }
     else {
       // Handle regular field updates
       const updatePayload = { [field]: data[field] };
-      
+
       const result = await prisma.user.update({
         where: { id: data.id },
         data: updatePayload
       });
-      
+
       console.log(`Updated user ${data.id} field ${field}:`, result);
     }
-    
+
     return { success: true };
   } catch (error) {
     console.error(`Error updating user ${data.id} field ${field}:`, error);

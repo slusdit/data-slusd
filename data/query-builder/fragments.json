@@ -1,0 +1,1307 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2025-12-05",
+  "fragments": {
+    "base_queries": {
+      "students": [
+        {
+          "id": "students_base",
+          "name": "Active Students Base Query",
+          "description": "Base query for currently enrolled students with basic demographics",
+          "snippet": "SELECT s.ID as student_id, s.SN as student_number, s.LN as last_name, s.FN as first_name, s.GR as grade, s.SC as school_code, s.BD as birth_date, s.SX as gender, s.EC as ethnicity, s.SEM as student_email, s.HL as home_language, s.CU as class_teacher_num FROM STU s WHERE s.DEL = 0 AND s.TG = ''",
+          "type": "base",
+          "category": "base_queries",
+          "subcategory": "students",
+          "tags": ["students", "active", "enrolled", "demographics", "base"],
+          "tables": ["STU"],
+          "dependencies": [],
+          "conflicts": ["staff_base", "transcripts_base"],
+          "parameters": [],
+          "outputColumns": ["student_id", "student_number", "last_name", "first_name", "grade", "school_code", "birth_date", "gender", "ethnicity", "student_email", "home_language", "class_teacher_num"]
+        }
+      ],
+      "staff": [
+        {
+          "id": "staff_base",
+          "name": "Active Staff Base Query",
+          "description": "Base query for active staff members",
+          "snippet": "SELECT t.ID as staff_id, t.TE as last_name, t.TF as first_name, t.EM as email, t.SC as school_code, t.TN as teacher_number FROM TCH t WHERE t.DEL = 0 AND t.TG = ''",
+          "type": "base",
+          "category": "base_queries",
+          "subcategory": "staff",
+          "tags": ["staff", "teachers", "employees", "active"],
+          "tables": ["TCH"],
+          "dependencies": [],
+          "conflicts": ["students_base", "transcripts_base"],
+          "parameters": []
+        }
+      ],
+      "transcripts": [
+        {
+          "id": "transcripts_base",
+          "name": "Student Transcript History",
+          "description": "Base query for student transcript/course history records from the HIS table",
+          "snippet": "SELECT h.ID as student_id, h.SN as student_number, h.SC as school_code, h.YR as school_year, h.SE as semester, h.CN as course_number, h.CO as course_name, h.TN as teacher_number, h.MK as mark, h.CR as credits_attempted, h.CA as credits_earned, h.GPA as gpa_points, h.GR as grade_level FROM HIS h WHERE h.DEL = 0",
+          "type": "base",
+          "category": "base_queries",
+          "subcategory": "transcripts",
+          "tags": ["transcripts", "history", "grades", "courses", "credits", "GPA", "marks", "course history"],
+          "tables": ["HIS"],
+          "dependencies": [],
+          "conflicts": ["students_base", "staff_base", "schedule_base", "lac_base"],
+          "parameters": [],
+          "outputColumns": ["student_id", "student_number", "school_code", "school_year", "semester", "course_number", "course_name", "teacher_number", "mark", "credits_attempted", "credits_earned", "gpa_points", "grade_level"]
+        }
+      ],
+      "schedule": [
+        {
+          "id": "schedule_base",
+          "name": "Master Schedule (Secondary)",
+          "description": "Base query for middle/high school master schedule from MST table - student class enrollments",
+          "snippet": "SELECT m.ID as student_id, m.SN as student_number, m.SC as school_code, m.SE as section, m.PD as period, m.TN as teacher_number, m.CN as course_number, m.NM as course_name, m.SM as semester, m.RM as room FROM MST m WHERE m.DEL = 0",
+          "type": "base",
+          "category": "base_queries",
+          "subcategory": "schedule",
+          "tags": ["schedule", "master schedule", "classes", "sections", "periods", "secondary", "middle school", "high school", "MST"],
+          "tables": ["MST"],
+          "dependencies": [],
+          "conflicts": ["students_base", "staff_base", "transcripts_base", "lac_base"],
+          "parameters": [],
+          "outputColumns": ["student_id", "student_number", "school_code", "section", "period", "teacher_number", "course_number", "course_name", "semester", "room"]
+        }
+      ],
+      "language": [
+        {
+          "id": "lac_base",
+          "name": "Language Assessment (LAC)",
+          "description": "Base query for language assessment records from LAC table - ELPAC scores and language proficiency",
+          "snippet": "SELECT l.PID as student_id, l.SC as school_code, l.TD as test_date, l.TY as test_type, l.OS as overall_score, l.OPL as overall_perf_level, l.LS as listening_score, l.SS as speaking_score, l.RS as reading_score, l.WS as writing_score FROM LAC l WHERE l.DEL = 0",
+          "type": "base",
+          "category": "base_queries",
+          "subcategory": "language",
+          "tags": ["language", "LAC", "ELPAC", "ELL", "English learner", "assessment", "proficiency", "test scores"],
+          "tables": ["LAC"],
+          "dependencies": [],
+          "conflicts": ["students_base", "staff_base", "transcripts_base", "schedule_base"],
+          "parameters": [],
+          "outputColumns": ["student_id", "school_code", "test_date", "test_type", "overall_score", "overall_perf_level", "listening_score", "speaking_score", "reading_score", "writing_score"]
+        }
+      ]
+    },
+    "school_filters": {
+      "all_schools": [
+        {
+          "id": "school_by_code",
+          "name": "Filter by School Code",
+          "description": "Filter to a specific school by its code",
+          "snippet": "s.SC = {{school_code}}",
+          "type": "filter",
+          "category": "school_filters",
+          "subcategory": "all_schools",
+          "tags": ["school", "filter", "code"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": [
+            {
+              "name": "school_code",
+              "type": "number",
+              "description": "School code number",
+              "required": true
+            }
+          ]
+        },
+        {
+          "id": "school_active_user",
+          "name": "User's Active School",
+          "description": "Filter to the user's currently active school",
+          "snippet": "s.SC = @@asc",
+          "type": "filter",
+          "category": "school_filters",
+          "subcategory": "all_schools",
+          "tags": ["school", "active", "user", "current", "my school"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": []
+        }
+      ],
+      "elementary": [
+        {
+          "id": "school_garfield",
+          "name": "Garfield Elementary",
+          "description": "Filter to Garfield Elementary School",
+          "snippet": "s.SC = 2",
+          "type": "filter",
+          "category": "school_filters",
+          "subcategory": "elementary",
+          "tags": ["garfield", "elementary", "school"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": []
+        },
+        {
+          "id": "school_jefferson",
+          "name": "Jefferson Elementary",
+          "description": "Filter to Jefferson Elementary School",
+          "snippet": "s.SC = 3",
+          "type": "filter",
+          "category": "school_filters",
+          "subcategory": "elementary",
+          "tags": ["jefferson", "elementary", "school"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": []
+        },
+        {
+          "id": "school_madison",
+          "name": "Madison Elementary",
+          "description": "Filter to Madison Elementary School",
+          "snippet": "s.SC = 4",
+          "type": "filter",
+          "category": "school_filters",
+          "subcategory": "elementary",
+          "tags": ["madison", "elementary", "school"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": []
+        },
+        {
+          "id": "school_mckinley",
+          "name": "McKinley Elementary",
+          "description": "Filter to McKinley Elementary School",
+          "snippet": "s.SC = 5",
+          "type": "filter",
+          "category": "school_filters",
+          "subcategory": "elementary",
+          "tags": ["mckinley", "elementary", "school"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": []
+        },
+        {
+          "id": "school_monroe",
+          "name": "Monroe Elementary",
+          "description": "Filter to Monroe Elementary School",
+          "snippet": "s.SC = 6",
+          "type": "filter",
+          "category": "school_filters",
+          "subcategory": "elementary",
+          "tags": ["monroe", "elementary", "school"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": []
+        },
+        {
+          "id": "school_roosevelt",
+          "name": "Roosevelt Elementary",
+          "description": "Filter to Roosevelt Elementary School",
+          "snippet": "s.SC = 7",
+          "type": "filter",
+          "category": "school_filters",
+          "subcategory": "elementary",
+          "tags": ["roosevelt", "elementary", "school"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": []
+        },
+        {
+          "id": "school_washington",
+          "name": "Washington Elementary",
+          "description": "Filter to Washington Elementary School",
+          "snippet": "s.SC = 8",
+          "type": "filter",
+          "category": "school_filters",
+          "subcategory": "elementary",
+          "tags": ["washington", "elementary", "school"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": []
+        },
+        {
+          "id": "school_halkin",
+          "name": "Halkin Elementary",
+          "description": "Filter to Halkin Elementary School",
+          "snippet": "s.SC = 9",
+          "type": "filter",
+          "category": "school_filters",
+          "subcategory": "elementary",
+          "tags": ["halkin", "elementary", "school"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": []
+        },
+        {
+          "id": "school_slva_elementary",
+          "name": "SLVA Elementary",
+          "description": "Filter to SLVA Elementary School",
+          "snippet": "s.SC = 60",
+          "type": "filter",
+          "category": "school_filters",
+          "subcategory": "elementary",
+          "tags": ["slva", "virtual", "elementary", "school"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": []
+        }
+      ],
+      "middle": [
+        {
+          "id": "school_bancroft",
+          "name": "Bancroft Middle School",
+          "description": "Filter to Bancroft Middle School",
+          "snippet": "s.SC = 11",
+          "type": "filter",
+          "category": "school_filters",
+          "subcategory": "middle",
+          "tags": ["bancroft", "middle", "school"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": []
+        },
+        {
+          "id": "school_muir",
+          "name": "Muir Middle School",
+          "description": "Filter to Muir Middle School",
+          "snippet": "s.SC = 12",
+          "type": "filter",
+          "category": "school_filters",
+          "subcategory": "middle",
+          "tags": ["muir", "middle", "school"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": []
+        },
+        {
+          "id": "school_slva_middle",
+          "name": "SLVA Middle School",
+          "description": "Filter to SLVA Middle School",
+          "snippet": "s.SC = 61",
+          "type": "filter",
+          "category": "school_filters",
+          "subcategory": "middle",
+          "tags": ["slva", "virtual", "middle", "school"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": []
+        }
+      ],
+      "high": [
+        {
+          "id": "school_lincoln",
+          "name": "Lincoln High School",
+          "description": "Filter to Lincoln High School",
+          "snippet": "s.SC = 15",
+          "type": "filter",
+          "category": "school_filters",
+          "subcategory": "high",
+          "tags": ["lincoln", "high", "school"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": []
+        },
+        {
+          "id": "school_slhs",
+          "name": "San Leandro High School",
+          "description": "Filter to San Leandro High School",
+          "snippet": "s.SC = 16",
+          "type": "filter",
+          "category": "school_filters",
+          "subcategory": "high",
+          "tags": ["san leandro", "slhs", "high", "school"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": []
+        },
+        {
+          "id": "school_slva_high",
+          "name": "SLVA High School",
+          "description": "Filter to SLVA High School",
+          "snippet": "s.SC = 62",
+          "type": "filter",
+          "category": "school_filters",
+          "subcategory": "high",
+          "tags": ["slva", "virtual", "high", "school"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": []
+        }
+      ]
+    },
+    "program_filters": {
+      "special_ed": [
+        {
+          "id": "has_iep",
+          "name": "Has Active IEP",
+          "description": "Filter to students with an active Individualized Education Program",
+          "snippet": "s.SP = 'Y'",
+          "type": "filter",
+          "category": "program_filters",
+          "subcategory": "special_ed",
+          "tags": ["iep", "special education", "sped", "special ed", "disability", "individualized education program"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": []
+        },
+        {
+          "id": "has_504",
+          "name": "Has 504 Plan",
+          "description": "Filter to students with an active 504 accommodation plan",
+          "snippet": "EXISTS (SELECT 1 FROM [504] p504 WHERE p504.ID = s.ID AND p504.DEL = 0 AND p504.ED IS NULL)",
+          "type": "filter",
+          "category": "program_filters",
+          "subcategory": "special_ed",
+          "tags": ["504", "504 plan", "accommodations", "section 504"],
+          "tables": ["STU", "S504"],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": []
+        }
+      ],
+      "ell": [
+        {
+          "id": "is_ell",
+          "name": "English Language Learner",
+          "description": "Filter to students classified as English Language Learners (active in EL program)",
+          "snippet": "EXISTS (SELECT 1 FROM PGM p WHERE p.PID = s.ID AND p.CD IN ('200', '235', '300', '400', '500', '600') AND p.DEL = 0 AND (p.PED IS NULL OR p.PED >= GETDATE()))",
+          "type": "filter",
+          "category": "program_filters",
+          "subcategory": "ell",
+          "tags": ["ell", "el", "english learner", "lep", "limited english", "eld", "english language learner"],
+          "tables": ["STU", "PGM"],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": []
+        },
+        {
+          "id": "is_rfep",
+          "name": "Reclassified Fluent English Proficient",
+          "description": "Filter to students who have been reclassified as fluent English proficient",
+          "snippet": "EXISTS (SELECT 1 FROM PGM p WHERE p.PID = s.ID AND p.CD = '235' AND p.DEL = 0 AND (p.PED IS NULL OR p.PED >= GETDATE()))",
+          "type": "filter",
+          "category": "program_filters",
+          "subcategory": "ell",
+          "tags": ["rfep", "reclassified", "fluent", "english proficient"],
+          "tables": ["STU", "PGM"],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": []
+        }
+      ],
+      "other_programs": [
+        {
+          "id": "is_gate",
+          "name": "GATE Student",
+          "description": "Filter to students identified as Gifted and Talented",
+          "snippet": "EXISTS (SELECT 1 FROM PGM p WHERE p.PID = s.ID AND p.CD = '135' AND p.DEL = 0 AND (p.PED IS NULL OR p.PED >= GETDATE()))",
+          "type": "filter",
+          "category": "program_filters",
+          "subcategory": "other_programs",
+          "tags": ["gate", "gifted", "talented", "gifted and talented"],
+          "tables": ["STU", "PGM"],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": []
+        },
+        {
+          "id": "is_homeless",
+          "name": "McKinney-Vento Eligible",
+          "description": "Filter to students identified as homeless/McKinney-Vento eligible",
+          "snippet": "EXISTS (SELECT 1 FROM PGM p WHERE p.PID = s.ID AND p.CD = '111' AND p.DEL = 0 AND (p.PED IS NULL OR p.PED >= GETDATE()))",
+          "type": "filter",
+          "category": "program_filters",
+          "subcategory": "other_programs",
+          "tags": ["homeless", "mckinney-vento", "housing insecure"],
+          "tables": ["STU", "PGM"],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": []
+        },
+        {
+          "id": "is_foster",
+          "name": "Foster Youth",
+          "description": "Filter to students identified as foster youth",
+          "snippet": "EXISTS (SELECT 1 FROM PGM p WHERE p.PID = s.ID AND p.CD = '168' AND p.DEL = 0 AND (p.PED IS NULL OR p.PED >= GETDATE()))",
+          "type": "filter",
+          "category": "program_filters",
+          "subcategory": "other_programs",
+          "tags": ["foster", "foster youth", "foster care"],
+          "tables": ["STU", "PGM"],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": []
+        },
+        {
+          "id": "is_migrant",
+          "name": "Migrant Student",
+          "description": "Filter to students identified as migrant",
+          "snippet": "EXISTS (SELECT 1 FROM PGM p WHERE p.PID = s.ID AND p.CD = '127' AND p.DEL = 0 AND (p.PED IS NULL OR p.PED >= GETDATE()))",
+          "type": "filter",
+          "category": "program_filters",
+          "subcategory": "other_programs",
+          "tags": ["migrant"],
+          "tables": ["STU", "PGM"],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": []
+        },
+        {
+          "id": "is_title1",
+          "name": "Title I Student",
+          "description": "Filter to students receiving Title I services",
+          "snippet": "EXISTS (SELECT 1 FROM PGM p WHERE p.PID = s.ID AND p.CD = '155' AND p.DEL = 0 AND (p.PED IS NULL OR p.PED >= GETDATE()))",
+          "type": "filter",
+          "category": "program_filters",
+          "subcategory": "other_programs",
+          "tags": ["title 1", "title i", "title one"],
+          "tables": ["STU", "PGM"],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": []
+        },
+        {
+          "id": "is_free_reduced_lunch",
+          "name": "Free/Reduced Lunch",
+          "description": "Filter to students eligible for free or reduced lunch",
+          "snippet": "s.LF IN ('F', 'R')",
+          "type": "filter",
+          "category": "program_filters",
+          "subcategory": "other_programs",
+          "tags": ["free lunch", "reduced lunch", "frl", "low income", "socioeconomically disadvantaged"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": []
+        }
+      ]
+    },
+    "grade_filters": {
+      "specific": [
+        {
+          "id": "grade_tk",
+          "name": "Transitional Kindergarten",
+          "description": "Filter to TK students",
+          "snippet": "s.GR = -1",
+          "type": "filter",
+          "category": "grade_filters",
+          "subcategory": "specific",
+          "tags": ["tk", "transitional kindergarten", "grade tk"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": ["grade_elementary", "grade_middle", "grade_high"],
+          "parameters": []
+        },
+        {
+          "id": "grade_k",
+          "name": "Kindergarten",
+          "description": "Filter to Kindergarten students",
+          "snippet": "s.GR = 0",
+          "type": "filter",
+          "category": "grade_filters",
+          "subcategory": "specific",
+          "tags": ["kindergarten", "k", "grade k", "kinder"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": ["grade_elementary", "grade_middle", "grade_high"],
+          "parameters": []
+        },
+        {
+          "id": "grade_1",
+          "name": "First Grade",
+          "description": "Filter to 1st grade students",
+          "snippet": "s.GR = 1",
+          "type": "filter",
+          "category": "grade_filters",
+          "subcategory": "specific",
+          "tags": ["first", "1st", "grade 1", "1st grade"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": ["grade_elementary", "grade_middle", "grade_high"],
+          "parameters": []
+        },
+        {
+          "id": "grade_2",
+          "name": "Second Grade",
+          "description": "Filter to 2nd grade students",
+          "snippet": "s.GR = 2",
+          "type": "filter",
+          "category": "grade_filters",
+          "subcategory": "specific",
+          "tags": ["second", "2nd", "grade 2", "2nd grade"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": ["grade_elementary", "grade_middle", "grade_high"],
+          "parameters": []
+        },
+        {
+          "id": "grade_3",
+          "name": "Third Grade",
+          "description": "Filter to 3rd grade students",
+          "snippet": "s.GR = 3",
+          "type": "filter",
+          "category": "grade_filters",
+          "subcategory": "specific",
+          "tags": ["third", "3rd", "grade 3", "3rd grade"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": ["grade_elementary", "grade_middle", "grade_high"],
+          "parameters": []
+        },
+        {
+          "id": "grade_4",
+          "name": "Fourth Grade",
+          "description": "Filter to 4th grade students",
+          "snippet": "s.GR = 4",
+          "type": "filter",
+          "category": "grade_filters",
+          "subcategory": "specific",
+          "tags": ["fourth", "4th", "grade 4", "4th grade"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": ["grade_elementary", "grade_middle", "grade_high"],
+          "parameters": []
+        },
+        {
+          "id": "grade_5",
+          "name": "Fifth Grade",
+          "description": "Filter to 5th grade students",
+          "snippet": "s.GR = 5",
+          "type": "filter",
+          "category": "grade_filters",
+          "subcategory": "specific",
+          "tags": ["fifth", "5th", "grade 5", "5th grade"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": ["grade_elementary", "grade_middle", "grade_high"],
+          "parameters": []
+        },
+        {
+          "id": "grade_6",
+          "name": "Sixth Grade",
+          "description": "Filter to 6th grade students",
+          "snippet": "s.GR = 6",
+          "type": "filter",
+          "category": "grade_filters",
+          "subcategory": "specific",
+          "tags": ["sixth", "6th", "grade 6", "6th grade"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": ["grade_elementary", "grade_middle", "grade_high"],
+          "parameters": []
+        },
+        {
+          "id": "grade_7",
+          "name": "Seventh Grade",
+          "description": "Filter to 7th grade students",
+          "snippet": "s.GR = 7",
+          "type": "filter",
+          "category": "grade_filters",
+          "subcategory": "specific",
+          "tags": ["seventh", "7th", "grade 7", "7th grade"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": ["grade_elementary", "grade_middle", "grade_high"],
+          "parameters": []
+        },
+        {
+          "id": "grade_8",
+          "name": "Eighth Grade",
+          "description": "Filter to 8th grade students",
+          "snippet": "s.GR = 8",
+          "type": "filter",
+          "category": "grade_filters",
+          "subcategory": "specific",
+          "tags": ["eighth", "8th", "grade 8", "8th grade"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": ["grade_elementary", "grade_middle", "grade_high"],
+          "parameters": []
+        },
+        {
+          "id": "grade_9",
+          "name": "Ninth Grade",
+          "description": "Filter to 9th grade students",
+          "snippet": "s.GR = 9",
+          "type": "filter",
+          "category": "grade_filters",
+          "subcategory": "specific",
+          "tags": ["ninth", "9th", "grade 9", "9th grade", "freshman", "freshmen"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": ["grade_elementary", "grade_middle", "grade_high"],
+          "parameters": []
+        },
+        {
+          "id": "grade_10",
+          "name": "Tenth Grade",
+          "description": "Filter to 10th grade students",
+          "snippet": "s.GR = 10",
+          "type": "filter",
+          "category": "grade_filters",
+          "subcategory": "specific",
+          "tags": ["tenth", "10th", "grade 10", "10th grade", "sophomore", "sophomores"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": ["grade_elementary", "grade_middle", "grade_high"],
+          "parameters": []
+        },
+        {
+          "id": "grade_11",
+          "name": "Eleventh Grade",
+          "description": "Filter to 11th grade students",
+          "snippet": "s.GR = 11",
+          "type": "filter",
+          "category": "grade_filters",
+          "subcategory": "specific",
+          "tags": ["eleventh", "11th", "grade 11", "11th grade", "junior", "juniors"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": ["grade_elementary", "grade_middle", "grade_high"],
+          "parameters": []
+        },
+        {
+          "id": "grade_12",
+          "name": "Twelfth Grade",
+          "description": "Filter to 12th grade students",
+          "snippet": "s.GR = 12",
+          "type": "filter",
+          "category": "grade_filters",
+          "subcategory": "specific",
+          "tags": ["twelfth", "12th", "grade 12", "12th grade", "senior", "seniors"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": ["grade_elementary", "grade_middle", "grade_high"],
+          "parameters": []
+        }
+      ],
+      "ranges": [
+        {
+          "id": "grade_elementary",
+          "name": "Elementary Grades (TK-5)",
+          "description": "Filter to elementary school grade levels",
+          "snippet": "s.GR BETWEEN -1 AND 5",
+          "type": "filter",
+          "category": "grade_filters",
+          "subcategory": "ranges",
+          "tags": ["elementary", "k-5", "primary", "tk-5"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": ["grade_middle", "grade_high"],
+          "parameters": []
+        },
+        {
+          "id": "grade_middle",
+          "name": "Middle School Grades (6-8)",
+          "description": "Filter to middle school grade levels",
+          "snippet": "s.GR BETWEEN 6 AND 8",
+          "type": "filter",
+          "category": "grade_filters",
+          "subcategory": "ranges",
+          "tags": ["middle", "middle school", "6-8", "junior high"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": ["grade_elementary", "grade_high"],
+          "parameters": []
+        },
+        {
+          "id": "grade_high",
+          "name": "High School Grades (9-12)",
+          "description": "Filter to high school grade levels",
+          "snippet": "s.GR BETWEEN 9 AND 12",
+          "type": "filter",
+          "category": "grade_filters",
+          "subcategory": "ranges",
+          "tags": ["high", "high school", "9-12", "secondary"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": ["grade_elementary", "grade_middle"],
+          "parameters": []
+        }
+      ]
+    },
+    "demographic_filters": {
+      "gender": [
+        {
+          "id": "gender_male",
+          "name": "Male Students",
+          "description": "Filter to male students",
+          "snippet": "s.SX = 'M'",
+          "type": "filter",
+          "category": "demographic_filters",
+          "subcategory": "gender",
+          "tags": ["male", "boys", "men", "gender male"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": ["gender_female"],
+          "parameters": []
+        },
+        {
+          "id": "gender_female",
+          "name": "Female Students",
+          "description": "Filter to female students",
+          "snippet": "s.SX = 'F'",
+          "type": "filter",
+          "category": "demographic_filters",
+          "subcategory": "gender",
+          "tags": ["female", "girls", "women", "gender female"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": ["gender_male"],
+          "parameters": []
+        }
+      ],
+      "ethnicity": [
+        {
+          "id": "ethnicity_hispanic",
+          "name": "Hispanic/Latino Students",
+          "description": "Filter to Hispanic/Latino students",
+          "snippet": "s.EC = '700'",
+          "type": "filter",
+          "category": "demographic_filters",
+          "subcategory": "ethnicity",
+          "tags": ["hispanic", "latino", "latina", "latinx"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": []
+        },
+        {
+          "id": "ethnicity_white",
+          "name": "White Students",
+          "description": "Filter to White students",
+          "snippet": "s.EC = '600'",
+          "type": "filter",
+          "category": "demographic_filters",
+          "subcategory": "ethnicity",
+          "tags": ["white", "caucasian"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": []
+        },
+        {
+          "id": "ethnicity_african_american",
+          "name": "African American Students",
+          "description": "Filter to African American/Black students",
+          "snippet": "s.EC = '400'",
+          "type": "filter",
+          "category": "demographic_filters",
+          "subcategory": "ethnicity",
+          "tags": ["african american", "black", "african-american"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": []
+        },
+        {
+          "id": "ethnicity_asian",
+          "name": "Asian Students",
+          "description": "Filter to Asian students",
+          "snippet": "s.EC = '200'",
+          "type": "filter",
+          "category": "demographic_filters",
+          "subcategory": "ethnicity",
+          "tags": ["asian"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": []
+        },
+        {
+          "id": "ethnicity_filipino",
+          "name": "Filipino Students",
+          "description": "Filter to Filipino students",
+          "snippet": "s.EC = '301'",
+          "type": "filter",
+          "category": "demographic_filters",
+          "subcategory": "ethnicity",
+          "tags": ["filipino", "philippine"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": []
+        },
+        {
+          "id": "ethnicity_pacific_islander",
+          "name": "Pacific Islander Students",
+          "description": "Filter to Pacific Islander students",
+          "snippet": "s.EC = '500'",
+          "type": "filter",
+          "category": "demographic_filters",
+          "subcategory": "ethnicity",
+          "tags": ["pacific islander", "hawaiian", "pacific island"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": []
+        },
+        {
+          "id": "ethnicity_native_american",
+          "name": "Native American Students",
+          "description": "Filter to Native American/Alaska Native students",
+          "snippet": "s.EC = '100'",
+          "type": "filter",
+          "category": "demographic_filters",
+          "subcategory": "ethnicity",
+          "tags": ["native american", "american indian", "alaska native", "indigenous"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": []
+        },
+        {
+          "id": "ethnicity_two_or_more",
+          "name": "Two or More Races",
+          "description": "Filter to students identifying as two or more races",
+          "snippet": "s.EC = '800'",
+          "type": "filter",
+          "category": "demographic_filters",
+          "subcategory": "ethnicity",
+          "tags": ["two or more", "multiracial", "mixed race", "multiple races"],
+          "tables": ["STU"],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": []
+        }
+      ]
+    },
+    "data_joins": {
+      "special_ed": [
+        {
+          "id": "iep_data",
+          "name": "IEP Details",
+          "description": "Join IEP/Special Education program details including disability codes and case manager",
+          "snippet": "LEFT JOIN CSE sped ON sped.ID = s.ID AND sped.DEL = 0",
+          "type": "join",
+          "category": "data_joins",
+          "subcategory": "special_ed",
+          "tags": ["iep", "special education", "sped", "disability", "services"],
+          "tables": ["CSE"],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": [],
+          "outputColumns": ["primary_disability", "secondary_disability", "iep_date", "annual_review_date", "case_manager"]
+        },
+        {
+          "id": "plan_504_data",
+          "name": "504 Plan Details",
+          "description": "Join 504 accommodation plan details",
+          "snippet": "LEFT JOIN [504] p504 ON p504.ID = s.ID AND p504.DEL = 0 AND p504.ED IS NULL",
+          "type": "join",
+          "category": "data_joins",
+          "subcategory": "special_ed",
+          "tags": ["504", "accommodations", "plan"],
+          "tables": ["S504"],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": [],
+          "outputColumns": ["start_date_504", "disability_504", "accommodations"]
+        }
+      ],
+      "attendance": [
+        {
+          "id": "attendance_summary",
+          "name": "YTD Attendance Summary",
+          "description": "Join year-to-date attendance statistics including absences and tardies",
+          "snippet": "LEFT JOIN (SELECT ID, SUM(CASE WHEN AL = 'A' THEN 1 ELSE 0 END) as absences, SUM(CASE WHEN AL = 'U' THEN 1 ELSE 0 END) as unexcused, SUM(CASE WHEN AL = 'T' THEN 1 ELSE 0 END) as tardies, COUNT(*) as total_days FROM ATT WHERE DEL = 0 AND DT >= '{{school_year_start}}' GROUP BY ID) att ON att.ID = s.ID",
+          "type": "join",
+          "category": "data_joins",
+          "subcategory": "attendance",
+          "tags": ["attendance", "absences", "tardies", "ytd", "summary", "chronic absence"],
+          "tables": ["ATT"],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": [
+            {
+              "name": "school_year_start",
+              "type": "date",
+              "description": "Start date of school year",
+              "required": true,
+              "default": "2024-08-01"
+            }
+          ],
+          "outputColumns": ["absences", "unexcused", "tardies", "total_days"]
+        }
+      ],
+      "contacts": [
+        {
+          "id": "contacts_primary",
+          "name": "Primary Contact",
+          "description": "Join primary parent/guardian contact information",
+          "snippet": "LEFT JOIN CON c ON c.ID = s.ID AND c.DEL = 0 AND c.MJ = 'Y'",
+          "type": "join",
+          "category": "data_joins",
+          "subcategory": "contacts",
+          "tags": ["contact", "parent", "guardian", "phone", "email", "address"],
+          "tables": ["CON"],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": [],
+          "outputColumns": ["contact_name", "relationship", "phone", "email", "address"]
+        }
+      ],
+      "transcripts": [
+        {
+          "id": "transcript_student_info",
+          "name": "Student Info for Transcripts",
+          "description": "Join student name and demographics to transcript records",
+          "snippet": "LEFT JOIN STU s ON s.ID = h.ID AND s.DEL = 0",
+          "type": "join",
+          "category": "data_joins",
+          "subcategory": "transcripts",
+          "tags": ["student", "name", "transcript"],
+          "tables": ["STU"],
+          "dependencies": ["transcripts_base"],
+          "conflicts": [],
+          "parameters": [],
+          "outputColumns": ["last_name", "first_name", "current_grade"]
+        }
+      ]
+    },
+    "transcript_filters": {
+      "year": [
+        {
+          "id": "transcript_year_current",
+          "name": "Current School Year",
+          "description": "Filter transcripts to current school year (2024-2025)",
+          "snippet": "h.YR = 2025",
+          "type": "filter",
+          "category": "transcript_filters",
+          "subcategory": "year",
+          "tags": ["current year", "2024-2025", "this year"],
+          "tables": ["HIS"],
+          "dependencies": ["transcripts_base"],
+          "conflicts": [],
+          "parameters": []
+        },
+        {
+          "id": "transcript_year_previous",
+          "name": "Previous School Year",
+          "description": "Filter transcripts to previous school year (2023-2024)",
+          "snippet": "h.YR = 2024",
+          "type": "filter",
+          "category": "transcript_filters",
+          "subcategory": "year",
+          "tags": ["previous year", "2023-2024", "last year"],
+          "tables": ["HIS"],
+          "dependencies": ["transcripts_base"],
+          "conflicts": [],
+          "parameters": []
+        }
+      ],
+      "semester": [
+        {
+          "id": "transcript_semester_fall",
+          "name": "Fall Semester",
+          "description": "Filter to fall/first semester transcripts",
+          "snippet": "h.SE = 'F'",
+          "type": "filter",
+          "category": "transcript_filters",
+          "subcategory": "semester",
+          "tags": ["fall", "first semester", "semester 1", "S1"],
+          "tables": ["HIS"],
+          "dependencies": ["transcripts_base"],
+          "conflicts": ["transcript_semester_spring"],
+          "parameters": []
+        },
+        {
+          "id": "transcript_semester_spring",
+          "name": "Spring Semester",
+          "description": "Filter to spring/second semester transcripts",
+          "snippet": "h.SE = 'S'",
+          "type": "filter",
+          "category": "transcript_filters",
+          "subcategory": "semester",
+          "tags": ["spring", "second semester", "semester 2", "S2"],
+          "tables": ["HIS"],
+          "dependencies": ["transcripts_base"],
+          "conflicts": ["transcript_semester_fall"],
+          "parameters": []
+        }
+      ],
+      "marks": [
+        {
+          "id": "transcript_mark_a",
+          "name": "A Grades",
+          "description": "Filter to A grades only",
+          "snippet": "h.MK IN ('A', 'A+', 'A-')",
+          "type": "filter",
+          "category": "transcript_filters",
+          "subcategory": "marks",
+          "tags": ["A", "grade A", "excellent"],
+          "tables": ["HIS"],
+          "dependencies": ["transcripts_base"],
+          "conflicts": [],
+          "parameters": []
+        },
+        {
+          "id": "transcript_mark_f",
+          "name": "F Grades (Failing)",
+          "description": "Filter to F/failing grades",
+          "snippet": "h.MK IN ('F', 'F+')",
+          "type": "filter",
+          "category": "transcript_filters",
+          "subcategory": "marks",
+          "tags": ["F", "failing", "failed", "grade F"],
+          "tables": ["HIS"],
+          "dependencies": ["transcripts_base"],
+          "conflicts": [],
+          "parameters": []
+        },
+        {
+          "id": "transcript_mark_d_or_f",
+          "name": "D or F Grades",
+          "description": "Filter to D or F grades (at-risk)",
+          "snippet": "h.MK IN ('D', 'D+', 'D-', 'F', 'F+')",
+          "type": "filter",
+          "category": "transcript_filters",
+          "subcategory": "marks",
+          "tags": ["D", "F", "failing", "at-risk", "low grades"],
+          "tables": ["HIS"],
+          "dependencies": ["transcripts_base"],
+          "conflicts": [],
+          "parameters": []
+        },
+        {
+          "id": "transcript_passing",
+          "name": "Passing Grades",
+          "description": "Filter to passing grades (A, B, C, D)",
+          "snippet": "h.MK IN ('A', 'A+', 'A-', 'B', 'B+', 'B-', 'C', 'C+', 'C-', 'D', 'D+', 'D-')",
+          "type": "filter",
+          "category": "transcript_filters",
+          "subcategory": "marks",
+          "tags": ["passing", "passed"],
+          "tables": ["HIS"],
+          "dependencies": ["transcripts_base"],
+          "conflicts": [],
+          "parameters": []
+        }
+      ],
+      "school": [
+        {
+          "id": "transcript_school_filter",
+          "name": "Transcript by School",
+          "description": "Filter transcript records by school code",
+          "snippet": "h.SC = {{school_code}}",
+          "type": "filter",
+          "category": "transcript_filters",
+          "subcategory": "school",
+          "tags": ["school", "transcript school"],
+          "tables": ["HIS"],
+          "dependencies": ["transcripts_base"],
+          "conflicts": [],
+          "parameters": [
+            {
+              "name": "school_code",
+              "type": "number",
+              "description": "School code for transcript filter",
+              "required": true
+            }
+          ]
+        }
+      ]
+    },
+    "aggregations": {
+      "counts": [
+        {
+          "id": "count_students",
+          "name": "Count Students",
+          "description": "Return count of students instead of individual records",
+          "snippet": "COUNT(*) as student_count",
+          "type": "aggregation",
+          "category": "aggregations",
+          "subcategory": "counts",
+          "tags": ["count", "total", "number of", "how many"],
+          "tables": [],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": []
+        },
+        {
+          "id": "count_by_school",
+          "name": "Count by School",
+          "description": "Group and count students by school",
+          "snippet": "GROUP BY s.SC ORDER BY s.SC",
+          "type": "aggregation",
+          "category": "aggregations",
+          "subcategory": "counts",
+          "tags": ["count", "by school", "group", "per school", "each school"],
+          "tables": [],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": []
+        },
+        {
+          "id": "count_by_grade",
+          "name": "Count by Grade Level",
+          "description": "Group and count students by grade level",
+          "snippet": "GROUP BY s.GR ORDER BY s.GR",
+          "type": "aggregation",
+          "category": "aggregations",
+          "subcategory": "counts",
+          "tags": ["count", "by grade", "group", "per grade", "grade level", "each grade"],
+          "tables": [],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": []
+        },
+        {
+          "id": "count_by_ethnicity",
+          "name": "Count by Ethnicity",
+          "description": "Group and count students by ethnicity",
+          "snippet": "GROUP BY s.EC ORDER BY COUNT(*) DESC",
+          "type": "aggregation",
+          "category": "aggregations",
+          "subcategory": "counts",
+          "tags": ["count", "by ethnicity", "group", "race", "demographic"],
+          "tables": [],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": []
+        },
+        {
+          "id": "count_by_gender",
+          "name": "Count by Gender",
+          "description": "Group and count students by gender",
+          "snippet": "GROUP BY s.SX ORDER BY s.SX",
+          "type": "aggregation",
+          "category": "aggregations",
+          "subcategory": "counts",
+          "tags": ["count", "by gender", "group", "male", "female"],
+          "tables": [],
+          "dependencies": ["students_base"],
+          "conflicts": [],
+          "parameters": []
+        }
+      ]
+    },
+    "ordering": {
+      "common": [
+        {
+          "id": "order_by_name",
+          "name": "Order by Name",
+          "description": "Sort results by last name, first name",
+          "snippet": "ORDER BY s.LN, s.FN",
+          "type": "order",
+          "category": "ordering",
+          "subcategory": "common",
+          "tags": ["sort", "order", "alphabetical", "name", "a-z"],
+          "tables": [],
+          "dependencies": ["students_base"],
+          "conflicts": ["order_by_grade", "order_by_school"],
+          "parameters": []
+        },
+        {
+          "id": "order_by_grade",
+          "name": "Order by Grade",
+          "description": "Sort results by grade level, then name",
+          "snippet": "ORDER BY s.GR, s.LN, s.FN",
+          "type": "order",
+          "category": "ordering",
+          "subcategory": "common",
+          "tags": ["sort", "order", "grade", "grade level"],
+          "tables": [],
+          "dependencies": ["students_base"],
+          "conflicts": ["order_by_name"],
+          "parameters": []
+        },
+        {
+          "id": "order_by_school",
+          "name": "Order by School",
+          "description": "Sort results by school code, then name",
+          "snippet": "ORDER BY s.SC, s.LN, s.FN",
+          "type": "order",
+          "category": "ordering",
+          "subcategory": "common",
+          "tags": ["sort", "order", "school"],
+          "tables": [],
+          "dependencies": ["students_base"],
+          "conflicts": ["order_by_name"],
+          "parameters": []
+        }
+      ]
+    },
+    "column_additions": {
+      "contact_info": [
+        {
+          "id": "add_contact_phone",
+          "name": "Add Contact Phone",
+          "description": "Add primary contact phone number to results",
+          "snippet": "c.PH as contact_phone",
+          "type": "column",
+          "category": "column_additions",
+          "subcategory": "contact_info",
+          "tags": ["phone", "contact", "parent phone"],
+          "tables": ["CON"],
+          "dependencies": ["students_base", "contacts_primary"],
+          "conflicts": [],
+          "parameters": [],
+          "outputColumns": ["contact_phone"]
+        },
+        {
+          "id": "add_contact_email",
+          "name": "Add Contact Email",
+          "description": "Add primary contact email to results",
+          "snippet": "c.EM as contact_email",
+          "type": "column",
+          "category": "column_additions",
+          "subcategory": "contact_info",
+          "tags": ["email", "contact", "parent email"],
+          "tables": ["CON"],
+          "dependencies": ["students_base", "contacts_primary"],
+          "conflicts": [],
+          "parameters": [],
+          "outputColumns": ["contact_email"]
+        }
+      ],
+      "attendance_data": [
+        {
+          "id": "add_absence_count",
+          "name": "Add Absence Count",
+          "description": "Add total absences to results",
+          "snippet": "att.absences",
+          "type": "column",
+          "category": "column_additions",
+          "subcategory": "attendance_data",
+          "tags": ["absences", "attendance"],
+          "tables": ["ATT"],
+          "dependencies": ["students_base", "attendance_summary"],
+          "conflicts": [],
+          "parameters": [],
+          "outputColumns": ["absences"]
+        },
+        {
+          "id": "add_tardy_count",
+          "name": "Add Tardy Count",
+          "description": "Add total tardies to results",
+          "snippet": "att.tardies",
+          "type": "column",
+          "category": "column_additions",
+          "subcategory": "attendance_data",
+          "tags": ["tardies", "attendance", "late"],
+          "tables": ["ATT"],
+          "dependencies": ["students_base", "attendance_summary"],
+          "conflicts": [],
+          "parameters": [],
+          "outputColumns": ["tardies"]
+        }
+      ]
+    }
+  }
+}

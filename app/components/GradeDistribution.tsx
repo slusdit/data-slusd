@@ -572,24 +572,24 @@ const GradeDistribution = ({
   const syncDataWithFilters = useCallback(async () => {
     setIsProcessing(true);
     try {
+      // Get teacher numbers for all selected teachers
+      const selectedTeacherNumbers = selectedTeachers
+        .map(teacher => getTeacherNumberFromName(teacher))
+        .filter(Boolean) as string[];
+
       const filterParams = {
-        term: selectedTerms.length > 0 ? selectedTerms[0] : undefined,
-        teacherNumber:
-          selectedTeachers.length > 0
-            ? getTeacherNumberFromName(selectedTeachers[0])
-            : undefined,
-        departmentCode:
-          selectedDepartments.length > 0 ? selectedDepartments[0] : undefined,
-        sc:
-          selectedSchools.length > 0 ? parseInt(selectedSchools[0]) : undefined,
+        // Multi-select filters - pass arrays
+        terms: selectedTerms.length > 0 ? selectedTerms : undefined,
+        teacherNumbers: selectedTeacherNumbers.length > 0 ? selectedTeacherNumbers : undefined,
+        departmentCodes: selectedDepartments.length > 0 ? selectedDepartments : undefined,
+        scs: selectedSchools.length > 0 ? selectedSchools.map(s => parseInt(s)) : undefined,
+        courseTitles: selectedCourseTitles.length > 0 ? selectedCourseTitles : undefined,
+        // Single-select demographic filters
         period: selectedPeriods.length > 0 ? selectedPeriods[0] : undefined,
         ellStatus: selectedEll.length > 0 ? selectedEll[0] : undefined,
-        specialEdStatus:
-          selectedSpecialEd.length > 0 ? selectedSpecialEd[0] : undefined,
+        specialEdStatus: selectedSpecialEd.length > 0 ? selectedSpecialEd[0] : undefined,
         ardStatus: selectedArd.length > 0 ? selectedArd[0] : undefined,
         genderStatus: selectedGender.length > 0 ? selectedGender[0] : undefined,
-        courseTitleStatus:
-          selectedCourseTitles.length > 0 ? selectedCourseTitles[0] : undefined,
       };
 
       const newData = await aggregateTeacherGradeSummaries(filterParams);
@@ -714,10 +714,47 @@ const GradeDistribution = ({
     getTeacherNumberFromName,
   ]);
 
-  // Effect to apply CLIENT-SIDE filters and update dropdowns
+  // Track if demographic filters are active to determine filtering strategy
+  const hasDemographicFilters = selectedEll.length > 0 ||
+    selectedSpecialEd.length > 0 ||
+    selectedArd.length > 0 ||
+    selectedGender.length > 0;
+
+  // Track previous demographic filter state to detect changes
+  const prevDemographicFilters = useRef({
+    ell: selectedEll,
+    specialEd: selectedSpecialEd,
+    ard: selectedArd,
+    gender: selectedGender,
+  });
+
+  // Unified effect for all filtering
+  // When demographic filters are active, we use server-side filtering
+  // When no demographic filters, we use client-side filtering for performance
   useEffect(() => {
     if (!initialData || isLoading) return;
 
+    const demographicFiltersChanged =
+      JSON.stringify(prevDemographicFilters.current.ell) !== JSON.stringify(selectedEll) ||
+      JSON.stringify(prevDemographicFilters.current.specialEd) !== JSON.stringify(selectedSpecialEd) ||
+      JSON.stringify(prevDemographicFilters.current.ard) !== JSON.stringify(selectedArd) ||
+      JSON.stringify(prevDemographicFilters.current.gender) !== JSON.stringify(selectedGender);
+
+    // Update ref for next comparison
+    prevDemographicFilters.current = {
+      ell: selectedEll,
+      specialEd: selectedSpecialEd,
+      ard: selectedArd,
+      gender: selectedGender,
+    };
+
+    // If demographic filters are active or changed, use server-side sync
+    if (hasDemographicFilters || demographicFiltersChanged) {
+      syncDataWithFilters();
+      return;
+    }
+
+    // Otherwise, use client-side filtering for better performance
     setIsProcessing(true);
     try {
       let result = initialData;
@@ -749,9 +786,6 @@ const GradeDistribution = ({
         result = result.filter((item) => selectedPeriods.includes(item.period));
       }
 
-      // FIX APPLIED: Removed client-side filtering logic for demographic filters
-      // to prevent race condition with server-side sync. The hook below will handle this.
-
       setData(result);
       setFilteredData(result);
       updateDropdownOptions();
@@ -767,29 +801,14 @@ const GradeDistribution = ({
     selectedTerms,
     selectedSchools,
     selectedPeriods,
-    // Note: selectedEll, selectedSpecialEd, selectedArd, selectedGender are removed from this hook's dependency array
-    // to avoid re-running it unnecessarily. The server-sync hook below is the authority for these filters.
-    initialData,
-    isLoading,
-    updateDropdownOptions,
-  ]);
-
-  // Effect to trigger SERVER-SIDE sync for demographic filters
-  useEffect(() => {
-    // This check prevents an unnecessary API call on initial load if no demographic filters are pre-selected.
-    if (
-      selectedEll.length > 0 ||
-      selectedSpecialEd.length > 0 ||
-      selectedArd.length > 0 ||
-      selectedGender.length > 0
-    ) {
-      syncDataWithFilters();
-    }
-  }, [
     selectedEll,
     selectedSpecialEd,
     selectedArd,
     selectedGender,
+    hasDemographicFilters,
+    initialData,
+    isLoading,
+    updateDropdownOptions,
     syncDataWithFilters,
   ]);
 

@@ -270,45 +270,34 @@ export async function runQuery(
           // }
 
         }
-        // console.log( session?.user?.activeSchool)
-        // console.log(query.includes("@@asc"))
+        // Handle @@asc (Active School Code) variable
         if (query.includes("@@asc")) {
-          // console.log(query.includes("@@asc"))
-          if (typeof session?.user?.activeSchool === "number") {
-            // console.log("Active School", session?.user?.activeSchool)
-            // console.log("Active School", session?.user?.activeSchool === 0)
+          const activeSchool = session?.user?.activeSchool;
 
-            // } else {
-            if (session?.user?.activeSchool === 0) {
-              const schools = await prisma.schoolInfo.findMany({
-                select: {
-                  sc: true,
-                },
-              })
-              // console.log(schools)
-              const allSchoolSc = "'" + schools.map((school) => `${school.sc}`).join("', '") + "'";
-              // console.log('Schools', schools, allSchoolSc)
+          if (activeSchool === undefined || activeSchool === null) {
+            // No active school set - return no data (use impossible school code)
+            query = query.replace(/@@asc/g, "'-1'");
+          } else if (activeSchool === 0) {
+            // District-wide view (0) - query all schools
+            const schools = await prisma.schoolInfo.findMany({
+              select: { sc: true },
+            });
+            const allSchoolSc = "'" + schools.map((school) => `${school.sc}`).join("', '") + "'";
 
-              query = query.replace("= @@asc", `in (${allSchoolSc})`);
-
-            } else {
-
-              query = query.replace("@@asc", "'" + session?.user?.activeSchool + "'");
-            }
-
-            query = query.replace("@@asc", "'" + session?.user?.primarySchool + "'");
+            // Handle both "= @@asc" and just "@@asc" patterns
+            query = query.replace("= @@asc", `in (${allSchoolSc})`);
+            query = query.replace(/@@asc/g, allSchoolSc);
+          } else {
+            // Specific school selected - replace all occurrences
+            query = query.replace(/@@asc/g, "'" + activeSchool + "'");
           }
-
         }
-        // console.log("Query", query);
-
 
         // Handle @TN variable
         if (query.includes("@tn")) {
           // TODO: get from session, feed in from auth() call or Aeries query
         }
 
-        // console.log("Query", query);
         result = await request.query(query);
 
         // console.log("SQL result", result.recordset);
@@ -415,45 +404,34 @@ export async function runQueryStandalone(
           // }
 
         }
-        // console.log( session?.user?.activeSchool)
-        // console.log(query.includes("@@asc"))
+        // Handle @@asc (Active School Code) variable
         if (query.includes("@@asc")) {
-          // console.log(query.includes("@@asc"))
-          if (typeof session?.user?.activeSchool === "number") {
-            // console.log("Active School", session?.user?.activeSchool)
-            // console.log("Active School", session?.user?.activeSchool === 0)
+          const activeSchool = session?.user?.activeSchool;
 
-            // } else {
-            if (session?.user?.activeSchool === 0) {
-              const schools = await prisma.schoolInfo.findMany({
-                select: {
-                  sc: true,
-                },
-              })
-              // console.log(schools)
-              const allSchoolSc = "'" + schools.map((school) => `${school.sc}`).join("', '") + "'";
-              // console.log('Schools', schools, allSchoolSc)
+          if (activeSchool === undefined || activeSchool === null) {
+            // No active school set - return no data (use impossible school code)
+            query = query.replace(/@@asc/g, "'-1'");
+          } else if (activeSchool === 0) {
+            // District-wide view (0) - query all schools
+            const schools = await prisma.schoolInfo.findMany({
+              select: { sc: true },
+            });
+            const allSchoolSc = "'" + schools.map((school) => `${school.sc}`).join("', '") + "'";
 
-              query = query.replace("= @@asc", `in (${allSchoolSc})`);
-
-            } else {
-
-              query = query.replace("@@asc", "'" + session?.user?.activeSchool + "'");
-            }
-
-            query = query.replace("@@asc", "'" + session?.user?.primarySchool + "'");
+            // Handle both "= @@asc" and just "@@asc" patterns
+            query = query.replace("= @@asc", `in (${allSchoolSc})`);
+            query = query.replace(/@@asc/g, allSchoolSc);
+          } else {
+            // Specific school selected - replace all occurrences
+            query = query.replace(/@@asc/g, "'" + activeSchool + "'");
           }
-
         }
-        // console.log("Query", query);
-
 
         // Handle @TN variable
         if (query.includes("@tn")) {
           // TODO: get from session, feed in from auth() call or Aeries query
         }
 
-        // console.log("Query", query);
         result = await request.query(query);
 
         // console.log("SQL result", result.recordset);

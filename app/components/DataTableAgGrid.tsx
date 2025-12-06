@@ -424,16 +424,19 @@ function DataTable<T extends object>({
   return (
     <div className="w-full flex flex-col gap-4">
       {showChart && (
-        <div className="w-full min-h-fit border rounded-lg overflow-hidden">
+        <div className="w-full h-[400px] border rounded-lg overflow-hidden">
           <AgCharts
-            options={createChartOptions({
-              chartTitle,
-              chartXKey,
-              chartYKey,
-              chartTypeKey,
-              chartStackKey,
-              visibleColumns,
-            })}
+            options={{
+              ...createChartOptions({
+                chartTitle,
+                chartXKey,
+                chartYKey,
+                chartTypeKey,
+                chartStackKey,
+                visibleColumns,
+              }),
+              height: 400,
+            }}
           />
         </div>
       )}
