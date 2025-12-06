@@ -147,9 +147,13 @@ export async function syncGradeDistribution() {
 export async function aggregateTeacherGradeSummaries({
   schoolYear,
   term,
+  terms,
   sc,
+  scs,
   teacherNumber,
+  teacherNumbers,
   departmentCode,
+  departmentCodes,
   period,
   genderStatus,
   grade,
@@ -157,13 +161,18 @@ export async function aggregateTeacherGradeSummaries({
   ellStatus,
   ardStatus: raceCode,
   courseTitleStatus,
+  courseTitles,
   setData,
 } : {
   schoolYear?: string;
   term?: string;
+  terms?: string[];
   sc?: number;
+  scs?: number[];
   teacherNumber?: string;
+  teacherNumbers?: string[];
   departmentCode?: string;
+  departmentCodes?: string[];
   period?: string;
   genderStatus?: string;
   grade?: string;
@@ -171,29 +180,22 @@ export async function aggregateTeacherGradeSummaries({
   ellStatus?: string;
   ardStatus?: string;
   courseTitleStatus?: string;
-  setData?: (data: any) => void; // Optional callback to set data in the component
+  courseTitles?: string[];
+  setData?: (data: any) => void;
   }) {
-  // console.log("Test", {  schoolYear,
-  //   term,
-  //   sc,
-  //   teacherNumber,
-  //   departmentCode,
-  //   period,
-  //   genderStatus,
-  //   grade,
-  //   specialEdStatus,
-  //   ellStatus,
-  //   ardStatus: raceCode,
-  //   courseTitleStatus,
-  //   setData });
   try {
     // Create base WHERE clause
     let whereConditions = Prisma.sql`WHERE 1=1`;
 
-    // Add conditions based on props with proper SQL parameter handling
-    if (courseTitleStatus) {
+    // Support both single value and array for each filter
+    // Course titles - support both single and multi-select
+    if (courseTitles && courseTitles.length > 0) {
+      whereConditions = Prisma.sql`${whereConditions} AND courseTitle IN (${Prisma.join(courseTitles)})`;
+    } else if (courseTitleStatus) {
       whereConditions = Prisma.sql`${whereConditions} AND courseTitle = ${courseTitleStatus}`;
     }
+
+    // Demographic filters (single select)
     if (specialEdStatus) {
       whereConditions = Prisma.sql`${whereConditions} AND specialEd = ${specialEdStatus}`;
     }
@@ -209,21 +211,35 @@ export async function aggregateTeacherGradeSummaries({
     if (grade) {
       whereConditions = Prisma.sql`${whereConditions} AND grade = ${grade}`;
     }
-    if (term) {
+
+    // Terms - support both single and multi-select
+    if (terms && terms.length > 0) {
+      whereConditions = Prisma.sql`${whereConditions} AND term IN (${Prisma.join(terms)})`;
+    } else if (term) {
       whereConditions = Prisma.sql`${whereConditions} AND term = ${term}`;
     }
-    if (sc !== undefined) {
+
+    // Schools - support both single and multi-select
+    if (scs && scs.length > 0) {
+      whereConditions = Prisma.sql`${whereConditions} AND sc IN (${Prisma.join(scs)})`;
+    } else if (sc !== undefined) {
       whereConditions = Prisma.sql`${whereConditions} AND sc = ${sc}`;
     }
-    if (teacherNumber) {
+
+    // Teacher numbers - support both single and multi-select
+    if (teacherNumbers && teacherNumbers.length > 0) {
+      whereConditions = Prisma.sql`${whereConditions} AND teacherNumber IN (${Prisma.join(teacherNumbers)})`;
+    } else if (teacherNumber) {
       whereConditions = Prisma.sql`${whereConditions} AND teacherNumber = ${teacherNumber}`;
     }
-    if (departmentCode) {
+
+    // Departments - support both single and multi-select
+    if (departmentCodes && departmentCodes.length > 0) {
+      whereConditions = Prisma.sql`${whereConditions} AND departmentCode IN (${Prisma.join(departmentCodes)})`;
+    } else if (departmentCode) {
       whereConditions = Prisma.sql`${whereConditions} AND departmentCode = ${departmentCode}`;
     }
-    // if (period) {
-    //   whereConditions = Prisma.sql`${whereConditions} AND period = ${period}`;
-    // }
+
     if (genderStatus) {
       whereConditions = Prisma.sql`${whereConditions} AND gender = ${genderStatus}`;
     }

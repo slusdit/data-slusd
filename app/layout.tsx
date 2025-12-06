@@ -7,11 +7,12 @@ import { ThemeProvider } from '@/app/components/providers/ThemeProvider'
 import MainFooter from '@/app/components/MainFooter'
 import MainHeader from "./components/MainHeader";
 import SessionProvider from "@/app/components/providers/SessionProvider";
-import { auth } from "@/auth";
+import { auth, SessionUser } from "@/auth";
 import {
   TooltipProvider,
 } from "@/components/ui/tooltip"
 import { AGGridProvider } from "./components/providers/AGGridProvider";
+import EmulationBanner from "./components/EmulationBanner";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -29,7 +30,9 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const session = await auth()
-  
+  const user = session?.user as SessionUser | undefined;
+  const isEmulating = user?.isEmulating && user?.emulatingUser && user?.realUser;
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${fontSans.className} w-full bg-card/90 flex flex-col min-h-screen`} suppressHydrationWarning>
@@ -43,10 +46,17 @@ export default async function RootLayout({
             delayDuration={1800}
           >
             <AGGridProvider>
-              <div className="sticky top-0 z-50">
+              {/* Emulation Banner - shows when admin is viewing as another user */}
+              {isEmulating && user?.emulatingUser && user?.realUser && (
+                <EmulationBanner
+                  emulatingUser={user.emulatingUser}
+                  realUser={user.realUser}
+                />
+              )}
+              <div className={`sticky ${isEmulating ? 'top-[32px]' : 'top-0'} z-40`}>
                 <MainHeader session={session} />
               </div>
-              <main className="flex-grow flex justify-center overflow-y-auto">
+              <main className={`flex-grow flex justify-center overflow-y-auto ${isEmulating ? 'pt-0' : ''}`}>
                 <div className="px-4 w-[95%] lg:w-[90%] bg-background">
                   {session ? children :
                     <UnauthorizedButton

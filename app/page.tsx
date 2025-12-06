@@ -1,16 +1,12 @@
-import { auth } from "@/auth";
+import { auth, SessionUser } from "@/auth";
 import { QueryWithCategory } from "./components/QueryBar";
-import { Card } from "@/components/ui/card";
 import prisma from "@/lib/db";
-import SchoolEnrollmentGraph from "./components/SchoolEnrollmentGraph";
-import { AttendanceOverTimeChart } from "./components/charts/AttendanceOverTime";
-import { getQueryData } from "@/lib/getQuery";
-import Sidebar from "./components/Sidebar";
-import FavoritesSectionGrid from "./components/FavoritesSectionGrid";
+import Dashboard from "./components/Dashboard";
+import ReportsSidebar from "./components/ReportsSidebar";
 
-// const prisma = new PrismaClient();
 export default async function Home() {
   const session = await auth();
+
   const queries: QueryWithCategory[] = await prisma.query.findMany({
     select: {
       id: true,
@@ -18,18 +14,16 @@ export default async function Home() {
       description: true,
       publicQuery: true,
       createdBy: true,
-
       category: {
         select: {
-          // id: true,
-          // label: true,
+          label: true,
           value: true,
         },
       },
     },
   });
 
-  let categories;
+  let categories: any[] = [];
   if (session?.user) {
     categories = await prisma.queryCategory.findMany({
       include: {
@@ -37,38 +31,40 @@ export default async function Home() {
         roles: true,
       },
     });
-    if (session?.user?.favorites){
+  }
 
-      categories = [{
-        id: 'favorites',
-        label: 'Favorites',
-        value: 'favorites',
-        queries: session?.user.favorites
-      },
-      
-      ...categories]
-    }
-
-  // console.log(categories);
-}
-
+  // If not logged in, show a simple landing page
+  if (!session?.user) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[80vh] p-8">
+        <h1 className="text-4xl font-bold mb-4">SLUSD Data Dashboard</h1>
+        <p className="text-muted-foreground text-lg mb-8 text-center max-w-md">
+          Access student data, reports, and analytics for San Leandro Unified School District.
+        </p>
+        <p className="text-muted-foreground">
+          Please sign in with your @slusd.us account to continue.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <>
-      <div className="m-auto mt-10 self-center flex flex-row rounded-lg max-h-[70vh] ">
-        {/* Sidebar */}
-        <Sidebar
-          categories={categories}
-          queries={queries}
-          session={session}
-          accordion={false} 
+      {/* Slide-out Reports Sidebar */}
+      <ReportsSidebar
+        categories={categories}
+        queries={queries}
+        user={session.user}
+        session={session}
+      />
+
+      {/* Main Dashboard */}
+      <main className="min-h-[calc(100vh-4rem)]">
+        <Dashboard
+          user={session.user}
+          activeSchool={(session.user as SessionUser).activeSchool}
         />
-
-        {/* Main Landing Page */}
-        <FavoritesSectionGrid user={session?.user}  />
-
-      </div>
-      {/* <pre>{JSON.stringify(session?.user, null, 2)}</pre> */}
+      </main>
     </>
   );
 }

@@ -43,22 +43,20 @@ function DataTable<T extends object>({
 
   return (
     <>
-    <div className="w-full flex flex-col justify-center">
-      {Chart && (
-        <div className="w-full flex justify-center">
-          <Suspense fallback={<div>Loading chart...</div>}>
-            <Chart
-              table={reactTable}
-              chartKey={chartColumnKey}
-            />
-          </Suspense>
-        </div>
-      )}
-      
-
-    </div>
-    <div className="w-full py-4">
-    <div className="mb-4 space-x-2 flex justify-center">
+      <div className="w-full flex flex-col justify-center">
+        {Chart && (
+          <div className="w-full flex justify-center">
+            <Suspense fallback={<div>Loading chart...</div>}>
+              <Chart
+                table={reactTable}
+                chartKey={chartColumnKey}
+              />
+            </Suspense>
+          </div>
+        )}
+      </div>
+      <div className="w-full py-4">
+        <div className="mb-4 space-x-2 flex justify-center">
       <button
         onClick={() => exportToCSV(reactTable)}
         className="px-4 py-2 bg-primary text-white rounded hover:bg-blue-600"
@@ -99,58 +97,58 @@ function DataTable<T extends object>({
               )
             })}
         </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
-    <div className="justify-center m-auto flex align-middle">
-      <ScrollArea className="max-w-[95%]">
-        <div className="overflow-x-auto">
-          <table className="border border-black">
-            <thead>
-              {reactTable.getHeaderGroups().map((headerGroup) => (
-                <tr key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <th
-                      key={header.id}
-                      className="border-b border-primary bg-title text-mainTitle-foreground p-1 text-center text-sm"
-                    >
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </thead>
-            <tbody>
-              {reactTable.getRowModel().rows.map((row) => {
-                // console.log(row)
-                return(
-                <tr key={row.id}>
-                  {row.getVisibleCells().map((cell) => {
-
-                    return (
-                    <td
-                    key={cell.id}
-                    className='p-1 text-xs border bg-card text-center '
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </td>
-                  )}
-                  )}
-                </tr>)
-              })}
-            </tbody>
-          </table>
+          </DropdownMenu>
         </div>
-        <ScrollBar orientation="horizontal" />
-      </ScrollArea>
-    </div>
+        <div className="justify-center m-auto flex align-middle">
+          <ScrollArea className="max-w-[95%]">
+            <div className="overflow-x-auto">
+              <table className="border border-black">
+                <thead>
+                  {reactTable.getHeaderGroups().map((headerGroup) => (
+                    <tr key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => (
+                        <th
+                          key={header.id}
+                          className="border-b border-primary bg-title text-mainTitle-foreground p-1 text-center text-sm"
+                        >
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                        </th>
+                      ))}
+                    </tr>
+                  ))}
+                </thead>
+                <tbody>
+                  {reactTable.getRowModel().rows.map((row) => {
+                    return(
+                      <tr key={row.id}>
+                        {row.getVisibleCells().map((cell) => {
+                          return (
+                            <td
+                              key={cell.id}
+                              className='p-1 text-xs border bg-card text-center '
+                            >
+                              {flexRender(
+                                cell.column.columnDef.cell,
+                                cell.getContext()
+                              )}
+                            </td>
+                          )
+                        })}
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
+        </div>
+      </div>
     </>
   );
 }
