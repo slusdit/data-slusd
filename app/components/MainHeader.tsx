@@ -111,6 +111,7 @@ export default async function MainHeader({ session }: { session: Session | null 
           <ActiveSchool
             activeSchool={schoolInfo}
             userSchools={(session?.user as SessionUser)?.UserSchool}
+            allowedSchoolCodes={(session?.user as SessionUser)?.schools}
             userId={(session?.user as SessionUser)?.id}
           />
         )}
