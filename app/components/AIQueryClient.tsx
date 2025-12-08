@@ -27,6 +27,7 @@ interface AIQueryClientProps {
   ethnicityOptions: FilterOption[];
   programOptions: FilterOption[];
   activeSchool?: string;
+  isDistrictWide?: boolean;
 }
 
 interface ParsedFilters {
@@ -98,6 +99,7 @@ export function AIQueryClient({
   ethnicityOptions,
   programOptions,
   activeSchool,
+  isDistrictWide,
 }: AIQueryClientProps) {
   const [state, setState] = useState<AIQueryState>({
     prompt: '',
@@ -255,9 +257,18 @@ export function AIQueryClient({
       {/* Input Card */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-yellow-500" />
-            AI Query Builder
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-yellow-500" />
+              AI Query Builder
+            </div>
+            <Badge variant={isDistrictWide ? "default" : "secondary"} className="text-xs">
+              {isDistrictWide
+                ? `District-wide (${schoolOptions.length} schools)`
+                : schoolOptions.length === 1
+                  ? schoolOptions[0]?.label
+                  : 'Single School'}
+            </Badge>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -449,7 +460,6 @@ Examples:
               <div className="h-[500px]">
                 <DataTableAgGrid
                   data={state.results}
-                  isLoading={false}
                 />
               </div>
             ) : (

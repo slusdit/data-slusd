@@ -1,5 +1,5 @@
 import { AIQueryClient } from '@/app/components/AIQueryClient';
-import { auth } from '@/auth';
+import { auth, SessionUser } from '@/auth';
 import { redirect } from 'next/navigation';
 import prisma from '@/lib/db';
 
@@ -82,20 +82,41 @@ export default async function AIQueryPage() {
     redirect('/');
   }
 
+  const user = session.user as SessionUser;
+  const activeSchool = user.activeSchool;
+  const allowedSchools = user.schools || [];
+
   // Fetch schools from database
   const schools = await prisma.schoolInfo.findMany({
     orderBy: { name: 'asc' },
   });
 
   // Map schools to fragment IDs, filter out schools without a fragment mapping
+  // Also filter based on user's allowed schools if activeSchool is not 0 (district-wide)
   const schoolOptions = schools
-    .filter((s) => schoolCodeToFragmentId[s.sc])
+    .filter((s) => {
+      // Must have a fragment mapping
+      if (!schoolCodeToFragmentId[s.sc]) return false;
+
+      // If activeSchool is 0 (district-wide), allow all schools user has access to
+      // If activeSchool is specific, only show that school
+      if (activeSchool === 0) {
+        // District-wide: show all schools user has access to
+        return allowedSchools.length === 0 || allowedSchools.includes(s.sc);
+      } else {
+        // Specific school: only show the active school
+        return s.sc === activeSchool.toString();
+      }
+    })
     .map((s) => ({
       id: schoolCodeToFragmentId[s.sc],
       label: s.name,
       logo: s.logo || undefined,
       code: s.sc,
     }));
+
+  // Determine if user is in district-wide mode or single-school mode
+  const isDistrictWide = activeSchool === 0;
 
   return (
     <div className="container mx-auto py-6 max-w-5xl">
@@ -104,6 +125,11 @@ export default async function AIQueryPage() {
         <p className="text-muted-foreground">
           Describe what data you need in plain English and let AI generate the SQL query for you.
         </p>
+        {!isDistrictWide && schoolOptions.length === 1 && (
+          <p className="text-sm text-amber-600 dark:text-amber-400 mt-2">
+            Data is scoped to {schoolOptions[0]?.label}. Select &quot;District&quot; in the school picker to query all your schools.
+          </p>
+        )}
       </div>
       <AIQueryClient
         schoolOptions={schoolOptions}
@@ -112,7 +138,8 @@ export default async function AIQueryPage() {
         genderOptions={genderOptions}
         ethnicityOptions={ethnicityOptions}
         programOptions={programOptions}
-        activeSchool={session.user.activeSchool?.toString()}
+        activeSchool={activeSchool?.toString()}
+        isDistrictWide={isDistrictWide}
       />
     </div>
   );

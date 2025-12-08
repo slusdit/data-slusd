@@ -24,15 +24,23 @@ type UserSchool = {
 interface ActiveSchoolProps {
   activeSchool: SchoolInfo;
   userSchools?: UserSchool[];
+  allowedSchoolCodes?: string[]; // Filtered list of school codes the user actually has access to
   userId?: string;
 }
 
-const ActiveSchool = ({ activeSchool, userSchools, userId }: ActiveSchoolProps) => {
+const ActiveSchool = ({ activeSchool, userSchools, allowedSchoolCodes, userId }: ActiveSchoolProps) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
 
-  const hasMultipleSchools = userSchools && userSchools.length > 1;
+  // Filter schools to only show those the user has access to
+  const filteredSchools = userSchools?.filter(us => {
+    // If no allowedSchoolCodes provided, show all
+    if (!allowedSchoolCodes || allowedSchoolCodes.length === 0) return true;
+    return allowedSchoolCodes.includes(us.school.sc);
+  }) || [];
+
+  const hasMultipleSchools = filteredSchools.length > 1;
 
   const handleSchoolChange = async (schoolSc: string) => {
     if (!userId) return;
@@ -89,7 +97,7 @@ const ActiveSchool = ({ activeSchool, userSchools, userId }: ActiveSchoolProps) 
         <ChevronDown className={`h-4 w-4 text-title-foreground/70 transition-transform ${open ? "rotate-180" : ""}`} />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="center" className="w-64">
-        {userSchools.map((userSchool) => (
+        {filteredSchools.map((userSchool) => (
           <DropdownMenuItem
             key={userSchool.school.sc}
             onClick={() => handleSchoolChange(userSchool.school.sc)}
