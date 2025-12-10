@@ -235,9 +235,22 @@ export async function updateActiveSchool(userId: string, activeSchool: number) {
     // console.log('Redirecting to:', currentPath)
     redirect('/')
     redirect(currentPath)
+}
 
-
-
+export async function updateActiveDbYear(userId: string, activeDbYear: number) {
+    const update = await prisma.user.update({
+        where: {
+            id: userId
+        },
+        data: {
+            activeDbYear
+        }
+    })
+    const headersList = await headers()
+    const referer = headersList.get('referer')
+    const currentPath = referer ? new URL(referer).pathname : '/'
+    redirect('/')
+    redirect(currentPath)
 }
 
 export async function getPrimarySchool(profileEmail: string): Promise<GetAllSchoolsReturn> {

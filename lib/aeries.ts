@@ -117,12 +117,19 @@ export type AeriesSimpleTeacher = {
 }
 // const prisma = new PrismaClient();
 
-// Define the configuration for your SQL Server
-const config = {
+// Import school year utilities for local use
+// NOTE: These are NOT re-exported because this is a "use server" file.
+// Import directly from './schoolYear' for these utilities.
+import {
+  DEFAULT_DB_YEAR,
+  getDatabaseName,
+} from './schoolYear';
+
+// Define the base configuration for SQL Server (without database)
+const baseConfig = {
   user: process.env.DB_USER, // Your SQL Server username
   password: process.env.DB_PASSWORD, // Your SQL Server password
   server: process.env.DB_SERVER, // Your SQL Server hostname or IP
-  database: process.env.DB_DATABASE, // Your database name
   options: {
     encrypt: true, // Use encryption
     trustServerCertificate: true, // Trust the server certificate
@@ -134,18 +141,36 @@ const config = {
   },
 };
 
-// Create a pool instance
-// @ts-ignore
-const poolPromise = new sql.ConnectionPool(config)
-  .connect()
-  .then((pool) => {
+// Pool cache for multiple database connections
+const poolCache: Map<string, Promise<sql.ConnectionPool>> = new Map();
 
-    return pool;
-  })
-  .catch((err) => {
-    console.error("Database Connection Failed! Bad Config: ", err);
-    throw err;
-  });
+// Get or create a connection pool for a specific database
+async function getPoolForDatabase(database: string): Promise<sql.ConnectionPool> {
+  if (!poolCache.has(database)) {
+    const config = {
+      ...baseConfig,
+      database,
+    };
+    // @ts-ignore
+    const poolPromise = new sql.ConnectionPool(config)
+      .connect()
+      .then((pool) => {
+        return pool;
+      })
+      .catch((err) => {
+        console.error(`Database Connection Failed for ${database}! Bad Config: `, err);
+        poolCache.delete(database); // Remove failed pool from cache
+        throw err;
+      });
+    poolCache.set(database, poolPromise);
+  }
+  return poolCache.get(database)!;
+}
+
+// Default pool for backwards compatibility (uses DB_DATABASE from env or default year)
+const defaultDatabase = process.env.DB_DATABASE || getDatabaseName(DEFAULT_DB_YEAR);
+// @ts-ignore
+const poolPromise = getPoolForDatabase(defaultDatabase);
 
 export async function getSchoolsFromEmail({
   email,
@@ -198,13 +223,13 @@ export async function removeCommentsFromQuery(query: string) {
 // Function to execute a query
 export async function runQuery(
   query: string,
-  //  params: any[] = []
+  options?: { dbYear?: number } // Optional: override database year
 ) {
 
   try {
-    
+
     const session = await auth();
-    
+
     const email = session?.user?.email;
     const queryBlockList = ["drop", "update", "insert", "delete", "modify", "alter", "create"];
     const queryLower = query?.toLowerCase();
@@ -217,7 +242,10 @@ export async function runQuery(
     // cleanQuery = await removeCommentsFromQuery(cleanQuery);
     let cleanQuery = await removeCommentsFromQuery(query);
 
-    const pool = await poolPromise;
+    // Get database year from options, session, or default
+    const dbYear = options?.dbYear ?? (session?.user as any)?.activeDbYear ?? DEFAULT_DB_YEAR;
+    const database = getDatabaseName(dbYear);
+    const pool = await getPoolForDatabase(database);
     // console.log(query)
     const request = pool.request();
     try {
@@ -324,15 +352,16 @@ export async function runQuery(
 export async function runQueryStandalone(
   query: string,
   standalone: boolean = false,
-  //  params: any[] = []
+  options?: { dbYear?: number } // Optional: override database year
 ) {
-  let session 
+  let session
   try {
     if (standalone) {
       session = {
         user: {
           email:"test@slusd.us",
           activeSchool: 0,
+          activeDbYear: DEFAULT_DB_YEAR,
         }
       }
     } else {
@@ -351,7 +380,10 @@ export async function runQueryStandalone(
     // cleanQuery = await removeCommentsFromQuery(cleanQuery);
     let cleanQuery = await removeCommentsFromQuery(query);
 
-    const pool = await poolPromise;
+    // Get database year from options, session, or default
+    const dbYear = options?.dbYear ?? (session?.user as any)?.activeDbYear ?? DEFAULT_DB_YEAR;
+    const database = getDatabaseName(dbYear);
+    const pool = await getPoolForDatabase(database);
     // console.log(query)
     const request = pool.request();
     try {

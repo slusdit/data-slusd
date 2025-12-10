@@ -258,6 +258,14 @@ export function parseInterpretation(content: string, library?: FragmentLibrary):
       jsonStr = jsonStr.slice(0, -3);
     }
 
+    // Try to extract JSON from LLM response that may have extra text
+    // Look for the first { and last } to extract just the JSON object
+    const firstBrace = jsonStr.indexOf('{');
+    const lastBrace = jsonStr.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+      jsonStr = jsonStr.slice(firstBrace, lastBrace + 1);
+    }
+
     const parsed = JSON.parse(jsonStr.trim());
 
     // Validate required fields

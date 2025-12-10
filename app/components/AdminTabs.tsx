@@ -4,8 +4,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import UserAdminGrid from "./UserAdminGrid";
 import QueryAdminGrid from "./QueryAdminGrid";
 import FragmentAdminGrid from "./FragmentAdminGrid";
+import AdminSettingsPanel from "./AdminSettingsPanel";
 import { QueryWithCategory } from "./QueryBar";
-import { Users, Database, Sparkles } from "lucide-react";
+import { Users, Database, Sparkles, Settings } from "lucide-react";
 import { Session } from "next-auth";
 
 type AdminPermissions = {
@@ -13,6 +14,12 @@ type AdminPermissions = {
   isSiteAdmin: boolean;
   isQueryEditor: boolean;
   userSchools: string[];
+};
+
+type SettingsData = {
+  currentDefaultYear: number;
+  calculatedYear: number;
+  onUpdateDefaultYear: (year: number, userId: string) => Promise<void>;
 };
 
 type AdminTabsProps = {
@@ -24,6 +31,7 @@ type AdminTabsProps = {
   fragments: any[];
   fragmentCategories: any[];
   permissions?: AdminPermissions;
+  settingsData?: SettingsData;
 };
 
 export default function AdminTabs({
@@ -35,6 +43,7 @@ export default function AdminTabs({
   fragments,
   fragmentCategories,
   permissions,
+  settingsData,
 }: AdminTabsProps) {
   // Determine which tabs should be visible based on permissions
   const { isSuperAdmin = false, isSiteAdmin = false, isQueryEditor = false } = permissions || {};
@@ -45,15 +54,19 @@ export default function AdminTabs({
   // Users tab is visible to SuperAdmin and SiteAdmin
   const canSeeUsersTab = isSuperAdmin || isSiteAdmin;
 
+  // Settings tab only visible to SuperAdmin
+  const canSeeSettingsTab = isSuperAdmin;
+
   // Determine available tabs for the grid layout
   const visibleTabs = [
     canSeeUsersTab && "users",
     canSeeQueryTabs && "queries",
     canSeeQueryTabs && "fragments",
+    canSeeSettingsTab && "settings",
   ].filter(Boolean);
 
-  const gridCols = visibleTabs.length === 1 ? "grid-cols-1" :
-                   visibleTabs.length === 2 ? "grid-cols-2" : "grid-cols-3";
+  const gridCols = visibleTabs.length <= 2 ? `grid-cols-${visibleTabs.length}` :
+                   visibleTabs.length === 3 ? "grid-cols-3" : "grid-cols-4";
 
   // Default to first available tab
   const defaultTab = canSeeUsersTab ? "users" : "queries";
@@ -77,6 +90,12 @@ export default function AdminTabs({
           <TabsTrigger value="fragments" className="flex items-center gap-2">
             <Sparkles className="h-4 w-4" />
             AI Fragments
+          </TabsTrigger>
+        )}
+        {canSeeSettingsTab && (
+          <TabsTrigger value="settings" className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            Settings
           </TabsTrigger>
         )}
       </TabsList>
@@ -107,6 +126,17 @@ export default function AdminTabs({
           <FragmentAdminGrid
             fragments={fragments}
             categories={fragmentCategories}
+          />
+        </TabsContent>
+      )}
+
+      {canSeeSettingsTab && settingsData && session?.user && (
+        <TabsContent value="settings">
+          <AdminSettingsPanel
+            currentDefaultYear={settingsData.currentDefaultYear}
+            calculatedYear={settingsData.calculatedYear}
+            userId={(session.user as any).id}
+            onUpdateDefaultYear={settingsData.onUpdateDefaultYear}
           />
         </TabsContent>
       )}

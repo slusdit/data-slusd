@@ -21,6 +21,7 @@ model User {
   primarySchool Int?
   psl           Int?            @unique
   activeSchool  Int             @default(0)
+  activeDbYear  Int             @default(25) // Aeries DB year (e.g., 25 = DST25000SLUSD for 2024-25)
   manualSchool  Int?
   emulatingId   String?         // ID of user being emulated (null = not emulating)
   // Manual overrides for access control
@@ -401,4 +402,13 @@ model AeriesColumnMeta {
 
   @@unique([tableName, columnName])
   @@index([tableName])
+}
+
+// Application-wide settings (key-value store)
+model AppSetting {
+  key       String   @id // e.g., "defaultDbYear", "maintenanceMode"
+  value     String   // JSON-encoded value
+  label     String?  // Human-readable label for admin UI
+  updatedAt DateTime @updatedAt
+  updatedBy String?  // User ID who last updated
 }

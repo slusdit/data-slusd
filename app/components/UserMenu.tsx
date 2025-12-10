@@ -92,7 +92,7 @@ export default function UserMenu({ user }: UserMenuProps) {
           <span className="hidden sm:inline-block text-title-foreground text-sm font-medium max-w-[120px] truncate">
             {user.name?.split(" ")[0]}
           </span>
-          <ChevronDown className="h-4 w-4 text-title-foreground/70" />
+          <ChevronDown className="h-4 w-4 text-title-foreground" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-64" align="end" sideOffset={8}>

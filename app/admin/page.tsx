@@ -7,6 +7,8 @@ import FragmentAdminGrid from "../components/FragmentAdminGrid";
 import { auth } from "@/auth";
 import prisma from "@/lib/db";
 import AdminTabs from "../components/AdminTabs";
+import { getDefaultDbYear, updateDefaultDbYear } from "@/lib/appSettings";
+import { calculateCurrentSchoolYear } from "@/lib/schoolYear";
 
 type UserRole = {
   id: string;
@@ -53,7 +55,7 @@ export default async function AdminPage() {
   const { isSuperAdmin, isSiteAdmin, isQueryEditor, userSchools } = adminResult;
 
   // Fetch all data in parallel
-  const [queries, roles, allUsers, session, categories, fragments, fragmentCategories] =
+  const [queries, roles, allUsers, session, categories, fragments, fragmentCategories, currentDefaultYear] =
     await Promise.all([
       prisma.query.findMany({
         select: {
@@ -125,6 +127,7 @@ export default async function AdminPage() {
       prisma.aIFragmentCategory.findMany({
         orderBy: { sortOrder: "asc" },
       }),
+      getDefaultDbYear(),
     ]);
 
   // Filter users for Site Admins - they can only see users at their schools
@@ -165,6 +168,11 @@ export default async function AdminPage() {
           isSiteAdmin,
           isQueryEditor,
           userSchools,
+        }}
+        settingsData={{
+          currentDefaultYear,
+          calculatedYear: calculateCurrentSchoolYear(),
+          onUpdateDefaultYear: updateDefaultDbYear,
         }}
       />
     </div>
