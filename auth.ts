@@ -5,6 +5,7 @@ import prisma from "./lib/db";
 import { getAllSchools, getPrimarySchool, syncTeacherClasses } from "./lib/signinMiddleware";
 import { Class, Query, ROLE, SchoolInfo, User } from "@prisma/client";
 import { AeriesSimpleTeacher } from "./lib/aeries";
+import { calculateCurrentSchoolYear } from "./lib/schoolYear";
 
 
 export interface SessionUser extends User {
@@ -15,6 +16,7 @@ export interface SessionUser extends User {
   favorites: Query[];
   primarySchool: number | null;
   activeSchool: number;
+  activeDbYear: number;
   psl: number;
   UserSchool: Array<{
     school: {
@@ -281,6 +283,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         primaryRole: effectiveUser.primaryRole,
         primarySchool: effectiveUser.primarySchool,
         activeSchool: effectiveUser.activeSchool,
+        activeDbYear: (effectiveUser as any).activeDbYear ?? calculateCurrentSchoolYear(), // Default to calculated current school year
         psl: effectiveUser.psl,
         favorites: effectiveUser.favorites || [],
         roles,

@@ -222,9 +222,31 @@ function DataTable<T extends object>({
       flex: 1,
       minWidth: 100,
       enableValue: true,
+      enablePivot: true,
     }),
     []
   );
+
+  // Status bar configuration for showing aggregates
+  const statusBar = useMemo(() => ({
+    statusPanels: [
+      {
+        statusPanel: 'agTotalAndFilteredRowCountComponent',
+        align: 'left',
+      },
+      {
+        statusPanel: 'agSelectedRowCountComponent',
+        align: 'left',
+      },
+      {
+        statusPanel: 'agAggregationComponent',
+        align: 'right',
+        statusPanelParams: {
+          aggFuncs: ['count', 'sum', 'avg', 'min', 'max'],
+        },
+      },
+    ],
+  }), []);
 
   const columnDefs = useMemo(() => {
     if (!data || data.length === 0) return [];
@@ -299,7 +321,7 @@ function DataTable<T extends object>({
         };
       }
 
-      // Handle numeric columns
+      // Handle numeric columns - enable aggregation
       if (typeof data[0][key] === "number") {
         return {
           ...baseCol,
@@ -308,6 +330,9 @@ function DataTable<T extends object>({
             buttons: ["apply", "reset"],
             closeOnApply: true,
           },
+          enableValue: true,
+          aggFunc: aggFunction || null, // Allow user to set via UI
+          allowedAggFuncs: ['sum', 'avg', 'count', 'min', 'max', 'first', 'last'],
         };
       }
 
@@ -371,7 +396,7 @@ function DataTable<T extends object>({
     return <div className="text-center p-4">No data available</div>;
   }
 
-  const sideBar = {
+  const sideBar = useMemo(() => ({
     toolPanels: [
       {
         id: 'columns',
@@ -379,48 +404,24 @@ function DataTable<T extends object>({
         labelKey: 'columns',
         iconKey: 'columns',
         toolPanel: 'agColumnsToolPanel',
-        defaultVisible: false,
-      }
-    ]
-  }
-  // const sideBar={
-  //   toolPanels: [
-  //     {
-  //       id: 'columns',
-  //       labelDefault: 'Columns',
-  //       labelKey: 'columns',
-  //       iconKey: 'columns',
-  //       toolPanel: 'agColumnsToolPanel',
-  //       defaultVisible: false,
-  //     },
-  //     {
-  //       id: 'filters',
-  //       labelDefault: 'Filters',
-  //       labelKey: 'filters',
-  //       iconKey: 'filter',
-  //       toolPanel: 'agFiltersToolPanel',
-  //       defaultVisible: false,
-  //     },
-  //     {
-  //       id: 'pivot',
-  //       labelDefault: 'Pivot',
-  //       labelKey: 'pivot',
-  //       iconKey: 'pivot',
-  //       toolPanel: 'agPivotToolPanel',
-  //       defaultVisible: false,
-  //     },
-  //     {
-  //       id: 'rowGroups',
-  //       labelDefault: 'Row Groups',
-  //       labelKey: 'rowGroups',
-  //       iconKey: 'rowGroup',
-  //       toolPanel: 'agRowGroupToolPanel',
-  //       defaultVisible: false
-  //     }
-  //   ],
-  //   defaultToolPanel: '', // set to an ID to have it open by default
-  //   position: 'right', // 'left' or 'right'
-  // }
+        toolPanelParams: {
+          suppressRowGroups: false,
+          suppressValues: false,
+          suppressPivots: false,
+          suppressPivotMode: false,
+        },
+      },
+      {
+        id: 'filters',
+        labelDefault: 'Filters',
+        labelKey: 'filters',
+        iconKey: 'filter',
+        toolPanel: 'agFiltersToolPanel',
+      },
+    ],
+    defaultToolPanel: '',
+    position: 'right' as const,
+  }), []);
   return (
     <div className="w-full flex flex-col gap-4">
       {showChart && (
@@ -452,7 +453,6 @@ function DataTable<T extends object>({
 
       <div className="h-[600px] w-full">
         <AgGridReact
-          // containerStyle={containerStyle}
           theme={gridThemeClass}
           rowData={rowData}
           columnDefs={columnDefs}
@@ -475,6 +475,7 @@ function DataTable<T extends object>({
           pivotMode={false}
           pivotPanelShow="onlyWhenPivoting"
           sideBar={sideBar}
+          statusBar={statusBar}
         />
       </div>
     </div>

@@ -360,6 +360,8 @@ export default function QueryPageClient({
           ...baseCol,
           filter: "agNumberColumnFilter",
           filterParams: { buttons: ["apply", "reset"], closeOnApply: true },
+          enableValue: true,
+          allowedAggFuncs: ['sum', 'avg', 'count', 'min', 'max', 'first', 'last'],
         };
       }
 
@@ -378,9 +380,33 @@ export default function QueryPageClient({
       floatingFilter: true,
       flex: 1,
       minWidth: 100,
+      enableValue: true,
+      enableRowGroup: true,
+      enablePivot: true,
     }),
     []
   );
+
+  // Status bar configuration for showing aggregates
+  const statusBar = useMemo(() => ({
+    statusPanels: [
+      {
+        statusPanel: 'agTotalAndFilteredRowCountComponent',
+        align: 'left' as const,
+      },
+      {
+        statusPanel: 'agSelectedRowCountComponent',
+        align: 'left' as const,
+      },
+      {
+        statusPanel: 'agAggregationComponent',
+        align: 'right' as const,
+        statusPanelParams: {
+          aggFuncs: ['count', 'sum', 'avg', 'min', 'max'],
+        },
+      },
+    ],
+  }), []);
 
   // Chart options with dynamic chart type
   const chartOptions = useMemo(() => {
@@ -490,7 +516,7 @@ export default function QueryPageClient({
     params.api.sizeColumnsToFit();
   }, []);
 
-  // Sidebar config
+  // Sidebar config with aggregation support
   const sideBar = useMemo(
     () => ({
       toolPanels: [
@@ -500,8 +526,23 @@ export default function QueryPageClient({
           labelKey: "columns",
           iconKey: "columns",
           toolPanel: "agColumnsToolPanel",
+          toolPanelParams: {
+            suppressRowGroups: false,
+            suppressValues: false,
+            suppressPivots: false,
+            suppressPivotMode: false,
+          },
+        },
+        {
+          id: "filters",
+          labelDefault: "Filters",
+          labelKey: "filters",
+          iconKey: "filter",
+          toolPanel: "agFiltersToolPanel",
         },
       ],
+      defaultToolPanel: "",
+      position: "right" as const,
     }),
     []
   );
@@ -589,9 +630,9 @@ export default function QueryPageClient({
     );
   }
 
-  // Render grid
-  const renderGrid = (height: string = "600px") => (
-    <div style={{ height }} className="w-full">
+  // Render grid - uses calc to fill available viewport height
+  const renderGrid = (minHeight: string = "500px") => (
+    <div style={{ height: `calc(100vh - 280px)`, minHeight }} className="w-full">
       <AgGridReact
         theme={gridTheme}
         rowData={data}
@@ -609,6 +650,9 @@ export default function QueryPageClient({
         paginationPageSizeSelector={[25, 50, 100, 500]}
         animateRows
         sideBar={sideBar}
+        statusBar={statusBar}
+        enableCharts={true}
+        cellSelection={true}
       />
     </div>
   );
@@ -879,10 +923,10 @@ export default function QueryPageClient({
 
           <TabsContent value="both" className="mt-4 space-y-4">
             <Card>
-              <CardContent className="p-4">{renderChart(350)}</CardContent>
+              <CardContent className="p-4">{renderChart(300)}</CardContent>
             </Card>
             <Card className="print-break">
-              <CardContent className="p-4">{renderGrid("500px")}</CardContent>
+              <CardContent className="p-4">{renderGrid("400px")}</CardContent>
             </Card>
           </TabsContent>
 
@@ -894,13 +938,13 @@ export default function QueryPageClient({
 
           <TabsContent value="table" className="mt-4">
             <Card>
-              <CardContent className="p-4">{renderGrid("650px")}</CardContent>
+              <CardContent className="p-0">{renderGrid()}</CardContent>
             </Card>
           </TabsContent>
         </Tabs>
       ) : (
         <Card>
-          <CardContent className="p-4">{renderGrid("650px")}</CardContent>
+          <CardContent className="p-0">{renderGrid()}</CardContent>
         </Card>
       )}
     </div>

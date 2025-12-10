@@ -9,6 +9,7 @@ import { QueryWithCategory } from "./QueryBar";
 import prisma from "@/lib/db";
 import ActiveSchool from "./ActiveSchool";
 import ReportsDropdown from "./ReportsDropdown";
+import YearSelector from "./YearSelector";
 
 export default async function MainHeader({ session }: { session: Session | null }) {
   let schoolInfo;
@@ -116,8 +117,14 @@ export default async function MainHeader({ session }: { session: Session | null 
           />
         )}
 
-        {/* Right section: User menu */}
-        <div className="flex items-center pr-2">
+        {/* Right section: Year selector and User menu */}
+        <div className="flex items-center gap-2 pr-2">
+          {session?.user && (
+            <YearSelector
+              activeDbYear={(session.user as SessionUser).activeDbYear ?? 25}
+              userId={(session.user as SessionUser).id}
+            />
+          )}
           <UserMenu
             user={session?.user ? {
               id: (session.user as SessionUser).id,
