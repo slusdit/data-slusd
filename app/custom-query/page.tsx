@@ -3,6 +3,26 @@ import { auth, SessionUser } from '@/auth';
 import { redirect } from 'next/navigation';
 import prisma from '@/lib/db';
 
+// Define grade ranges for each school
+// TK = -1, K = 0, 1-12 = 1-12
+const SCHOOL_GRADE_RANGES: Record<string, { low: number; high: number }> = {
+  '2': { low: -1, high: 5 },   // Garfield Elementary
+  '3': { low: -1, high: 5 },   // Jefferson Elementary
+  '4': { low: -1, high: 5 },   // Madison Elementary
+  '5': { low: -1, high: 5 },   // McKinley Elementary
+  '6': { low: -1, high: 5 },   // Monroe Elementary
+  '7': { low: -1, high: 5 },   // Roosevelt Elementary
+  '8': { low: -1, high: 5 },   // Washington Elementary
+  '9': { low: -1, high: 5 },   // Halkin Elementary
+  '11': { low: 6, high: 8 },   // Bancroft Middle School
+  '12': { low: 6, high: 8 },   // Muir Middle School
+  '15': { low: 9, high: 12 },  // Lincoln High School
+  '16': { low: 9, high: 12 },  // San Leandro High School
+  '60': { low: -1, high: 5 },  // SLVA Elementary
+  '61': { low: 6, high: 8 },   // SLVA Middle
+  '62': { low: 9, high: 12 },  // SLVA High
+};
+
 export default async function CustomQueryPage() {
   const session = await auth();
 
@@ -34,6 +54,7 @@ export default async function CustomQueryPage() {
       code: s.sc,
       name: s.name,
       logo: s.logo || undefined,
+      gradeRange: SCHOOL_GRADE_RANGES[s.sc] || { low: -1, high: 12 },
     }));
 
   const isDistrictWide = activeSchool === 0;
