@@ -24,7 +24,8 @@ import {
   PlusCircle,
   MoreVertical,
   Download,
-  ExternalLink
+  ExternalLink,
+  Database,
 } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import { useTheme } from "next-themes";
@@ -185,6 +186,12 @@ export default function Dashboard({ user, activeSchool, quickStats }: DashboardP
           </p>
         </div>
         <div className="flex gap-2">
+          <Button asChild variant="outline">
+            <Link href="/custom-query">
+              <Database className="h-4 w-4 mr-2" />
+              Query Builder
+            </Link>
+          </Button>
           <Button asChild variant="outline">
             <Link href="/ai-query">
               <Sparkles className="h-4 w-4 mr-2" />
@@ -381,6 +388,16 @@ export default function Dashboard({ user, activeSchool, quickStats }: DashboardP
             bgColor: "bg-green-100 dark:bg-green-900",
             iconColor: "text-green-600 dark:text-green-400",
             hasAccess: isSuperAdmin || user?.roles?.includes("IEPUPLOAD"),
+          },
+          {
+            key: "custom-query",
+            href: "/custom-query",
+            title: "Custom Query Builder",
+            description: "Build queries with filters",
+            icon: Database,
+            bgColor: "bg-cyan-100 dark:bg-cyan-900",
+            iconColor: "text-cyan-600 dark:text-cyan-400",
+            hasAccess: isSuperAdmin || user?.roles?.includes("AIQUERY"),
           },
           {
             key: "ai-query",
