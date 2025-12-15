@@ -376,26 +376,7 @@ function DataTable<T extends object>({
     [data]
   );
 
-  useEffect(() => {
-    if (data?.length) {
-      setRowData(data);
-      setFilteredData(data);
-      setLoading(false);
-    }
-  }, [data]);
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-96">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  if (!data || !data.length) {
-    return <div className="text-center p-4">No data available</div>;
-  }
-
+  // Sidebar configuration - must be before early returns to maintain hook order
   const sideBar = useMemo(() => ({
     toolPanels: [
       {
@@ -422,6 +403,27 @@ function DataTable<T extends object>({
     defaultToolPanel: '',
     position: 'right' as const,
   }), []);
+
+  useEffect(() => {
+    if (data?.length) {
+      setRowData(data);
+      setFilteredData(data);
+      setLoading(false);
+    }
+  }, [data]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-96">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!data || !data.length) {
+    return <div className="text-center p-4">No data available</div>;
+  }
+
   return (
     <div className="w-full flex flex-col gap-4">
       {showChart && (

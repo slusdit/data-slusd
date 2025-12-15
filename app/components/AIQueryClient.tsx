@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Sparkles, Copy, Play, Check, AlertCircle, ChevronDown, ChevronUp, Settings2, Database, Layers, Lock, Unlock, Wand2 } from 'lucide-react';
+import { Loader2, Sparkles, Copy, Play, Check, AlertCircle, ChevronDown, ChevronUp, Settings2, Database, Layers, Lock, Unlock, Wand2, Bug, RefreshCw } from 'lucide-react';
 import { runQuery } from '@/lib/aeries';
 import DataTableAgGrid from './DataTableAgGrid';
 import { Separator } from '@/components/ui/separator';
@@ -31,6 +31,26 @@ interface AIQueryClientProps {
   programOptions: FilterOption[];
   activeSchool?: string;
   isDistrictWide?: boolean;
+  canEditQueries?: boolean;
+}
+
+// Debug info for query attempts
+interface QueryAttempt {
+  attemptNumber: number;
+  sql: string;
+  rawResponse: string;
+  validation: {
+    valid: boolean;
+    errors: string[];
+    warnings: string[];
+    referencedViews: string[];
+  };
+  correctionPrompt?: string;
+}
+
+interface DebugInfo {
+  attempts: QueryAttempt[];
+  totalAttempts: number;
 }
 
 // Query mode: 'fragment' uses existing system, 'view' uses new llm_* views
@@ -94,6 +114,9 @@ interface AIQueryState {
   queryMode: QueryMode;
   // AI-suggested enhancements (from query analysis)
   suggestedEnhancements: string[];
+  // Debug info for query attempts (only shown to editors)
+  debugInfo: DebugInfo | null;
+  attemptCount: number;
 }
 
 // Read-only filter display component
@@ -140,6 +163,7 @@ export function AIQueryClient({
   programOptions,
   activeSchool,
   isDistrictWide,
+  canEditQueries = false,
 }: AIQueryClientProps) {
   const [state, setState] = useState<AIQueryState>({
     prompt: '',
@@ -157,7 +181,11 @@ export function AIQueryClient({
     warnings: [],
     queryMode: 'view', // Default to view mode (simpler, more reliable)
     suggestedEnhancements: [],
+    debugInfo: null,
+    attemptCount: 0,
   });
+
+  const [showDebugInfo, setShowDebugInfo] = useState(false);
 
   const [filtersOpen, setFiltersOpen] = useState(true);
   const [enhancementsOpen, setEnhancementsOpen] = useState(false);
@@ -306,6 +334,8 @@ export function AIQueryClient({
       fragmentsUsed: [],
       referencedViews: [],
       warnings: [],
+      debugInfo: null,
+      attemptCount: 0,
     }));
 
     try {
@@ -347,6 +377,8 @@ export function AIQueryClient({
           referencedViews: data.metadata?.referencedViews || [],
           warnings: data.metadata?.warnings || [],
           results: data.data || null,
+          debugInfo: data.debugInfo || null,
+          attemptCount: data.metadata?.attemptCount || 1,
         }));
       } else {
         // Fragment mode response
@@ -479,25 +511,63 @@ export function AIQueryClient({
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* All/Filter toggle at top (View Mode Only) */}
+          {state.queryMode === 'view' && (
+            <div className="flex items-center justify-between p-2 rounded-lg border bg-muted/30">
+              <div className="flex items-center gap-2">
+                <Label className="text-sm font-medium">
+                  {filterByEnhancements ? 'Filter to matching students only' : 'Include all students'}
+                </Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`text-xs ${!filterByEnhancements ? 'font-medium' : 'text-muted-foreground'}`}>All</span>
+                <Checkbox
+                  checked={filterByEnhancements}
+                  onCheckedChange={(checked) => setFilterByEnhancements(checked === true)}
+                  className="data-[state=checked]:bg-primary"
+                />
+                <span className={`text-xs ${filterByEnhancements ? 'font-medium' : 'text-muted-foreground'}`}>Filter</span>
+              </div>
+            </div>
+          )}
+
           <div>
             <Textarea
               value={state.prompt}
               onChange={(e) => setState(s => ({ ...s, prompt: e.target.value }))}
               onKeyDown={handleKeyDown}
-              placeholder="Describe what data you need...
+              placeholder="Students with ...
 
 Examples:
-• Give me all students at Jefferson with an IEP
-• Count of ELL students by grade level at Bancroft
-• Show me 3rd graders at Madison who are foster youth
-• How many Hispanic students are homeless at each school?
-• List all female students in middle school grades"
+• Students with an IEP at Jefferson
+• Students who are English Learners by grade level
+• Students in 3rd grade at Madison who are foster youth
+• Students who are Hispanic and homeless at each school
+• Students who are female in middle school grades"
               className="min-h-[140px] font-mono text-sm"
             />
             <p className="text-xs text-muted-foreground mt-2">
               Press <kbd className="px-1 py-0.5 bg-muted rounded text-xs">Ctrl</kbd>+<kbd className="px-1 py-0.5 bg-muted rounded text-xs">Enter</kbd> to generate
             </p>
           </div>
+
+          <Button
+            onClick={generateQuery}
+            disabled={state.isGenerating || !state.prompt.trim()}
+            className="w-full sm:w-auto"
+          >
+            {state.isGenerating ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4 mr-2" />
+                Generate SQL
+              </>
+            )}
+          </Button>
 
           {/* Data Enhancement Options (View Mode Only) */}
           {state.queryMode === 'view' && (
@@ -523,7 +593,6 @@ Examples:
                     {enhancementsOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                   </Button>
                 </CollapsibleTrigger>
-                {/* Lock/Unlock button */}
                 <Button
                   variant={lockedEnhancements ? "default" : "outline"}
                   size="sm"
@@ -531,11 +600,7 @@ Examples:
                   className="shrink-0"
                   title={lockedEnhancements ? "Unlock to let AI update selections based on prompt" : "Lock to prevent AI from changing selections"}
                 >
-                  {lockedEnhancements ? (
-                    <Lock className="h-4 w-4" />
-                  ) : (
-                    <Unlock className="h-4 w-4" />
-                  )}
+                  {lockedEnhancements ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
                 </Button>
               </div>
               {lockedEnhancements && (
@@ -546,7 +611,6 @@ Examples:
               )}
               <CollapsibleContent className="pt-3">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 border rounded-lg bg-muted/30">
-                  {/* Group enhancements by category */}
                   {(['attendance', 'academics', 'programs', 'demographics', 'contacts'] as const).map(category => {
                     const categoryEnhancements = DATA_ENHANCEMENTS.filter(e => e.category === category);
                     if (categoryEnhancements.length === 0) return null;
@@ -566,18 +630,15 @@ Examples:
                                 onCheckedChange={() => toggleEnhancement(enhancement.id)}
                               />
                               <div className="grid gap-0.5 leading-none flex-1">
-                                <Label
-                                  htmlFor={enhancement.id}
-                                  className="text-sm font-medium cursor-pointer flex items-center gap-1.5"
-                                >
+                                <Label htmlFor={enhancement.id} className="text-sm font-medium cursor-pointer flex items-center gap-1.5">
                                   {enhancement.label}
                                   {isAiSuggested && isSelected && (
-                                    <Wand2 className="h-3 w-3 text-yellow-600" title="AI suggested based on your prompt" />
+                                    <span title="AI suggested based on your prompt">
+                                      <Wand2 className="h-3 w-3 text-yellow-600" />
+                                    </span>
                                   )}
                                 </Label>
-                                <p className="text-xs text-muted-foreground">
-                                  {enhancement.description}
-                                </p>
+                                <p className="text-xs text-muted-foreground">{enhancement.description}</p>
                               </div>
                             </div>
                           );
@@ -586,54 +647,9 @@ Examples:
                     );
                   })}
                 </div>
-
-                {/* Filter mode toggle - only show when enhancements are selected */}
-                {selectedEnhancements.length > 0 && (
-                  <div className="mt-3 pt-3 border-t">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label className="text-sm font-medium">
-                          {filterByEnhancements ? 'Filter to matching students' : 'Include all students'}
-                        </Label>
-                        <p className="text-xs text-muted-foreground">
-                          {filterByEnhancements
-                            ? 'Only show students who have the selected data (e.g., only students with IEPs)'
-                            : 'Show all students, with empty values for those without the selected data'}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-xs ${!filterByEnhancements ? 'font-medium' : 'text-muted-foreground'}`}>All</span>
-                        <Checkbox
-                          checked={filterByEnhancements}
-                          onCheckedChange={(checked) => setFilterByEnhancements(checked === true)}
-                          className="data-[state=checked]:bg-primary"
-                        />
-                        <span className={`text-xs ${filterByEnhancements ? 'font-medium' : 'text-muted-foreground'}`}>Filter</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
               </CollapsibleContent>
             </Collapsible>
           )}
-
-          <Button
-            onClick={generateQuery}
-            disabled={state.isGenerating || !state.prompt.trim()}
-            className="w-full sm:w-auto"
-          >
-            {state.isGenerating ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Generating...
-              </>
-            ) : (
-              <>
-                <Sparkles className="h-4 w-4 mr-2" />
-                Generate SQL
-              </>
-            )}
-          </Button>
 
           {/* Error Display */}
           {state.error && (
@@ -828,7 +844,128 @@ Examples:
                 </div>
               </div>
             )}
+
+            {/* Attempt count indicator (for editors) */}
+            {canEditQueries && state.attemptCount > 1 && (
+              <div className="border-t pt-4">
+                <div className="flex items-center gap-2 text-sm text-amber-600">
+                  <RefreshCw className="h-4 w-4" />
+                  <span>Query succeeded after {state.attemptCount} attempts (validation errors were auto-corrected)</span>
+                </div>
+              </div>
+            )}
           </CardContent>
+        </Card>
+      )}
+
+      {/* Debug Info Card (only visible to query editors) */}
+      {canEditQueries && state.debugInfo && state.debugInfo.attempts.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Bug className="h-5 w-5 text-amber-500" />
+                <span>Query Generation Debug Info</span>
+                <Badge variant="outline" className="text-xs font-normal">
+                  {state.debugInfo.totalAttempts} attempt{state.debugInfo.totalAttempts !== 1 ? 's' : ''}
+                </Badge>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowDebugInfo(!showDebugInfo)}
+              >
+                {showDebugInfo ? (
+                  <><ChevronUp className="h-4 w-4 mr-1" /> Hide</>
+                ) : (
+                  <><ChevronDown className="h-4 w-4 mr-1" /> Show</>
+                )}
+              </Button>
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Shows all query generation attempts with validation results (visible only to query editors)
+            </p>
+          </CardHeader>
+          {showDebugInfo && (
+            <CardContent className="space-y-6">
+              {state.debugInfo.attempts.map((attempt, index) => (
+                <div key={index} className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Badge variant={attempt.validation.valid ? "default" : "destructive"}>
+                      Attempt {attempt.attemptNumber}
+                    </Badge>
+                    {attempt.validation.valid ? (
+                      <Badge variant="outline" className="text-green-600 border-green-400 bg-green-50">
+                        <Check className="h-3 w-3 mr-1" /> Valid
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-red-600 border-red-400 bg-red-50">
+                        <AlertCircle className="h-3 w-3 mr-1" /> Invalid
+                      </Badge>
+                    )}
+                    {attempt.validation.referencedViews.length > 0 && (
+                      <span className="text-xs text-muted-foreground">
+                        Views: {attempt.validation.referencedViews.join(', ')}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Generated SQL for this attempt */}
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground uppercase">Generated SQL</label>
+                    <pre className="bg-muted p-3 rounded-md overflow-x-auto text-xs font-mono whitespace-pre-wrap max-h-48">
+                      {attempt.sql}
+                    </pre>
+                  </div>
+
+                  {/* Validation errors */}
+                  {attempt.validation.errors.length > 0 && (
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-red-600 uppercase">Validation Errors</label>
+                      <div className="bg-red-50 dark:bg-red-950/30 p-3 rounded-md space-y-1">
+                        {attempt.validation.errors.map((error, i) => (
+                          <div key={i} className="text-xs text-red-600 flex items-start gap-2">
+                            <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />
+                            <span>{error}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Validation warnings */}
+                  {attempt.validation.warnings.length > 0 && (
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-amber-600 uppercase">Warnings</label>
+                      <div className="bg-amber-50 dark:bg-amber-950/30 p-3 rounded-md space-y-1">
+                        {attempt.validation.warnings.map((warning, i) => (
+                          <div key={i} className="text-xs text-amber-600 flex items-start gap-2">
+                            <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />
+                            <span>{warning}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Correction prompt (for retry attempts) */}
+                  {attempt.correctionPrompt && (
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-blue-600 uppercase">Correction Prompt Sent</label>
+                      <pre className="bg-blue-50 dark:bg-blue-950/30 p-3 rounded-md overflow-x-auto text-xs font-mono whitespace-pre-wrap max-h-32 text-blue-800 dark:text-blue-200">
+                        {attempt.correctionPrompt}
+                      </pre>
+                    </div>
+                  )}
+
+                  {/* Separator between attempts */}
+                  {index < state.debugInfo!.attempts.length - 1 && (
+                    <Separator className="my-4" />
+                  )}
+                </div>
+              ))}
+            </CardContent>
+          )}
         </Card>
       )}
 

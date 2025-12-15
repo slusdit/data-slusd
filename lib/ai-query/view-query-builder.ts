@@ -129,15 +129,18 @@ export class ViewQueryBuilder {
   cleanLlmResponse(response: string): string {
     let sql = response.trim();
 
-    // Remove markdown code blocks
-    if (sql.startsWith('```sql')) {
-      sql = sql.slice(6);
-    } else if (sql.startsWith('```')) {
-      sql = sql.slice(3);
-    }
-
-    if (sql.endsWith('```')) {
-      sql = sql.slice(0, -3);
+    // First, try to extract SQL from markdown code blocks (anywhere in the response)
+    // This handles cases where LLM adds explanation before/after the code block
+    const codeBlockMatch = sql.match(/```(?:sql)?\s*([\s\S]*?)```/i);
+    if (codeBlockMatch && codeBlockMatch[1]) {
+      sql = codeBlockMatch[1].trim();
+    } else {
+      // No code block found - try to extract just the SELECT statement
+      // Handle case where LLM adds explanation text before/after raw SQL
+      const selectMatch = sql.match(/(SELECT[\s\S]*?)(?:;?\s*\n\s*(?:###|This |The |Note:|Explanation:|Here|Make sure|You can|I |---)|$)/i);
+      if (selectMatch && selectMatch[1]) {
+        sql = selectMatch[1].trim();
+      }
     }
 
     // Remove any leading/trailing whitespace
@@ -152,8 +155,8 @@ export class ViewQueryBuilder {
     // Extract only the SQL query - stop at semicolon or explanatory text
     // Look for patterns that indicate end of SQL and start of explanation
     const explanationPatterns = [
-      /;\s*\n\s*(?:This|The|Note|I |Here|You|It )/i,  // Semicolon followed by explanation
-      /\n\s*(?:This query|This will|This SQL|The query|The above|Note:|Explanation:)/i,
+      /;\s*\n\s*(?:This|The|Note|I |Here|You|It |###)/i,  // Semicolon followed by explanation
+      /\n\s*(?:This query|This will|This SQL|The query|The above|Note:|Explanation:|###)/i,
     ];
 
     for (const pattern of explanationPatterns) {

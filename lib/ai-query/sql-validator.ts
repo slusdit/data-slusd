@@ -114,6 +114,17 @@ const BLOCKED_TABLES = [
   'sse',
 ];
 
+// Boolean columns that should only use = 1 or = 0, never strings
+const BOOLEAN_COLUMNS = [
+  'is_english_learner', 'is_special_education', 'is_foster_youth', 'is_homeless', 'is_migrant',
+  'is_section_504', 'is_in_any_special_program', 'is_chronically_absent', 'is_active', 'is_active_sped',
+  'is_current_year', 'is_currently_enrolled', 'is_frpm_eligible', 'is_free', 'is_reduced', 'is_sed',
+  'has_low_parent_education', 'is_failing', 'is_honor_grade', 'is_at_risk', 'is_suspension',
+  'is_out_of_school_suspension', 'is_in_school_suspension', 'is_expulsion', 'is_primary_contact',
+  'lives_with_student', 'all_day_counts_as_present', 'all_day_suspension_related', 'was_absent_all_day',
+  'is_suspension_absence', 'is_newcomer_el', 'is_long_term_el'
+];
+
 // Valid columns for each view - used to catch hallucinated column names
 const VIEW_COLUMNS: Record<string, string[]> = {
   llm_student_demographics: [
@@ -293,6 +304,40 @@ function extractViewAliases(sql: string): Record<string, string> {
 }
 
 /**
+ * Validate that boolean columns are not used with string values
+ */
+function validateBooleanColumns(sql: string): { errors: string[], warnings: string[] } {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+
+  for (const boolCol of BOOLEAN_COLUMNS) {
+    // Check for string values like = 'Y', = 'N', = 'true', = 'false', = 'yes', = 'no'
+    const stringPattern = new RegExp(
+      `\\b${boolCol}\\s*=\\s*['"]\\w+['"]`,
+      'gi'
+    );
+    if (stringPattern.test(sql)) {
+      errors.push(
+        `Type mismatch: "${boolCol}" is a BIT/boolean column - use = 1 or = 0, not string values like 'Y' or 'true'`
+      );
+    }
+
+    // Check for unquoted true/false (JavaScript/Python style)
+    const unquotedBoolPattern = new RegExp(
+      `\\b${boolCol}\\s*=\\s*(true|false)\\b`,
+      'gi'
+    );
+    if (unquotedBoolPattern.test(sql)) {
+      errors.push(
+        `Type mismatch: "${boolCol}" is a BIT/boolean column - use = 1 or = 0, not unquoted true/false`
+      );
+    }
+  }
+
+  return { errors, warnings };
+}
+
+/**
  * Extract column references from SQL and validate them against view schemas
  */
 function validateColumns(sql: string, viewAliases: Record<string, string>): { errors: string[], warnings: string[] } {
@@ -436,6 +481,11 @@ export function validateSql(sql: string): ValidationResult {
   const columnValidation = validateColumns(sql, viewAliases);
   errors.push(...columnValidation.errors);
   warnings.push(...columnValidation.warnings);
+
+  // 8. Validate boolean column type usage
+  const boolValidation = validateBooleanColumns(sql);
+  errors.push(...boolValidation.errors);
+  warnings.push(...boolValidation.warnings);
 
   return {
     valid: errors.length === 0,

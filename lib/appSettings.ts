@@ -3,8 +3,8 @@
 import prisma from './db';
 import { calculateCurrentSchoolYear, AVAILABLE_DB_YEARS } from './schoolYear';
 
-// Setting keys
-export const SETTING_KEYS = {
+// Setting keys - defined inline since "use server" files can only export async functions
+const SETTING_KEYS = {
   DEFAULT_DB_YEAR: 'defaultDbYear',
 } as const;
 
