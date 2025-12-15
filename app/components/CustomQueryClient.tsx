@@ -1,22 +1,24 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Copy, Play, Check, AlertCircle, ChevronDown, ChevronUp, Database, X } from 'lucide-react';
+import { Loader2, Copy, Play, Check, AlertCircle, ChevronDown, ChevronUp, Database, X, Wand2 } from 'lucide-react';
 import { runQuery } from '@/lib/aeries';
 import DataTableAgGrid from './DataTableAgGrid';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
 
 interface SchoolOption {
   code: string;
   name: string;
   logo?: string;
+  gradeRange: { low: number; high: number };
 }
 
 interface CustomQueryClientProps {
@@ -197,6 +199,235 @@ export function CustomQueryClient({
   });
 
   const [showSql, setShowSql] = useState(false);
+  const [nlPrompt, setNlPrompt] = useState('');
+
+  // Parse natural language prompt and extract filters
+  const parseNaturalLanguage = useCallback((text: string) => {
+    const lower = text.toLowerCase();
+    const detected: FilterState = {
+      schools: [],
+      grades: [],
+      genders: [],
+      ethnicities: [],
+      programs: [],
+      frpm: [],
+      attendance: [],
+      academic: [],
+    };
+
+    // Detect schools by name
+    const schoolPatterns: Record<string, string[]> = {
+      '2': ['garfield'],
+      '3': ['jefferson'],
+      '4': ['madison'],
+      '5': ['mckinley'],
+      '6': ['monroe'],
+      '7': ['roosevelt'],
+      '8': ['washington'],
+      '9': ['halkin'],
+      '11': ['bancroft'],
+      '12': ['muir'],
+      '15': ['lincoln'],
+      '16': ['san leandro high', 'slhs'],
+      '60': ['slva elementary', 'slva elem'],
+      '61': ['slva middle', 'slva mid'],
+      '62': ['slva high'],
+    };
+
+    for (const [code, patterns] of Object.entries(schoolPatterns)) {
+      if (patterns.some(p => lower.includes(p))) {
+        const school = schoolOptions.find(s => s.code === code);
+        if (school) detected.schools.push(code);
+      }
+    }
+
+    // Detect grade levels
+    const gradePatterns: Array<{ pattern: RegExp; grades: number[] }> = [
+      { pattern: /\b(tk|transitional k|transitional kindergarten)\b/, grades: [-1] },
+      { pattern: /\b(kindergarten|kinder)\b(?!\s*-|\s*through)/, grades: [0] },
+      { pattern: /\b1st\s*grad|\bfirst\s*grad|\bgrade\s*1\b/, grades: [1] },
+      { pattern: /\b2nd\s*grad|\bsecond\s*grad|\bgrade\s*2\b/, grades: [2] },
+      { pattern: /\b3rd\s*grad|\bthird\s*grad|\bgrade\s*3\b/, grades: [3] },
+      { pattern: /\b4th\s*grad|\bfourth\s*grad|\bgrade\s*4\b/, grades: [4] },
+      { pattern: /\b5th\s*grad|\bfifth\s*grad|\bgrade\s*5\b/, grades: [5] },
+      { pattern: /\b6th\s*grad|\bsixth\s*grad|\bgrade\s*6\b/, grades: [6] },
+      { pattern: /\b7th\s*grad|\bseventh\s*grad|\bgrade\s*7\b/, grades: [7] },
+      { pattern: /\b8th\s*grad|\beighth\s*grad|\bgrade\s*8\b/, grades: [8] },
+      { pattern: /\b9th\s*grad|\bninth\s*grad|\bgrade\s*9\b/, grades: [9] },
+      { pattern: /\b10th\s*grad|\btenth\s*grad|\bgrade\s*10\b/, grades: [10] },
+      { pattern: /\b11th\s*grad|\beleventh\s*grad|\bgrade\s*11\b/, grades: [11] },
+      { pattern: /\b12th\s*grad|\btwelfth\s*grad|\bgrade\s*12\b/, grades: [12] },
+      // Grade ranges
+      { pattern: /\belementary\b/, grades: [-1, 0, 1, 2, 3, 4, 5] },
+      { pattern: /\bmiddle\s*school\b/, grades: [6, 7, 8] },
+      { pattern: /\bhigh\s*school\b/, grades: [9, 10, 11, 12] },
+    ];
+
+    for (const { pattern, grades } of gradePatterns) {
+      if (pattern.test(lower)) {
+        detected.grades.push(...grades);
+      }
+    }
+    detected.grades = [...new Set(detected.grades)]; // Remove duplicates
+
+    // Detect gender
+    if (/\b(male|boy|boys|men)\b/.test(lower) && !/\bfemale\b/.test(lower)) {
+      detected.genders.push('M');
+    }
+    if (/\b(female|girl|girls|women)\b/.test(lower)) {
+      detected.genders.push('F');
+    }
+
+    // Detect ethnicity
+    const ethnicityPatterns: Array<{ pattern: RegExp; id: string }> = [
+      { pattern: /\b(hispanic|latino|latina|latinx)\b/, id: 'H' },
+      { pattern: /\basian\b/, id: 'A' },
+      { pattern: /\b(african\s*american|black)\b/, id: 'B' },
+      { pattern: /\bwhite\b/, id: 'W' },
+      { pattern: /\bfilipino\b/, id: 'F' },
+      { pattern: /\b(pacific\s*islander|polynesian)\b/, id: 'P' },
+      { pattern: /\b(native\s*american|american\s*indian)\b/, id: 'I' },
+      { pattern: /\b(two\s*or\s*more|multi\s*racial|mixed\s*race)\b/, id: 'T' },
+    ];
+
+    for (const { pattern, id } of ethnicityPatterns) {
+      if (pattern.test(lower)) {
+        detected.ethnicities.push(id);
+      }
+    }
+
+    // Detect programs
+    const programPatterns: Array<{ pattern: RegExp; id: string }> = [
+      { pattern: /\b(iep|special\s*ed|sped|special\s*education)\b/, id: 'sped' },
+      { pattern: /\b504\b/, id: '504' },
+      { pattern: /\b(english\s*learner|ell?\b|el\s+student|limited\s*english)\b/, id: 'el' },
+      { pattern: /\bfoster\b/, id: 'foster' },
+      { pattern: /\b(homeless|unhoused|mckinney[\s-]?vento)\b/, id: 'homeless' },
+      { pattern: /\bmigrant\b/, id: 'migrant' },
+    ];
+
+    for (const { pattern, id } of programPatterns) {
+      if (pattern.test(lower)) {
+        detected.programs.push(id);
+      }
+    }
+
+    // Detect FRPM
+    if (/\b(free\s*lunch|free\s*meal)\b/.test(lower) && !/reduced/.test(lower)) {
+      detected.frpm.push('free');
+    }
+    if (/\b(reduced\s*lunch|reduced\s*meal)\b/.test(lower)) {
+      detected.frpm.push('reduced');
+    }
+    if (/\b(frpm|free\s*(or|\/)\s*reduced|low[\s-]?income|socioeconomic)\b/.test(lower)) {
+      detected.frpm.push('frpm');
+    }
+
+    // Detect attendance
+    if (/\b(chronic|chronically\s*absent|chronic\s*absen)\b/.test(lower)) {
+      detected.attendance.push('chronic');
+    }
+
+    // Detect academic
+    if (/\b(failing|fail)\b/.test(lower)) {
+      detected.academic.push('failing');
+    }
+    if (/\b(at[\s-]?risk|academic[\s-]?risk)\b/.test(lower)) {
+      detected.academic.push('at_risk');
+    }
+
+    return detected;
+  }, [schoolOptions]);
+
+  // Apply parsed filters
+  const applyParsedFilters = useCallback(() => {
+    if (!nlPrompt.trim()) return;
+
+    const detected = parseNaturalLanguage(nlPrompt);
+
+    // Filter grades to only include those available for selected/all schools
+    const relevantSchools = detected.schools.length > 0
+      ? schoolOptions.filter(s => detected.schools.includes(s.code))
+      : schoolOptions;
+
+    let gradeRange = { low: -1, high: 12 };
+    if (relevantSchools.length > 0) {
+      gradeRange = {
+        low: Math.min(...relevantSchools.map(s => s.gradeRange.low)),
+        high: Math.max(...relevantSchools.map(s => s.gradeRange.high)),
+      };
+    }
+
+    detected.grades = detected.grades.filter(
+      g => g >= gradeRange.low && g <= gradeRange.high
+    );
+
+    setFilters(detected);
+  }, [nlPrompt, parseNaturalLanguage, schoolOptions]);
+
+  // Count detected filters for preview
+  const detectedFilters = useMemo(() => {
+    if (!nlPrompt.trim()) return null;
+    return parseNaturalLanguage(nlPrompt);
+  }, [nlPrompt, parseNaturalLanguage]);
+
+  const detectedCount = useMemo(() => {
+    if (!detectedFilters) return 0;
+    return (
+      detectedFilters.schools.length +
+      detectedFilters.grades.length +
+      detectedFilters.genders.length +
+      detectedFilters.ethnicities.length +
+      detectedFilters.programs.length +
+      detectedFilters.frpm.length +
+      detectedFilters.attendance.length +
+      detectedFilters.academic.length
+    );
+  }, [detectedFilters]);
+
+  // Compute available grades based on selected schools (or all if none selected)
+  const availableGradeRange = useMemo(() => {
+    const relevantSchools = filters.schools.length > 0
+      ? schoolOptions.filter(s => filters.schools.includes(s.code))
+      : schoolOptions;
+
+    if (relevantSchools.length === 0) {
+      return { low: -1, high: 12 }; // Default to all grades
+    }
+
+    // Get the union of all grade ranges
+    const low = Math.min(...relevantSchools.map(s => s.gradeRange.low));
+    const high = Math.max(...relevantSchools.map(s => s.gradeRange.high));
+
+    return { low, high };
+  }, [filters.schools, schoolOptions]);
+
+  // Filter grade options based on available range
+  const filteredGradeOptions = useMemo(() => {
+    return GRADE_OPTIONS.filter(
+      g => g.value >= availableGradeRange.low && g.value <= availableGradeRange.high
+    );
+  }, [availableGradeRange]);
+
+  // Filter grade groups based on available range
+  const filteredGradeGroups = useMemo(() => {
+    return GRADE_GROUPS.map(group => ({
+      ...group,
+      grades: group.grades.filter(
+        g => g >= availableGradeRange.low && g <= availableGradeRange.high
+      ),
+    })).filter(group => group.grades.length > 0);
+  }, [availableGradeRange]);
+
+  // Clear invalid grades when school selection changes
+  useEffect(() => {
+    setFilters(f => ({
+      ...f,
+      grades: f.grades.filter(
+        g => g >= availableGradeRange.low && g <= availableGradeRange.high
+      ),
+    }));
+  }, [availableGradeRange]);
 
   // Toggle filter helpers
   const toggleSchool = useCallback((code: string) => {
@@ -548,24 +779,26 @@ export function CustomQueryClient({
             {/* Grade Level */}
             <FilterSection title="Grade Level">
               <div className="space-y-3">
-                {/* Grade groups */}
-                <div className="space-y-2">
-                  {GRADE_GROUPS.map(group => (
-                    <div key={group.id} className="flex items-center gap-2">
-                      <Checkbox
-                        id={`grade-group-${group.id}`}
-                        checked={group.grades.every(g => filters.grades.includes(g))}
-                        onCheckedChange={() => toggleGradeGroup(group.grades)}
-                      />
-                      <Label htmlFor={`grade-group-${group.id}`} className="text-sm cursor-pointer">
-                        {group.label}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-                {/* Individual grades */}
+                {/* Grade groups - only show if they have grades in range */}
+                {filteredGradeGroups.length > 0 && (
+                  <div className="space-y-2">
+                    {filteredGradeGroups.map(group => (
+                      <div key={group.id} className="flex items-center gap-2">
+                        <Checkbox
+                          id={`grade-group-${group.id}`}
+                          checked={group.grades.length > 0 && group.grades.every(g => filters.grades.includes(g))}
+                          onCheckedChange={() => toggleGradeGroup(group.grades)}
+                        />
+                        <Label htmlFor={`grade-group-${group.id}`} className="text-sm cursor-pointer">
+                          {group.label}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {/* Individual grades - filtered by school range */}
                 <div className="grid grid-cols-4 gap-1">
-                  {GRADE_OPTIONS.map(grade => (
+                  {filteredGradeOptions.map(grade => (
                     <div key={grade.id} className="flex items-center gap-1">
                       <Checkbox
                         id={`grade-${grade.id}`}
@@ -579,6 +812,12 @@ export function CustomQueryClient({
                     </div>
                   ))}
                 </div>
+                {/* Show hint if grades are limited */}
+                {filteredGradeOptions.length < GRADE_OPTIONS.length && (
+                  <p className="text-xs text-muted-foreground">
+                    Grades filtered to match selected school(s)
+                  </p>
+                )}
               </div>
             </FilterSection>
 
@@ -698,6 +937,103 @@ export function CustomQueryClient({
 
         {/* Main Content */}
         <div className="lg:col-span-3 space-y-6">
+          {/* Natural Language Input */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Wand2 className="h-4 w-4" />
+                Describe Your Query
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Type what you&apos;re looking for and we&apos;ll select the right filters
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex gap-2">
+                <Input
+                  value={nlPrompt}
+                  onChange={(e) => setNlPrompt(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      applyParsedFilters();
+                    }
+                  }}
+                  placeholder="e.g., 3rd grade EL students at Jefferson who are chronically absent"
+                  className="flex-1"
+                />
+                <Button
+                  onClick={applyParsedFilters}
+                  disabled={!nlPrompt.trim() || detectedCount === 0}
+                  variant="secondary"
+                >
+                  <Wand2 className="h-4 w-4 mr-2" />
+                  Apply
+                </Button>
+              </div>
+
+              {/* Preview of detected filters */}
+              {nlPrompt.trim() && detectedFilters && (
+                <div className="text-sm space-y-2 p-3 rounded-lg bg-muted/50 border">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <span className="font-medium">Detected filters:</span>
+                    {detectedCount === 0 && (
+                      <span className="text-amber-600">No filters detected. Try being more specific.</span>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {detectedFilters.schools.map(code => {
+                      const school = schoolOptions.find(s => s.code === code);
+                      return (
+                        <Badge key={`school-${code}`} variant="outline" className="text-xs">
+                          {school?.name || `School ${code}`}
+                        </Badge>
+                      );
+                    })}
+                    {detectedFilters.grades.map(g => {
+                      const grade = GRADE_OPTIONS.find(opt => opt.value === g);
+                      return (
+                        <Badge key={`grade-${g}`} variant="outline" className="text-xs">
+                          Grade {grade?.label || g}
+                        </Badge>
+                      );
+                    })}
+                    {detectedFilters.genders.map(g => (
+                      <Badge key={`gender-${g}`} variant="outline" className="text-xs">
+                        {GENDER_OPTIONS.find(opt => opt.id === g)?.label || g}
+                      </Badge>
+                    ))}
+                    {detectedFilters.ethnicities.map(e => (
+                      <Badge key={`eth-${e}`} variant="outline" className="text-xs">
+                        {ETHNICITY_OPTIONS.find(opt => opt.id === e)?.label || e}
+                      </Badge>
+                    ))}
+                    {detectedFilters.programs.map(p => (
+                      <Badge key={`prog-${p}`} variant="outline" className="text-xs">
+                        {PROGRAM_OPTIONS.find(opt => opt.id === p)?.label || p}
+                      </Badge>
+                    ))}
+                    {detectedFilters.frpm.map(f => (
+                      <Badge key={`frpm-${f}`} variant="outline" className="text-xs">
+                        {FRPM_OPTIONS.find(opt => opt.id === f)?.label || f}
+                      </Badge>
+                    ))}
+                    {detectedFilters.attendance.map(a => (
+                      <Badge key={`att-${a}`} variant="outline" className="text-xs">
+                        {ATTENDANCE_OPTIONS.find(opt => opt.id === a)?.label || a}
+                      </Badge>
+                    ))}
+                    {detectedFilters.academic.map(a => (
+                      <Badge key={`acad-${a}`} variant="outline" className="text-xs">
+                        {ACADEMIC_OPTIONS.find(opt => opt.id === a)?.label || a}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Data Columns Selection */}
           <Card>
             <CardHeader className="pb-3">
