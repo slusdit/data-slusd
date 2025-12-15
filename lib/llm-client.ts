@@ -111,7 +111,7 @@ export function createLLMClient(): LLMClient {
 function getDefaultModel(provider: string): string {
   switch (provider) {
     case 'gemini':
-      return 'gemini-1.5-flash';
+      return 'gemini-2.0-flash'; // Updated from gemini-1.5-flash
     case 'openai':
       return 'gpt-4o-mini';
     case 'anthropic':

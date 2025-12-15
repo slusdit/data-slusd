@@ -13,11 +13,24 @@
  */
 
 import { NextResponse } from 'next/server';
-import { createLLMClient } from '@/lib/llm-client';
+import { createLLMClient, LLMClient } from '@/lib/llm-client';
 import { auth, SessionUser } from '@/auth';
 import { runQuery } from '@/lib/aeries';
 import { buildViewSystemPrompt, buildCompactViewPrompt } from '@/lib/ai-query/view-prompt-builder';
 import { ViewQueryBuilder } from '@/lib/ai-query/view-query-builder';
+import { ValidationResult } from '@/lib/ai-query/sql-validator';
+
+// Maximum number of regeneration attempts when validation fails
+const MAX_REGENERATION_ATTEMPTS = 2;
+
+// Tracks each query generation attempt for debugging
+interface QueryAttempt {
+  attemptNumber: number;
+  sql: string;
+  rawResponse: string;
+  validation: ValidationResult;
+  correctionPrompt?: string;
+}
 
 // School code mapping for context
 const SCHOOL_NAMES: Record<string, string> = {
@@ -38,8 +51,32 @@ const SCHOOL_NAMES: Record<string, string> = {
   '62': 'SLVA High',
 };
 
+/**
+ * Build a correction prompt to help the LLM fix validation errors
+ */
+function buildCorrectionPrompt(originalPrompt: string, failedSql: string, errors: string[]): string {
+  return `Your previous SQL query had validation errors. Please fix them and try again.
+
+ORIGINAL REQUEST: ${originalPrompt}
+
+YOUR PREVIOUS SQL (with errors):
+${failedSql}
+
+VALIDATION ERRORS:
+${errors.map((e, i) => `${i + 1}. ${e}`).join('\n')}
+
+IMPORTANT REMINDERS:
+- Only use the EXACT view names listed in the schema (llm_student_demographics, llm_attendance_summary, etc.)
+- Do NOT invent view names - if unsure, use llm_student_demographics as the base
+- Use EXACT column names from the schema - do not abbreviate or modify them
+- Return ONLY the corrected SQL query, no explanations
+
+Please provide the corrected SQL query:`;
+}
+
 export async function POST(request: Request) {
   const startTime = Date.now();
+  const queryAttempts: QueryAttempt[] = [];
 
   try {
     // Check authentication
@@ -51,6 +88,7 @@ export async function POST(request: Request) {
     const user = session.user as SessionUser;
     const activeSchool = user.activeSchool ?? -1;
     const allowedSchools = user.schools || [];
+    const canSeeDebugInfo = user.queryEdit === true;
 
     // Deny access if no active school set
     if (activeSchool === -1 || (activeSchool === undefined && activeSchool !== 0)) {
@@ -94,32 +132,90 @@ export async function POST(request: Request) {
     const useCompactPrompt = process.env.LLM_COMPACT_PROMPT === 'true';
     const systemPrompt = useCompactPrompt ? buildCompactViewPrompt() : buildViewSystemPrompt();
 
-    // Call LLM to generate SQL
-    console.log('[View AI Query] Calling LLM...');
-    const llmResponse = await llm.chat([
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: contextPrompt }
-    ]);
-
-    console.log('[View AI Query] LLM response received');
-
-    // Clean up the response (remove markdown code blocks, etc.)
     const builder = new ViewQueryBuilder();
-    let sql = builder.cleanLlmResponse(llmResponse.content);
+    let sql = '';
+    let validation: ValidationResult = { valid: false, errors: [], warnings: [], referencedViews: [] };
+    let llmResponse: { content: string; usage?: any } = { content: '' };
+    let attemptNumber = 0;
+    let lastCorrectionPrompt: string | undefined;
 
-    console.log('[View AI Query] Cleaned SQL:', sql);
+    // Try to generate a valid query, with retries if validation fails
+    while (attemptNumber <= MAX_REGENERATION_ATTEMPTS) {
+      attemptNumber++;
+      console.log(`[View AI Query] Attempt ${attemptNumber}/${MAX_REGENERATION_ATTEMPTS + 1}...`);
 
-    // Validate the SQL
-    const validation = builder.validate(sql);
+      // Build the message for this attempt
+      const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
+        { role: 'system', content: systemPrompt }
+      ];
 
+      if (attemptNumber === 1) {
+        // First attempt: use the original prompt
+        messages.push({ role: 'user', content: contextPrompt });
+      } else {
+        // Retry attempt: include the previous failed SQL and errors
+        const previousAttempt = queryAttempts[queryAttempts.length - 1];
+        lastCorrectionPrompt = buildCorrectionPrompt(
+          prompt,
+          previousAttempt.sql,
+          previousAttempt.validation.errors
+        );
+        messages.push({ role: 'user', content: contextPrompt });
+        messages.push({ role: 'assistant', content: previousAttempt.sql });
+        messages.push({ role: 'user', content: lastCorrectionPrompt });
+      }
+
+      // Call LLM
+      llmResponse = await llm.chat(messages);
+      console.log(`[View AI Query] Attempt ${attemptNumber} - LLM response received`);
+
+      // Clean up the response
+      sql = builder.cleanLlmResponse(llmResponse.content);
+      console.log(`[View AI Query] Attempt ${attemptNumber} - Cleaned SQL:`, sql);
+
+      // Validate the SQL
+      validation = builder.validate(sql);
+
+      // Record this attempt
+      queryAttempts.push({
+        attemptNumber,
+        sql,
+        rawResponse: llmResponse.content,
+        validation,
+        correctionPrompt: attemptNumber > 1 ? lastCorrectionPrompt : undefined
+      });
+
+      // If valid, break out of the loop
+      if (validation.valid) {
+        console.log(`[View AI Query] Attempt ${attemptNumber} - Validation passed!`);
+        break;
+      }
+
+      console.warn(`[View AI Query] Attempt ${attemptNumber} - Validation failed:`, validation.errors);
+    }
+
+    // If still invalid after all attempts, return error with all attempts for debugging
     if (!validation.valid) {
-      console.error('[View AI Query] Validation failed:', validation.errors);
+      console.error('[View AI Query] All attempts failed validation');
+      const duration = Date.now() - startTime;
+
       return NextResponse.json({
         success: false,
-        error: 'Invalid SQL generated',
+        error: 'Invalid SQL generated after multiple attempts',
         details: validation.errors,
         sql: sql,
-        raw: llmResponse.content
+        raw: llmResponse.content,
+        // Only include debug info for users with queryEdit permission
+        ...(canSeeDebugInfo && {
+          debugInfo: {
+            attempts: queryAttempts,
+            totalAttempts: attemptNumber
+          }
+        }),
+        metadata: {
+          durationMs: duration,
+          attemptCount: attemptNumber
+        }
       }, { status: 400 });
     }
 
@@ -137,14 +233,15 @@ export async function POST(request: Request) {
     console.log('[View AI Query] Secured SQL:', sql);
 
     // Optionally execute the query
-    let data = null;
+    let data: any[] | null = null;
     let rowCount = 0;
-    let executeError = null;
+    let executeError: string | null = null;
 
     if (body.execute !== false) {
       try {
         console.log('[View AI Query] Executing query...');
-        data = await runQuery(sql);
+        const queryResult = await runQuery(sql);
+        data = queryResult as any[] | null;
         rowCount = data?.length || 0;
         console.log(`[View AI Query] Query returned ${rowCount} rows`);
       } catch (execError: any) {
@@ -164,6 +261,13 @@ export async function POST(request: Request) {
       data: data,
       rowCount: rowCount,
       executeError: executeError,
+      // Only include debug info for users with queryEdit permission
+      ...(canSeeDebugInfo && {
+        debugInfo: {
+          attempts: queryAttempts,
+          totalAttempts: attemptNumber
+        }
+      }),
       metadata: {
         mode: 'view',
         referencedViews: validation.referencedViews,
@@ -172,7 +276,8 @@ export async function POST(request: Request) {
           ? (allowedSchools.length > 0 ? `District (${allowedSchools.length} schools)` : 'District (all schools)')
           : SCHOOL_NAMES[activeSchool.toString()] || `School ${activeSchool}`,
         durationMs: duration,
-        llmUsage: llmResponse.usage
+        llmUsage: llmResponse.usage,
+        attemptCount: attemptNumber
       }
     });
 

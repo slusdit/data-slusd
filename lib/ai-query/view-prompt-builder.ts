@@ -90,12 +90,17 @@ JOINS TO llm_student_demographics (d) using: student_id = d.student_id AND schoo
 - llm_elpac_scores (elpac) - for ELPAC specifically
 
 COMMON ABBREVIATIONS & SYNONYMS (treat these as equivalent):
+- student, students, pupil, pupils, kid, kids → use llm_student_demographics as base view
 - EL, el, ELL, English Learner, English Language Learner → is_english_learner = 1
 - SPED, SpEd, special ed, special education, IEP → is_special_education = 1
 - FRL, free lunch, reduced lunch, low income, FRPM → is_frpm_eligible = 1
 - SED, socioeconomically disadvantaged → is_sed = 1
 - 504, Section 504 → is_section_504 = 1
 - chronically absent, chronic absenteeism → is_chronically_absent = 1
+- GPA, grades, academic standing, academics → use llm_student_gpa view (columns: current_gpa, academic_standing, academic_risk_level)
+- attendance, absent, absences, truancy → use llm_attendance_summary view
+- discipline, suspension, suspensions, behavior → use llm_suspension_summary view
+- program flags, programs → use llm_student_program_summary view
 
 COMMON QUERY PATTERNS:
 - "EL students" / "ELs" / "English learners" → use p.is_english_learner = 1 (PREFERRED)
@@ -106,7 +111,39 @@ COMMON QUERY PATTERNS:
 - "homeless students" → use p.is_homeless = 1
 - "FRL students" / "low income" → JOIN llm_frpm_status, filter is_frpm_eligible = 1
 
-IMPORTANT - CODE COLUMNS vs DESCRIPTION COLUMNS:
+IMPORTANT - COLUMN DATA TYPES:
+
+BOOLEAN/BIT columns (use = 1 or = 0, NEVER strings):
+- is_english_learner, is_special_education, is_foster_youth, is_homeless, is_migrant, is_section_504, is_in_any_special_program
+- is_chronically_absent, is_active, is_active_sped, is_current_year, is_currently_enrolled
+- is_frpm_eligible, is_free, is_reduced, is_sed, has_low_parent_education
+- is_failing, is_honor_grade, is_at_risk
+- is_suspension, is_out_of_school_suspension, is_in_school_suspension, is_expulsion
+- is_primary_contact, lives_with_student
+- all_day_counts_as_present, all_day_suspension_related, was_absent_all_day, is_suspension_absence
+- CORRECT: is_english_learner = 1  |  WRONG: is_english_learner = 'Y' or is_english_learner = 'true' or is_english_learner = true
+
+INTEGER columns (numeric values):
+- student_id, school_id, student_number, teacher_number, staff_id, section_number
+- grade_level, age, days_absent, days_present, days_enrolled
+- scale_score, raw_score, performance_level
+- failing_grade_count, at_risk_grade_count, honor_grade_count
+- total_suspensions, out_of_school_suspensions, in_school_suspensions
+- All columns ending in _code (language_fluency_code, ethnicity_code, etc.)
+
+DECIMAL/FLOAT columns:
+- current_gpa, cumulative_gpa, attendance_rate_percent, absence_rate_percent, attendance_rate_ytd
+
+VARCHAR/STRING columns (use quotes):
+- last_name, first_name, school_name, course_name, etc.
+- gender (use 'M' or 'F')
+- english_learner_status (use 'Y' or 'N')
+- All columns ending in _description or without _code suffix
+
+DATE columns:
+- birth_date, entry_date, leave_date, test_date, incident_date, etc.
+
+CODE COLUMNS vs DESCRIPTION COLUMNS:
 - Columns ending in _code contain NUMERIC codes (e.g., language_fluency_code = 3, NOT 'EL')
 - Columns without _code suffix contain text descriptions (e.g., language_fluency = 'English Learner')
 - NEVER guess code values! Use boolean flags (is_english_learner, is_special_education) or description columns instead
@@ -239,17 +276,19 @@ RULES:
 5. Use LEFT JOIN for optional data, INNER JOIN to filter
 6. CRITICAL: Use ONLY EXACT column names listed above - never invent or abbreviate!
 7. Return ONLY the SQL query - NO explanations or descriptions
-8. _code columns are NUMERIC - never guess code values! Use boolean flags instead:
-   - English Learners: is_english_learner = 1 (NOT language_fluency_code)
-   - Special Ed: is_special_education = 1 (NOT sped_disability_code)
-   - Foster Youth: is_foster_youth = 1
+8. _code columns are NUMERIC - never guess code values! Use boolean flags instead
+9. DATA TYPES - Use correct value format:
+   - BOOLEAN/BIT (is_* columns): use = 1 or = 0, NEVER strings like 'Y', 'true', or unquoted true
+   - VARCHAR/STRING: use single quotes like 'F' or 'McKinley Elementary'
+   - INTEGER: use numbers without quotes like 5 or 10
 
 ABBREVIATIONS (treat as equivalent):
 - EL/ELL/English Learner → is_english_learner = 1
 - SPED/IEP/special ed → is_special_education = 1
 - FRE/FRM/free lunch/low income/reduced lunch → is_frpm_eligible = 1
 
-Column examples:
-- WRONG: language_fluency_code = 'EL' → RIGHT: is_english_learner = 1
-- WRONG: sped_primary_disability_code → RIGHT: sped_disability_code`;
+CORRECT vs WRONG examples:
+- CORRECT: is_english_learner = 1  |  WRONG: is_english_learner = 'Y' or is_english_learner = true
+- CORRECT: gender = 'F'  |  WRONG: gender = F
+- CORRECT: grade_level = 5  |  WRONG: grade_level = '5'`;
 }

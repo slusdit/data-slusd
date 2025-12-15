@@ -140,6 +140,7 @@ export default async function AIQueryPage() {
         programOptions={programOptions}
         activeSchool={activeSchool?.toString()}
         isDistrictWide={isDistrictWide}
+        canEditQueries={user.queryEdit === true}
       />
     </div>
   );
