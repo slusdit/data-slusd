@@ -1,4 +1,4 @@
-import * as XLSX from 'xlsx';
+import xlsx from 'json-as-xlsx';
 import { Table } from '@tanstack/react-table'
 
 export const exportToCSV = (reactTable: Table<any>) => {
@@ -40,39 +40,32 @@ export const exportToCSV = (reactTable: Table<any>) => {
   }
 }
 
-export const exportToExcel = (reactTable:any) => {
+export const exportToExcel = (reactTable: any) => {
   let rowsToExport = reactTable.getSelectedRowModel().rows
-  
 
   // If no rows are selected, export all rows
   if (rowsToExport.length === 0) {
     rowsToExport = reactTable.getRowModel().rows
   }
-  // console.log(reactTable.getRowModel())
-  // console.log('Made it here')
-  // if (columnsToExport.length === 0) {
-  //   columnsToExport = reactTable.getColumns().columns
-  // }
 
-  const worksheet = XLSX.utils.json_to_sheet(
-    rowsToExport.map((row: { original: Record<string, unknown> }) => row.original)
-  );
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
-  
-  // Generate buffer
-  const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+  const rows = rowsToExport.map((row: { original: Record<string, unknown> }) => row.original)
 
-  // Save to file
-  const data = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-  const link = document.createElement('a');
-  if (link.download !== undefined) {
-    const url = URL.createObjectURL(data);
-    link.setAttribute('href', url);
-    link.setAttribute('download', 'exported_data.xlsx');
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  // Get column headers from the first row
+  const columns = rows.length > 0
+    ? Object.keys(rows[0]).map((key) => ({ label: key, value: key }))
+    : []
+
+  const data = [
+    {
+      sheet: "Sheet1",
+      columns,
+      content: rows,
+    },
+  ]
+
+  const settings = {
+    fileName: "exported_data",
   }
+
+  xlsx(data, settings)
 }

@@ -11,7 +11,11 @@ import ActiveSchool from "./ActiveSchool";
 import ReportsDropdown from "./ReportsDropdown";
 import YearSelector from "./YearSelector";
 
-export default async function MainHeader({ session }: { session: Session | null }) {
+export default async function MainHeader({
+  session,
+}: {
+  session: Session | null;
+}) {
   let schoolInfo;
   let categories: (QueryCategory & { roles: { role: string }[] })[] = [];
   let queries: QueryWithCategory[] = [];
@@ -21,16 +25,16 @@ export default async function MainHeader({ session }: { session: Session | null 
     const [schoolResult, categoriesResult, queriesResult] = await Promise.all([
       prisma.schoolInfo.findUnique({
         where: {
-          sc: session?.user?.activeSchool.toString()
-        }
+          sc: session?.user?.activeSchool.toString(),
+        },
       }),
       prisma.queryCategory.findMany({
         include: {
           roles: {
-            select: { role: true }
-          }
+            select: { role: true },
+          },
         },
-        orderBy: { sort: "asc" }
+        orderBy: { sort: "asc" },
       }),
       prisma.query.findMany({
         select: {
@@ -41,18 +45,18 @@ export default async function MainHeader({ session }: { session: Session | null 
             select: {
               id: true,
               label: true,
-              value: true
-            }
+              value: true,
+            },
           },
         },
-        orderBy: { name: "asc" }
-      })
+        orderBy: { name: "asc" },
+      }),
     ]);
 
     schoolInfo = schoolResult;
     categories = categoriesResult;
     queries = queriesResult;
-  } 
+  }
 
   // console.log(session.user)
   return (
@@ -63,18 +67,13 @@ export default async function MainHeader({ session }: { session: Session | null 
             h-[4.5rem]
             items-center
             justify-between
-            
             bg-title
             text-title-foreground
-
-          mx-auto
-          
-          
-
-          text-xl
-          font-bold
-          border-b
-          border-title-foreground/60
+            mx-auto
+            text-xl
+            font-bold
+            border-b
+            border-title-foreground/60
           `}
       >
         {/* Left section: Logo */}
@@ -85,7 +84,13 @@ export default async function MainHeader({ session }: { session: Session | null 
             className="text-xl text-mainTitle-foreground font-bold hover"
           >
             <Link href="/">
-              <Image src="/logos/slusd-logo.png" alt="logo" width={35} height={35} className="mr-2" />
+              <Image
+                src="/logos/slusd-logo.png"
+                alt="logo"
+                width={35}
+                height={35}
+                className="mr-2"
+              />
               SLUSD Data
             </Link>
           </Button>
@@ -126,14 +131,18 @@ export default async function MainHeader({ session }: { session: Session | null 
             />
           )}
           <UserMenu
-            user={session?.user ? {
-              id: (session.user as SessionUser).id,
-              name: session.user.name,
-              email: session.user.email,
-              image: session.user.image,
-              admin: (session.user as SessionUser).admin,
-              roles: (session.user as SessionUser).roles,
-            } : null}
+            user={
+              session?.user
+                ? {
+                    id: (session.user as SessionUser).id,
+                    name: session.user.name,
+                    email: session.user.email,
+                    image: session.user.image,
+                    admin: (session.user as SessionUser).admin,
+                    roles: (session.user as SessionUser).roles,
+                  }
+                : null
+            }
           />
         </div>
       </nav>

@@ -46,14 +46,14 @@ const YearSelector = ({ activeDbYear, userId }: YearSelectorProps) => {
         disabled={isPending}
       >
         {isPending ? (
-          <Loader2 className="h-4 w-4 animate-spin text-title-foreground" />
+          <Loader2 className="h-4 w-4 animate-spin text-mainTitle-foreground" />
         ) : (
-          <Calendar className="h-4 w-4 text-title-foreground" />
+          <Calendar className="h-4 w-4 text-mainTitle-foreground" />
         )}
-        <span className="text-title-foreground font-medium">
+        <span className="text-mainTitle-foreground font-medium">
           {currentYearInfo.label}
         </span>
-        <ChevronDown className={`h-3 w-3 text-title-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+        <ChevronDown className={`h-3 w-3 text-mainTitle-foreground transition-transform ${open ? "rotate-180" : ""}`} />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="center" className="w-32">
         {AVAILABLE_DB_YEARS.map((yearInfo) => (

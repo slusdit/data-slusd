@@ -89,10 +89,10 @@ export default function UserMenu({ user }: UserMenuProps) {
               {userInitials}
             </AvatarFallback>
           </Avatar>
-          <span className="hidden sm:inline-block text-title-foreground text-sm font-medium max-w-[120px] truncate">
+          <span className="hidden sm:inline-block text-mainTitle-foreground text-sm font-medium max-w-[120px] truncate">
             {user.name?.split(" ")[0]}
           </span>
-          <ChevronDown className="h-4 w-4 text-title-foreground" />
+          <ChevronDown className="h-4 w-4 text-mainTitle-foreground" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-64" align="end" sideOffset={8}>

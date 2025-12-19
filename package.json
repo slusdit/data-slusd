@@ -47,7 +47,7 @@
     "lucide-react": "^0.396.0",
     "mssql": "^11.0.0",
     "next": "^15.3.1",
-    "next-auth": "^5.0.0-beta.27",
+    "next-auth": "^5.0.0-beta.30",
     "next-themes": "^0.3.0",
     "ngrok": "5.0.0-beta.2",
     "react": "^18",
@@ -59,8 +59,10 @@
     "sql-formatter": "^15.4.3",
     "tailwind-merge": "^2.3.0",
     "tailwindcss-animate": "^1.0.7",
-    "xlsx": "^0.18.5",
     "zod": "^3.23.8"
+  },
+  "overrides": {
+    "glob": "^10.5.0"
   },
   "devDependencies": {
     "@types/mssql": "^9.1.5",
