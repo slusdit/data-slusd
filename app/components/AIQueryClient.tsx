@@ -199,14 +199,14 @@ export function AIQueryClient({
     const suggestions: string[] = [];
 
     // Program-related keywords
-    if (/\b(iep|special ed|sped|disability|individualized education)\b/.test(lowerPrompt)) {
+    if (/\b(ieps|iep|special ed|sped|disability|individualized education)\b/.test(lowerPrompt)) {
       suggestions.push('special_ed');
       suggestions.push('program_flags');
     }
-    if (/\b(504|accommodation|plan)\b/.test(lowerPrompt)) {
+    if (/\b(504|504s|accommodation|plan)\b/.test(lowerPrompt)) {
       suggestions.push('program_flags');
     }
-    if (/\b(english learner|ell|el student|elpac|lep|language)\b/.test(lowerPrompt)) {
+    if (/\b(english learner|english learners| el |ell|el student|elpac|lep|language)\b/.test(lowerPrompt)) {
       suggestions.push('program_flags');
     }
     if (/\b(foster|homeless|migrant|mckinney|unhoused)\b/.test(lowerPrompt)) {
@@ -461,6 +461,13 @@ export function AIQueryClient({
     state.parsedFilters.programs.length
   ) : 0;
 
+
+  const placeholderTextEscaped = `Examples: Students with ... 
+• Students with an IEP at Jefferson
+• Students who are English Learners by grade level
+• Students in 3rd grade at Madison who are foster youth
+• Students who are Hispanic and homeless at each school
+• Students who are female in middle school grades`
   return (
     <div className="space-y-6">
       {/* Input Card */}
@@ -536,14 +543,7 @@ export function AIQueryClient({
               value={state.prompt}
               onChange={(e) => setState(s => ({ ...s, prompt: e.target.value }))}
               onKeyDown={handleKeyDown}
-              placeholder="Students with ...
-
-Examples:
-• Students with an IEP at Jefferson
-• Students who are English Learners by grade level
-• Students in 3rd grade at Madison who are foster youth
-• Students who are Hispanic and homeless at each school
-• Students who are female in middle school grades"
+              placeholder={placeholderTextEscaped}
               className="min-h-[140px] font-mono text-sm"
             />
             <p className="text-xs text-muted-foreground mt-2">

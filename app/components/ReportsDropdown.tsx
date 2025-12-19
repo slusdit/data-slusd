@@ -126,7 +126,7 @@ export default function ReportsDropdown({
       <PopoverTrigger asChild>
         <Button
           variant="ghost"
-          className="text-title-foreground hover:bg-title-foreground/10 gap-1"
+          className="text-mainTitle-foreground hover:bg-title-foreground/10 gap-1"
         >
           <FileText className="h-4 w-4" />
           Reports
