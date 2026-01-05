@@ -17,9 +17,10 @@ export default async function GradeDistributionPage() {
         select: {
             ell: true,
             specialEd: true,
-            ard: true
+            ard: true,
+            schoolYear: true
         },
-        distinct: ['ell', 'specialEd', 'ard']
+        distinct: ['ell', 'specialEd', 'ard', 'schoolYear']
     });
     // console.log("Raw data fetched from the database:", rawData[0]);
 
@@ -29,6 +30,8 @@ export default async function GradeDistributionPage() {
     // console.log("Unique Special Ed options:", specialEdOptions);
     const ardOptions = [...new Set(rawData.map(item => item.ard).filter(Boolean))];
     // console.log("Unique ARD options:", ardOptions);
+    const schoolYearOptions = [...new Set(rawData.map(item => item.schoolYear).filter(Boolean))].sort().reverse();
+    // console.log("Unique School Year options:", schoolYearOptions);
 
     const data = await aggregateTeacherGradeSummaries({})
     // console.log("Data fetched from the database:", data[0]);
@@ -60,14 +63,15 @@ export default async function GradeDistributionPage() {
                     <h1 className="text-3xl font-bold">Grade Distribution by Course</h1>
                     <p className="text-muted-foreground">Please select a Term and Course to view data</p>
                 </div>
-                <GradeDistribution 
-                    data={data} 
+                <GradeDistribution
+                    data={data}
                     session={session}
                     defaultTerm={[sentTerm]}
                     studentAttributes={{
                         ellOptions,
                         specialEdOptions,
-                        ardOptions
+                        ardOptions,
+                        schoolYearOptions
                     }}
                     activeSchool={session.user.activeSchool.toString()}
                     user={session.user}
