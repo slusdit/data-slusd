@@ -607,7 +607,8 @@ const GradeDistribution = ({
         departmentCodes: selectedDepartments.length > 0 ? selectedDepartments : undefined,
         scs: selectedSchools.length > 0 ? selectedSchools.map(s => parseInt(s)) : undefined,
         courseTitles: selectedCourseTitles.length > 0 ? selectedCourseTitles : undefined,
-        // Single-select demographic filters
+        // Single-select filters
+        schoolYear: selectedSchoolYear.length > 0 ? selectedSchoolYear[0] : undefined,
         period: selectedPeriods.length > 0 ? selectedPeriods[0] : undefined,
         ellStatus: selectedEll.length > 0 ? selectedEll[0] : undefined,
         specialEdStatus: selectedSpecialEd.length > 0 ? selectedSpecialEd[0] : undefined,
@@ -734,14 +735,16 @@ const GradeDistribution = ({
     selectedSpecialEd,
     selectedArd,
     selectedGender,
+    selectedSchoolYear,
     getTeacherNumberFromName,
   ]);
 
-  // Track if demographic filters are active to determine filtering strategy
+  // Track if demographic/school year filters are active to determine filtering strategy
   const hasDemographicFilters = selectedEll.length > 0 ||
     selectedSpecialEd.length > 0 ||
     selectedArd.length > 0 ||
-    selectedGender.length > 0;
+    selectedGender.length > 0 ||
+    selectedSchoolYear.length > 0;
 
   // Track previous demographic filter state to detect changes
   const prevDemographicFilters = useRef({
@@ -749,6 +752,7 @@ const GradeDistribution = ({
     specialEd: selectedSpecialEd,
     ard: selectedArd,
     gender: selectedGender,
+    schoolYear: selectedSchoolYear,
   });
 
   // Unified effect for all filtering
@@ -761,7 +765,8 @@ const GradeDistribution = ({
       JSON.stringify(prevDemographicFilters.current.ell) !== JSON.stringify(selectedEll) ||
       JSON.stringify(prevDemographicFilters.current.specialEd) !== JSON.stringify(selectedSpecialEd) ||
       JSON.stringify(prevDemographicFilters.current.ard) !== JSON.stringify(selectedArd) ||
-      JSON.stringify(prevDemographicFilters.current.gender) !== JSON.stringify(selectedGender);
+      JSON.stringify(prevDemographicFilters.current.gender) !== JSON.stringify(selectedGender) ||
+      JSON.stringify(prevDemographicFilters.current.schoolYear) !== JSON.stringify(selectedSchoolYear);
 
     // Update ref for next comparison
     prevDemographicFilters.current = {
@@ -769,6 +774,7 @@ const GradeDistribution = ({
       specialEd: selectedSpecialEd,
       ard: selectedArd,
       gender: selectedGender,
+      schoolYear: selectedSchoolYear,
     };
 
     // If demographic filters are active or changed, use server-side sync
@@ -828,6 +834,7 @@ const GradeDistribution = ({
     selectedSpecialEd,
     selectedArd,
     selectedGender,
+    selectedSchoolYear,
     hasDemographicFilters,
     initialData,
     isLoading,
@@ -1079,6 +1086,12 @@ const GradeDistribution = ({
       setSelectedGender([]);
       setSelectedSchools([]);
       setSelectedPeriods([]);
+      // Reset school year to most recent (first in sorted list)
+      setSelectedSchoolYear(
+        studentAttributes.schoolYearOptions && studentAttributes.schoolYearOptions.length > 0
+          ? [studentAttributes.schoolYearOptions[0]]
+          : []
+      );
       setFilteredData(initialData || []);
       setFilteredTeacherItems(teacherItems);
       setFilteredDepartmentItems(departmentItems);
@@ -1090,6 +1103,7 @@ const GradeDistribution = ({
       setFilteredGenderItems(genderItems);
       setFilteredSchoolItems(schoolItems);
       setFilteredPeriodItems(periodItems);
+      setFilteredSchoolYearItems(schoolYearItems);
 
       aggregateTeacherGradeSummaries({
         setData: (newData: any[]) => {
@@ -1122,6 +1136,8 @@ const GradeDistribution = ({
     genderItems,
     schoolItems,
     periodItems,
+    schoolYearItems,
+    studentAttributes.schoolYearOptions,
   ]);
 
   const showLoading = isLoading || isProcessing;
@@ -1319,12 +1335,23 @@ const GradeDistribution = ({
               <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-4 items-center">
                 <div className="col-span-2">
                   <MultiDropdownSelector
+                    items={filteredSchoolYearItems}
+                    values={selectedSchoolYear}
+                    onChange={setSelectedSchoolYear}
+                    placeholder="Select year"
+                    label="School Year"
+                    disabled={showLoading}
+                    maxDisplayItems={1}
+                    singleSelect={true}
+                  />
+                </div>
+                <div className="col-span-2">
+                  <MultiDropdownSelector
                     items={filteredTermItems}
                     values={selectedTerms}
                     onChange={setSelectedTerms}
                     placeholder="Select terms"
                     label="Terms"
-                    // width="w-1/2"
                     disabled={showLoading}
                     maxDisplayItems={1}
                     singleSelect={true}
@@ -1337,20 +1364,19 @@ const GradeDistribution = ({
                   />
                 </div>
 
-                <div className="col-span-5">
+                <div className="col-span-4">
                   <MultiDropdownSelector
                     items={schoolItems}
                     values={selectedSchools}
                     onChange={setSelectedSchools}
                     placeholder="Select schools"
                     label="Schools"
-                    // width="w-2/3"
                     disabled={showLoading}
                     maxDisplayItems={2}
                     schoolValues={user.UserSchool}
                   />
                 </div>
-                  <div className="col-span-5">
+                  <div className="col-span-4">
                     <MultiDropdownSelector
                   items={filteredDepartmentItems}
                   values={selectedDepartments}
