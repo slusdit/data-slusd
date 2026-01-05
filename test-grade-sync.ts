@@ -187,22 +187,21 @@ const percentQueryId = process.env.QUERY_ASSESSMENT_GRADE_PERCENTAGE;
     try {
       
       transformedData = rawData.map((record) => {
-        
         return {
           source: record.SOURCE,
           schoolYear: record["School Year"],
-          sc: record.SC[0],
-          studentId: record.ID[0].toString(),
-          studentNumber: record.SN[0].toString(),
-          grade: record.GR.toString(),
-          gender: record.GN.toString(),
-          period: record.PD.toString(),
+          sc: Number(record.SC),
+          studentId: String(record.ID),
+          studentNumber: String(record.SN),
+          grade: record.GR?.toString() ?? "",
+          gender: record.GN?.toString() ?? "",
+          period: record.PD?.toString() ?? "",
           departmentCode: record.DEPT_CODE,
           divisionCode: record.DC,
-          courseNumber: record.CN.toString(),
+          courseNumber: record.CN?.toString() ?? "",
           courseTitle: record.CO,
-          teacherNumber: record.TN.toString(),
-          section: record.SE.toString(),
+          teacherNumber: record.TN?.toString() ?? "",
+          section: record.SE?.toString() ?? "",
           term: record.TERM,
           mark: record.MARK,
           teacherName: record.TE,

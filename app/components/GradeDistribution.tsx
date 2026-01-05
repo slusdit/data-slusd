@@ -35,6 +35,7 @@ interface StudentAttributes {
   specialEdOptions?: string[];
   ardOptions?: string[];
   genderOptions?: string[];
+  schoolYearOptions?: string[];
 }
 
 interface GradeDistributionProps {
@@ -99,6 +100,11 @@ const GradeDistribution = ({
   const [selectedSpecialEd, setSelectedSpecialEd] = useState<string[]>([]);
   const [selectedArd, setSelectedArd] = useState<string[]>([]);
   const [selectedGender, setSelectedGender] = useState<string[]>([]);
+  const [selectedSchoolYear, setSelectedSchoolYear] = useState<string[]>(
+    studentAttributes.schoolYearOptions && studentAttributes.schoolYearOptions.length > 0
+      ? [studentAttributes.schoolYearOptions[0]]
+      : []
+  );
   const [isProcessing, setIsProcessing] = useState(false);
 
   // New state variables for filtered dropdown options
@@ -131,6 +137,9 @@ const GradeDistribution = ({
   >([]);
   const [filteredArdItems, setFilteredArdItems] = useState<FilteredItem[]>([]);
   const [filteredGenderItems, setFilteredGenderItems] = useState<
+    FilteredItem[]
+  >([]);
+  const [filteredSchoolYearItems, setFilteredSchoolYearItems] = useState<
     FilteredItem[]
   >([]);
 
@@ -386,6 +395,18 @@ const GradeDistribution = ({
     }));
   }, [studentAttributes.genderOptions]);
 
+  const schoolYearItems = useMemo(() => {
+    const options =
+      studentAttributes.schoolYearOptions &&
+      studentAttributes.schoolYearOptions.length > 0
+        ? studentAttributes.schoolYearOptions
+        : [];
+    return options.map((value) => ({
+      id: value,
+      label: value,
+    }));
+  }, [studentAttributes.schoolYearOptions]);
+
   useEffect(() => {
     setFilteredTeacherItems(teacherItems);
     setFilteredDepartmentItems(departmentItems);
@@ -397,6 +418,7 @@ const GradeDistribution = ({
     setFilteredGenderItems(genderItems);
     setFilteredSchoolItems(schoolItems);
     setFilteredPeriodItems(periodItems);
+    setFilteredSchoolYearItems(schoolYearItems);
   }, [
     teacherItems,
     departmentItems,
@@ -408,6 +430,7 @@ const GradeDistribution = ({
     genderItems,
     schoolItems,
     periodItems,
+    schoolYearItems,
   ]);
 
   const getFilteredDataExcluding = useCallback(

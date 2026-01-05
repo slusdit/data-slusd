@@ -6,9 +6,9 @@ import { Prisma } from "@prisma/client";
 export interface RawGradeData {
   SOURCE: string;
   "School Year": string;
-  SC: [number, number];
-  ID: string;
-  SN: string;
+  SC: number;
+  ID: number | string;
+  SN: number | string;
   GR: string;
   GN: string;
   PD: string;
@@ -60,35 +60,61 @@ export async function syncGradeDistribution() {
 
     console.log('Raw Data Sample', rawData[0])
 
+    // Helper function to extract first value from potentially comma-separated or duplicated fields
+    const extractFirst = (value: any): string => {
+      if (value == null) return "";
+      const str = String(value);
+      // If the value contains a comma, take the first part
+      if (str.includes(",")) {
+        return str.split(",")[0].trim();
+      }
+      return str;
+    };
+
     // Transform and insert data
     let transformedData: any[] = [];
+    let skippedRecords = 0;
     try {
-      
-      transformedData = rawData.map((record) => {
-        
-        return {
-          source: record.SOURCE,
-          schoolYear: record["School Year"],
-          sc: record.SC[0],
-          studentId: record.ID[0].toString(),
-          studentNumber: record.SN[0].toString(),
-          grade: record.GR.toString(),
-          gender: record.GN.toString(),
-          period: record.PD.toString(),
-          departmentCode: record.DEPT_CODE,
-          divisionCode: record.DC,
-          courseNumber: record.CN.toString(),
-          courseTitle: record.CO,
-          teacherNumber: record.TN.toString(),
-          section: record.SE.toString(),
-          term: record.TERM,
-          mark: record.MARK,
-          teacherName: record.TE,
-          specialEd: record.SpecialEd,
-          ell: record.ELL,
-          ard: record.ARD,
-        };
-      });
+      transformedData = rawData
+        .filter((record) => {
+          // Filter out records missing required fields
+          const scValue = extractFirst(record.SC);
+          const idValue = extractFirst(record.ID);
+          const tnValue = extractFirst(record.TN);
+          if (!scValue || !idValue || !tnValue || isNaN(Number(scValue))) {
+            skippedRecords++;
+            return false;
+          }
+          return true;
+        })
+        .map((record) => {
+          return {
+            source: record.SOURCE,
+            schoolYear: record["School Year"],
+            sc: Number(extractFirst(record.SC)),
+            studentId: extractFirst(record.ID),
+            studentNumber: extractFirst(record.SN),
+            grade: record.GR?.toString() ?? "",
+            gender: record.GN?.toString() ?? "",
+            period: record.PD?.toString() ?? "",
+            departmentCode: record.DEPT_CODE,
+            divisionCode: record.DC,
+            courseNumber: record.CN?.toString() ?? "",
+            courseTitle: record.CO,
+            teacherNumber: extractFirst(record.TN),
+            section: record.SE?.toString() ?? "",
+            term: record.TERM,
+            mark: record.MARK,
+            teacherName: record.TE,
+            specialEd: record.SpecialEd,
+            ell: record.ELL,
+            ard: record.ARD,
+          };
+        });
+
+      if (skippedRecords > 0) {
+        console.log(`Skipped ${skippedRecords} records with missing required fields (SC, ID, or TN)`);
+      }
     } catch (error) {
       console.error("Error transforming data:", error);
       throw error;
