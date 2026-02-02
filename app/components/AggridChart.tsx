@@ -19,12 +19,12 @@ const StackedBarChartComponent = ({
   title = '',
   description = '',
 }:{
-  data,
+  data: Record<string, unknown>[],
   title?: string,
   description?: string,
   dataKey?: string
 }) => {
-  const [selectedFields, setSelectedFields] = useState([]);
+  const [selectedFields, setSelectedFields] = useState<string[]>([]);
 
   const chartConfig = useMemo(() => {
     if (data.length === 0) return {};
@@ -36,7 +36,7 @@ const StackedBarChartComponent = ({
       'hsl(var(--chart-4))',
       'hsl(var(--chart-5))'
     ];
-    return numericFields.reduce((acc, field, index) => {
+    return numericFields.reduce((acc: Record<string, { label: string; color: string }>, field, index) => {
       acc[field] = {
         label: field.charAt(0).toUpperCase() + field.slice(1),
         color: colors[index % colors.length]
@@ -53,7 +53,7 @@ const StackedBarChartComponent = ({
 
       return ({
       name: item.School, //item[dataKey], // Assuming the first field is the label
-      ...selectedFields.reduce((acc, field) => {
+      ...selectedFields.reduce((acc: Record<string, unknown>, field) => {
         acc[field] = item[field];
         return acc;
       }, {})
@@ -67,7 +67,7 @@ const StackedBarChartComponent = ({
     }
   }, [fields, selectedFields]);
 
-  const handleFieldToggle = (field) => {
+  const handleFieldToggle = (field: string) => {
     setSelectedFields(prev =>
       prev.includes(field)
         ? prev.filter(f => f !== field)
@@ -112,13 +112,12 @@ const StackedBarChartComponent = ({
             <ChartTooltip content={<ChartTooltipContent indicator="dashed" hideLabel/>} />
             <ChartLegend content={<ChartLegendContent />} />
             {selectedFields.map((field, index) => (
-
               <Bar
+                key={field}
                 dataKey={chartConfig[field].label.toString()}
                 stackId="a"
                 fill={chartConfig[field].color}
-
-                />
+              />
             ))}
           </BarChart>
           {/* <BarChart data={chartData}>

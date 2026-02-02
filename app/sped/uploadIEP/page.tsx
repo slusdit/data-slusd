@@ -55,7 +55,7 @@ const uploadIEP = () => {
                 <li>• Log into your SEIS account</li>
                 <li>• Navigate to the IEP section</li>
                 <li>• Export IEP documents as PDF files</li>
-                <li>• Ensure documents are "IEP at a Glance" format</li>
+                <li>• Ensure documents are &quot;IEP at a Glance&quot; format</li>
               </ul>
             </div>
             

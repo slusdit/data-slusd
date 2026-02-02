@@ -19,6 +19,9 @@ export default async function StudentDemoPage(
   console.log(sql)
   const data = await runQuery(sql)
   console.log(data)
+
+  const student = data?.[0];
+
   return (
     <div className="container mx-auto p-6">
       <div className="bg-card rounded-lg shadow-lg p-6">
@@ -32,23 +35,23 @@ export default async function StudentDemoPage(
 
             <div className="bg-muted/10 p-4 rounded-md">
               <p className="text-sm text-muted-foreground">Name</p>
-              <p className="text-lg font-semibold">{data[0]?.LN}, {data[0]?.FN}</p>
+              <p className="text-lg font-semibold">{student?.LN}, {student?.FN}</p>
             </div>
             <div className="bg-muted/10 p-4 rounded-md">
               <p className="text-sm text-muted-foreground">Grade</p>
-              <p className="text-lg font-semibold">{data[0]?.GR}</p>
+              <p className="text-lg font-semibold">{student?.GR}</p>
             </div>
             <div className="bg-muted/10 p-4 rounded-md">
               <p className="text-sm text-muted-foreground">Parent / Guardian</p>
-              <p className="text-lg font-semibold">{data[0]?.PG}</p>
+              <p className="text-lg font-semibold">{student?.PG}</p>
             </div>
             <div className="bg-muted/10 p-4 rounded-md">
               <p className="text-sm text-muted-foreground">Enter Date</p>
-              <p className="text-lg font-semibold">{data[0]?.BD.toLocaleDateString('en-US')}</p>
+              <p className="text-lg font-semibold">{student?.BD?.toLocaleDateString('en-US')}</p>
             </div>
             <div className="bg-muted/10 p-4 rounded-md">
               <p className="text-sm text-muted-foreground">Phone</p>
-              <p className="text-lg font-semibold">{data[0]?.TL?.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3')}</p>
+              <p className="text-lg font-semibold">{student?.TL?.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3')}</p>
             </div>
           </div>
         </div>

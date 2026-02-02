@@ -25,7 +25,7 @@ export default async function adminCheck(): Promise<AdminCheckResult | null> {
         return null
     }
 
-    const user = session.user as SessionUser
+    const user = session.user as unknown as SessionUser
     const roles = user.roles || []
     const userSchools = user.schools || []
 
@@ -33,8 +33,8 @@ export default async function adminCheck(): Promise<AdminCheckResult | null> {
     const isSiteAdmin = roles.includes('SITEADMIN') || roles.includes('PRINCIPAL')
     const isQueryEditor = user.queryEdit || roles.includes('QUERYEDITOR')
 
-    // User can access admin if they are superadmin, site admin, or query editor
-    const canAccessAdmin = isSuperAdmin || isSiteAdmin || isQueryEditor
+    // Only users with admin=true can access admin page
+    const canAccessAdmin = user.admin === true
 
     if (!canAccessAdmin) {
         return null

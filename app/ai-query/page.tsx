@@ -82,7 +82,7 @@ export default async function AIQueryPage() {
     redirect('/');
   }
 
-  const user = session.user as SessionUser;
+  const user = session.user as unknown as SessionUser;
   const activeSchool = user.activeSchool;
   const allowedSchools = user.schools || [];
 

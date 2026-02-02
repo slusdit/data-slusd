@@ -4,7 +4,7 @@ import UnauthorizedButton from "../components/UnauthorizedButton";
 export default async function SchoolLayout(
   props: Readonly<{
         children: React.ReactNode;
-        params: { sc: string };
+        params: Promise<{ sc: string }>;
     }>
 ) {
   const params = await props.params;

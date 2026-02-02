@@ -12,8 +12,8 @@ import { useTheme } from "next-themes";
 
 const FavoriteCard = ({
     query,
-    user, 
-    theme,
+    user,
+    theme: themeProp,
     data = [],
     chartOptions = null,
     loading = true,
@@ -27,10 +27,8 @@ const FavoriteCard = ({
     loading?: boolean;
     error?: string | null;
 }) => {
-    if (!theme) {
-        const { theme: providerTheme } = useTheme();
-        theme = providerTheme;
-    }
+    const { theme: providerTheme } = useTheme();
+    const theme = themeProp || providerTheme;
 
     const [agGridTheme, setAgGridTheme] = useState(
         theme === "dark" ? "ag-theme-quartz-dark" : "ag-theme-quartz"

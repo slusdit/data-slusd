@@ -234,7 +234,7 @@ export default function AddQueryForm({
                   SQL Query
                   <small>
                     <br />
-                    `@@asc` - User's current active school
+                    `@@asc` - User&apos;s current active school
                   </small>
                 </FormDescription>
                 <FormMessage />

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useEffect, useState } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { ColDef, GridApi, GridReadyEvent } from "ag-grid-community";

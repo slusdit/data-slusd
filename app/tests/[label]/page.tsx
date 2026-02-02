@@ -7,7 +7,9 @@ export default async function DynamicTest(props: { params: Promise<{ label: stri
   const { label } = params;
   // console.log(label);
 
-  let Chart: ComponentType<{}> | JSX.Element = () => { return <div>Loading...</div> };
+  const DefaultChart = () => { return <div>Loading...</div> };
+  DefaultChart.displayName = "DefaultChart";
+  let Chart: ComponentType<object> = DefaultChart;
 
   switch (label) {
     case 'test2':
@@ -26,7 +28,7 @@ export default async function DynamicTest(props: { params: Promise<{ label: stri
       });
       break;  
     default:
-      Chart = () => <div></div>;
+      Chart = DefaultChart;
       break;
   }
 

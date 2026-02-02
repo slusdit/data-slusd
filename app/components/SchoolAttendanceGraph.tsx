@@ -1,6 +1,5 @@
 'use client';
 
-import  prisma from "@/lib/db";
 import { getQueryData } from "@/lib/getQuery";
 import { AttendanceOverTimeChart } from "./charts/AttendanceOverTime";
 import SchoolEnrollmentGraph from "./SchoolEnrollmentGraph";
@@ -9,10 +8,9 @@ import getActiveSchoolInfo from "@/lib/getActiveSchoolInfo";
 import { useEffect, useState } from "react";
 import { SchoolInfo } from "@prisma/client";
 
-export default async function SchoolAttendanceGraph({ session }: { session: Session }) {
-  const schoolSc = session?.user?.activeSchool?.toString() || "2";
-  const [schoolInfo, setSchoolInfo] = useState<SchoolInfo | null>([]);
-  const [attendanceData, setAttendanceData] = useState([]);
+export default function SchoolAttendanceGraph({ session }: { session: Session }) {
+  const [schoolInfo, setSchoolInfo] = useState<SchoolInfo | null>(null);
+  const [attendanceData, setAttendanceData] = useState<{ data?: unknown[] } | null>(null);
     
   useEffect(() => {
     const fetchData = async () => {

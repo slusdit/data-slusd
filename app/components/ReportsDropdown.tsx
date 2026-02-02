@@ -51,14 +51,14 @@ export default function ReportsDropdown({
   const [search, setSearch] = useState("");
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
-  if (!user) return null;
-
-  const userRoles = user.roles || [];
+  const userRoles = user?.roles || [];
   const userRoleStrings = userRoles.map(r => r.toString());
-  const favorites = user.favorites || [];
+  const favorites = user?.favorites || [];
 
   // Filter categories the user has access to
   const accessibleCategories = useMemo(() => {
+    if (!user) return [];
+
     return categories?.filter((category) => {
       if (!category || category.label === "Favorites") return false;
 
@@ -74,7 +74,7 @@ export default function ReportsDropdown({
 
       return hasAccess && categoryQueries.length > 0;
     }) || [];
-  }, [categories, queries, userRoleStrings]);
+  }, [user, categories, queries, userRoleStrings]);
 
   // Filter results based on search
   const filteredResults = useMemo(() => {
@@ -120,6 +120,8 @@ export default function ReportsDropdown({
     setOpen(false);
     setSearch("");
   };
+
+  if (!user) return null;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

@@ -102,7 +102,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const user = session.user as SessionUser;
+    const user = session.user as unknown as SessionUser;
     const activeSchool = user.activeSchool ?? -1;
     const allowedSchools = user.schools || [];
 
