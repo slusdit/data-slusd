@@ -25,6 +25,7 @@ model User {
   activeDbYear  Int             @default(25) // Aeries DB year (e.g., 25 = DST25000SLUSD for 2024-25)
   manualSchool  Int?
   emulatingId   String?         // ID of user being emulated (null = not emulating)
+  emulationStartedAt DateTime?  // When emulation started (for timeout enforcement)
   // Manual overrides for access control
   blockedSchools  String?       @db.Text // Comma-separated school codes to block (overrides Aeries)
   addedSchools    String?       @db.Text // Comma-separated school codes to add (supplements Aeries)

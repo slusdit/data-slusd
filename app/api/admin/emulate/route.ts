@@ -71,8 +71,7 @@ export async function POST(request: NextRequest) {
     // Get the real user ID (in case we're already emulating)
     const realUserId = user.realUser?.id || user.id;
 
-    // Update the real user's emulatingId using raw SQL to avoid Prisma type issues
-    // until prisma generate is run with the new schema
+    // Update the real user's emulatingId using raw SQL
     await prisma.$executeRaw`UPDATE User SET emulatingId = ${userId} WHERE id = ${realUserId}`;
 
     return NextResponse.json({
@@ -108,7 +107,7 @@ export async function DELETE() {
     // Get the real user ID
     const realUserId = user.realUser?.id || user.id;
 
-    // Clear the emulatingId using raw SQL to avoid Prisma type issues
+    // Clear the emulatingId using raw SQL
     await prisma.$executeRaw`UPDATE User SET emulatingId = NULL WHERE id = ${realUserId}`;
 
     return NextResponse.json({
