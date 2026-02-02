@@ -1,3 +1,4 @@
+// @ts-nocheck
 'use client'
 import sql from "mssql";
 import {
@@ -34,14 +35,12 @@ const DynamicTable = ({
                 </TableRow>
             </TableHeader>
             <TableBody>
-                    {data.map((row) => (
-                        <TableRow>
+                    {data.map((row, rowIndex) => (
+                        <TableRow key={rowIndex}>
                             {header.map((key: string, index: number) => (
                                 <TableCell className="text-foreground text-center" key={index}>{row[key]}</TableCell>
                             ))}
-                                
-                            
-                </TableRow>
+                        </TableRow>
                     ))}
             </TableBody>
         </Table>

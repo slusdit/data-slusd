@@ -87,8 +87,7 @@ const fileStatusReducer = <TUploadRes, TUploadError>(
     case "update-status":
       return state.map((fileStatus) => {
         if (fileStatus.id === action.id) {
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { id, type, ...rest } = action;
+          const { id: _id, type: _type, ...rest } = action;
           return {
             ...fileStatus,
             ...rest,
@@ -384,8 +383,7 @@ const useDropzone = <TUploadRes, TUploadError = string>(
   };
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const DropZoneContext = createContext<UseDropzoneReturn<any, any>>({
+const DropZoneContext = createContext<UseDropzoneReturn<unknown, unknown>>({
   getRootProps: () => ({}) as never,
   getInputProps: () => ({}) as never,
   onRemoveFile: async () => {},

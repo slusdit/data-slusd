@@ -128,32 +128,28 @@ export function AttendanceOverTimeChart({
   //   fetchData();
   // }, []);
 
+  const filteredData = useMemo(() => {
+    if (!chartData) return [];
+    return chartData.filter((item) => {
+      const date = new Date(item.dt);
+      const now = new Date();
+      let daysToSubtract = 90;
+      if (timeRange === "3d") {
+        daysToSubtract = 3;
+      } else if (timeRange === "90d") {
+        daysToSubtract = 90;
+      } else if (timeRange === "30d") {
+        daysToSubtract = 30;
+      } else if (timeRange === "7d") {
+        daysToSubtract = 7;
+      } else if (timeRange === "180d") {
+        daysToSubtract = 180;
+      }
+      now.setDate(now.getDate() - daysToSubtract);
 
-  if (!chartData) {
-    return null;
-  }
-
-const filteredData = useMemo(() => {
-  return chartData.filter((item) => {
-    const date = new Date(item.dt);
-    const now = new Date();
-    let daysToSubtract = 90;
-    if (timeRange === "3d") {
-      daysToSubtract = 3;
-    } else if (timeRange === "90d") {
-      daysToSubtract = 90;
-    } else if (timeRange === "30d") {
-      daysToSubtract = 30;
-    } else if (timeRange === "7d") {
-      daysToSubtract = 7;
-    } else if (timeRange === "180d") {
-      daysToSubtract = 180;
-    }
-    now.setDate(now.getDate() - daysToSubtract);
-   
-    return date >= now;
-  });
-}, [chartData, timeRange]);
+      return date >= now;
+    });
+  }, [chartData, timeRange]);
 
   if (loading || !chartData) {
     return (

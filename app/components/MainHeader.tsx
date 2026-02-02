@@ -102,10 +102,10 @@ export default async function MainHeader({
                 categories={categories}
                 queries={queries}
                 user={{
-                  favorites: (session.user as SessionUser).favorites || [],
-                  roles: (session.user as SessionUser).roles || [],
+                  favorites: (session.user as unknown as SessionUser).favorites || [],
+                  roles: (session.user as unknown as SessionUser).roles || [],
                   email: session.user.email || "",
-                  queryEdit: (session.user as SessionUser).queryEdit,
+                  queryEdit: (session.user as unknown as SessionUser).queryEdit,
                 }}
               />
             </div>
@@ -126,20 +126,20 @@ export default async function MainHeader({
         <div className="flex items-center gap-2 pr-2">
           {session?.user && (
             <YearSelector
-              activeDbYear={(session.user as SessionUser).activeDbYear ?? 25}
-              userId={(session.user as SessionUser).id}
+              activeDbYear={(session.user as unknown as SessionUser).activeDbYear ?? 25}
+              userId={(session.user as unknown as SessionUser).id}
             />
           )}
           <UserMenu
             user={
               session?.user
                 ? {
-                    id: (session.user as SessionUser).id,
+                    id: (session.user as unknown as SessionUser).id,
                     name: session.user.name,
                     email: session.user.email,
                     image: session.user.image,
-                    admin: (session.user as SessionUser).admin,
-                    roles: (session.user as SessionUser).roles,
+                    admin: (session.user as unknown as SessionUser).admin,
+                    roles: (session.user as unknown as SessionUser).roles,
                   }
                 : null
             }

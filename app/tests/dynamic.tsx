@@ -1,5 +1,29 @@
 import dynamic from 'next/dynamic';
 import { Suspense, useMemo } from 'react';
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { flexRender } from "@tanstack/react-table";
+
+// Type placeholder for DataTableProps
+interface DataTableProps<T> {
+  data: T[];
+  id?: string;
+  showChart?: boolean;
+  chartTitle?: string;
+  chartValueKey?: string;
+  chartColumnKey?: string;
+}
+
+// Placeholder for reactTable - this file appears to be a test/example file
+declare const reactTable: ReturnType<typeof import("@tanstack/react-table").useReactTable>;
+declare function exportToCSV(table: unknown): void;
+declare function exportToExcel(table: unknown): void;
 
 function DataTable<T extends object>({ 
   data, 

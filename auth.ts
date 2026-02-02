@@ -108,6 +108,7 @@ function applyRoleOverrides(
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
   providers: [Google],
+  trustHost: true,
   callbacks: {
     async signIn({ user, account, profile, email, credentials }) {
       if (account?.provider === "google") {
@@ -292,8 +293,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         isEmulating,
         emulatingUser: emulatingUserInfo,
         realUser: realUserInfo,
-        // Keep admin status from real user for emulation controls
-        admin: isEmulating ? dbUser.admin : effectiveUser.admin,
+        // Use emulated user's admin status so emulation shows exactly what that user would see
+        admin: effectiveUser.admin,
       };
       return session;
     },

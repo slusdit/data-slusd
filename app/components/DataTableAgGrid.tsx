@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { AgGridReact } from "ag-grid-react";

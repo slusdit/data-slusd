@@ -144,7 +144,7 @@ const GradeDistribution = ({
   >([]);
 
   const createTeacherCellRenderer = () => {
-    return (props: {
+    const TeacherCellRenderer = (props: {
       value: string | null | undefined;
       data: {
         teacherName?: string;
@@ -176,6 +176,8 @@ const GradeDistribution = ({
         </TeacherStudentGradesDialog>
       );
     };
+    TeacherCellRenderer.displayName = "TeacherCellRenderer";
+    return TeacherCellRenderer;
   };
 
   useEffect(() => {

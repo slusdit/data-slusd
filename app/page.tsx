@@ -62,7 +62,7 @@ export default async function Home() {
       <main className="min-h-[calc(100vh-4rem)]">
         <Dashboard
           user={session.user}
-          activeSchool={(session.user as SessionUser).activeSchool}
+          activeSchool={(session.user as unknown as SessionUser).activeSchool}
         />
       </main>
     </>
