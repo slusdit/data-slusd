@@ -10,44 +10,31 @@ export async function addQuery(values: z.infer<typeof queryFormSchema>) {
   // values.query = values.query.split("\n").map((line) => "\"" + line + "\"").join("\n");
 
   try {
-  const result = await prisma.query.upsert({
-    where: {
-      name: values.name // Use 'name' or another unique field as the identifier
-    },
-    update: {
-      query: values.query,
-      name: values.name,
-      createdBy: values.createdBy,
-      description: values.description,
-      hiddenCols: values.hiddenCols,
-      chart: values.chart,
-      chartTypeKey: values.chartTypeKey,
-      chartStackKey: values.chartStackKey,
-      chartXKey: values.chartXKey,
-      chartYKey: values.chartYKey,
-      categoryId: values.categoryId,
-    },
-    create: {
-      query: values.query,
-      name: values.name,
-      label: values.name.toLowerCase().replaceAll('(', "").replaceAll(')', "").replaceAll('%', "").replaceAll(/\s+/g, "-"),
-      createdBy: values.createdBy,
-      description: values.description,
-      hiddenCols: values.hiddenCols,
-      chart: values.chart,
-      chartTypeKey: values.chartTypeKey,
-      chartStackKey: values.chartStackKey,
-      chartXKey: values.chartXKey,
-      chartYKey: values.chartYKey,
-      categoryId: values.categoryId,
-    },
-  })
-  // console.log({result})
-    
-  return true
+    // Generate label from name (same logic as before)
+    const label = values.name.toLowerCase().replaceAll('(', "").replaceAll(')', "").replaceAll('%', "").replaceAll(/\s+/g, "-");
+
+    const result = await prisma.query.create({
+      data: {
+        query: values.query,
+        name: values.name,
+        label: label,
+        createdBy: values.createdBy,
+        description: values.description,
+        hiddenCols: values.hiddenCols || "",
+        chart: values.chart,
+        chartTypeKey: values.chartTypeKey,
+        chartStackKey: values.chartStackKey,
+        chartXKey: values.chartXKey,
+        chartYKey: values.chartYKey,
+        categoryId: values.categoryId,
+      },
+    })
+    // console.log({result})
+
+    return true
   } catch (error) {
-    console.error("Error upserting query:", error)
-    return error
+    console.error("Error creating query:", error)
+    throw error
   }
 }
 

@@ -327,53 +327,60 @@ export async function syncTeacherClasses(profileId: string, profileEmail: string
 
 
             if (newAeriesClasses.length > 0) {
-                // Add new classes to DB
-                newAeriesClasses.map(async (aeriesClass) => {
-                    const newClass = await prisma.class.create({ data: aeriesClass })
-                    const result = await prisma.userClass.create({
-                        data: {
-                            classId: newClass.id,
-                            userId: profileId,
-                        }
+                // Add new classes to DB using createMany for better performance
+                // First create all classes
+                const createdClasses = await Promise.all(
+                    newAeriesClasses.map(async (aeriesClass) => {
+                        return await prisma.class.create({ data: aeriesClass })
                     })
+                )
+
+                // Then create all UserClass associations in a single transaction
+                await prisma.userClass.createMany({
+                    data: createdClasses.map(newClass => ({
+                        classId: newClass.id,
+                        userId: profileId,
+                    })),
+                    skipDuplicates: true
                 })
 
-                displayResult = `Some New Classes Added`
+                displayResult = `${newAeriesClasses.length} New Classes Added`
             }
 
             if (oldCurrentClasses.length > 0) {
-                // Delete old classes from DB
-                // console.log(oldCurrentClasses)
-                await Promise.all(oldCurrentClasses.map(async (oldClass) => {
-                    if (oldClass.activeOverride) return null
-                    const result = await prisma.class.delete({
+                // Delete old classes from DB using deleteMany for better performance
+                const classIdsToDelete = oldCurrentClasses
+                    .filter(oldClass => !oldClass.activeOverride)
+                    .map(oldClass => oldClass.id)
+
+                if (classIdsToDelete.length > 0) {
+                    await prisma.class.deleteMany({
                         where: {
-                            id: oldClass.id,
+                            id: { in: classIdsToDelete },
                             activeOverride: false
                         }
-
                     })
-                    // console.log(result)
-                })
-                )
-                displayResult = 'Out of date classes exists, Old Classes Deleted'
+                }
+                displayResult = `${classIdsToDelete.length} out-of-date classes deleted`
             }
         } else {
-            // Add all classes to DB
-            // console.log(aeriesClasses )
-            aeriesClasses.map(async (aeriesClass) => {
-                const newClass = await prisma.class.create({ data: aeriesClass })
-                const result = await prisma.userClass.create({
-                    data: {
-                        classId: newClass.id,
-                        userId: profileId,
-                    }
+            // Add all classes to DB using batch operations for better performance
+            const createdClasses = await Promise.all(
+                aeriesClasses.map(async (aeriesClass) => {
+                    return await prisma.class.create({ data: aeriesClass })
                 })
-                // console.log(result)
+            )
+
+            // Create all UserClass associations in one batch
+            await prisma.userClass.createMany({
+                data: createdClasses.map(newClass => ({
+                    classId: newClass.id,
+                    userId: profileId,
+                })),
+                skipDuplicates: true
             })
 
-
-            displayResult = ` classes added - All Classes Added`
+            displayResult = `${aeriesClasses.length} classes added - All Classes Added`
 
         }
     } else {

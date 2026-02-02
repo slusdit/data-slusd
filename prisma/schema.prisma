@@ -39,6 +39,10 @@ model User {
   UserSchool    UserSchool[]
   userRole      Role[]          @relation("UserRole")
   school        SchoolInfo[]    @relation("UserSchool")
+
+  @@index([emulatingId]) // For checking who is being emulated
+  @@index([admin]) // For filtering admin users
+  @@index([primaryRole]) // For role-based access control
 }
 
 model Account {
@@ -73,6 +77,7 @@ model Session {
   user         User     @relation(fields: [userId], references: [id])
 
   @@index([userId])
+  @@index([expires]) // For cleaning up expired sessions
 }
 
 model VerificationToken {
@@ -107,6 +112,7 @@ model Role {
   users         User[]          @relation("UserRole")
 
   @@index([queryId], map: "Role_queryId_fkey")
+  @@index([role]) // For looking up roles by ROLE enum value
 }
 
 model SchoolInfo {
@@ -158,6 +164,9 @@ model Class {
   StaffID3       Int?
   activeOverride Boolean     @default(false)
   UserClass      UserClass[]
+
+  @@index([email]) // For looking up classes by teacher email
+  @@index([sc, tn]) // For composite lookups by school and teacher number
 }
 
 model Query {
@@ -182,6 +191,8 @@ model Query {
   roles          Role[]
 
   @@index([categoryId], map: "Query_categoryId_fkey")
+  @@index([publicQuery]) // For filtering public/private queries
+  @@index([chart]) // For filtering chart queries
   User User[] @relation("id")
 }
 
@@ -357,6 +368,8 @@ model AIFragmentCategory {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   fragments   AIFragment[]
+
+  @@index([isActive]) // For filtering active categories
 }
 
 enum FragmentType {
