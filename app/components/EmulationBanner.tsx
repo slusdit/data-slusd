@@ -41,7 +41,8 @@ export default function EmulationBanner({ emulatingUser, realUser }: EmulationBa
       router.push("/");
       router.refresh();
     } catch (error: any) {
-      toast.error(error.message || "Failed to stop emulation");
+      const errorMessage = error.message || "Failed to stop emulation";
+      toast.error(`${errorMessage}. Please refresh the page or try again. If the issue persists, log out and back in.`);
     } finally {
       setIsLoading(false);
     }

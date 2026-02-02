@@ -16,6 +16,16 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -96,6 +106,7 @@ export default function FragmentAdminGrid({
   });
   const [isLoading, setIsLoading] = useState(false);
   const [selectedRows, setSelectedRows] = useState<Fragment[]>([]);
+  const [fragmentToDelete, setFragmentToDelete] = useState<Fragment | null>(null);
 
   const myTheme = themeQuartz.withParams({
     backgroundColor: resolvedTheme === "dark" ? "#1f2937" : "#fff",
@@ -270,25 +281,31 @@ export default function FragmentAdminGrid({
     setIsAddDialogOpen(true);
   };
 
-  const handleDelete = async (fragment: Fragment) => {
-    if (!confirm(`Are you sure you want to delete "${fragment.name}"?`)) {
-      return;
-    }
+  const handleDelete = (fragment: Fragment) => {
+    setFragmentToDelete(fragment);
+  };
+
+  const confirmDelete = async () => {
+    if (!fragmentToDelete) return;
 
     try {
-      const response = await fetch(`/api/admin/fragments/${fragment.id}`, {
+      const response = await fetch(`/api/admin/fragments/${fragmentToDelete.id}`, {
         method: "DELETE",
       });
 
       if (!response.ok) {
-        throw new Error("Failed to delete fragment");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Unable to delete fragment");
       }
 
-      setFragments((prev) => prev.filter((f) => f.id !== fragment.id));
+      setFragments((prev) => prev.filter((f) => f.id !== fragmentToDelete.id));
       toast.success("Fragment deleted successfully");
     } catch (error) {
-      toast.error("Failed to delete fragment");
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      toast.error(`Failed to delete fragment: ${errorMessage}. The fragment may be in use by queries.`);
       console.error(error);
+    } finally {
+      setFragmentToDelete(null);
     }
   };
 
@@ -309,7 +326,8 @@ export default function FragmentAdminGrid({
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || "Failed to create fragment");
+        const details = error.error || error.details || error.message || "Unknown error";
+        throw new Error(`${details}`);
       }
 
       const newFragment = await response.json();
@@ -318,7 +336,8 @@ export default function FragmentAdminGrid({
       resetForm();
       toast.success("Fragment created successfully");
     } catch (error: any) {
-      toast.error(error.message || "Failed to create fragment");
+      const errorMessage = error.message || "Failed to create fragment";
+      toast.error(`Failed to create fragment: ${errorMessage}. Please check your SQL syntax and fragment ID.`);
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -344,7 +363,8 @@ export default function FragmentAdminGrid({
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || "Failed to update fragment");
+        const details = error.error || error.details || error.message || "Unknown error";
+        throw new Error(`${details}`);
       }
 
       const updatedFragment = await response.json();
@@ -355,7 +375,8 @@ export default function FragmentAdminGrid({
       setSelectedFragment(null);
       toast.success("Fragment updated successfully");
     } catch (error: any) {
-      toast.error(error.message || "Failed to update fragment");
+      const errorMessage = error.message || "Failed to update fragment";
+      toast.error(`Failed to update fragment: ${errorMessage}. Please check your SQL syntax.`);
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -746,6 +767,28 @@ export default function FragmentAdminGrid({
           <FragmentForm onSave={handleSaveEdit} isEdit />
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!fragmentToDelete} onOpenChange={(open) => !open && setFragmentToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Fragment</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <strong>&quot;{fragmentToDelete?.name}&quot;</strong>?
+              <br />
+              <br />
+              This action cannot be undone and will permanently delete this SQL fragment from the system.
+              Any queries using this fragment may stop working.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

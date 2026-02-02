@@ -49,7 +49,8 @@ export default function AdminSettingsPanel({
         router.refresh();
       } catch (error) {
         console.error("Error updating default year:", error);
-        toast.error("Failed to update default year");
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        toast.error(`Failed to update default year: ${errorMessage}. Please try again or contact support if the issue persists.`);
       }
     });
   };

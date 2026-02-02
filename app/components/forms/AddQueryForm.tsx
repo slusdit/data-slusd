@@ -16,7 +16,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Plus, Save, Send } from "lucide-react";
+import { Plus, Save, Send, Loader2 } from "lucide-react";
 import { Session } from "next-auth";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -123,7 +123,9 @@ export default function AddQueryForm({
       // TODO: validate SQL, try running it?
     } catch (e) {
       console.error(e);
-      toast.error(`Error running query \n Error: ${e}`);
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      toast.error(`Error validating query: ${errorMessage}. Please check your SQL syntax.`);
+      return; // Don't continue if validation fails
     }
 
     try {
@@ -135,7 +137,8 @@ export default function AddQueryForm({
       toast.success("Query inserted successfully");
     } catch (e) {
       console.error(e);
-      toast.error(`Error creating query \n Error: ${e}`);
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      toast.error(`Failed to create query: ${errorMessage}. Please ensure all required fields are filled and the SQL is valid.`);
     }
   }
 
@@ -382,9 +385,18 @@ export default function AddQueryForm({
           />
         </div>
 
-        <Button type="submit">
-          {submitTitle ?? "Add"}
-          <Plus className="py-1" />
+        <Button type="submit" disabled={form.formState.isSubmitting}>
+          {form.formState.isSubmitting ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            <>
+              {submitTitle ?? "Add"}
+              <Plus className="py-1" />
+            </>
+          )}
         </Button>
       </form>
     </Form>

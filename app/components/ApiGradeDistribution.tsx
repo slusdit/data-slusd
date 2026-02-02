@@ -145,7 +145,7 @@ const ApiGradeDistribution = ({
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch filter options');
+        throw new Error('Failed to load filter options. Please refresh the page or contact support if the issue persists.');
       }
 
       const options = await response.json();
@@ -176,7 +176,9 @@ const ApiGradeDistribution = ({
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch grade data');
+        const errorData = await response.json().catch(() => ({}));
+        const details = errorData.error || 'Please check your filter selections and try again.';
+        throw new Error(`Failed to load grade data: ${details}`);
       }
 
       const result = await response.json();

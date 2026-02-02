@@ -702,7 +702,8 @@ export function CustomQueryClient({
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Query execution failed');
+        const errorDetails = data.error || data.details || 'Unknown error occurred';
+        throw new Error(`Query execution failed: ${errorDetails}. Please verify your SQL syntax and filters, then try again.`);
       }
 
       setQueryState(s => ({
