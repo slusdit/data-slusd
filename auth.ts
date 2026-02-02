@@ -147,30 +147,57 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         user: any
       }
     ) {
+      // Define shared include structure to avoid duplication
+      const userInclude = {
+        favorites: {
+          include: {
+            category: true
+          }
+        },
+        userRole: {
+          include: {
+            QueryCategory: true,
+          },
+        },
+        UserSchool: {
+          include: {
+            school: true,
+          },
+        },
+        school: true,
+        UserClass: {
+          include: {
+            class: true,
+          },
+        },
+      };
+
+      // Fetch user with emulatingId in a single query
       const dbUser = await prisma.user.findUnique({
         where: { id: user.id },
-        include: {
-          favorites: {
-            include: {
-              category: true
-            }
-          },
-          userRole: {
-            include: {
-              QueryCategory: true,
-            },
-          },
-          UserSchool: {
-            include: {
-              school: true,
-            },
-          },
-          school: true,
-          UserClass: {
-            include: {
-              class: true,
-            },
-          },
+        select: {
+          ...userInclude,
+          id: true,
+          name: true,
+          email: true,
+          image: true,
+          admin: true,
+          createdAt: true,
+          updatedAt: true,
+          lastLogin: true,
+          queryEdit: true,
+          primaryRole: true,
+          emailVerified: true,
+          primarySchool: true,
+          psl: true,
+          activeSchool: true,
+          activeDbYear: true,
+          manualSchool: true,
+          emulatingId: true, // Include emulatingId directly
+          blockedSchools: true,
+          addedSchools: true,
+          blockedRoles: true,
+          addedRoles: true,
         },
       });
 
@@ -178,50 +205,38 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return session;
       }
 
-      // Check if user is emulating another user
-      // Try to get emulatingId - column may not exist yet if migration hasn't run
-      let emulatingId: string | null = null;
-      try {
-        const emulatingResult = await prisma.$queryRaw<Array<{ emulatingId: string | null }>>`
-          SELECT emulatingId FROM User WHERE id = ${dbUser.id}
-        `;
-        emulatingId = emulatingResult[0]?.emulatingId || null;
-      } catch (error) {
-        // Column doesn't exist yet - emulation not available until migration runs
-        emulatingId = null;
-      }
-
       let effectiveUser = dbUser;
       let isEmulating = false;
       let emulatingUserInfo = null;
       let realUserInfo = null;
 
-      if (emulatingId && dbUser.admin) {
+      // Check if user is emulating (emulatingId is now already loaded)
+      if (dbUser.emulatingId && dbUser.admin) {
         // Fetch the emulated user's data
         const emulatedUser = await prisma.user.findUnique({
-          where: { id: emulatingId },
-          include: {
-            favorites: {
-              include: {
-                category: true
-              }
-            },
-            userRole: {
-              include: {
-                QueryCategory: true,
-              },
-            },
-            UserSchool: {
-              include: {
-                school: true,
-              },
-            },
-            school: true,
-            UserClass: {
-              include: {
-                class: true,
-              },
-            },
+          where: { id: dbUser.emulatingId },
+          select: {
+            ...userInclude,
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+            admin: true,
+            createdAt: true,
+            updatedAt: true,
+            lastLogin: true,
+            queryEdit: true,
+            primaryRole: true,
+            emailVerified: true,
+            primarySchool: true,
+            psl: true,
+            activeSchool: true,
+            activeDbYear: true,
+            manualSchool: true,
+            blockedSchools: true,
+            addedSchools: true,
+            blockedRoles: true,
+            addedRoles: true,
           },
         });
 
@@ -245,43 +260,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       const effectiveUserSchools = effectiveUser.UserSchool.map((userSchool) => userSchool.school);
       const effectiveUserClasses = effectiveUser.UserClass.map((userClass) => userClass.class);
 
-      // Get override fields - may not exist if migration hasn't run
-      let blockedSchools: string | null = null;
-      let addedSchools: string | null = null;
-      let blockedRoles: string | null = null;
-      let addedRoles: string | null = null;
-
-      try {
-        const overrideResult = await prisma.$queryRaw<Array<{
-          blockedSchools: string | null;
-          addedSchools: string | null;
-          blockedRoles: string | null;
-          addedRoles: string | null;
-        }>>`
-          SELECT blockedSchools, addedSchools, blockedRoles, addedRoles
-          FROM User WHERE id = ${effectiveUser.id}
-        `;
-        if (overrideResult[0]) {
-          blockedSchools = overrideResult[0].blockedSchools;
-          addedSchools = overrideResult[0].addedSchools;
-          blockedRoles = overrideResult[0].blockedRoles;
-          addedRoles = overrideResult[0].addedRoles;
-        }
-      } catch (error) {
-        // Columns don't exist yet - overrides not available until migration runs
-      }
-
+      // Override fields are now loaded directly in the query above
       const schools = await getSchools({
         schools: effectiveUserSchools,
         manualSchool: effectiveUser.manualSchool,
         classes: effectiveUserClasses,
-        blockedSchools,
-        addedSchools,
+        blockedSchools: effectiveUser.blockedSchools,
+        addedSchools: effectiveUser.addedSchools,
       });
 
       // Apply role overrides
       const baseRoles = effectiveUser.userRole.map((role) => role.role) || [];
-      const roles = applyRoleOverrides(baseRoles, blockedRoles, addedRoles);
+      const roles = applyRoleOverrides(baseRoles, effectiveUser.blockedRoles, effectiveUser.addedRoles);
 
       session.user = {
         ...session.user,

@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import sql from "mssql";
 import prisma from "./db";
 import { number } from "zod";
+import { queryCache } from "./queryCache";
 
 export type SchooolCredentials = {
   id: number;
@@ -443,7 +444,20 @@ export async function runQuery(
           // TODO: get from session, feed in from auth() call or Aeries query
         }
 
+        // Check cache before executing query
+        const cacheKey = { query, dbYear };
+        const cachedResult = queryCache.get(query, cacheKey);
+        if (cachedResult) {
+          // console.log("Cache hit for query");
+          return cachedResult;
+        }
+
         result = await request.query(query);
+
+        // Cache the results (only for SELECT queries)
+        if (result.recordset && query.trim().toLowerCase().startsWith('select')) {
+          queryCache.set(query, result.recordset, cacheKey, 300); // 5 minute TTL
+        }
 
         // console.log("SQL result", result.recordset);
         // await closePool();
@@ -574,7 +588,20 @@ export async function runQueryStandalone(
           // TODO: get from session, feed in from auth() call or Aeries query
         }
 
+        // Check cache before executing query
+        const cacheKey = { query, dbYear };
+        const cachedResult = queryCache.get(query, cacheKey);
+        if (cachedResult) {
+          // console.log("Cache hit for query");
+          return cachedResult;
+        }
+
         result = await request.query(query);
+
+        // Cache the results (only for SELECT queries)
+        if (result.recordset && query.trim().toLowerCase().startsWith('select')) {
+          queryCache.set(query, result.recordset, cacheKey, 300); // 5 minute TTL
+        }
 
         // console.log("SQL result", result.recordset);
         // await closePool();
