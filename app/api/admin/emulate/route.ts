@@ -1,6 +1,7 @@
 import { auth, SessionUser } from "@/auth";
 import prisma from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
+import { checkRateLimit, getRateLimitIdentifier } from "@/lib/rateLimit";
 
 /**
  * POST /api/admin/emulate
@@ -16,6 +17,31 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Unauthorized - Admin access required" },
         { status: 403 }
+      );
+    }
+
+    // Rate limiting: 3 requests per minute for emulation (strict limit)
+    const identifier = await getRateLimitIdentifier(request, user.id);
+    const rateLimit = checkRateLimit(identifier, {
+      maxRequests: 3,
+      windowSeconds: 60,
+    });
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        {
+          error: 'Too many requests',
+          message: `Rate limit exceeded. Try again after ${new Date(rateLimit.reset).toLocaleTimeString()}`,
+        },
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': rateLimit.limit.toString(),
+            'X-RateLimit-Remaining': rateLimit.remaining.toString(),
+            'X-RateLimit-Reset': rateLimit.reset.toString(),
+            'Retry-After': Math.ceil((rateLimit.reset - Date.now()) / 1000).toString(),
+          },
+        }
       );
     }
 

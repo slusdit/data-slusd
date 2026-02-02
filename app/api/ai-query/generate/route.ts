@@ -5,6 +5,7 @@ import { buildSystemPrompt, parseInterpretation } from '@/lib/prompt-builder';
 import { auth, SessionUser } from '@/auth';
 import { getFragmentLibrary } from '@/lib/fragment-service';
 import { FragmentLibrary, Fragment } from '@/lib/types/query-builder';
+import { checkRateLimit, getRateLimitIdentifier } from '@/lib/rateLimit';
 
 // Map school codes to fragment IDs (same as in page.tsx)
 const schoolCodeToFragmentId: Record<string, string> = {
@@ -187,6 +188,32 @@ export async function POST(request: Request) {
     }
 
     const user = session.user as unknown as SessionUser;
+
+    // Rate limiting: 10 requests per 10 seconds per user
+    const identifier = await getRateLimitIdentifier(request, user.id);
+    const rateLimit = checkRateLimit(identifier, {
+      maxRequests: 10,
+      windowSeconds: 10,
+    });
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        {
+          error: 'Too many requests',
+          message: `Rate limit exceeded. Try again after ${new Date(rateLimit.reset).toLocaleTimeString()}`,
+        },
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': rateLimit.limit.toString(),
+            'X-RateLimit-Remaining': rateLimit.remaining.toString(),
+            'X-RateLimit-Reset': rateLimit.reset.toString(),
+            'Retry-After': Math.ceil((rateLimit.reset - Date.now()) / 1000).toString(),
+          },
+        }
+      );
+    }
+
     const activeSchool = user.activeSchool ?? -1; // -1 means no access
     const allowedSchools = user.schools || [];
 
