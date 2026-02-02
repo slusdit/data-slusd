@@ -123,6 +123,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           // console.log({ user }, { account }, { profile }, { profileEmail }, { profileId }, { result })
           const allSchools = await getAllSchools(profileEmail)
           // console.log({ result })
+
+          // Update lastLogin timestamp
+          await prisma.user.update({
+            where: { id: profileId },
+            data: { lastLogin: new Date() }
+          })
         }
 
         // console.log(user)

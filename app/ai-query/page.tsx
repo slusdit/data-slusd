@@ -83,6 +83,12 @@ export default async function AIQueryPage() {
   }
 
   const user = session.user as unknown as SessionUser;
+
+  // Only admins can access the AI Query Builder
+  if (!user.admin) {
+    redirect('/');
+  }
+
   const activeSchool = user.activeSchool;
   const allowedSchools = user.schools || [];
 

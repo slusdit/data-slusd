@@ -51,6 +51,7 @@ type User = {
   queryEdit: boolean;
   activeSchool: number;
   primaryRole?: string;
+  lastLogin?: Date | string | null;
   userRole: UserRole[];
   UserSchool: UserSchool[];
   favorites?: any[];
@@ -263,6 +264,40 @@ export default function UserAdminGrid({
             {params.value ? "Yes" : "No"}
           </span>
         ),
+      },
+      {
+        headerName: "Last Login",
+        field: "lastLogin",
+        width: 150,
+        filter: true,
+        floatingFilter: true,
+        sortable: true,
+        valueFormatter: (params: any) => {
+          if (!params.value) return "Never";
+          const date = new Date(params.value);
+          return date.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
+          });
+        },
+        cellRenderer: (params: any) => {
+          if (!params.value) {
+            return <span className="text-muted-foreground">Never</span>;
+          }
+          const date = new Date(params.value);
+          return (
+            <span title={date.toLocaleString()}>
+              {date.toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })}
+            </span>
+          );
+        },
       },
       {
         headerName: "Actions",

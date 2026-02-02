@@ -32,6 +32,7 @@ export type AdminPageUser = {
   queryEdit: boolean;
   activeSchool: number;
   primarySchool: number | null;
+  lastLogin: Date | null;
   userRole: UserRole[];
   UserSchool: UserSchool[];
 };
@@ -94,6 +95,7 @@ export default async function AdminPage() {
           activeSchool: true,
           primarySchool: true,
           primaryRole: true,
+          lastLogin: true,
           // Manual overrides
           blockedSchools: true,
           addedSchools: true,
