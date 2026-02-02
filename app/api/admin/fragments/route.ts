@@ -3,6 +3,61 @@ import { auth } from '@/auth';
 import prisma from '@/lib/db';
 import adminCheck from '@/lib/adminCheck';
 
+/**
+ * Validates SQL fragment for safety
+ * Ensures fragment only contains SELECT statements
+ */
+function validateFragmentSQL(snippet: string, fragmentType: string): { valid: boolean; error?: string } {
+  // Normalize SQL
+  const normalized = snippet.trim().toLowerCase();
+
+  if (!normalized) {
+    return { valid: false, error: 'SQL snippet cannot be empty' };
+  }
+
+  // For base queries, must start with SELECT
+  if (fragmentType === 'base') {
+    if (!normalized.startsWith('select') && !normalized.startsWith('with')) {
+      return { valid: false, error: 'Base queries must start with SELECT or WITH (CTE)' };
+    }
+  }
+
+  // Check for dangerous SQL keywords
+  const dangerousKeywords = [
+    'drop', 'delete', 'insert', 'update', 'alter', 'create', 'truncate',
+    'exec', 'execute', 'xp_cmdshell', 'sp_executesql', 'merge', 'grant',
+    'revoke', 'deny', 'backup', 'restore', 'bulk'
+  ];
+
+  for (const keyword of dangerousKeywords) {
+    const regex = new RegExp(`\\b${keyword}\\b`, 'i');
+    if (regex.test(snippet)) {
+      return { valid: false, error: `Dangerous keyword detected: ${keyword.toUpperCase()}. Fragments must be read-only.` };
+    }
+  }
+
+  // Check for SQL injection patterns
+  const injectionPatterns = [
+    /;\s*(drop|delete|insert|update|create)/i,
+    /--\s*$/m, // SQL comments at end of line (potential comment-out attack)
+    /\/\*.*\*\//s, // Block comments (can hide malicious code)
+  ];
+
+  for (const pattern of injectionPatterns) {
+    if (pattern.test(snippet)) {
+      return { valid: false, error: 'SQL snippet contains potentially unsafe patterns' };
+    }
+  }
+
+  // Validate no multiple statements (semicolon-separated)
+  const statements = snippet.split(';').filter(s => s.trim().length > 0);
+  if (statements.length > 1) {
+    return { valid: false, error: 'Fragments cannot contain multiple SQL statements (semicolon-separated)' };
+  }
+
+  return { valid: true };
+}
+
 // GET all fragments
 export async function GET() {
   try {
@@ -37,6 +92,26 @@ export async function POST(request: Request) {
     if (!data.fragmentId || !data.name || !data.snippet || !data.categoryId) {
       return NextResponse.json(
         { error: 'Missing required fields: fragmentId, name, snippet, categoryId' },
+        { status: 400 }
+      );
+    }
+
+    // Validate SQL fragment for safety
+    const validation = validateFragmentSQL(data.snippet, data.type || 'filter');
+    if (!validation.valid) {
+      return NextResponse.json(
+        {
+          error: 'Invalid SQL fragment',
+          details: validation.error,
+        },
+        { status: 400 }
+      );
+    }
+
+    // Validate fragmentId format (alphanumeric and underscores only)
+    if (!/^[a-zA-Z0-9_]+$/.test(data.fragmentId)) {
+      return NextResponse.json(
+        { error: 'Fragment ID must contain only alphanumeric characters and underscores' },
         { status: 400 }
       );
     }

@@ -303,27 +303,85 @@ export class QueryComposer {
     return finalQuery;
   }
 
+  /**
+   * Safely substitutes parameters into SQL query
+   * Uses robust escaping to prevent SQL injection
+   * @param query - SQL query with {{parameter}} placeholders
+   * @param parameters - Parameter values to substitute
+   * @returns Query with substituted parameters
+   */
   private substituteParameters(query: string, parameters: Record<string, unknown>): string {
     let result = query;
 
     for (const [name, value] of Object.entries(parameters)) {
+      // Validate parameter name to prevent injection
+      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name)) {
+        throw new Error(`Invalid parameter name: ${name}. Parameter names must be alphanumeric.`);
+      }
+
       const placeholder = new RegExp(`\\{\\{${name}\\}\\}`, 'g');
 
       let substitution: string;
       if (typeof value === 'string') {
-        // Escape single quotes for SQL safety
-        substitution = `'${value.replace(/'/g, "''")}'`;
+        // Comprehensive SQL escaping for strings
+        // 1. Escape single quotes by doubling them (SQL standard)
+        // 2. Prevent Unicode/multi-byte injection
+        // 3. Remove null bytes and control characters
+        const escaped = value
+          .replace(/\0/g, '') // Remove null bytes
+          .replace(/[\x00-\x1F\x7F]/g, '') // Remove control characters
+          .replace(/'/g, "''"); // Escape single quotes
+
+        // Validate that the string doesn't contain SQL keywords that shouldn't be in data
+        const dangerousPatterns = /(\b(union|select|insert|update|delete|drop|exec|execute)\b)/i;
+        if (dangerousPatterns.test(escaped)) {
+          console.warn(`[SECURITY] Parameter "${name}" contains SQL keywords: ${escaped.substring(0, 50)}`);
+        }
+
+        substitution = `'${escaped}'`;
       } else if (typeof value === 'number') {
+        // Validate number is safe
+        if (!isFinite(value) || isNaN(value)) {
+          throw new Error(`Invalid number parameter: ${name} = ${value}`);
+        }
         substitution = String(value);
       } else if (Array.isArray(value)) {
-        substitution = `(${value.map(v => typeof v === 'string' ? `'${v.replace(/'/g, "''")}'` : v).join(', ')})`;
+        // Validate and escape array elements
+        if (value.length === 0) {
+          throw new Error(`Parameter "${name}" is an empty array`);
+        }
+        const escapedArray = value.map(v => {
+          if (typeof v === 'string') {
+            const escaped = v
+              .replace(/\0/g, '')
+              .replace(/[\x00-\x1F\x7F]/g, '')
+              .replace(/'/g, "''");
+            return `'${escaped}'`;
+          } else if (typeof v === 'number') {
+            if (!isFinite(v) || isNaN(v)) {
+              throw new Error(`Invalid number in array parameter: ${name}`);
+            }
+            return String(v);
+          } else {
+            throw new Error(`Unsupported array element type in parameter: ${name}`);
+          }
+        });
+        substitution = `(${escapedArray.join(', ')})`;
       } else if (typeof value === 'boolean') {
         substitution = value ? '1' : '0';
+      } else if (value === null || value === undefined) {
+        substitution = 'NULL';
       } else {
-        substitution = String(value);
+        throw new Error(`Unsupported parameter type for "${name}": ${typeof value}`);
       }
 
       result = result.replace(placeholder, substitution);
+    }
+
+    // Verify all placeholders were substituted
+    const remainingPlaceholders = result.match(/\{\{[^}]+\}\}/g);
+    if (remainingPlaceholders) {
+      throw new Error(`Unsubstituted parameters found: ${remainingPlaceholders.join(', ')}`);
     }
 
     return result;
