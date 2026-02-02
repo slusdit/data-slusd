@@ -66,8 +66,15 @@ const QueryInput = ({
           className="w-1/2 place-content-start whitespace-pre-wrap min-h-40"
           onChange={(e) => setValue(e.target.value)}
         />
-        <Button variant="outline" onClick={handleQuery}>
-          Run Query
+        <Button variant="outline" onClick={handleQuery} disabled={loading}>
+          {loading ? (
+            <>
+              <LoaderCircle className="h-4 w-4 mr-2 animate-spin" />
+              Running...
+            </>
+          ) : (
+            "Run Query"
+          )}
         </Button>
       </div>
 

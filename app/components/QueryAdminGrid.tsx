@@ -18,6 +18,16 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -68,6 +78,7 @@ export default function QueryAdminGrid({
   });
   const [isLoading, setIsLoading] = useState(false);
   const [selectedRows, setSelectedRows] = useState<QueryWithCategory[]>([]);
+  const [queryToDelete, setQueryToDelete] = useState<QueryWithCategory | null>(null);
 
   const myTheme = themeQuartz.withParams({
     backgroundColor: resolvedTheme === "dark" ? "#1f2937" : "#fff",
@@ -232,18 +243,23 @@ export default function QueryAdminGrid({
     setIsEditDialogOpen(true);
   };
 
-  const handleDelete = async (query: QueryWithCategory) => {
-    if (!confirm(`Are you sure you want to delete "${query.name}"?`)) {
-      return;
-    }
+  const handleDelete = (query: QueryWithCategory) => {
+    setQueryToDelete(query);
+  };
+
+  const confirmDelete = async () => {
+    if (!queryToDelete) return;
 
     try {
-      await deleteQuery({ id: query.id });
-      setQueries((prev) => prev.filter((q) => q.id !== query.id));
+      await deleteQuery({ id: queryToDelete.id });
+      setQueries((prev) => prev.filter((q) => q.id !== queryToDelete.id));
       toast.success("Query deleted successfully");
     } catch (error) {
-      toast.error("Failed to delete query");
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      toast.error(`Failed to delete query: ${errorMessage}`);
       console.error(error);
+    } finally {
+      setQueryToDelete(null);
     }
   };
 
@@ -561,6 +577,26 @@ export default function QueryAdminGrid({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!queryToDelete} onOpenChange={(open) => !open && setQueryToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Query</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <strong>&quot;{queryToDelete?.name}&quot;</strong>?
+              <br />
+              This action cannot be undone and will permanently delete this query from the system.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

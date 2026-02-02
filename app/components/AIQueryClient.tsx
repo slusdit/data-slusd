@@ -399,10 +399,12 @@ export function AIQueryClient({
       }
 
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Query generation failed';
+      const actionableError = `${errorMessage}. Try simplifying your prompt or selecting different filters.`;
       setState(s => ({
         ...s,
         isGenerating: false,
-        error: error instanceof Error ? error.message : 'Generation failed',
+        error: actionableError,
       }));
     }
   }, [state.prompt, state.queryMode, categorizeFragments, selectedEnhancements, filterByEnhancements, buildEnhancedPrompt]);
@@ -420,10 +422,12 @@ export function AIQueryClient({
         results: results || [],
       }));
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Query execution failed';
+      const actionableError = `${errorMessage}. Please check the generated SQL for errors or try regenerating the query.`;
       setState(s => ({
         ...s,
         isExecuting: false,
-        error: error instanceof Error ? error.message : 'Query execution failed'
+        error: actionableError
       }));
     }
   }, [state.generatedSql]);
