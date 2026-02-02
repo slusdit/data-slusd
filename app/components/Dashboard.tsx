@@ -261,15 +261,9 @@ export default function Dashboard({ user, activeSchool, quickStats }: DashboardP
             <CardContent className="flex flex-col items-center justify-center py-10">
               <Star className="h-10 w-10 text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium mb-2">No favorites yet</h3>
-              <p className="text-muted-foreground text-center mb-4">
+              <p className="text-muted-foreground text-center">
                 Add reports to your favorites by clicking the star icon on any query page.
               </p>
-              <Button asChild variant="outline">
-                <Link href="/ai-query">
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  Try AI Query Builder
-                </Link>
-              </Button>
             </CardContent>
           </Card>
         ) : (

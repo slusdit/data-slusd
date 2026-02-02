@@ -15,6 +15,7 @@ model User {
   admin         Boolean         @default(false)
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
+  lastLogin     DateTime?
   queryEdit     Boolean         @default(false)
   primaryRole   ROLE            @default(USER)
   emailVerified DateTime?
