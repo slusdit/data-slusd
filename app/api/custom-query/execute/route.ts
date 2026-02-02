@@ -8,6 +8,7 @@
 import { NextResponse } from 'next/server';
 import { auth, SessionUser } from '@/auth';
 import { runQuery } from '@/lib/aeries';
+import { checkRateLimit, getRateLimitIdentifier } from '@/lib/rateLimit';
 
 // School code to name mapping for logging
 const SCHOOL_NAMES: Record<string, string> = {
@@ -103,6 +104,32 @@ export async function POST(request: Request) {
     }
 
     const user = session.user as unknown as SessionUser;
+
+    // Rate limiting: 20 requests per 30 seconds per user
+    const identifier = await getRateLimitIdentifier(request, user.id);
+    const rateLimit = checkRateLimit(identifier, {
+      maxRequests: 20,
+      windowSeconds: 30,
+    });
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        {
+          error: 'Too many requests',
+          message: `Rate limit exceeded. Try again after ${new Date(rateLimit.reset).toLocaleTimeString()}`,
+        },
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': rateLimit.limit.toString(),
+            'X-RateLimit-Remaining': rateLimit.remaining.toString(),
+            'X-RateLimit-Reset': rateLimit.reset.toString(),
+            'Retry-After': Math.ceil((rateLimit.reset - Date.now()) / 1000).toString(),
+          },
+        }
+      );
+    }
+
     const activeSchool = user.activeSchool ?? -1;
     const allowedSchools = user.schools || [];
 

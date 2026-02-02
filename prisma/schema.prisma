@@ -413,3 +413,47 @@ model AppSetting {
   updatedAt DateTime @updatedAt
   updatedBy String?  // User ID who last updated
 }
+
+// Audit log for tracking security-sensitive actions
+model AuditLog {
+  id            String   @id @default(cuid())
+  userId        String   // User who performed the action
+  userEmail     String   // Email of user (denormalized for easy filtering)
+  action        AuditAction // Type of action performed
+  resource      String?  // Resource affected (e.g., user ID being emulated)
+  resourceType  String?  // Type of resource (e.g., "user", "query", "fragment")
+  details       String?  @db.Text // JSON-encoded details about the action
+  ipAddress     String?  // IP address of the request
+  userAgent     String?  @db.Text // User agent string
+  status        AuditStatus @default(SUCCESS) // SUCCESS or FAILURE
+  errorMessage  String?  @db.Text // Error message if status is FAILURE
+  createdAt     DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@index([userEmail])
+  @@index([status])
+}
+
+enum AuditAction {
+  EMULATION_START
+  EMULATION_STOP
+  QUERY_EXECUTE
+  QUERY_CREATE
+  QUERY_UPDATE
+  QUERY_DELETE
+  FRAGMENT_CREATE
+  FRAGMENT_UPDATE
+  FRAGMENT_DELETE
+  USER_LOGIN
+  USER_LOGOUT
+  PERMISSION_CHANGE
+  ROLE_CHANGE
+  SCHOOL_ACCESS_CHANGE
+}
+
+enum AuditStatus {
+  SUCCESS
+  FAILURE
+}

@@ -188,8 +188,10 @@ export async function getSchoolsFromEmail({
     pool = await poolPromise;
   }
   const request = pool.request();
+  // Use parameterized query to prevent SQL injection
+  request.input('email', sql.VarChar, email);
   const query = `Select sc from tch
- where em = '${email}'
+ where em = @email
  and del = 0
  and tg = ''`;
   let schoolQueryResult;
@@ -220,6 +222,129 @@ export async function removeCommentsFromQuery(query: string) {
   return cleanedQuery;
 }
 
+/**
+ * Validates and sanitizes school codes to prevent SQL injection
+ * Ensures all values are valid integers
+ * @param schoolCodes - Single school code or array of school codes
+ * @returns Validated array of school codes as numbers
+ */
+function validateSchoolCodes(schoolCodes: string | number | (string | number)[] | undefined): number[] {
+  if (schoolCodes === undefined || schoolCodes === null) {
+    return [];
+  }
+
+  const codesArray = Array.isArray(schoolCodes) ? schoolCodes : [schoolCodes];
+
+  const validated = codesArray.map(code => {
+    const numCode = typeof code === 'string' ? parseInt(code, 10) : code;
+    if (isNaN(numCode) || !Number.isInteger(numCode)) {
+      throw new Error(`Invalid school code: ${code}. School codes must be integers.`);
+    }
+    return numCode;
+  });
+
+  return validated;
+}
+
+/**
+ * Validates that a query only contains SELECT and UNION statements (whitelist approach)
+ * This prevents SQL injection by only allowing read-only queries
+ * @param query - The SQL query to validate
+ * @throws Error if query contains non-whitelisted operations
+ */
+function validateQueryWhitelist(query: string): void {
+  // Remove comments first to prevent bypass attempts
+  let cleanQuery = query;
+
+  // Remove single-line comments (--)
+  cleanQuery = cleanQuery.replace(/--[^\r\n]*/g, '');
+
+  // Remove multi-line comments (/* ... */)
+  cleanQuery = cleanQuery.replace(/\/\*[\s\S]*?\*\//g, '');
+
+  // Normalize whitespace and convert to lowercase for analysis
+  const normalized = cleanQuery.replace(/\s+/g, ' ').trim().toLowerCase();
+
+  // Check if query is empty after removing comments
+  if (!normalized || normalized.length === 0) {
+    throw new Error("Query is empty or contains only comments");
+  }
+
+  // Split by common statement separators (semicolon) to check each statement
+  const statements = normalized.split(';').filter(s => s.trim().length > 0);
+
+  for (const statement of statements) {
+    const trimmed = statement.trim();
+
+    // Each statement must start with SELECT or be part of a UNION
+    // We also need to handle CTEs (WITH clause) which are read-only
+    const startsWithSelect = /^select\s/.test(trimmed);
+    const startsWithWith = /^with\s/.test(trimmed); // CTEs (Common Table Expressions)
+    const isUnionPart = /union\s+(all\s+)?select\s/.test(trimmed);
+
+    if (!startsWithSelect && !startsWithWith && !isUnionPart) {
+      throw new Error(`Query validation failed: Only SELECT and UNION queries are allowed. Found: ${trimmed.substring(0, 50)}...`);
+    }
+  }
+
+  // Blocklist dangerous keywords that should never appear in SELECT queries
+  const dangerousKeywords = [
+    'drop', 'delete', 'insert', 'update', 'alter', 'create', 'truncate',
+    'exec', 'execute', 'xp_cmdshell', 'sp_executesql', 'merge', 'grant',
+    'revoke', 'deny', 'backup', 'restore', 'bulk'
+  ];
+
+  const foundDangerous = dangerousKeywords.filter(keyword => {
+    // Use word boundaries to avoid false positives (e.g., "select" contains "elect")
+    const regex = new RegExp(`\\b${keyword}\\b`, 'i');
+    return regex.test(normalized);
+  });
+
+  if (foundDangerous.length > 0) {
+    throw new Error(`Query validation failed: Dangerous keywords detected: ${foundDangerous.join(', ')}`);
+  }
+}
+
+/**
+ * Helper function to run a parameterized query with proper SQL injection protection
+ * @param query - SQL query with parameter placeholders (@param1, @param2, etc.)
+ * @param parameters - Object mapping parameter names to their values
+ * @param options - Optional database year override
+ * @returns Query results
+ */
+export async function runParameterizedQuery(
+  query: string,
+  parameters: Record<string, { type: any; value: any }> = {},
+  options?: { dbYear?: number }
+) {
+  try {
+    const session = await auth();
+
+    // Validate query using whitelist approach (only SELECT and UNION allowed)
+    validateQueryWhitelist(query);
+
+    const cleanQuery = await removeCommentsFromQuery(query);
+
+    // Get database year from options, session, or default
+    const dbYear = options?.dbYear ?? (session?.user as any)?.activeDbYear ?? DEFAULT_DB_YEAR;
+    const database = getDatabaseName(dbYear);
+    const pool = await getPoolForDatabase(database);
+
+    const request = pool.request();
+
+    // Add all parameters to the request
+    for (const [name, param] of Object.entries(parameters)) {
+      request.input(name, param.type, param.value);
+    }
+
+    const result = await request.query(cleanQuery);
+    return result.recordset;
+  } catch (error) {
+    console.error("Error in runParameterizedQuery:", error);
+    throw error;
+  }
+}
+
 // Function to execute a query
 export async function runQuery(
   query: string,
@@ -230,16 +355,9 @@ export async function runQuery(
 
     const session = await auth();
 
-    const email = session?.user?.email;
-    const queryBlockList = ["drop", "update", "insert", "delete", "modify", "alter", "create"];
-    const queryLower = query?.toLowerCase();
-    if (queryBlockList.some((term) => queryLower?.includes(term))) {
-      throw Error("Dangerous query");
-    }
+    // Validate query using whitelist approach (only SELECT and UNION allowed)
+    validateQueryWhitelist(query);
 
-    // let cleanQuery = query?.replace(/\s+/g, " ").trim();
-
-    // cleanQuery = await removeCommentsFromQuery(cleanQuery);
     let cleanQuery = await removeCommentsFromQuery(query);
 
     // Get database year from options, session, or default
@@ -253,52 +371,48 @@ export async function runQuery(
       try {
         let result;
 
-        // TEST: Remove email to test @@sc overrice
-        const schoolCode = session?.user?.schools
-        // console.log(session?.user?.schools)
-        // console.log(session?.user)
-
-        // console.log(schoolCode);
-        // TODO: Prepend @@variables to declarations at the top of the query, rather than search and replace?
-        // Handle @SC variable
+        // Handle @@sc variable (user's allowed schools)
         if (query.includes("@@sc")) {
+          const schoolCode = session?.user?.schools;
+
           if (schoolCode === "0") {
-            let allSchools:
-              | {
-                sc: string;
-              }[]
-              | string = await prisma.schoolInfo.findMany({
-                select: {
-                  sc: true,
-                },
-              });
-            allSchools = allSchools.map((school) => `${school.sc}`).join(",");
-            ;
+            // User has access to all schools
+            const allSchools = await prisma.schoolInfo.findMany({
+              select: { sc: true },
+            });
+            // Validate all school codes are integers
+            const validatedSchools = validateSchoolCodes(allSchools.map(s => s.sc));
+            const schoolList = validatedSchools.join(",");
 
-            query = query.replace("= @@sc", `in (${allSchools})`);
-
+            query = query.replace("= @@sc", `in (${schoolList})`);
           } else {
-            if (typeof schoolCode === "string") {
-              query = query.replace("@@sc", schoolCode);
+            // Validate and sanitize school codes before injection
+            const validatedSchools = validateSchoolCodes(schoolCode);
+
+            if (validatedSchools.length === 1) {
+              query = query.replace(/@@sc/g, validatedSchools[0].toString());
+            } else if (validatedSchools.length > 1) {
+              const schoolList = validatedSchools.join(",");
+              query = query.replace("= @@sc", `in (${schoolList})`);
+              query = query.replace(/@@sc/g, validatedSchools[0].toString()); // Fallback for non-IN usage
             }
-            if (Array.isArray(schoolCode)) {
-              query = query.replace("= @@sc", `in (${schoolCode.join(",")})`); // TODO: make this work with comma separated school codes
-            }
-            // console.log("Query", query);
           }
         }
 
+        // Handle @@psc variable (user's primary school code)
         if (query.includes("@@psc")) {
-          // if (session?.user?.manualSchool) {
+          const primarySchool = session?.user?.primarySchool;
+          // Validate primary school is a valid integer
+          const validatedPrimary = validateSchoolCodes(primarySchool);
 
-          //   query = query.replace("@@psc", "'"+ session?.user?.manualSchool + "'");
-          // } else {
-
-          query = query.replace("@@psc", "'" + session?.user?.primarySchool + "'");
-          // }
-
+          if (validatedPrimary.length > 0) {
+            query = query.replace(/@@psc/g, "'" + validatedPrimary[0] + "'");
+          } else {
+            throw new Error("Invalid primary school code");
+          }
         }
-        // Handle @@asc (Active School Code) variable
+
+        // Handle @@asc variable (user's active school code)
         if (query.includes("@@asc")) {
           const activeSchool = session?.user?.activeSchool;
 
@@ -310,14 +424,17 @@ export async function runQuery(
             const schools = await prisma.schoolInfo.findMany({
               select: { sc: true },
             });
-            const allSchoolSc = "'" + schools.map((school) => `${school.sc}`).join("', '") + "'";
+            // Validate all school codes
+            const validatedSchools = validateSchoolCodes(schools.map(s => s.sc));
+            const allSchoolSc = validatedSchools.map(sc => `'${sc}'`).join(", ");
 
             // Handle both "= @@asc" and just "@@asc" patterns
             query = query.replace("= @@asc", `in (${allSchoolSc})`);
             query = query.replace(/@@asc/g, allSchoolSc);
           } else {
-            // Specific school selected - replace all occurrences
-            query = query.replace(/@@asc/g, "'" + activeSchool + "'");
+            // Specific school selected - validate and replace
+            const validatedActive = validateSchoolCodes(activeSchool);
+            query = query.replace(/@@asc/g, "'" + validatedActive[0] + "'");
           }
         }
 
@@ -368,16 +485,10 @@ export async function runQueryStandalone(
 
       session = await auth();
     }
-    const email = session?.user?.email;
-    const queryBlockList = ["drop", "update", "insert", "delete", "modify", "alter", "create"];
-    const queryLower = query?.toLowerCase();
-    if (queryBlockList.some((term) => queryLower?.includes(term))) {
-      throw Error("Dangerous query");
-    }
 
-    // let cleanQuery = query?.replace(/\s+/g, " ").trim();
+    // Validate query using whitelist approach (only SELECT and UNION allowed)
+    validateQueryWhitelist(query);
 
-    // cleanQuery = await removeCommentsFromQuery(cleanQuery);
     let cleanQuery = await removeCommentsFromQuery(query);
 
     // Get database year from options, session, or default
@@ -391,52 +502,48 @@ export async function runQueryStandalone(
       try {
         let result;
 
-        // TEST: Remove email to test @@sc overrice
-        const schoolCode = session?.user?.schools
-        // console.log(session?.user?.schools)
-        // console.log(session?.user)
-
-        // console.log(schoolCode);
-        // TODO: Prepend @@variables to declarations at the top of the query, rather than search and replace?
-        // Handle @SC variable
+        // Handle @@sc variable (user's allowed schools)
         if (query.includes("@@sc")) {
+          const schoolCode = session?.user?.schools;
+
           if (schoolCode === "0") {
-            let allSchools:
-              | {
-                sc: string;
-              }[]
-              | string = await prisma.schoolInfo.findMany({
-                select: {
-                  sc: true,
-                },
-              });
-            allSchools = allSchools.map((school) => `${school.sc}`).join(",");
-            ;
+            // User has access to all schools
+            const allSchools = await prisma.schoolInfo.findMany({
+              select: { sc: true },
+            });
+            // Validate all school codes are integers
+            const validatedSchools = validateSchoolCodes(allSchools.map(s => s.sc));
+            const schoolList = validatedSchools.join(",");
 
-            query = query.replace("= @@sc", `in (${allSchools})`);
-
+            query = query.replace("= @@sc", `in (${schoolList})`);
           } else {
-            if (typeof schoolCode === "string") {
-              query = query.replace("@@sc", schoolCode);
+            // Validate and sanitize school codes before injection
+            const validatedSchools = validateSchoolCodes(schoolCode);
+
+            if (validatedSchools.length === 1) {
+              query = query.replace(/@@sc/g, validatedSchools[0].toString());
+            } else if (validatedSchools.length > 1) {
+              const schoolList = validatedSchools.join(",");
+              query = query.replace("= @@sc", `in (${schoolList})`);
+              query = query.replace(/@@sc/g, validatedSchools[0].toString()); // Fallback for non-IN usage
             }
-            if (Array.isArray(schoolCode)) {
-              query = query.replace("= @@sc", `in (${schoolCode.join(",")})`); // TODO: make this work with comma separated school codes
-            }
-            // console.log("Query", query);
           }
         }
 
+        // Handle @@psc variable (user's primary school code)
         if (query.includes("@@psc")) {
-          // if (session?.user?.manualSchool) {
+          const primarySchool = session?.user?.primarySchool;
+          // Validate primary school is a valid integer
+          const validatedPrimary = validateSchoolCodes(primarySchool);
 
-          //   query = query.replace("@@psc", "'"+ session?.user?.manualSchool + "'");
-          // } else {
-
-          query = query.replace("@@psc", "'" + session?.user?.primarySchool + "'");
-          // }
-
+          if (validatedPrimary.length > 0) {
+            query = query.replace(/@@psc/g, "'" + validatedPrimary[0] + "'");
+          } else {
+            throw new Error("Invalid primary school code");
+          }
         }
-        // Handle @@asc (Active School Code) variable
+
+        // Handle @@asc variable (user's active school code)
         if (query.includes("@@asc")) {
           const activeSchool = session?.user?.activeSchool;
 
@@ -448,14 +555,17 @@ export async function runQueryStandalone(
             const schools = await prisma.schoolInfo.findMany({
               select: { sc: true },
             });
-            const allSchoolSc = "'" + schools.map((school) => `${school.sc}`).join("', '") + "'";
+            // Validate all school codes
+            const validatedSchools = validateSchoolCodes(schools.map(s => s.sc));
+            const allSchoolSc = validatedSchools.map(sc => `'${sc}'`).join(", ");
 
             // Handle both "= @@asc" and just "@@asc" patterns
             query = query.replace("= @@asc", `in (${allSchoolSc})`);
             query = query.replace(/@@asc/g, allSchoolSc);
           } else {
-            // Specific school selected - replace all occurrences
-            query = query.replace(/@@asc/g, "'" + activeSchool + "'");
+            // Specific school selected - validate and replace
+            const validatedActive = validateSchoolCodes(activeSchool);
+            query = query.replace(/@@asc/g, "'" + validatedActive[0] + "'");
           }
         }
 

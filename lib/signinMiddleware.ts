@@ -1,12 +1,13 @@
 'use server'
 import { Profile } from "next-auth";
-import { AeriesSimpleStaff, AeriesSimpleTeacher, getAeriesStaff, getTeacherSchoolCredentials, runQuery } from "./aeries";
+import { AeriesSimpleStaff, AeriesSimpleTeacher, getAeriesStaff, getTeacherSchoolCredentials, runQuery, runParameterizedQuery } from "./aeries";
 import prisma from "./db";
 import { revalidatePath } from "next/cache";
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { auth } from "@/auth";
 import { ROLE } from "@prisma/client";
+import sql from "mssql";
 
 type GetAllSchoolsReturn = {
     primarySchool: number
@@ -255,9 +256,14 @@ export async function updateActiveDbYear(userId: string, activeDbYear: number) {
 
 export async function getPrimarySchool(profileEmail: string): Promise<GetAllSchoolsReturn> {
 
-    const primarySchoolQuery = `SELECT PSC 'primarySchool', ID 'psl' FROM STF WHERE EM = '${profileEmail}'`
-    // console.log(primarySchoolQuery)
-    const primarySchoolResults = await runQuery(primarySchoolQuery)
+    // Use parameterized query to prevent SQL injection
+    const primarySchoolQuery = `SELECT PSC 'primarySchool', ID 'psl' FROM STF WHERE EM = @email`
+    const primarySchoolResults = await runParameterizedQuery(
+        primarySchoolQuery,
+        {
+            email: { type: sql.VarChar, value: profileEmail }
+        }
+    )
     return primarySchoolResults[0]
 
 }
