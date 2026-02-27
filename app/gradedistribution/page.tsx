@@ -13,30 +13,7 @@ import { aggregateTeacherGradeSummaries, getHighestIndexTermFromDatabase } from 
 export default async function GradeDistributionPage() {
     const session = await auth();
 
-    const rawData = await prisma.gradeDistribution.findMany({
-        select: {
-            ell: true,
-            specialEd: true,
-            ard: true,
-            schoolYear: true
-        },
-        distinct: ['ell', 'specialEd', 'ard', 'schoolYear']
-    });
-    // console.log("Raw data fetched from the database:", rawData[0]);
-
-    const ellOptions = [...new Set(rawData.map(item => item.ell).filter(Boolean))];
-    // console.log("Unique ELL options:", ellOptions);
-    const specialEdOptions = [...new Set(rawData.map(item => item.specialEd).filter(Boolean))];
-    // console.log("Unique Special Ed options:", specialEdOptions);
-    const ardOptions = [...new Set(rawData.map(item => item.ard).filter(Boolean))];
-    // console.log("Unique ARD options:", ardOptions);
-    const schoolYearOptions = [...new Set(rawData.map(item => item.schoolYear).filter(Boolean))].sort().reverse();
-    // console.log("Unique School Year options:", schoolYearOptions);
-
-    const data = await aggregateTeacherGradeSummaries({})
-    // console.log("Data fetched from the database:", data[0]);
-    
-    if (!session) {    
+    if (!session) {
         return (
             <div className="container mx-auto p-4">
                 <h1 className="text-3xl font-bold">Grade Distribution</h1>
@@ -45,6 +22,27 @@ export default async function GradeDistributionPage() {
             </div>
         );
     }
+
+    const userSchools = session.user.schools?.map(Number).filter(n => !isNaN(n)) || [];
+    const schoolFilter = userSchools.length > 0 ? userSchools : undefined;
+
+    const rawData = await prisma.gradeDistribution.findMany({
+        where: schoolFilter ? { sc: { in: schoolFilter } } : undefined,
+        select: {
+            ell: true,
+            specialEd: true,
+            ard: true,
+            schoolYear: true
+        },
+        distinct: ['ell', 'specialEd', 'ard', 'schoolYear']
+    });
+
+    const ellOptions = [...new Set(rawData.map(item => item.ell).filter(Boolean))];
+    const specialEdOptions = [...new Set(rawData.map(item => item.specialEd).filter(Boolean))];
+    const ardOptions = [...new Set(rawData.map(item => item.ard).filter(Boolean))];
+    const schoolYearOptions = [...new Set(rawData.map(item => item.schoolYear).filter(Boolean))].sort().reverse();
+
+    const data = await aggregateTeacherGradeSummaries({ scs: schoolFilter })
 
     const termFilter = (session?.user?.activeSchool > 10) ? session?.user?.activeSchool : undefined;
     const defaultTerm = await getHighestIndexTermFromDatabase({ sc: termFilter })

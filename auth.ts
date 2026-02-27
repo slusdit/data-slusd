@@ -109,33 +109,34 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
   providers: [Google],
   trustHost: true,
-  callbacks: {
-    async signIn({ user, account, profile, email, credentials }) {
+  events: {
+    // Sync runs after PrismaAdapter has created the user record, so DB operations
+    // work on first sign-in (unlike the signIn callback which fires before creation).
+    async signIn({ user, account, profile }) {
       if (account?.provider === "google") {
-        // console.log('~~~~~~~~~~~~ SIGNING IN WITH GOOGLE ~~~~~~~~~~~~')
-        let profileEmail = profile?.email
-        // profileEmail =  'jfox@slusd.us' // 'xbugarin@slusd.us' // !! Override for testing
+        const profileEmail = profile?.email
         const profileId = user?.id
-        // console.log({ profileEmail })
-        // console.log({ profileId })
         if (profileId && profileEmail) {
-          const result = await syncTeacherClasses(profileId, profileEmail)
-          // console.log({ user }, { account }, { profile }, { profileEmail }, { profileId }, { result })
-          const allSchools = await getAllSchools(profileEmail)
-          // console.log({ result })
+          try {
+            await syncTeacherClasses(profileId, profileEmail)
+            await getAllSchools(profileEmail)
 
-          // Update lastLogin timestamp
-          await prisma.user.update({
-            where: { id: profileId },
-            data: { lastLogin: new Date() }
-          })
+            // Update lastLogin timestamp
+            await prisma.user.update({
+              where: { id: profileId },
+              data: { lastLogin: new Date() }
+            })
+          } catch (error) {
+            console.error("Sign-in sync error:", error)
+          }
         }
-
-        // console.log(user)
-
-        // console.log({ profileEmail })
-        // console.log(profile?.email_verified && profile?.email?.endsWith("@slusd.us"))
-        return profile?.email_verified && profile?.email?.endsWith("@slusd.us")
+      }
+    },
+  },
+  callbacks: {
+    async signIn({ account, profile }) {
+      if (account?.provider === "google") {
+        return !!(profile?.email_verified && profile?.email?.endsWith("@slusd.us"))
       }
 
       return true;
