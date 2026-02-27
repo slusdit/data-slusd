@@ -10,8 +10,8 @@ import { ROLE } from "@prisma/client";
 import sql from "mssql";
 
 type GetAllSchoolsReturn = {
-    primarySchool: number
-    psl: number
+    primarySchool: number | null
+    psl: number | null
     allSchools: number[]
 }
 
@@ -196,7 +196,7 @@ export async function updateSchools(profileEmail: string, allQueriedSchools?: Ge
 
 export async function getAllSchools(profileEmail: string) {
 
-    const results = await getPrimarySchool(profileEmail)
+    const results = await getPrimarySchool(profileEmail) ?? { primarySchool: null, psl: null, allSchools: [] as number[] }
     const profileName = profileEmail.split('@')[0]
     const allSchoolsQuery = `SELECT SCH FROM USR where NM like '${profileName}%' and DEL = 0`
     // console.log(allSchoolsQuery)

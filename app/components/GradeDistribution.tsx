@@ -1401,10 +1401,14 @@ const GradeDistribution = ({
                     items={filteredCourseTitleItems}
                     values={selectedCourseTitles}
                     onChange={setSelectedCourseTitles}
-                    placeholder="Select Courses"
+                    placeholder={
+                      selectedTerms.length === 0 || selectedSchools.length === 0
+                        ? "Select a term and school first"
+                        : "Select Courses"
+                    }
                     label="Courses"
                     width="w-full"
-                    disabled={showLoading}
+                    disabled={showLoading || selectedTerms.length === 0 || selectedSchools.length === 0}
                     maxDisplayItems={3}
                     classNameVar={
                       selectedCourseTitles.length === 0
@@ -1498,7 +1502,7 @@ const GradeDistribution = ({
           )}
         </CardContent>
       </Card>
-      {selectedTerms.length > 0 && selectedCourseTitles.length > 0 ? (
+      {selectedTerms.length > 0 && selectedSchools.length > 0 && selectedCourseTitles.length > 0 ? (
         <>
           <Card>
             <CardHeader>
@@ -1589,7 +1593,7 @@ const GradeDistribution = ({
         <Card>
           <CardHeader>
             <CardTitle className="text-center">
-              Please Select a Term and at least one Course to show data
+              Please select a Term, School, and at least one Course to show data
             </CardTitle>
           </CardHeader>
         </Card>
