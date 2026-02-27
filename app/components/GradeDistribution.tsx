@@ -74,13 +74,15 @@ const GradeDistribution = ({
     "SEM2",
   ];
   
-  const acceptedSchools = initialData?.map((item) => String(item.sc)) || [];
-  let defaultSchool;
-  if (activeSchool) {
-    if (activeSchool === "0" || !acceptedSchools.includes(activeSchool)) {
-      defaultSchool = [];
-    } else {
-      defaultSchool = [activeSchool];
+  // Find the matching UserSchool entry so we use the exact SchoolInfo.sc format
+  // that the dropdown items use (avoids Int vs String format mismatches)
+  let defaultSchool: string[] = [];
+  if (activeSchool && activeSchool !== "0") {
+    const matchingUserSchool = user.UserSchool.find(
+      (us) => us.school.sc === activeSchool || Number(us.school.sc) === Number(activeSchool)
+    );
+    if (matchingUserSchool) {
+      defaultSchool = [matchingUserSchool.school.sc];
     }
   }
   const [data, setData] = useState(initialData || []);
@@ -608,7 +610,7 @@ const GradeDistribution = ({
         teacherNumbers: selectedTeacherNumbers.length > 0 ? selectedTeacherNumbers : undefined,
         departmentCodes: selectedDepartments.length > 0 ? selectedDepartments : undefined,
         scs: selectedSchools.length > 0 ? selectedSchools.map(s => parseInt(s)) : undefined,
-        courseTitles: selectedCourseTitles.length > 0 ? selectedCourseTitles : undefined,
+        // courseTitles excluded from server query so the dropdown retains all available courses
         // Single-select filters
         schoolYear: selectedSchoolYear.length > 0 ? selectedSchoolYear[0] : undefined,
         period: selectedPeriods.length > 0 ? selectedPeriods[0] : undefined,
@@ -621,8 +623,12 @@ const GradeDistribution = ({
       const newData = await aggregateTeacherGradeSummaries(filterParams);
 
       if (newData && newData.length > 0) {
-        setData(newData);
-        setFilteredData(newData);
+        // Apply course filter client-side so the course dropdown keeps all options
+        const displayData = selectedCourseTitles.length > 0
+          ? newData.filter((item: { courseTitle: string }) => selectedCourseTitles.includes(item.courseTitle))
+          : newData;
+        setData(displayData);
+        setFilteredData(displayData);
 
         const newTeacherItems = Array.from(
           new Set(newData.map((item: { teacherName: any; }) => item.teacherName))
@@ -686,17 +692,6 @@ const GradeDistribution = ({
           );
           if (validSchools.length !== selectedSchools.length) {
             setSelectedSchools(validSchools);
-          }
-        }
-        if (selectedCourseTitles.length > 0) {
-          const validCourses = selectedCourseTitles.filter((course) =>
-            newCourseTitleItems.some(
-              (item) =>
-                item.id.toLowerCase().trim() === course.toLowerCase().trim()
-            )
-          );
-          if (validCourses.length !== selectedCourseTitles.length) {
-            setSelectedCourseTitles(validCourses);
           }
         }
         if (selectedTerms.length > 0) {
@@ -1411,7 +1406,7 @@ const GradeDistribution = ({
                     disabled={showLoading || selectedTerms.length === 0 || selectedSchools.length === 0}
                     maxDisplayItems={3}
                     classNameVar={
-                      selectedCourseTitles.length === 0
+                      selectedCourseTitles.length === 0 && selectedTeachers.length === 0
                         ? "outline outline-red-600 rounded-md"
                         : ""
                     }
@@ -1502,7 +1497,7 @@ const GradeDistribution = ({
           )}
         </CardContent>
       </Card>
-      {selectedTerms.length > 0 && selectedSchools.length > 0 && selectedCourseTitles.length > 0 ? (
+      {selectedTerms.length > 0 && selectedSchools.length > 0 && (selectedCourseTitles.length > 0 || selectedTeachers.length > 0) ? (
         <>
           <Card>
             <CardHeader>
@@ -1593,7 +1588,7 @@ const GradeDistribution = ({
         <Card>
           <CardHeader>
             <CardTitle className="text-center">
-              Please select a Term, School, and at least one Course to show data
+              Please select a Term, School, and at least one Course or Teacher to show data
             </CardTitle>
           </CardHeader>
         </Card>

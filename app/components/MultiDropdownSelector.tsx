@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/popover";
 import { Check, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { FC, ReactNode, MouseEvent, useMemo, useState, useEffect } from "react";
+import { FC, ReactNode, useMemo, useState, useEffect, useRef } from "react";
 import UserSchoolWithDetails from "./SchoolPicker";
 import Image from "next/image";
 
@@ -69,6 +69,7 @@ const MultiDropdownSelector: FC<MultiDropdownSelectorProps> = ({
 }) => {
   const [open, setOpen] = useState(false);
   const [initialized, setInitialized] = useState(false);
+  const skipNextOpen = useRef(false);
   
   const findMostRecentItem = useMemo(() => {
     if (!itemOrder || itemOrder.length === 0 || items.length === 0) return null;
@@ -125,13 +126,20 @@ const MultiDropdownSelector: FC<MultiDropdownSelectorProps> = ({
     }
   };
 
-  const handleClearAll = (e: MouseEvent) => {
+  const stopAllPropagation = (e: React.SyntheticEvent) => {
     e.stopPropagation();
+    e.preventDefault();
+    e.nativeEvent.stopImmediatePropagation();
+    skipNextOpen.current = true;
+  };
+
+  const handleClearAll = (e: React.PointerEvent) => {
+    stopAllPropagation(e);
     onChange([]);
   };
 
-  const handleRemoveItem = (itemId: string, e: MouseEvent) => {
-    e.stopPropagation();
+  const handleRemoveItem = (itemId: string, e: React.PointerEvent) => {
+    stopAllPropagation(e);
     onChange(values.filter((id) => id !== itemId));
   };
 
@@ -162,10 +170,13 @@ const MultiDropdownSelector: FC<MultiDropdownSelectorProps> = ({
               </div>
             )}
             {item.label}
-            <X 
-              className="h-3 w-3 cursor-pointer opacity-70 hover:opacity-100" 
-              onClick={(e) => handleRemoveItem(item.id, e)} 
-            />
+            <span
+              role="button"
+              onPointerDown={(e) => handleRemoveItem(item.id, e)}
+              onClick={(e) => stopAllPropagation(e)}
+            >
+              <X className="h-3 w-3 cursor-pointer opacity-70 hover:opacity-100" />
+            </span>
           </Badge>
         ))}
         {remainingCount > 0 && (
@@ -202,7 +213,13 @@ const MultiDropdownSelector: FC<MultiDropdownSelectorProps> = ({
   return (
     <div className="flex items-center space-x-4">
       {label && <label className="font-medium text-sm">{label}</label>}
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={open} onOpenChange={(newOpen) => {
+          if (skipNextOpen.current) {
+            skipNextOpen.current = false;
+            return;
+          }
+          setOpen(newOpen);
+        }}>
         <PopoverTrigger asChild className={classNameVar || ""}>
           <Button
             variant="outline"
@@ -218,10 +235,13 @@ const MultiDropdownSelector: FC<MultiDropdownSelectorProps> = ({
                   : displayText()}
               </div>
               {selectedItems.length > 0 && (
-                <X
-                  className="h-4 w-4 shrink-0 opacity-50 hover:opacity-100 ml-2 cursor-pointer"
-                  onClick={handleClearAll}
-                />
+                <span
+                  role="button"
+                  onPointerDown={(e) => handleClearAll(e)}
+                  onClick={(e) => stopAllPropagation(e)}
+                >
+                  <X className="h-4 w-4 shrink-0 opacity-50 hover:opacity-100 ml-2 cursor-pointer" />
+                </span>
               )}
             </div>
           </Button>
