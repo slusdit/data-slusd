@@ -74,17 +74,8 @@ const GradeDistribution = ({
     "SEM2",
   ];
   
-  // Find the matching UserSchool entry so we use the exact SchoolInfo.sc format
-  // that the dropdown items use (avoids Int vs String format mismatches)
-  let defaultSchool: string[] = [];
-  if (activeSchool && activeSchool !== "0") {
-    const matchingUserSchool = user.UserSchool.find(
-      (us) => us.school.sc === activeSchool || Number(us.school.sc) === Number(activeSchool)
-    );
-    if (matchingUserSchool) {
-      defaultSchool = [matchingUserSchool.school.sc];
-    }
-  }
+  // Pre-fill the school filter with the user's active school from the header
+  const defaultSchool: string[] = (activeSchool && activeSchool !== "0") ? [activeSchool] : [];
   const [data, setData] = useState(initialData || []);
   const [filteredData, setFilteredData] = useState(initialData || []);
   const [gridApi, setGridApi] = useState<GridApi | null>(null);
@@ -191,6 +182,7 @@ const GradeDistribution = ({
 
   const { resolvedTheme } = useTheme();
   const chartRef = useRef(null);
+  const isInitialMount = useRef(true);
 
   const baseChartTheme = useMemo(
     () => (resolvedTheme === "dark" ? "ag-sheets-dark" : "ag-sheets"),
@@ -621,7 +613,6 @@ const GradeDistribution = ({
       };
 
       const newData = await aggregateTeacherGradeSummaries(filterParams);
-
       if (newData && newData.length > 0) {
         // Apply course filter client-side so the course dropdown keeps all options
         const displayData = selectedCourseTitles.length > 0
@@ -773,6 +764,16 @@ const GradeDistribution = ({
       gender: selectedGender,
       schoolYear: selectedSchoolYear,
     };
+
+    // Skip server sync on initial mount — initialData is already loaded and
+    // the dropdowns are populated from it. Running syncDataWithFilters here
+    // with the pre-filled school + default term + school year may return no
+    // data and wipe the dropdown items.
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      updateDropdownOptions();
+      return;
+    }
 
     // If demographic filters are active or changed, use server-side sync
     if (hasDemographicFilters || demographicFiltersChanged) {

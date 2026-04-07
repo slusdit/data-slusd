@@ -4,9 +4,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import UserAdminGrid from "./UserAdminGrid";
 import QueryAdminGrid from "./QueryAdminGrid";
 import FragmentAdminGrid from "./FragmentAdminGrid";
+import CategoryAdminGrid from "./CategoryAdminGrid";
 import AdminSettingsPanel from "./AdminSettingsPanel";
 import { QueryWithCategory } from "./QueryBar";
-import { Users, Database, Sparkles, Settings } from "lucide-react";
+import { Users, Database, Sparkles, Settings, Tags } from "lucide-react";
 import { Session } from "next-auth";
 
 type AdminPermissions = {
@@ -61,12 +62,14 @@ export default function AdminTabs({
   const visibleTabs = [
     canSeeUsersTab && "users",
     canSeeQueryTabs && "queries",
+    canSeeQueryTabs && "categories",
     canSeeQueryTabs && "fragments",
     canSeeSettingsTab && "settings",
   ].filter(Boolean);
 
   const gridCols = visibleTabs.length <= 2 ? `grid-cols-${visibleTabs.length}` :
-                   visibleTabs.length === 3 ? "grid-cols-3" : "grid-cols-4";
+                   visibleTabs.length === 3 ? "grid-cols-3" :
+                   visibleTabs.length === 4 ? "grid-cols-4" : "grid-cols-5";
 
   // Default to first available tab
   const defaultTab = canSeeUsersTab ? "users" : "queries";
@@ -84,6 +87,12 @@ export default function AdminTabs({
           <TabsTrigger value="queries" className="flex items-center gap-2">
             <Database className="h-4 w-4" />
             Queries
+          </TabsTrigger>
+        )}
+        {canSeeQueryTabs && (
+          <TabsTrigger value="categories" className="flex items-center gap-2">
+            <Tags className="h-4 w-4" />
+            Categories
           </TabsTrigger>
         )}
         {canSeeQueryTabs && (
@@ -117,6 +126,15 @@ export default function AdminTabs({
             dataIn={queries}
             categories={categories}
             session={session}
+          />
+        </TabsContent>
+      )}
+
+      {canSeeQueryTabs && (
+        <TabsContent value="categories">
+          <CategoryAdminGrid
+            categories={categories}
+            roles={roles}
           />
         </TabsContent>
       )}

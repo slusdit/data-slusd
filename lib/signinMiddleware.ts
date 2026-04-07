@@ -1,6 +1,6 @@
 'use server'
 import { Profile } from "next-auth";
-import { AeriesSimpleStaff, AeriesSimpleTeacher, getAeriesStaff, getTeacherSchoolCredentials, runQuery, runParameterizedQuery } from "./aeries";
+import { AeriesSimpleStaff, AeriesSimpleTeacher, getAeriesStaff, getTeacherSchoolCredentials, runParameterizedQuery } from "./aeries";
 import prisma from "./db";
 import { revalidatePath } from "next/cache";
 import { redirect } from 'next/navigation';
@@ -197,13 +197,22 @@ export async function updateSchools(profileEmail: string, allQueriedSchools?: Ge
 export async function getAllSchools(profileEmail: string) {
 
     const results = await getPrimarySchool(profileEmail) ?? { primarySchool: null, psl: null, allSchools: [] as number[] }
-    const profileName = profileEmail.split('@')[0]
-    const allSchoolsQuery = `SELECT SCH FROM USR where NM like '${profileName}%' and DEL = 0`
-    // console.log(allSchoolsQuery)
-    const allSchoolsResults = await runQuery(allSchoolsQuery)
-    // console.log({ allSchoolsResults })
-    results['allSchools'] = allSchoolsResults.map((school) => school.SCH)
-    // console.log({ results })
+
+    // Use the Aeries API SchoolAccessPermissions as the source of truth
+    // instead of the USR table, which could match wrong users via LIKE query
+    try {
+        const aeriesStaff = await getAeriesStaff({ email: profileEmail, endpoint: "/api/v5/staff" })
+        results['allSchools'] = aeriesStaff.schoolPermissions
+    } catch (error) {
+        console.error("Failed to get school permissions from Aeries API, falling back to primary school:", error)
+        // Fall back to primary school only if API call fails
+        if (results.primarySchool) {
+            results['allSchools'] = [results.primarySchool]
+        } else {
+            results['allSchools'] = []
+        }
+    }
+
     const user = await prisma.user.findUnique({
         where: {
             email: profileEmail
@@ -211,8 +220,6 @@ export async function getAllSchools(profileEmail: string) {
     })
 
     // Always update schools on sign-in to ensure permissions are current
-    // Previously only updated when primarySchool was null, which meant returning users
-    // never got their school assignments refreshed from Aeries
     if (user) {
         await updateSchools(profileEmail, results)
     }

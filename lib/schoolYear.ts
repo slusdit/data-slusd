@@ -7,10 +7,10 @@
 // Available Aeries database years (add new years as they become available)
 // Year code is the START year of the school year (e.g., 25 = 2025-26)
 export const AVAILABLE_DB_YEARS = [
-  { year: 25, label: '2025-26', database: 'DST25000SLUSD' },
-  { year: 24, label: '2024-25', database: 'DST24000SLUSD' },
-  { year: 23, label: '2023-24', database: 'DST23000SLUSD' },
-  { year: 22, label: '2022-23', database: 'DST22000SLUSD' },
+  { year: 25, label: '2025-26', database: 'DST25000SanLeandroUSD' },
+  { year: 24, label: '2024-25', database: 'DST24000SanLeandroUSD' },
+  { year: 23, label: '2023-24', database: 'DST23000SanLeandroUSD' },
+  { year: 22, label: '2022-23', database: 'DST22000SanLeandroUSD' },
 ];
 
 /**
@@ -55,5 +55,5 @@ export function getDatabaseName(yearCode: number): string {
     return yearInfo.database;
   }
   // Fallback: construct from pattern if not found in list
-  return `DST${yearCode.toString().padStart(2, '0')}000SLUSD`;
+  return `DST${yearCode.toString().padStart(2, '0')}000SanLeandroUSD`;
 }

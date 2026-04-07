@@ -77,10 +77,6 @@ export async function updateUser(data: any, field: string) {
           addedSchools: data.addedSchools,
           blockedRoles: data.blockedRoles,
           addedRoles: data.addedRoles,
-          // Update roles relationship
-          userRole: {
-            set: data.userRoleIds?.map((roleId: string) => ({ id: roleId })) || []
-          },
           // Update schools relationship through UserSchool
           UserSchool: {
             deleteMany: {},
@@ -91,18 +87,34 @@ export async function updateUser(data: any, field: string) {
         }
       });
 
+      // Update roles via explicit UserRole junction table (consistent with Aeries sync)
+      if (data.userRoleIds) {
+        await prisma.userRole.deleteMany({ where: { userId: data.id } });
+        if (data.userRoleIds.length > 0) {
+          await prisma.userRole.createMany({
+            data: data.userRoleIds.map((roleId: string) => ({
+              userId: data.id,
+              roleId,
+            })),
+            skipDuplicates: true,
+          });
+        }
+      }
+
       console.log(`Updated user ${data.id} with all fields`);
     }
     else if (field === "User Roles") {
-      // UPDATED: Use the userRole many-to-many relationship instead of manual junction table management
-      await prisma.user.update({
-        where: { id: data.id },
-        data: {
-          userRole: {
-            set: data.userRoleIds?.map((roleId: string) => ({ id: roleId })) || []
-          }
-        }
-      });
+      // Use explicit UserRole junction table (consistent with Aeries sync)
+      await prisma.userRole.deleteMany({ where: { userId: data.id } });
+      if (data.userRoleIds?.length > 0) {
+        await prisma.userRole.createMany({
+          data: data.userRoleIds.map((roleId: string) => ({
+            userId: data.id,
+            roleId,
+          })),
+          skipDuplicates: true,
+        });
+      }
 
       console.log(`Updated user roles for user ${data.id}: ${data.userRoleIds?.length || 0} roles`);
     }
@@ -148,5 +160,60 @@ export async function updateUser(data: any, field: string) {
   } catch (error) {
     console.error(`Error updating user ${data.id} field ${field}:`, error);
     throw error; // Re-throw to let the calling code handle it
+  }
+}
+
+export async function addQueryCategory(data: { label: string; value: string; sort?: number; roleIds?: string[] }) {
+  try {
+    const result = await prisma.queryCategory.create({
+      data: {
+        label: data.label,
+        value: data.value,
+        sort: data.sort ?? 0,
+        roles: {
+          connect: data.roleIds?.map((id) => ({ id })) || [],
+        },
+      },
+      include: { roles: true },
+    });
+    return result;
+  } catch (error) {
+    console.error("Error creating query category:", error);
+    throw error;
+  }
+}
+
+export async function updateQueryCategory(data: { id: string; label?: string; value?: string; sort?: number; roleIds?: string[] }) {
+  try {
+    const result = await prisma.queryCategory.update({
+      where: { id: data.id },
+      data: {
+        ...(data.label !== undefined && { label: data.label }),
+        ...(data.value !== undefined && { value: data.value }),
+        ...(data.sort !== undefined && { sort: data.sort }),
+        ...(data.roleIds !== undefined && {
+          roles: {
+            set: data.roleIds.map((id) => ({ id })),
+          },
+        }),
+      },
+      include: { roles: true },
+    });
+    return result;
+  } catch (error) {
+    console.error(`Error updating query category ${data.id}:`, error);
+    throw error;
+  }
+}
+
+export async function deleteQueryCategory(id: string) {
+  try {
+    await prisma.queryCategory.delete({
+      where: { id },
+    });
+    return { success: true };
+  } catch (error) {
+    console.error(`Error deleting query category ${id}:`, error);
+    throw error;
   }
 }

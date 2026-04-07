@@ -155,9 +155,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             category: true
           }
         },
-        userRole: {
+        UserRole: {
           include: {
-            QueryCategory: true,
+            role: true,
           },
         },
         UserSchool: {
@@ -270,8 +270,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         addedSchools: effectiveUser.addedSchools,
       });
 
-      // Apply role overrides
-      const baseRoles = effectiveUser.userRole.map((role) => role.role) || [];
+      // Apply role overrides — read from explicit UserRole table (where Aeries sync writes)
+      const baseRoles: ROLE[] = effectiveUser.UserRole.map((ur) => ur.role.role) || [];
+      // Include primaryRole in the roles array so it's used for access control
+      if (effectiveUser.primaryRole && !baseRoles.includes(effectiveUser.primaryRole)) {
+        baseRoles.push(effectiveUser.primaryRole);
+      }
       const roles = applyRoleOverrides(baseRoles, effectiveUser.blockedRoles, effectiveUser.addedRoles);
 
       session.user = {
