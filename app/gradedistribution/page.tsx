@@ -45,7 +45,8 @@ export default async function GradeDistributionPage() {
     const data = await aggregateTeacherGradeSummaries({ scs: schoolFilter })
 
     const termFilter = (session?.user?.activeSchool > 10) ? session?.user?.activeSchool : undefined;
-    const defaultTerm = await getHighestIndexTermFromDatabase({ sc: termFilter })
+    const defaultSchoolYear = schoolYearOptions.length > 0 ? schoolYearOptions[0] : undefined;
+    const defaultTerm = await getHighestIndexTermFromDatabase({ sc: termFilter, schoolYear: defaultSchoolYear })
     const sentTerm = await defaultTerm?.term ? defaultTerm.term : "SEM1"
 
     return (

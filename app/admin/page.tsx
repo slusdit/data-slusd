@@ -101,10 +101,14 @@ export default async function AdminPage() {
           addedSchools: true,
           blockedRoles: true,
           addedRoles: true,
-          userRole: {
+          UserRole: {
             select: {
-              id: true,
-              role: true,
+              role: {
+                select: {
+                  id: true,
+                  role: true,
+                },
+              },
             },
           },
           UserSchool: {
@@ -121,7 +125,10 @@ export default async function AdminPage() {
         },
       }),
       auth(),
-      prisma.queryCategory.findMany(),
+      prisma.queryCategory.findMany({
+        include: { roles: true },
+        orderBy: { sort: "asc" },
+      }),
       prisma.aIFragment.findMany({
         orderBy: { sortOrder: "asc" },
         include: { category: true },
@@ -132,8 +139,14 @@ export default async function AdminPage() {
       getDefaultDbYear(),
     ]);
 
+  // Transform UserRole data to flat userRole shape expected by components
+  const transformedUsers = allUsers.map((user) => ({
+    ...user,
+    userRole: user.UserRole.map((ur) => ur.role),
+  }));
+
   // Filter users for Site Admins - they can only see users at their schools
-  let users = allUsers;
+  let users = transformedUsers;
   if (isSiteAdmin && !isSuperAdmin) {
     users = allUsers.filter((user) => {
       // Check if user has any school in common with the site admin
