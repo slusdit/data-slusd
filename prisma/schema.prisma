@@ -224,19 +224,19 @@ model GradeDistribution {
   source        String?
   schoolYear    String   @db.VarChar(50)
   sc            Int      // School Code
-  studentId     String   // Student ID
+  studentId     String   @db.VarChar(50)  // Student ID
   studentNumber String   // Student Number (SN)
   grade         String?  // GR
   gender       String?  // GE
-  period        String?  // PD
+  period        String?  @db.VarChar(10)  // PD
   departmentCode String? // DEPT_CODE
   course        String? // CO (Not used)
   divisionCode  String?  // DC
   courseNumber  String?  // CN
-  courseTitle   String?  // CO
-  teacherNumber String     // TN
-  section       String?  // SE
-  term          String
+  courseTitle   String?  @db.VarChar(100)  // CO
+  teacherNumber String   @db.VarChar(20)  // TN
+  section       String?  @db.VarChar(10)  // SE
+  term          String   @db.VarChar(10)
   mark          String
   teacherName   String   // TE
   specialEd     String?
@@ -245,7 +245,11 @@ model GradeDistribution {
   dli           String?  // Dual Language Student
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
-  
+
+  // Unique constraint to prevent duplicate enrollments
+  // A student can only have one grade per unique combination of these fields
+  @@unique([studentId, sc, term, courseTitle, section, period, teacherNumber])
+
   // Indexes for faster queries
   @@index([sc, teacherNumber, term, mark])
   @@index([schoolYear, sc])

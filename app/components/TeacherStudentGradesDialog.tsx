@@ -27,6 +27,8 @@ const TeacherStudentGradesDialog = ({
   ellStatus,
   specialEdStatus,
   ardStatus,
+  periodStatus,
+  schoolYearStatus,
 }: {
   children: React.ReactNode;
   teacher: string;
@@ -39,6 +41,8 @@ const TeacherStudentGradesDialog = ({
   ellStatus?: string;
   specialEdStatus?: string;
   ardStatus?: string;
+  periodStatus?: string[];
+  schoolYearStatus?: string;
   }) => {
   console.log("Gender Status2:", genderStatus);
   const [gradeData, setGradeData] = useState<any[]>([]);
@@ -87,6 +91,14 @@ const TeacherStudentGradesDialog = ({
         sortable: true,
         flex: 1,
         minWidth: 100,
+      },
+      {
+        field: "schoolYear",
+        headerName: "School Year",
+        filter: true,
+        sortable: true,
+        flex: 1,
+        minWidth: 120,
       },
       {
         field: "studentId",
@@ -288,7 +300,7 @@ const TeacherStudentGradesDialog = ({
           // const dataCheck = await checkGradeDistributionData();
           // console.log("Database check result:", dataCheck);
 
-          const result = await getStudentGrades(sc, tn, term, courseTitle, genderStatus, ellStatus, specialEdStatus, ardStatus);
+          const result = await getStudentGrades(sc, tn, term, courseTitle, genderStatus, ellStatus, specialEdStatus, ardStatus, periodStatus, schoolYearStatus);
           // console.log(
           //   "Student grade data retrieved:",
           //   result?.length || 0,
@@ -307,7 +319,7 @@ const TeacherStudentGradesDialog = ({
 
       fetchData();
     }
-  }, [open, sc, tn, term, courseTitle]);
+  }, [open, sc, tn, term, courseTitle, genderStatus, ellStatus, specialEdStatus, ardStatus, periodStatus, schoolYearStatus]);
 
   // Calculate summary statistics
 const gradeSummary = useMemo(() => {

@@ -32,15 +32,17 @@ export default async function GradeDistributionPage() {
             ell: true,
             specialEd: true,
             ard: true,
-            schoolYear: true
+            schoolYear: true,
+            period: true
         },
-        distinct: ['ell', 'specialEd', 'ard', 'schoolYear']
+        distinct: ['ell', 'specialEd', 'ard', 'schoolYear', 'period']
     });
 
     const ellOptions = [...new Set(rawData.map(item => item.ell).filter(Boolean))];
     const specialEdOptions = [...new Set(rawData.map(item => item.specialEd).filter(Boolean))];
     const ardOptions = [...new Set(rawData.map(item => item.ard).filter(Boolean))];
     const schoolYearOptions = [...new Set(rawData.map(item => item.schoolYear).filter(Boolean))].sort().reverse();
+    const periodOptions = [...new Set(rawData.map(item => item.period).filter(Boolean))].sort();
 
     const data = await aggregateTeacherGradeSummaries({ scs: schoolFilter })
 
@@ -70,7 +72,8 @@ export default async function GradeDistributionPage() {
                         ellOptions,
                         specialEdOptions,
                         ardOptions,
-                        schoolYearOptions
+                        schoolYearOptions,
+                        periodOptions
                     }}
                     activeSchool={session.user.activeSchool.toString()}
                     user={session.user}

@@ -181,6 +181,7 @@ export async function aggregateTeacherGradeSummaries({
   departmentCode,
   departmentCodes,
   period,
+  periods,
   genderStatus,
   grade,
   specialEdStatus,
@@ -200,6 +201,7 @@ export async function aggregateTeacherGradeSummaries({
   departmentCode?: string;
   departmentCodes?: string[];
   period?: string;
+  periods?: string[];
   genderStatus?: string;
   grade?: string;
   specialEdStatus?: string;
@@ -268,6 +270,13 @@ export async function aggregateTeacherGradeSummaries({
 
     if (genderStatus) {
       whereConditions = Prisma.sql`${whereConditions} AND gender = ${genderStatus}`;
+    }
+
+    // Periods - support both single and multi-select
+    if (periods && periods.length > 0) {
+      whereConditions = Prisma.sql`${whereConditions} AND period IN (${Prisma.join(periods)})`;
+    } else if (period) {
+      whereConditions = Prisma.sql`${whereConditions} AND period = ${period}`;
     }
 
     // Log the filters for debugging
