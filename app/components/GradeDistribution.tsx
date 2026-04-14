@@ -36,6 +36,7 @@ interface StudentAttributes {
   ardOptions?: string[];
   genderOptions?: string[];
   schoolYearOptions?: string[];
+  periodOptions?: string[];
 }
 
 interface GradeDistributionProps {
@@ -58,6 +59,8 @@ const GradeDistribution = ({
     specialEdOptions: [],
     ardOptions: [],
     genderOptions: [],
+    schoolYearOptions: [],
+    periodOptions: [],
   },
 }: GradeDistributionProps) => {
 
@@ -162,6 +165,8 @@ const GradeDistribution = ({
           specialEdStatus={selectedSpecialEd[0]}
           ardStatus={selectedArd[0]}
           genderStatus={selectedGender[0]}
+          periodStatus={selectedPeriods.length > 0 ? selectedPeriods : undefined}
+          schoolYearStatus={selectedSchoolYear[0]}
         >
           <span className="text-blue-500 hover:text-blue-700 hover:underline">
             {value}
@@ -274,15 +279,13 @@ const GradeDistribution = ({
   }, [initialData]);
 
   const periodItems = useMemo(() => {
-    if (!initialData || initialData.length === 0) return [];
-    const uniquePeriods = [...new Set(initialData.map((item) => item.period))]
-      .filter(Boolean)
-      .sort((a, b) => a.localeCompare(b));
-    return uniquePeriods.map((period) => ({
-      id: period,
-      label: period,
+    const options = studentAttributes.periodOptions || [];
+    console.log("Period options:", options);
+    return options.map((value) => ({
+      id: value,
+      label: value,
     }));
-  }, [initialData]);
+  }, [studentAttributes.periodOptions]);
 
   const schoolItems = useMemo(() => {
     if (!initialData || initialData.length === 0) return [];
@@ -404,6 +407,7 @@ const GradeDistribution = ({
   }, [studentAttributes.schoolYearOptions]);
 
   useEffect(() => {
+    console.log("Setting filtered items - periodItems:", periodItems);
     setFilteredTeacherItems(teacherItems);
     setFilteredDepartmentItems(departmentItems);
     setFilteredCourseTitleItems(courseTitleItems);
@@ -415,6 +419,7 @@ const GradeDistribution = ({
     setFilteredSchoolItems(schoolItems);
     setFilteredPeriodItems(periodItems);
     setFilteredSchoolYearItems(schoolYearItems);
+    console.log("After setting - filteredPeriodItems should have", periodItems.length, "items");
   }, [
     teacherItems,
     departmentItems,
@@ -495,7 +500,6 @@ const GradeDistribution = ({
     const courseFilteredData = getFilteredDataExcluding("courses");
     const termFilteredData = getFilteredDataExcluding("terms");
     const schoolFilteredData = getFilteredDataExcluding("schools");
-    const periodFilteredData = getFilteredDataExcluding("periods");
 
     const getUniqueItemsWithSelection = (
       data: any[],
@@ -530,14 +534,9 @@ const GradeDistribution = ({
         schoolItems
       )
     );
-    setFilteredPeriodItems(
-      getUniqueItemsWithSelection(
-        periodFilteredData,
-        "period",
-        selectedPeriods,
-        periodItems
-      )
-    );
+    // Period items come from studentAttributes (like school year), not from aggregated data
+    // because aggregated data doesn't preserve period information
+    setFilteredPeriodItems(periodItems);
     setFilteredDepartmentItems(
       getUniqueItemsWithSelection(
         departmentFilteredData,
@@ -602,10 +601,10 @@ const GradeDistribution = ({
         teacherNumbers: selectedTeacherNumbers.length > 0 ? selectedTeacherNumbers : undefined,
         departmentCodes: selectedDepartments.length > 0 ? selectedDepartments : undefined,
         scs: selectedSchools.length > 0 ? selectedSchools.map(s => parseInt(s)) : undefined,
+        periods: selectedPeriods.length > 0 ? selectedPeriods : undefined,
         // courseTitles excluded from server query so the dropdown retains all available courses
         // Single-select filters
         schoolYear: selectedSchoolYear.length > 0 ? selectedSchoolYear[0] : undefined,
-        period: selectedPeriods.length > 0 ? selectedPeriods[0] : undefined,
         ellStatus: selectedEll.length > 0 ? selectedEll[0] : undefined,
         specialEdStatus: selectedSpecialEd.length > 0 ? selectedSpecialEd[0] : undefined,
         ardStatus: selectedArd.length > 0 ? selectedArd[0] : undefined,
@@ -732,6 +731,7 @@ const GradeDistribution = ({
     selectedSpecialEd.length > 0 ||
     selectedArd.length > 0 ||
     selectedGender.length > 0 ||
+    selectedPeriods.length > 0 ||
     selectedSchoolYear.length > 0;
 
   // Track previous demographic filter state to detect changes
@@ -740,6 +740,7 @@ const GradeDistribution = ({
     specialEd: selectedSpecialEd,
     ard: selectedArd,
     gender: selectedGender,
+    period: selectedPeriods,
     schoolYear: selectedSchoolYear,
   });
 
@@ -754,6 +755,7 @@ const GradeDistribution = ({
       JSON.stringify(prevDemographicFilters.current.specialEd) !== JSON.stringify(selectedSpecialEd) ||
       JSON.stringify(prevDemographicFilters.current.ard) !== JSON.stringify(selectedArd) ||
       JSON.stringify(prevDemographicFilters.current.gender) !== JSON.stringify(selectedGender) ||
+      JSON.stringify(prevDemographicFilters.current.period) !== JSON.stringify(selectedPeriods) ||
       JSON.stringify(prevDemographicFilters.current.schoolYear) !== JSON.stringify(selectedSchoolYear);
 
     // Update ref for next comparison
@@ -762,6 +764,7 @@ const GradeDistribution = ({
       specialEd: selectedSpecialEd,
       ard: selectedArd,
       gender: selectedGender,
+      period: selectedPeriods,
       schoolYear: selectedSchoolYear,
     };
 
@@ -1037,7 +1040,7 @@ const GradeDistribution = ({
         enableValue: true,
       },
     ],
-    [selectedEll, selectedSpecialEd, selectedArd, selectedGender]
+    [selectedEll, selectedSpecialEd, selectedArd, selectedGender, selectedSchoolYear, selectedPeriods]
   );
 
   const defaultColDef = useMemo(
@@ -1392,7 +1395,7 @@ const GradeDistribution = ({
               <h1 className="mb-2 font-bold underline w-full text-center">
                 Course and Teacher Filters
               </h1>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                   <MultiDropdownSelector
                     items={filteredCourseTitleItems}
                     values={selectedCourseTitles}
@@ -1421,6 +1424,16 @@ const GradeDistribution = ({
                   width="w-full"
                   disabled={showLoading}
                   maxDisplayItems={5}
+                />
+                <MultiDropdownSelector
+                  items={filteredPeriodItems}
+                  values={selectedPeriods}
+                  onChange={setSelectedPeriods}
+                  placeholder="Select Periods"
+                  label="Period"
+                  width="w-full"
+                  disabled={showLoading || filteredPeriodItems.length === 0}
+                  maxDisplayItems={3}
                 />
                 
               </div>

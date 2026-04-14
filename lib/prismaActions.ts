@@ -17,10 +17,12 @@ export async function getStudentGrades(
   genderStatus?: string,
   ellStatus?: string,
   specialEdStatus?: string,
-  ardStatus?: string
+  ardStatus?: string,
+  period?: string | string[],
+  schoolYear?: string
 ) {
   try {
-    console.log("Server action called with:", { sc, tn, term, courseTitle, genderStatus, ellStatus, specialEdStatus, ardStatus });
+    console.log("Server action called with:", { sc, tn, term, courseTitle, genderStatus, ellStatus, specialEdStatus, ardStatus, period, schoolYear });
 
     // Use Prisma's $queryRaw to execute raw SQL safely with parameter binding
     // This approach prevents SQL injection
@@ -64,25 +66,43 @@ export async function getStudentGrades(
       params.push(genderStatus);
     }
 
+    // Support both single period and array of periods
+    if (period) {
+      if (Array.isArray(period) && period.length > 0) {
+        const placeholders = period.map(() => '?').join(',');
+        whereConditions.push(`period IN (${placeholders})`);
+        params.push(...period);
+      } else if (typeof period === 'string') {
+        whereConditions.push("period = ?");
+        params.push(period);
+      }
+    }
+
+    if (schoolYear) {
+      whereConditions.push("schoolYear = ?");
+      params.push(schoolYear);
+    }
+
     const whereClause = whereConditions.join(" AND ");
 
     const query = `
-      SELECT 
-        studentId, 
-        studentNumber, 
-        grade, 
+      SELECT
+        studentId,
+        studentNumber,
+        grade,
         period,
         gender,
-        departmentCode, 
-        courseNumber, 
+        departmentCode,
+        courseNumber,
         courseTitle,
-        section, 
-        term, 
-        mark, 
+        section,
+        term,
+        mark,
         teacherName,
-        specialEd, 
-        ell, 
-        ard
+        specialEd,
+        ell,
+        ard,
+        schoolYear
       FROM GradeDistribution
       WHERE ${whereClause}
       ORDER BY term, period, courseTitle, studentId
