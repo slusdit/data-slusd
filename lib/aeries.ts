@@ -135,6 +135,10 @@ const baseConfig = {
     encrypt: true, // Use encryption
     trustServerCertificate: true, // Trust the server certificate
   },
+  // Driver default is 15000ms; some Aeries reports (e.g. grade distribution)
+  // legitimately run longer, so allow more time before timing out.
+  requestTimeout: 60000, // 60s per query
+  connectionTimeout: 30000, // 30s to establish a connection
   pool: {
     max: 10, // Maximum number of connections in the pool
     min: 0, // Minimum number of connections in the pool
@@ -719,7 +723,21 @@ export async function getAeriesStaff({
   if (response.status !== 200) {
     throw new Error(`Request failed with status ${response.status}`);
   }
-  const data: PersonInfo[] = await response.json()
+  // Aeries can return a 200 with an HTML error/login page (e.g. when the
+  // AERIES-CERT key is invalid or NEXT_PUBLIC_AERIES_URL is wrong). Parsing
+  // that as JSON throws a confusing "Unexpected token '<'" error, so detect
+  // it and surface an actionable message instead.
+  const body = await response.text();
+  let data: PersonInfo[];
+  try {
+    data = JSON.parse(body);
+  } catch {
+    const preview = body.slice(0, 120).replace(/\s+/g, " ").trim();
+    throw new Error(
+      `Aeries staff endpoint ${endpoint} returned non-JSON (status 200). ` +
+      `Check NEXT_PUBLIC_AERIES_URL and the AERIES-CERT key. Response began: ${preview}`
+    );
+  }
   // console.log(data)
   // console.log(email)
   let person = data.filter(p => p.EmailAddress === email)[0]
