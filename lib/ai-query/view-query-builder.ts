@@ -22,50 +22,82 @@ export class ViewQueryBuilder {
    *
    * @param sql - The SQL query to modify
    * @param schools - Array of school codes the user has access to
+   * @param filterExpression - Optional override for the filter condition given
+   *   the detected alias (e.g. saving as a reusable query with `@@sc`)
    * @returns Modified SQL with school filter
    */
-  injectSecurityFilters(sql: string, schools: string[]): string {
-    // If no schools specified, return as-is (admin/district-wide access)
-    if (!schools || schools.length === 0) {
+  injectSecurityFilters(sql: string, schools: string[], filterExpression?: (alias: string) => string): string {
+    // If no schools specified (and no override), return as-is (admin/district-wide access)
+    if (!filterExpression && (!schools || schools.length === 0)) {
       return sql;
     }
 
     const schoolList = schools.join(', ');
 
-    // Find the main view being queried (first FROM clause)
-    const mainViewMatch = sql.match(/FROM\s+(\w+)/i);
+    // Find the main view being queried: the first TOP-LEVEL FROM clause
+    // (a scalar subquery in the SELECT list can contain an earlier FROM)
+    const fromMatch = this.findTopLevelMatch(sql, '\\bFROM\\b');
+    if (!fromMatch) {
+      return sql;
+    }
+    const afterFrom = sql.slice(fromMatch.index);
+    const mainViewMatch = afterFrom.match(/FROM\s+(\w+)/i);
     if (!mainViewMatch) {
       return sql;
     }
 
     const mainView = mainViewMatch[1];
-    const alias = this.getViewAlias(sql, mainView);
+    const alias = this.getViewAlias(afterFrom, mainView);
 
     // Build the school filter
-    const schoolFilter = `${alias}.school_id IN (${schoolList})`;
+    const schoolFilter = filterExpression
+      ? filterExpression(alias)
+      : `${alias}.school_id IN (${schoolList})`;
 
-    // Determine where to inject the filter
-    const hasWhere = /\bWHERE\b/i.test(sql);
-    const hasGroupBy = /\bGROUP BY\b/i.test(sql);
-    const hasOrderBy = /\bORDER BY\b/i.test(sql);
-    const hasHaving = /\bHAVING\b/i.test(sql);
-
-    if (hasWhere) {
-      // Insert after WHERE keyword
-      return sql.replace(/\bWHERE\b/i, `WHERE ${schoolFilter} AND`);
-    } else if (hasGroupBy) {
-      // Insert before GROUP BY
-      return sql.replace(/\bGROUP BY\b/i, `WHERE ${schoolFilter}\nGROUP BY`);
-    } else if (hasHaving) {
-      // Insert before HAVING (shouldn't happen without GROUP BY, but just in case)
-      return sql.replace(/\bHAVING\b/i, `WHERE ${schoolFilter}\nHAVING`);
-    } else if (hasOrderBy) {
-      // Insert before ORDER BY
-      return sql.replace(/\bORDER BY\b/i, `WHERE ${schoolFilter}\nORDER BY`);
-    } else {
-      // Append at end
-      return `${sql}\nWHERE ${schoolFilter}`;
+    // Find the main query's WHERE (ignoring any inside subqueries) and wrap
+    // the existing predicate in parens so an OR can't escape the school scope:
+    // WHERE a = 1 OR b = 1  ->  WHERE school_id IN (...) AND (a = 1 OR b = 1)
+    const whereMatch = this.findTopLevelMatch(sql, '\\bWHERE\\b');
+    if (whereMatch) {
+      const predicateStart = whereMatch.index + whereMatch.text.length;
+      const rest = sql.slice(predicateStart);
+      const clauseMatch = this.findTopLevelMatch(rest, '\\b(?:GROUP\\s+BY|HAVING|ORDER\\s+BY)\\b');
+      const predicateEnd = clauseMatch ? clauseMatch.index : rest.length;
+      const predicate = rest.slice(0, predicateEnd).trim();
+      const tail = clauseMatch ? rest.slice(predicateEnd) : '';
+      return `${sql.slice(0, whereMatch.index)}WHERE ${schoolFilter} AND (${predicate})${tail ? '\n' + tail.trim() : ''}`;
     }
+
+    // No WHERE clause - insert one before the first top-level GROUP BY/HAVING/ORDER BY
+    const clauseMatch = this.findTopLevelMatch(sql, '\\b(?:GROUP\\s+BY|HAVING|ORDER\\s+BY)\\b');
+    if (clauseMatch) {
+      return `${sql.slice(0, clauseMatch.index).trimEnd()}\nWHERE ${schoolFilter}\n${sql.slice(clauseMatch.index)}`;
+    }
+
+    // Append at end
+    return `${sql}\nWHERE ${schoolFilter}`;
+  }
+
+  /**
+   * Find the first match of a keyword pattern at parenthesis depth 0,
+   * so keywords inside subqueries are ignored.
+   */
+  private findTopLevelMatch(sql: string, pattern: string): { index: number; text: string } | null {
+    const re = new RegExp(`\\(|\\)|${pattern}`, 'gi');
+    let depth = 0;
+    let match: RegExpExecArray | null;
+
+    while ((match = re.exec(sql)) !== null) {
+      if (match[0] === '(') {
+        depth++;
+      } else if (match[0] === ')') {
+        depth = Math.max(0, depth - 1);
+      } else if (depth === 0) {
+        return { index: match.index, text: match[0] };
+      }
+    }
+
+    return null;
   }
 
   /**
