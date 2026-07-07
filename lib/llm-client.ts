@@ -31,13 +31,17 @@ const PROVIDER_ENDPOINTS: Record<string, string> = {
   local: 'http://localhost:11434/v1', // Ollama default
 };
 
+const DEBUG = process.env.AI_QUERY_DEBUG === 'true';
+
 export class LLMClient {
   private config: LLMConfig;
   private baseUrl: string;
+  private timeoutMs: number;
 
   constructor(config: LLMConfig) {
     this.config = config;
     this.baseUrl = config.baseUrl || PROVIDER_ENDPOINTS[config.provider] || PROVIDER_ENDPOINTS.local;
+    this.timeoutMs = parseInt(process.env.LLM_TIMEOUT_MS || '30000');
   }
 
   async chat(messages: ChatMessage[]): Promise<LLMResponse> {
@@ -56,37 +60,83 @@ export class LLMClient {
       headers['anthropic-version'] = '2023-06-01';
     }
 
-    const body = {
+    const body: Record<string, unknown> = {
       model: this.config.model,
       messages,
       temperature: this.config.temperature ?? 0.3,
-      max_tokens: this.config.maxTokens ?? 2000,
+      max_tokens: this.config.maxTokens ?? 4096,
     };
 
-    console.log(`[LLM] Calling ${this.config.provider} at ${this.baseUrl}/chat/completions`);
-    console.log(`[LLM] Model: ${this.config.model}`);
-
-    const response = await fetch(`${this.baseUrl}/chat/completions`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(body),
-    });
-
-    if (!response.ok) {
-      const error = await response.text();
-      console.error(`[LLM] Error response:`, error);
-      throw new Error(`LLM request failed: ${response.status} - ${error}`);
+    // Gemini 2.5+ are thinking models; disable thinking for SQL generation latency
+    if (this.config.provider === 'gemini' && /^gemini-2\.5/.test(this.config.model)) {
+      body.reasoning_effort = 'none';
     }
 
-    const data = await response.json();
+    if (DEBUG) {
+      console.log(`[LLM] Calling ${this.config.provider} at ${this.baseUrl}/chat/completions`);
+      console.log(`[LLM] Model: ${this.config.model}`);
+    }
 
-    return {
-      content: data.choices?.[0]?.message?.content || '',
-      usage: data.usage ? {
-        promptTokens: data.usage.prompt_tokens,
-        completionTokens: data.usage.completion_tokens,
-      } : undefined,
-    };
+    // One transport-level retry on network error / 429 / 5xx; content repair
+    // is handled by the caller's regeneration loop.
+    const MAX_TRANSPORT_ATTEMPTS = 2;
+    let lastError: Error | undefined;
+
+    for (let attempt = 1; attempt <= MAX_TRANSPORT_ATTEMPTS; attempt++) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
+
+      try {
+        const response = await fetch(`${this.baseUrl}/chat/completions`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(body),
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          const error = await response.text();
+          const retryable = response.status === 429 || response.status >= 500;
+          lastError = new Error(`LLM request failed: ${response.status} - ${error}`);
+          if (retryable && attempt < MAX_TRANSPORT_ATTEMPTS) {
+            console.warn(`[LLM] ${response.status} response, retrying...`);
+            await new Promise((r) => setTimeout(r, 1000));
+            continue;
+          }
+          console.error(`[LLM] Error response:`, error);
+          throw lastError;
+        }
+
+        const data = await response.json();
+
+        return {
+          content: data.choices?.[0]?.message?.content || '',
+          usage: data.usage ? {
+            promptTokens: data.usage.prompt_tokens,
+            completionTokens: data.usage.completion_tokens,
+          } : undefined,
+        };
+      } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') {
+          lastError = new Error(`LLM request timed out after ${this.timeoutMs}ms`);
+        } else if (err instanceof Error) {
+          lastError = err;
+        } else {
+          lastError = new Error(String(err));
+        }
+        // Retry network errors/timeouts; non-retryable HTTP errors were rethrown above
+        if (attempt < MAX_TRANSPORT_ATTEMPTS && lastError.message.startsWith('LLM request failed:') === false) {
+          console.warn(`[LLM] ${lastError.message}, retrying...`);
+          await new Promise((r) => setTimeout(r, 1000));
+          continue;
+        }
+        throw lastError;
+      } finally {
+        clearTimeout(timeout);
+      }
+    }
+
+    throw lastError ?? new Error('LLM request failed');
   }
 }
 
@@ -100,10 +150,12 @@ export function createLLMClient(): LLMClient {
     baseUrl: process.env.LLM_BASE_URL,
     model: process.env.LLM_MODEL || getDefaultModel(provider),
     temperature: parseFloat(process.env.LLM_TEMPERATURE || '0.3'),
-    maxTokens: parseInt(process.env.LLM_MAX_TOKENS || '2000'),
+    maxTokens: parseInt(process.env.LLM_MAX_TOKENS || '4096'),
   };
 
-  console.log(`[LLM] Creating client for provider: ${provider}, model: ${config.model}`);
+  if (DEBUG) {
+    console.log(`[LLM] Creating client for provider: ${provider}, model: ${config.model}`);
+  }
 
   return new LLMClient(config);
 }
@@ -111,7 +163,7 @@ export function createLLMClient(): LLMClient {
 function getDefaultModel(provider: string): string {
   switch (provider) {
     case 'gemini':
-      return 'gemini-2.0-flash'; // Updated from gemini-1.5-flash
+      return 'gemini-2.5-flash';
     case 'openai':
       return 'gpt-4o-mini';
     case 'anthropic':
