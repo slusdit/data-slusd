@@ -1,0 +1,168 @@
+{
+  "_readme": "Golden prompt set for the AI query builder eval (scripts/eval-ai-query.ts). Each entry: prompt (natural language input), expectViews (ALL must be referenced), expectAnyViews (AT LEAST ONE must be referenced), minRows (optional row-count floor, only for prompts guaranteed to match data), notes.",
+  "prompts": [
+    {
+      "id": "list-all-students",
+      "prompt": "List all students with their name, grade, and school",
+      "expectAnyViews": ["llm_student_demographics"],
+      "minRows": 1
+    },
+    {
+      "id": "count-by-grade",
+      "prompt": "How many students are in each grade level?",
+      "expectAnyViews": ["llm_student_demographics", "llm_student_enrollment"],
+      "minRows": 1
+    },
+    {
+      "id": "english-learners",
+      "prompt": "Show me all English learners",
+      "expectAnyViews": ["llm_student_program_summary", "llm_student_demographics", "llm_elpac_scores"]
+    },
+    {
+      "id": "students-with-ieps",
+      "prompt": "List students with IEPs",
+      "expectAnyViews": ["llm_special_education", "llm_student_program_summary"]
+    },
+    {
+      "id": "chronically-absent",
+      "prompt": "Which students are chronically absent?",
+      "expectAnyViews": ["llm_attendance_summary"]
+    },
+    {
+      "id": "attendance-below-90",
+      "prompt": "Show students with an attendance rate below 90 percent",
+      "expectAnyViews": ["llm_attendance_summary"]
+    },
+    {
+      "id": "gpa-above-35",
+      "prompt": "List students with a GPA above 3.5",
+      "expectAnyViews": ["llm_student_gpa"]
+    },
+    {
+      "id": "failing-two-classes",
+      "prompt": "Which students are failing two or more classes?",
+      "expectAnyViews": ["llm_student_gpa", "llm_student_grades"]
+    },
+    {
+      "id": "suspensions-this-year",
+      "prompt": "Show me all students who were suspended this school year",
+      "expectAnyViews": ["llm_discipline_incidents", "llm_suspension_summary"]
+    },
+    {
+      "id": "suspensions-since-january",
+      "prompt": "List suspensions that happened since January",
+      "expectAnyViews": ["llm_discipline_incidents"],
+      "notes": "Date-bounded query - tests T-SQL date handling"
+    },
+    {
+      "id": "teacher-sections",
+      "prompt": "List all the courses each teacher is teaching",
+      "expectAnyViews": ["llm_teacher_courses", "llm_all_sections"]
+    },
+    {
+      "id": "period-3-rosters",
+      "prompt": "Show me the class rosters for period 3",
+      "expectAnyViews": ["llm_class_rosters", "llm_course_enrollments"]
+    },
+    {
+      "id": "free-lunch-synonym",
+      "prompt": "Which kids are on free lunch?",
+      "expectAnyViews": ["llm_frpm_status", "llm_sed_status"],
+      "notes": "Synonym trap: free lunch -> FRPM"
+    },
+    {
+      "id": "foster-youth",
+      "prompt": "List all foster youth students",
+      "expectAnyViews": ["llm_student_program_summary", "llm_special_programs"]
+    },
+    {
+      "id": "homeless-students",
+      "prompt": "Show me students experiencing homelessness",
+      "expectAnyViews": ["llm_student_program_summary", "llm_special_programs"]
+    },
+    {
+      "id": "section-504",
+      "prompt": "Which students have 504 plans?",
+      "expectAnyViews": ["llm_student_program_summary"]
+    },
+    {
+      "id": "long-term-els",
+      "prompt": "Show me the long-term English learners",
+      "expectAnyViews": ["llm_elpac_scores"],
+      "notes": "Synonym trap: LTEL -> is_long_term_el"
+    },
+    {
+      "id": "newcomer-els",
+      "prompt": "List newcomer EL students and when they entered US schools",
+      "expectAnyViews": ["llm_elpac_scores"]
+    },
+    {
+      "id": "recent-elpac",
+      "prompt": "Show the most recent ELPAC scores for English learners",
+      "expectAnyViews": ["llm_elpac_scores"]
+    },
+    {
+      "id": "caaspp-11th",
+      "prompt": "CAASPP test scores for 11th graders",
+      "expectAnyViews": ["llm_test_scores", "llm_test_scores_current"]
+    },
+    {
+      "id": "contacts-high-absences",
+      "prompt": "Get parent contact information for students with more than 10 absences",
+      "expectViews": ["llm_student_contacts", "llm_attendance_summary"],
+      "notes": "Multi-view join"
+    },
+    {
+      "id": "el-chronic-absent-contacts",
+      "prompt": "Show English learners who are chronically absent, along with their parent contact info",
+      "expectAnyViews": ["llm_attendance_summary"],
+      "notes": "3-view join candidate: program/elpac + attendance + contacts"
+    },
+    {
+      "id": "count-by-ethnicity",
+      "prompt": "Count of students by ethnicity",
+      "expectAnyViews": ["llm_student_demographics"],
+      "minRows": 1
+    },
+    {
+      "id": "home-language-counts",
+      "prompt": "Group students by home language with counts, sorted from most to least common",
+      "expectAnyViews": ["llm_student_demographics"],
+      "minRows": 1
+    },
+    {
+      "id": "teacher-student-counts",
+      "prompt": "List teachers and how many students they each have",
+      "expectAnyViews": ["llm_staff_roster", "llm_teacher_courses", "llm_all_sections", "llm_teacher_student_roster"]
+    },
+    {
+      "id": "avg-attendance-by-grade",
+      "prompt": "What is the average attendance rate by grade level?",
+      "expectAnyViews": ["llm_attendance_summary"],
+      "notes": "Aggregation"
+    },
+    {
+      "id": "iep-and-chronic-absent",
+      "prompt": "Which special education students are also chronically absent?",
+      "expectViews": ["llm_attendance_summary"],
+      "notes": "Cross-domain join: sped + attendance"
+    },
+    {
+      "id": "large-classes",
+      "prompt": "Which class sections have more than 30 students enrolled?",
+      "expectAnyViews": ["llm_all_sections", "llm_class_rosters", "llm_teacher_courses"],
+      "notes": "HAVING or student_count filter"
+    },
+    {
+      "id": "elpac-level-1-2",
+      "prompt": "Students who scored level 1 or 2 on their most recent ELPAC",
+      "expectAnyViews": ["llm_elpac_scores"]
+    },
+    {
+      "id": "sed-students",
+      "prompt": "List socioeconomically disadvantaged students",
+      "expectAnyViews": ["llm_sed_status"],
+      "notes": "Synonym trap: SED"
+    }
+  ]
+}
