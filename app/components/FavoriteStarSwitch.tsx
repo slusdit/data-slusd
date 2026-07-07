@@ -18,39 +18,46 @@ const FavoriteStarSwitch = ({
   );
 
   async function handleToggleFavorite() {
-    setIsFavorite(!isFavorite);
+    const previous = isFavorite;
+    const next = !isFavorite;
+    setIsFavorite(next); // optimistic update
+
+    // Await the same promise the toast tracks, so a failure actually rolls back.
+    const promise = toggleFavorite(user, queryId);
+    toast.promise(promise, {
+      loading: "Updating favorite",
+      success: next ? "Added to favorites" : "Removed from favorites",
+      error: "Error updating favorite",
+    });
     try {
-      toast.promise(toggleFavorite(user, queryId), {
-        error: "Error updating favorite",
-        success: "Successfully Updated favorite",
-        loading: "Updating favorite",
-      });
+      await promise;
     } catch (error) {
-      setIsFavorite(!isFavorite);
+      setIsFavorite(previous); // rollback on failure
       console.error("Error updating favorite:", error);
     }
   }
 
   return (
     <div className="flex items-center my-2">
-      {/* <span className="mr-2">Favorite</span> */}
       <Tooltip>
         <TooltipTrigger asChild>
       <button
         onClick={handleToggleFavorite}
-        className="p-1 rounded-full hover:bg-gray-100 transition-colors"
+        aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+        aria-pressed={isFavorite}
+        className="p-1 rounded-full hover:bg-muted transition-colors"
         >
         <Star
           className={`w-6 h-6 ${
-              isFavorite 
-              ? "fill-yellow-400 text-yellow-400" 
-              : "text-gray-400"
+              isFavorite
+              ? "fill-yellow-400 text-yellow-400"
+              : "text-muted-foreground"
             }`}
             />
       </button>
             </TooltipTrigger>
             <TooltipContent>
-                Add to favorites
+                {isFavorite ? "Remove from favorites" : "Add to favorites"}
             </TooltipContent>
             </Tooltip>
     </div>

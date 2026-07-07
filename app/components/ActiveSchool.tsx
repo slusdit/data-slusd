@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { SchoolInfo } from "@prisma/client";
 import Image from "next/image";
+import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -51,6 +52,7 @@ const ActiveSchool = ({ activeSchool, userSchools, allowedSchoolCodes, userId }:
         router.refresh();
       } catch (error) {
         console.error("Error updating active school:", error);
+        toast.error("Couldn't switch schools. Please try again.");
       }
     });
   };

@@ -1,11 +1,16 @@
-/**
+﻿/**
  * SQL Validator for View-Based AI Queries
  *
  * Provides security validation to ensure LLM-generated SQL:
  * 1. Only queries allowed llm_* views (whitelist)
  * 2. Does not contain dangerous operations (blocklist)
  * 3. Is a SELECT query only
+ *
+ * View/column/type knowledge comes from view-schema.generated.ts (introspected
+ * from the live database - regenerate with `npm run generate:view-schema`).
  */
+
+import { VIEW_SCHEMAS, ViewColumn } from './view-schema.generated';
 
 export interface ValidationResult {
   valid: boolean;
@@ -14,43 +19,8 @@ export interface ValidationResult {
   referencedViews: string[];
 }
 
-// Allowed views (whitelist) - all llm_* views from the database
-const ALLOWED_VIEWS = [
-  // Student Information
-  'llm_student_demographics',
-  'llm_student_enrollment',
-  'llm_student_program_summary',
-  // Attendance
-  'llm_attendance_daily',
-  'llm_attendance_summary',
-  // Special Programs & Special Education
-  'llm_special_programs',
-  'llm_special_education',
-  // Grades & GPA
-  'llm_student_grades',
-  'llm_student_gpa',
-  // Discipline
-  'llm_discipline_incidents',
-  'llm_suspension_summary',
-  // Courses & Rosters
-  'llm_course_enrollments',
-  'llm_class_rosters',
-  'llm_all_sections',
-  // Staff
-  'llm_staff_roster',
-  'llm_teacher_courses',
-  'llm_elementary_teachers',
-  'llm_elementary_grades',
-  'llm_teacher_student_roster',
-  // Contacts & Demographics
-  'llm_student_contacts',
-  'llm_frpm_status',
-  'llm_sed_status',
-  // Testing
-  'llm_test_scores',
-  'llm_test_scores_current',
-  'llm_elpac_scores',
-];
+// Allowed views (whitelist) - derived from the introspected database schema
+const ALLOWED_VIEWS = Object.keys(VIEW_SCHEMAS);
 
 // Blocked keywords (destructive/dangerous operations)
 const BLOCKED_KEYWORDS = [
@@ -114,171 +84,17 @@ const BLOCKED_TABLES = [
   'sse',
 ];
 
-// Boolean columns that should only use = 1 or = 0, never strings
-const BOOLEAN_COLUMNS = [
-  'is_english_learner', 'is_special_education', 'is_foster_youth', 'is_homeless', 'is_migrant',
-  'is_section_504', 'is_in_any_special_program', 'is_chronically_absent', 'is_active', 'is_active_sped',
-  'is_current_year', 'is_currently_enrolled', 'is_frpm_eligible', 'is_free', 'is_reduced', 'is_sed',
-  'has_low_parent_education', 'is_failing', 'is_honor_grade', 'is_at_risk', 'is_suspension',
-  'is_out_of_school_suspension', 'is_in_school_suspension', 'is_expulsion', 'is_primary_contact',
-  'lives_with_student', 'all_day_counts_as_present', 'all_day_suspension_related', 'was_absent_all_day',
-  'is_suspension_absence', 'is_newcomer_el', 'is_long_term_el'
-];
+// Flag-named columns whose comparisons get type-checked against the real
+// database types. NOTE: these are NOT uniformly bit/int - several are varchar
+// holding 'Yes'/'No' or 'Y'/'N' (e.g. is_chronically_absent), and
+// llm_elpac_scores.is_english_learner even holds 'RFEP'. The generated schema
+// carries the true type and sampled values per view.
+const FLAG_COLUMN_NAME = /^(?:is_|has_)\w+$|^(?:lives_with_student|was_absent_all_day|all_day_counts_as_present|all_day_suspension_related)$/;
 
-// Valid columns for each view - used to catch hallucinated column names
-const VIEW_COLUMNS: Record<string, string[]> = {
-  llm_student_demographics: [
-    'student_id', 'state_student_id', 'student_number', 'school_id', 'last_name', 'first_name', 'middle_name',
-    'school_name', 'grade_level', 'birth_date', 'age', 'gender', 'address', 'city', 'state', 'zip_code',
-    'home_phone', 'parent_guardian_name', 'parent_email', 'student_email', 'home_language_code', 'home_language',
-    'correspondence_language_code', 'correspondence_language', 'language_fluency_code', 'language_fluency',
-    'english_learner_status', 'ethnicity_code', 'ethnicity', 'race_code_1', 'race_1', 'race_code_2', 'race_2',
-    'race_code_3', 'race_3', 'race_code_4', 'race_4', 'race_code_5', 'race_5', 'primary_race_ethnicity',
-    'birth_country_code', 'birth_city', 'birth_state', 'counselor_email', 'counselor_name', 'student_status_code',
-    'student_status', 'special_program_status', 'entry_date', 'leave_date', 'interdistrict_transfer_code',
-    'interdistrict_transfer_district', 'custom_field_u11', 'days_absent_ytd', 'days_enrolled_ytd',
-    'days_present_ytd', 'attendance_rate_ytd'
-  ],
-  llm_student_enrollment: [
-    'student_id', 'school_id', 'student_number', 'school_year', 'school_name', 'last_name', 'first_name',
-    'entry_date', 'leave_date', 'enrollment_status', 'days_enrolled', 'grade_level_at_enrollment',
-    'entry_reason_code', 'entry_reason', 'homeroom_teacher_number', 'homeroom_teacher_name',
-    'homeroom_teacher_email', 'track', 'program', 'is_current_year'
-  ],
-  llm_student_program_summary: [
-    'student_id', 'school_id', 'student_number', 'last_name', 'first_name', 'grade_level', 'school_name',
-    'is_english_learner', 'language_fluency_code', 'language_fluency', 'is_special_education',
-    'sped_disability_code', 'sped_primary_disability', 'is_foster_youth', 'is_homeless', 'is_migrant',
-    'is_section_504', 'is_in_any_special_program'
-  ],
-  llm_attendance_daily: [
-    'student_id', 'school_id', 'student_number', 'last_name', 'first_name', 'grade_level', 'school_name',
-    'day_number', 'attendance_date', 'day_of_week', 'all_day_code', 'all_day_description', 'all_day_status',
-    'all_day_counts_as_present', 'all_day_suspension_related', 'period_0_code', 'period_1_code', 'period_2_code',
-    'period_3_code', 'period_4_code', 'period_5_code', 'period_6_code', 'period_absence_count',
-    'overall_attendance_code', 'was_absent_all_day', 'is_suspension_absence'
-  ],
-  llm_attendance_summary: [
-    'student_id', 'school_id', 'student_number', 'last_name', 'first_name', 'grade_level', 'school_name',
-    'instructional_days', 'days_present', 'days_absent', 'suspension_days', 'unexcused_absences', 'tardies',
-    'attendance_rate_percent', 'absence_rate_percent', 'is_chronically_absent', 'truancy_risk_level'
-  ],
-  llm_special_programs: [
-    'student_id', 'school_id', 'student_number', 'last_name', 'first_name', 'grade_level', 'school_name',
-    'program_code', 'program_description', 'program_category', 'program_start_date', 'program_end_date',
-    'eligibility_start_date', 'eligibility_end_date', 'is_active', 'status'
-  ],
-  llm_special_education: [
-    'student_id', 'school_id', 'student_number', 'last_name', 'first_name', 'grade_level', 'school_name',
-    'sped_status', 'eligibility_date', 'exit_date', 'placement_code', 'placement_description',
-    'primary_disability_code', 'primary_disability', 'last_assessment_date', 'assessment_date',
-    'review_date', 'is_active_sped'
-  ],
-  llm_student_grades: [
-    'student_id', 'school_id', 'student_number', 'section_number', 'course_number', 'period', 'last_name',
-    'first_name', 'grade_level', 'school_name', 'course_name', 'course_description', 'department_name',
-    'teacher_last_name', 'teacher_first_name', 'final_grade', 'credits_earned', 'mark_1', 'mark_2', 'mark_3',
-    'mark_4', 'mark_5', 'mark_6', 'citizenship_1', 'citizenship_2', 'citizenship_3', 'citizenship_indicator',
-    'grade_comments', 'is_failing', 'is_honor_grade', 'is_at_risk'
-  ],
-  llm_student_gpa: [
-    'student_id', 'school_id', 'student_number', 'last_name', 'first_name', 'grade_level', 'school_name',
-    'current_gpa', 'cumulative_credits', 'current_year_credits', 'failing_grade_count', 'at_risk_grade_count',
-    'honor_grade_count', 'academic_standing', 'academic_risk_level'
-  ],
-  llm_discipline_incidents: [
-    'student_id', 'sequence_number', 'school_id', 'student_number', 'last_name', 'first_name', 'grade_level',
-    'incident_school_code', 'incident_school_name', 'incident_date', 'primary_discipline_code',
-    'primary_discipline_description', 'secondary_code_1', 'secondary_description_1', 'secondary_code_2',
-    'secondary_description_2', 'secondary_code_3', 'secondary_description_3', 'secondary_code_4',
-    'secondary_description_4', 'incident_comment', 'disposition_code', 'disposition_description',
-    'discipline_category', 'is_out_of_school_suspension', 'is_in_school_suspension', 'is_expulsion',
-    'is_suspension', 'school_year_start'
-  ],
-  llm_suspension_summary: [
-    'student_id', 'school_id', 'student_number', 'last_name', 'first_name', 'grade_level', 'school_name',
-    'out_of_school_suspensions', 'in_school_suspensions', 'total_suspensions', 'expulsions',
-    'most_recent_suspension_date', 'first_suspension_date', 'days_since_last_suspension', 'discipline_risk_level'
-  ],
-  llm_course_enrollments: [
-    'student_id', 'school_id', 'student_number', 'section_number', 'last_name', 'first_name', 'grade_level',
-    'school_name', 'course_number', 'course_name', 'course_description', 'department_code', 'department_name',
-    'state_course_code', 'section_id', 'period', 'room_number', 'teacher_number', 'teacher_last_name',
-    'teacher_first_name', 'teacher_email', 'schedule_mode', 'schedule_mode_description', 'enrollment_status',
-    'credits', 'track', 'is_currently_enrolled'
-  ],
-  llm_class_rosters: [
-    'school_id', 'section_number', 'school_name', 'course_number', 'course_name', 'course_description',
-    'department_name', 'period', 'room_number', 'teacher_number', 'teacher_last_name', 'teacher_first_name',
-    'teacher_email', 'student_id', 'student_number', 'student_last_name', 'student_first_name',
-    'student_grade_level', 'student_email', 'enrollment_status', 'current_class_size'
-  ],
-  llm_all_sections: [
-    'section_id', 'school_id', 'school_name', 'term', 'period', 'course_id', 'course_name', 'teacher_staff_id',
-    'teacher_number', 'teacher_last_name', 'teacher_first_name', 'teacher_email', 'room_number', 'grade_high',
-    'grade_low', 'school_level', 'student_count'
-  ],
-  llm_staff_roster: [
-    'staff_id', 'teacher_number', 'school_id', 'school_name', 'last_name', 'first_name', 'middle_name', 'email',
-    'room_number', 'low_grade', 'high_grade', 'grade_range', 'custom_field_1', 'custom_field_2', 'teacher_status',
-    'school_level', 'sections_taught', 'total_students'
-  ],
-  llm_teacher_courses: [
-    'staff_id', 'teacher_number', 'school_id', 'teacher_last_name', 'teacher_first_name', 'teacher_email',
-    'teacher_room', 'school_name', 'section_number', 'period', 'section_room', 'course_number', 'course_name',
-    'course_description', 'department_code', 'department_name', 'schedule_mode', 'schedule_mode_description',
-    'current_enrollment', 'credits', 'state_course_code'
-  ],
-  llm_elementary_teachers: [
-    'staff_id', 'teacher_number', 'school_id', 'last_name', 'first_name', 'email', 'room_number', 'school_name',
-    'low_grade', 'high_grade', 'grade_range', 'homeroom_student_count'
-  ],
-  llm_elementary_grades: [
-    'student_id', 'school_id', 'student_number', 'last_name', 'first_name', 'grade_level', 'school_name',
-    'homeroom_teacher_number', 'teacher_last_name', 'teacher_first_name', 'teacher_email', 'room_number',
-    'teacher_grade_low', 'teacher_grade_high', 'teacher_grade_range', 'school_level', 'pseudo_section_id'
-  ],
-  llm_teacher_student_roster: [
-    'student_id', 'school_id', 'student_number', 'last_name', 'first_name', 'grade_level', 'teacher_staff_id',
-    'teacher_number', 'teacher_last_name', 'teacher_first_name', 'teacher_email', 'assignment_type',
-    'section_number', 'course_name', 'period', 'teacher_section_id'
-  ],
-  llm_student_contacts: [
-    'student_id', 'school_id', 'student_number', 'student_last_name', 'student_first_name', 'grade_level',
-    'school_name', 'contact_sequence', 'contact_first_name', 'contact_last_name', 'relationship_code',
-    'relationship', 'email', 'home_phone', 'work_phone', 'cell_phone', 'address', 'city', 'state', 'zip_code',
-    'is_primary_contact', 'lives_with_student', 'notification_priority', 'notification_priority_description',
-    'education_level_code', 'education_level'
-  ],
-  llm_frpm_status: [
-    'student_id', 'school_id', 'student_number', 'last_name', 'first_name', 'grade_level', 'school_name',
-    'frpm_code', 'frpm_status', 'eligibility_code', 'eligibility_method', 'effective_start_date',
-    'is_frpm_eligible', 'is_free', 'is_reduced'
-  ],
-  llm_sed_status: [
-    'student_id', 'school_id', 'student_number', 'last_name', 'first_name', 'grade_level', 'school_name',
-    'frpm_code', 'is_frpm_eligible', 'lowest_parent_education_level', 'has_low_parent_education',
-    'direct_certification_flag', 'is_sed', 'sed_reason'
-  ],
-  llm_test_scores: [
-    'student_id', 'school_id', 'student_number', 'last_name', 'first_name', 'grade_level', 'school_name',
-    'test_code', 'test_description', 'test_date', 'test_year', 'test_type', 'test_category', 'performance_level',
-    'scale_score', 'raw_score', 'elpac_level_description', 'caaspp_level_description', 'part_type',
-    'part_description', 'grade_at_test', 'recency_rank'
-  ],
-  llm_test_scores_current: [
-    'student_id', 'school_id', 'student_number', 'last_name', 'first_name', 'grade_level', 'school_name',
-    'test_code', 'test_description', 'test_date', 'test_year', 'test_category', 'performance_level',
-    'scale_score', 'raw_score', 'elpac_level_description', 'caaspp_level_description', 'part_type',
-    'part_description', 'grade_at_test'
-  ],
-  llm_elpac_scores: [
-    'student_id', 'school_id', 'student_number', 'last_name', 'first_name', 'grade_level', 'school_name',
-    'language_fluency_code', 'language_fluency', 'is_english_learner', 'test_code', 'test_date', 'test_year',
-    'performance_level', 'scale_score', 'elpac_level_description', 'is_newcomer_el', 'is_long_term_el',
-    'us_school_entry_date', 'us_entry_date', 'birth_country', 'years_in_us_schools'
-  ],
-};
+// Valid columns for each view - derived from the introspected database schema
+const VIEW_COLUMNS: Record<string, string[]> = Object.fromEntries(
+  Object.entries(VIEW_SCHEMAS).map(([view, cols]) => [view, cols.map((c) => c.name)])
+);
 
 /**
  * Extract view aliases from SQL (e.g., "llm_student_demographics d" -> { d: 'llm_student_demographics' })
@@ -304,32 +120,140 @@ function extractViewAliases(sql: string): Record<string, string> {
 }
 
 /**
- * Validate that boolean columns are not used with string values
+ * Look up a column definition (type + sampled values) for a view
  */
-function validateBooleanColumns(sql: string): { errors: string[], warnings: string[] } {
+function getColumnDef(view: string, column: string): ViewColumn | undefined {
+  return VIEW_SCHEMAS[view]?.find((c) => c.name === column);
+}
+
+// Keywords/functions that look like identifiers in SQL text
+const SQL_KEYWORDS = new Set([
+  'select', 'from', 'where', 'and', 'or', 'not', 'in', 'like', 'between', 'is',
+  'null', 'order', 'by', 'group', 'having', 'as', 'on', 'join', 'inner', 'left',
+  'right', 'full', 'outer', 'cross', 'top', 'distinct', 'case', 'when', 'then',
+  'else', 'end', 'asc', 'desc', 'exists', 'all', 'any', 'some', 'percent',
+  'offset', 'fetch', 'next', 'rows', 'only', 'over', 'partition', 'true', 'false',
+  'int', 'varchar', 'date', 'datetime', 'decimal', 'float', 'bit',
+]);
+
+/**
+ * Validate UNQUALIFIED column references. Only judged when exactly one view is
+ * referenced (no joins) - then every bare identifier that isn't a keyword,
+ * function call, alias, or SELECT-list alias must be a real column of that view.
+ * Catches hallucinated columns like "is_free_lunch_eligible" that the
+ * alias.column check can't see.
+ */
+function validateUnqualifiedColumns(sql: string, viewAliases: Record<string, string>): { errors: string[], warnings: string[] } {
+  const errors: string[] = [];
+  const views = [...new Set(Object.values(viewAliases))];
+  if (views.length !== 1) return { errors, warnings: [] };
+
+  const view = views[0];
+  const validColumns = VIEW_COLUMNS[view];
+  if (!validColumns || validColumns.length === 0) return { errors, warnings: [] };
+  const validSet = new Set(validColumns);
+
+  // Strip string literals so their contents aren't treated as identifiers
+  const stripped = sql.replace(/'[^']*'/g, "''");
+
+  // SELECT-list aliases (COUNT(*) AS total) are legitimate references later on.
+  // (Also matches CAST(x AS int) - harmless, 'int' is a keyword anyway.)
+  const defined = new Set<string>();
+  let aliasMatch;
+  const asPattern = /\bAS\s+(\w+)/gi;
+  while ((aliasMatch = asPattern.exec(stripped)) !== null) {
+    defined.add(aliasMatch[1].toLowerCase());
+  }
+
+  const reported = new Set<string>();
+  const idPattern = /\b([a-zA-Z_]\w*)\b/g;
+  let match;
+  while ((match = idPattern.exec(stripped)) !== null) {
+    const word = match[1].toLowerCase();
+    const before = stripped[match.index - 1];
+    const after = stripped.slice(match.index + match[1].length).match(/^\s*(.)/)?.[1];
+
+    if (before === '.' || after === '.') continue; // part of a qualified reference
+    if (after === '(') continue; // function call
+    if (SQL_KEYWORDS.has(word)) continue;
+    if (viewAliases[word]) continue; // view name or alias
+    if (defined.has(word)) continue; // SELECT-list alias
+    if (validSet.has(word)) continue;
+    if (reported.has(word)) continue;
+    reported.add(word);
+
+    let suggestions = validColumns.filter(c => c.includes(word) || word.includes(c)).slice(0, 3);
+    if (suggestions.length === 0 && /^(?:is_|has_)/.test(word)) {
+      suggestions = validColumns.filter(c => /^(?:is_|has_)/.test(c)).slice(0, 6);
+    }
+    let errorMsg = `Invalid column "${word}" - does not exist in ${view}`;
+    if (suggestions.length > 0) {
+      errorMsg += `. Did you mean: ${suggestions.join(', ')}?`;
+    }
+    errors.push(errorMsg);
+  }
+
+  return { errors, warnings: [] };
+}
+
+/**
+ * Validate that flag-column comparisons match the column's REAL database type.
+ * Numeric flags (int/bit) must compare to 1/0; text flags (varchar) must
+ * compare to their actual string values ('Yes'/'No', 'Y'/'N', ...).
+ */
+function validateFlagComparisons(sql: string, viewAliases: Record<string, string>): { errors: string[], warnings: string[] } {
   const errors: string[] = [];
   const warnings: string[] = [];
+  const referencedViews = [...new Set(Object.values(viewAliases))];
 
-  for (const boolCol of BOOLEAN_COLUMNS) {
-    // Check for string values like = 'Y', = 'N', = 'true', = 'false', = 'yes', = 'no'
-    const stringPattern = new RegExp(
-      `\\b${boolCol}\\s*=\\s*['"]\\w+['"]`,
-      'gi'
-    );
-    if (stringPattern.test(sql)) {
-      errors.push(
-        `Type mismatch: "${boolCol}" is a BIT/boolean column - use = 1 or = 0, not string values like 'Y' or 'true'`
-      );
+  // Match: (alias.)?column = value  where value is 'string' | number | true/false
+  const cmpPattern = /\b(?:(\w+)\.)?(\w+)\s*(?:=|<>|!=)\s*('[^']*'|\d+(?:\.\d+)?|true\b|false\b)/gi;
+  let match;
+  const seen = new Set<string>();
+
+  while ((match = cmpPattern.exec(sql)) !== null) {
+    const alias = match[1]?.toLowerCase();
+    const column = match[2].toLowerCase();
+    const value = match[3];
+
+    if (!FLAG_COLUMN_NAME.test(column)) continue;
+
+    const key = `${alias ?? ''}.${column}=${value}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    // Resolve the column's definition: qualified -> that view; unqualified ->
+    // every referenced view that has the column
+    let defs: ViewColumn[] = [];
+    if (alias) {
+      const view = viewAliases[alias];
+      const def = view ? getColumnDef(view, column) : undefined;
+      if (def) defs = [def];
+    } else {
+      defs = referencedViews
+        .map((v) => getColumnDef(v, column))
+        .filter((d): d is ViewColumn => d !== undefined);
     }
+    if (defs.length === 0) continue;
 
-    // Check for unquoted true/false (JavaScript/Python style)
-    const unquotedBoolPattern = new RegExp(
-      `\\b${boolCol}\\s*=\\s*(true|false)\\b`,
-      'gi'
-    );
-    if (unquotedBoolPattern.test(sql)) {
+    const types = new Set(defs.map((d) => d.dataType));
+    if (types.size > 1) continue; // same column name, different types across views - can't judge
+    const type = defs[0].dataType;
+
+    const isStringValue = value.startsWith("'");
+    const isBoolLiteral = /^(?:true|false)$/i.test(value);
+
+    if ((type === 'bit' || type === 'int') && (isStringValue || isBoolLiteral)) {
       errors.push(
-        `Type mismatch: "${boolCol}" is a BIT/boolean column - use = 1 or = 0, not unquoted true/false`
+        `Type mismatch: "${column}" is a numeric (${type}) flag - use = 1 or = 0, not ${value}`
+      );
+    } else if (type === 'varchar' && !isStringValue) {
+      const examples = defs.find((d) => d.exampleValues?.length)?.exampleValues;
+      const hint = examples
+        ? ` Valid values: ${examples.map((v) => `'${v}'`).join(', ')}`
+        : '';
+      errors.push(
+        `Type mismatch: "${column}" is a TEXT column, not a bit flag - compare to a quoted string, not ${value}.${hint}`
       );
     }
   }
@@ -374,10 +298,16 @@ function validateColumns(sql: string, viewAliases: Record<string, string>): { er
     // Check if column exists in the view
     if (!validColumns.includes(columnName)) {
       // Find similar column names to suggest
-      const suggestions = validColumns.filter(c =>
+      let suggestions = validColumns.filter(c =>
         c.includes(columnName.replace('sped_', '').replace('primary_', '')) ||
         columnName.includes(c.replace('sped_', '').replace('primary_', ''))
       ).slice(0, 3);
+      // Hallucinated flag names rarely substring-match the real one
+      // (is_socioeconomically_disadvantaged vs is_sed) - offer the view's
+      // actual flag columns instead
+      if (suggestions.length === 0 && /^(?:is_|has_)/.test(columnName)) {
+        suggestions = validColumns.filter(c => /^(?:is_|has_)/.test(c)).slice(0, 6);
+      }
 
       let errorMsg = `Invalid column "${alias}.${columnName}" - does not exist in ${viewName}`;
       if (suggestions.length > 0) {
@@ -453,9 +383,10 @@ export function validateSql(sql: string): ValidationResult {
         `Invalid table/view: "${tableName}". Only llm_* views are allowed.`
       );
     } else {
-      // It starts with llm_ but isn't in our whitelist
-      warnings.push(
-        `Unknown view "${tableName}" - it may not exist. Valid views start with llm_`
+      // It starts with llm_ but doesn't exist in the database - hard error so
+      // the repair loop gets the valid list instead of a wasted DB round trip
+      errors.push(
+        `View "${tableName}" does not exist. Use ONLY these views: ${ALLOWED_VIEWS.join(', ')}`
       );
     }
   }
@@ -482,10 +413,14 @@ export function validateSql(sql: string): ValidationResult {
   errors.push(...columnValidation.errors);
   warnings.push(...columnValidation.warnings);
 
-  // 8. Validate boolean column type usage
-  const boolValidation = validateBooleanColumns(sql);
-  errors.push(...boolValidation.errors);
-  warnings.push(...boolValidation.warnings);
+  // 7b. Validate unqualified columns (single-view queries only)
+  const unqualifiedValidation = validateUnqualifiedColumns(sql, viewAliases);
+  errors.push(...unqualifiedValidation.errors);
+
+  // 8. Validate flag column comparisons against real database types
+  const flagValidation = validateFlagComparisons(sql, viewAliases);
+  errors.push(...flagValidation.errors);
+  warnings.push(...flagValidation.warnings);
 
   return {
     valid: errors.length === 0,

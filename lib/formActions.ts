@@ -1,12 +1,11 @@
 'use server'
 import { z } from "zod"
 import { queryFormSchema } from "@/app/components/forms/AddQueryForm"
-import { PrismaClient } from "@prisma/client"
-// import { prisma } from "@/lib/db"
-
-const prisma = new PrismaClient()
+import prisma from "@/lib/db"
+import { requireAdmin, requireQueryEditor } from "@/lib/authGuard"
 
 export async function addQuery(values: z.infer<typeof queryFormSchema>) {
+  await requireQueryEditor()
   // values.query = values.query.split("\n").map((line) => "\"" + line + "\"").join("\n");
 
   try {
@@ -39,6 +38,7 @@ export async function addQuery(values: z.infer<typeof queryFormSchema>) {
 }
 
 export async function updateQuery(data: any, field: string) {
+  await requireQueryEditor()
   const { id, ...updateData } = data
 
   // console.log("updateQuery", data)
@@ -59,39 +59,56 @@ export async function updateQuery(data: any, field: string) {
 
 // UPDATED: Improved updateUser function with better handling of many-to-many relationships
 export async function updateUser(data: any, field: string) {
-  console.log(`Updating user ${data.id} - Field: ${field}`, data);
+  await requireAdmin();
 
   try {
     if (field === "User") {
-      // Handle full user update from the edit dialog
-      // Update basic fields and many-to-many relationships
-      await prisma.user.update({
-        where: { id: data.id },
-        data: {
-          name: data.name,
-          admin: data.admin,
-          queryEdit: data.queryEdit,
-          primaryRole: data.primaryRole,
-          // Manual overrides
-          blockedSchools: data.blockedSchools,
-          addedSchools: data.addedSchools,
-          blockedRoles: data.blockedRoles,
-          addedRoles: data.addedRoles,
-          // Update schools relationship through UserSchool
-          UserSchool: {
-            deleteMany: {},
-            create: data.schoolIds?.map((schoolId: string) => ({
-              schoolSc: schoolId
-            })) || []
+      // Update the user, schools, and roles atomically so a concurrent sign-in
+      // can't interleave a half-applied delete-then-recreate.
+      await prisma.$transaction(async (tx) => {
+        await tx.user.update({
+          where: { id: data.id },
+          data: {
+            name: data.name,
+            admin: data.admin,
+            queryEdit: data.queryEdit,
+            primaryRole: data.primaryRole,
+            // Manual overrides
+            blockedSchools: data.blockedSchools,
+            addedSchools: data.addedSchools,
+            blockedRoles: data.blockedRoles,
+            addedRoles: data.addedRoles,
+            // Update schools relationship through UserSchool
+            UserSchool: {
+              deleteMany: {},
+              create: data.schoolIds?.map((schoolId: string) => ({
+                schoolSc: schoolId
+              })) || []
+            }
+          }
+        });
+
+        // Update roles via explicit UserRole junction table (consistent with Aeries sync)
+        if (data.userRoleIds) {
+          await tx.userRole.deleteMany({ where: { userId: data.id } });
+          if (data.userRoleIds.length > 0) {
+            await tx.userRole.createMany({
+              data: data.userRoleIds.map((roleId: string) => ({
+                userId: data.id,
+                roleId,
+              })),
+              skipDuplicates: true,
+            });
           }
         }
       });
-
-      // Update roles via explicit UserRole junction table (consistent with Aeries sync)
-      if (data.userRoleIds) {
-        await prisma.userRole.deleteMany({ where: { userId: data.id } });
-        if (data.userRoleIds.length > 0) {
-          await prisma.userRole.createMany({
+    }
+    else if (field === "User Roles") {
+      // Replace roles atomically.
+      await prisma.$transaction(async (tx) => {
+        await tx.userRole.deleteMany({ where: { userId: data.id } });
+        if (data.userRoleIds?.length > 0) {
+          await tx.userRole.createMany({
             data: data.userRoleIds.map((roleId: string) => ({
               userId: data.id,
               roleId,
@@ -99,24 +116,7 @@ export async function updateUser(data: any, field: string) {
             skipDuplicates: true,
           });
         }
-      }
-
-      console.log(`Updated user ${data.id} with all fields`);
-    }
-    else if (field === "User Roles") {
-      // Use explicit UserRole junction table (consistent with Aeries sync)
-      await prisma.userRole.deleteMany({ where: { userId: data.id } });
-      if (data.userRoleIds?.length > 0) {
-        await prisma.userRole.createMany({
-          data: data.userRoleIds.map((roleId: string) => ({
-            userId: data.id,
-            roleId,
-          })),
-          skipDuplicates: true,
-        });
-      }
-
-      console.log(`Updated user roles for user ${data.id}: ${data.userRoleIds?.length || 0} roles`);
+      });
     }
     else if (field === "School Access") {
       // UPDATED: Use the school many-to-many relationship instead of manual junction table management
@@ -164,6 +164,7 @@ export async function updateUser(data: any, field: string) {
 }
 
 export async function addQueryCategory(data: { label: string; value: string; sort?: number; roleIds?: string[] }) {
+  await requireQueryEditor()
   try {
     const result = await prisma.queryCategory.create({
       data: {
@@ -184,6 +185,7 @@ export async function addQueryCategory(data: { label: string; value: string; sor
 }
 
 export async function updateQueryCategory(data: { id: string; label?: string; value?: string; sort?: number; roleIds?: string[] }) {
+  await requireQueryEditor()
   try {
     const result = await prisma.queryCategory.update({
       where: { id: data.id },
@@ -207,6 +209,7 @@ export async function updateQueryCategory(data: { id: string; label?: string; va
 }
 
 export async function deleteQueryCategory(id: string) {
+  await requireQueryEditor()
   try {
     await prisma.queryCategory.delete({
       where: { id },

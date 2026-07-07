@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { auth } from "@/auth";
+import { requireUser } from "./authGuard";
 import { ROLE } from "@prisma/client";
 import sql from "mssql";
 
@@ -131,24 +132,26 @@ export async function updateSchools(profileEmail: string, allQueriedSchools?: Ge
         const existingSchoolCodes = existingSchools.map(school => school.sc)
         // console.log(existingSchoolCodes)
 
-        // First, remove all existing school associations
-        await prisma.userSchool.deleteMany({
-            where: { userId: user.id }
-        });
-
-        // Then, create new associations
-        await prisma.user.update({
-            where: { id: user.id },
-            data: {
-                UserSchool: {
-                    create: existingSchoolCodes.map(sc => ({
-                        school: {
-                            connect: { sc: sc }
-                        }
-                    }))
+        // Replace all school associations atomically so a concurrent sign-in
+        // (e.g. a second browser tab) can't observe the user mid-delete with no
+        // schools. The delete + recreate run in a single transaction.
+        await prisma.$transaction([
+            prisma.userSchool.deleteMany({
+                where: { userId: user.id }
+            }),
+            prisma.user.update({
+                where: { id: user.id },
+                data: {
+                    UserSchool: {
+                        create: existingSchoolCodes.map(sc => ({
+                            school: {
+                                connect: { sc: sc }
+                            }
+                        }))
+                    }
                 }
-            }
-        });
+            }),
+        ]);
 
         // const updateUser = await prisma.user.update({
         //     where: {
@@ -228,10 +231,12 @@ export async function getAllSchools(profileEmail: string) {
 }
 
 
-export async function updateActiveSchool(userId: string, activeSchool: number) {
-    const update = await prisma.user.update({
+export async function updateActiveSchool(_userId: string, activeSchool: number) {
+    // Always act on the authenticated session user — never a caller-supplied id.
+    const sessionUser = await requireUser()
+    await prisma.user.update({
         where: {
-            id: userId
+            id: sessionUser.id
         },
         data: {
             activeSchool
@@ -240,15 +245,15 @@ export async function updateActiveSchool(userId: string, activeSchool: number) {
     const headersList = await headers()
     const referer = headersList.get('referer')
     const currentPath = referer ? new URL(referer).pathname : '/'
-    // console.log('Redirecting to:', currentPath)
-    redirect('/')
     redirect(currentPath)
 }
 
-export async function updateActiveDbYear(userId: string, activeDbYear: number) {
-    const update = await prisma.user.update({
+export async function updateActiveDbYear(_userId: string, activeDbYear: number) {
+    // Always act on the authenticated session user — never a caller-supplied id.
+    const sessionUser = await requireUser()
+    await prisma.user.update({
         where: {
-            id: userId
+            id: sessionUser.id
         },
         data: {
             activeDbYear
@@ -257,7 +262,6 @@ export async function updateActiveDbYear(userId: string, activeDbYear: number) {
     const headersList = await headers()
     const referer = headersList.get('referer')
     const currentPath = referer ? new URL(referer).pathname : '/'
-    redirect('/')
     redirect(currentPath)
 }
 

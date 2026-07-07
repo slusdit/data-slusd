@@ -467,17 +467,15 @@ export async function runQuery(
         // await closePool();
         return result.recordset;
       } catch (error) {
-        // closePool();
         console.error("SQL error", error);
-        throw new Error("SQL error", { cause: error });
-        // setError(error)
+        // Preserve the underlying MSSQL message so callers (e.g. the AI query
+        // repair loop) can act on it
+        const message = error instanceof Error ? error.message : String(error);
+        throw new Error(`SQL error: ${message}`, { cause: error });
       }
     } catch (err) {
       console.error("SQL error", err);
-      // console.log(query)
-      // console.log({err})
-
-      // throw  Error("SQL Pool error", { cause: err });
+      throw err;
     }
   } catch (error) {
     console.error("Error in runQuery:", error);
@@ -611,17 +609,15 @@ export async function runQueryStandalone(
         // await closePool();
         return result.recordset;
       } catch (error) {
-        // closePool();
         console.error("SQL error", error);
-        throw new Error("SQL error", { cause: error });
-        // setError(error)
+        // Preserve the underlying MSSQL message so callers (e.g. the AI query
+        // repair loop) can act on it
+        const message = error instanceof Error ? error.message : String(error);
+        throw new Error(`SQL error: ${message}`, { cause: error });
       }
     } catch (err) {
       console.error("SQL error", err);
-      // console.log(query)
-      // console.log({err})
-
-      // throw  Error("SQL Pool error", { cause: err });
+      throw err;
     }
   } catch (error) {
     console.error("Error in runQuery:", error);

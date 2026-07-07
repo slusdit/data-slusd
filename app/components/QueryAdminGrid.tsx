@@ -251,7 +251,7 @@ export default function QueryAdminGrid({
     if (!queryToDelete) return;
 
     try {
-      await deleteQuery({ id: queryToDelete.id });
+      await deleteQuery(queryToDelete.id);
       setQueries((prev) => prev.filter((q) => q.id !== queryToDelete.id));
       toast.success("Query deleted successfully");
     } catch (error) {
@@ -339,7 +339,7 @@ export default function QueryAdminGrid({
     try {
       for (const query of selectedRows) {
         try {
-          await deleteQuery({ id: query.id });
+          await deleteQuery(query.id);
           successCount++;
         } catch (e) {
           console.error(`Failed to delete query ${query.id}`, e);

@@ -1,27 +1,23 @@
 import { auth } from "@/auth";
 import UnauthorizedButton from "../components/UnauthorizedButton";
+import AccessDenied from "../components/AccessDenied";
 
-export default async function GradedistributionLayout({
+export default async function InterventionsLayout({
     children,
 
   }: Readonly<{
       children: React.ReactNode;
-      
+
   }>) {
     const session = await auth()
     const userRoles = session?.user?.roles
-    // console.log(userRoles)
 
     if (!userRoles?.some(role => [
         "INTERVENTIONS",
         "SUPERADMIN",
         "PRINCIPAL",
     ].includes(role))) {
-      return (
-        <div>
-          Unauthorized, please go back
-        </div>
-      );
+      return <AccessDenied />;
     }
 
   

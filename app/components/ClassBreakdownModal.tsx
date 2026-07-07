@@ -8,8 +8,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { AgGridReact } from 'ag-grid-react';
+import { useTheme } from 'next-themes';
 
 const ClassBreakdownModal = ({ isOpen, onClose, data, teacher }) => {
+  const { resolvedTheme } = useTheme();
+  const gridThemeClass = resolvedTheme === 'dark' ? 'ag-theme-quartz-dark' : 'ag-theme-quartz';
   const columnDefs = [
     { field: 'Period', width: 100 },
     { field: 'Course', flex: 1 },
@@ -27,7 +30,7 @@ const ClassBreakdownModal = ({ isOpen, onClose, data, teacher }) => {
         <DialogHeader>
           <DialogTitle>Grade Distribution by Class - {teacher}</DialogTitle>
         </DialogHeader>
-        <div className="h-[400px] w-full ag-theme-quartz-dark">
+        <div className={`h-[400px] w-full ${gridThemeClass}`}>
           <AgGridReact
             rowData={data}
             columnDefs={columnDefs}

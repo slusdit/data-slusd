@@ -27,9 +27,6 @@ const transformLabel = (label: string) => {
 const IdCellRenderer = (props: any) => {
   const sc = props.data?.sc || props.data?.SC || "";
   const value = props.value || "";
-  console.log("sc", sc);
-  console.log("value", value);
-  console.log("props", props.node.group);
   if (props.node.group || props.node.aggData) {
     const displayValue = props.value?.value || props.value || "";
     return <div>{displayValue}</div>;
@@ -406,11 +403,11 @@ function DataTable<T extends object>({
   }), []);
 
   useEffect(() => {
-    if (data?.length) {
-      setRowData(data);
-      setFilteredData(data);
-      setLoading(false);
-    }
+    // Resolve loading whenever the data prop settles — including an empty result,
+    // otherwise an empty dataset leaves the spinner up forever.
+    setRowData(data ?? []);
+    setFilteredData(data ?? []);
+    setLoading(false);
   }, [data]);
 
   if (loading) {
@@ -422,7 +419,7 @@ function DataTable<T extends object>({
   }
 
   if (!data || !data.length) {
-    return <div className="text-center p-4">No data available</div>;
+    return <div className="text-muted-foreground text-center p-8">No data available</div>;
   }
 
   return (

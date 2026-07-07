@@ -145,14 +145,16 @@ export default async function AdminPage() {
     userRole: user.UserRole.map((ur) => ur.role),
   }));
 
-  // Filter users for Site Admins - they can only see users at their schools
-  let users = transformedUsers;
-  if (isSiteAdmin && !isSuperAdmin) {
-    users = allUsers.filter((user) => {
-      // Check if user has any school in common with the site admin
+  // Only viewers who can see the Users tab receive any user PII in the payload.
+  // A query-editor-only admin never gets the user list serialized to the client.
+  let users: typeof transformedUsers = [];
+  if (isSuperAdmin) {
+    users = transformedUsers;
+  } else if (isSiteAdmin) {
+    // Site Admins can only see users at their schools.
+    users = transformedUsers.filter((user) => {
       const userSchoolCodes = user.UserSchool.map((us) => us.school.sc);
       const hasCommonSchool = userSchoolCodes.some((sc) => userSchools.includes(sc));
-      // Also include users with the same primary school
       const hasSamePrimarySchool = user.primarySchool && userSchools.includes(user.primarySchool.toString());
       return hasCommonSchool || hasSamePrimarySchool;
     });
