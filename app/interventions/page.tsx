@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { TriangleAlert } from 'lucide-react';
 import Interventions from '@/app/components/Interventions';
 
 // Sample data structure matching the specified headers
@@ -239,7 +240,21 @@ const InterventionsPage = () => {
   return (
     <div className="w-full px-2 py-4">
       <h1 className="text-3xl font-bold mb-4">Student Interventions Dashboard</h1>
-      <Interventions data={sampleData} title="Student Interventions" />
+      <div
+        role="status"
+        className="mb-4 flex items-start gap-3 rounded-md border border-amber-400/60 bg-amber-50 p-4 text-amber-900 dark:border-amber-500/40 dark:bg-amber-950/40 dark:text-amber-200"
+      >
+        <TriangleAlert className="mt-0.5 h-5 w-5 flex-shrink-0" />
+        <div>
+          <p className="font-semibold">Sample data — not real students</p>
+          <p className="text-sm">
+            This dashboard is a preview populated with fictional demo records. It is
+            not yet connected to live Aeries data. Do not use it for decisions about
+            actual students.
+          </p>
+        </div>
+      </div>
+      <Interventions data={sampleData} title="Student Interventions (Demo)" />
     </div>
   );
 };

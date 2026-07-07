@@ -33,8 +33,9 @@ export default async function adminCheck(): Promise<AdminCheckResult | null> {
     const isSiteAdmin = roles.includes('SITEADMIN') || roles.includes('PRINCIPAL')
     const isQueryEditor = user.queryEdit || roles.includes('QUERYEDITOR')
 
-    // Only users with admin=true can access admin page
-    const canAccessAdmin = user.admin === true
+    // Any of the three admin tiers may reach the admin dashboard; the page and
+    // AdminTabs then scope which tabs/data each tier actually sees.
+    const canAccessAdmin = isSuperAdmin || isSiteAdmin || isQueryEditor
 
     if (!canAccessAdmin) {
         return null

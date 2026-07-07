@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/select";
 import { addQuery } from "@/lib/formActions";
 import { Textarea } from "@/components/ui/textarea";
+import { useFormDialog } from "@/app/components/forms/FormDialog";
 
 type PageValues = {
   id: string;
@@ -115,26 +116,25 @@ export default function AddQueryForm({
     // console.log("Form validation failed", errors);
   }
 
-  // const { closeDialog } = useDialog()
+  const { close } = useFormDialog();
+
   async function onSubmit(values: z.infer<typeof queryFormSchema>) {
-    // console.log("submit");
-    // console.log('values', {values})
-    try {
-      // TODO: validate SQL, try running it?
-    } catch (e) {
-      console.error(e);
-      const errorMessage = e instanceof Error ? e.message : String(e);
-      toast.error(`Error validating query: ${errorMessage}. Please check your SQL syntax.`);
-      return; // Don't continue if validation fails
+    // Basic client-side sanity check; deeper validation happens server-side.
+    const trimmedQuery = values.query?.trim() ?? "";
+    if (!trimmedQuery) {
+      toast.error("Query cannot be empty.");
+      return;
+    }
+    if (!/\bselect\b/i.test(trimmedQuery)) {
+      toast.error("Query must be a SELECT statement.");
+      return;
     }
 
     try {
-      // console.log(`Values - ${JSON.stringify(values)}`);
-      const response = await addQuery(values);
-      // console.log({response})
-      // const query = await response.json();
+      await addQuery(values);
       form.reset();
       toast.success("Query inserted successfully");
+      close(); // dismiss the dialog on success
     } catch (e) {
       console.error(e);
       const errorMessage = e instanceof Error ? e.message : String(e);

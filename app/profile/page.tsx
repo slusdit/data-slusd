@@ -1,13 +1,13 @@
 import { auth } from "@/auth";
-import GoogleAuthButton from "@/app/components/GoogleAuthButton";
-import { Button } from "@/components/ui/button";
-import { Link } from "next/link";
-import RenewSchools from "../components/RenewSchools";
+import { redirect } from "next/navigation";
 import SchoolPicker from "../components/SchoolPicker";
 
 export default async function Profile() {
 
     const session = await auth()
+    if (!session?.user) {
+        redirect("/");
+    }
 
     return (
         <div>

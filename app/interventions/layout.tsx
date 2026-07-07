@@ -1,16 +1,15 @@
 import { auth } from "@/auth";
 import UnauthorizedButton from "../components/UnauthorizedButton";
 
-export default async function GradedistributionLayout({
+export default async function InterventionsLayout({
     children,
 
   }: Readonly<{
       children: React.ReactNode;
-      
+
   }>) {
     const session = await auth()
     const userRoles = session?.user?.roles
-    // console.log(userRoles)
 
     if (!userRoles?.some(role => [
         "INTERVENTIONS",
