@@ -1,19 +1,25 @@
 'use client';
 
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Sparkles, Copy, Play, Check, AlertCircle, ChevronDown, ChevronUp, Settings2, Database, Layers, Lock, Unlock, Wand2, Bug, RefreshCw } from 'lucide-react';
-import { runQuery } from '@/lib/aeries';
+import {
+  Loader2, Sparkles, Copy, Play, Check, AlertCircle, ChevronDown, ChevronUp,
+  Bug, RefreshCw, Search, ShieldCheck, Database, X, History, Save, CircleDashed,
+} from 'lucide-react';
 import DataTableAgGrid from './DataTableAgGrid';
 import { Separator } from '@/components/ui/separator';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
+import { saveAiQuery } from '@/lib/ai-query/save-ai-query';
 
 interface FilterOption {
   id: string;
@@ -24,11 +30,6 @@ interface FilterOption {
 
 interface AIQueryClientProps {
   schoolOptions: FilterOption[];
-  gradeOptions: FilterOption[];
-  gradeGroupOptions: FilterOption[];
-  genderOptions: FilterOption[];
-  ethnicityOptions: FilterOption[];
-  programOptions: FilterOption[];
   activeSchool?: string;
   isDistrictWide?: boolean;
   canEditQueries?: boolean;
@@ -45,6 +46,8 @@ interface QueryAttempt {
     warnings: string[];
     referencedViews: string[];
   };
+  executedSql?: string;
+  executionError?: string;
   correctionPrompt?: string;
 }
 
@@ -53,392 +56,246 @@ interface DebugInfo {
   totalAttempts: number;
 }
 
-// Query mode: 'fragment' uses existing system, 'view' uses new llm_* views
-type QueryMode = 'fragment' | 'view';
-
-// Data enhancement options - additional data to include via CTEs/JOINs
-interface DataEnhancement {
-  id: string;
+// One row in the live progress stepper
+interface ProgressStep {
+  key: string;
   label: string;
-  description: string;
-  category: 'attendance' | 'academics' | 'programs' | 'demographics' | 'contacts';
+  detail?: string;
+  status: 'active' | 'done' | 'failed';
+  isRepair: boolean;
 }
 
-const DATA_ENHANCEMENTS: DataEnhancement[] = [
-  // Attendance
-  { id: 'attendance_summary', label: 'Attendance Summary', description: 'Include attendance rate, chronic absence status', category: 'attendance' },
-  { id: 'attendance_daily', label: 'Daily Attendance', description: 'Include individual attendance records', category: 'attendance' },
-  // Academics
-  { id: 'gpa', label: 'GPA & Academic Standing', description: 'Include current GPA, failing grades, honors', category: 'academics' },
-  { id: 'grades', label: 'Course Grades', description: 'Include letter grades by course', category: 'academics' },
-  { id: 'test_scores', label: 'Test Scores', description: 'Include SBAC, ELPAC, and other assessments', category: 'academics' },
-  // Programs
-  { id: 'program_flags', label: 'Program Flags', description: 'Include EL, SPED, foster, homeless flags', category: 'programs' },
-  { id: 'special_ed', label: 'Special Education Details', description: 'Include IEP info, disability, placement', category: 'programs' },
-  // Demographics
-  { id: 'frpm', label: 'Free/Reduced Lunch', description: 'Include FRPM eligibility status', category: 'demographics' },
-  { id: 'sed', label: 'Socioeconomically Disadvantaged', description: 'Include SED status and reason', category: 'demographics' },
-  // Contacts
-  { id: 'contacts', label: 'Parent/Guardian Contacts', description: 'Include parent email, phone, relationship', category: 'contacts' },
-  // Discipline
-  { id: 'discipline', label: 'Discipline Summary', description: 'Include suspensions, incidents', category: 'programs' },
-];
-
-interface ParsedFilters {
-  schools: string[];
-  grades: string[];
-  gradeGroups: string[];
-  gender: string[];
-  ethnicity: string[];
-  programs: string[];
-}
-
-interface AIQueryState {
-  prompt: string;
-  isGenerating: boolean;
-  generatedSql: string | null;
-  formattedSql: string | null;
-  explanation: {
-    summary: string;
-    sections: { name: string; description: string; sql: string }[];
-  } | null;
-  error: string | null;
-  isExecuting: boolean;
-  results: Record<string, unknown>[] | null;
-  copied: boolean;
-  parsedFilters: ParsedFilters | null;
-  fragmentsUsed: string[];
-  // View mode additions
+interface QueryResultState {
+  sql: string;
+  originalSql: string;
+  formattedSql: string;
+  data: Record<string, unknown>[] | null;
+  rowCount: number;
+  executeError: string | null;
   referencedViews: string[];
   warnings: string[];
-  queryMode: QueryMode;
-  // AI-suggested enhancements (from query analysis)
-  suggestedEnhancements: string[];
-  // Debug info for query attempts (only shown to editors)
-  debugInfo: DebugInfo | null;
+  schoolScope: string;
+  appliedSchools: string[];
   attemptCount: number;
+  debugInfo: DebugInfo | null;
 }
 
-// Read-only filter display component
-function FilterDisplay({
-  label,
-  items,
-  selectedIds,
-  allOptions
-}: {
-  label: string;
-  items: FilterOption[];
-  selectedIds: string[];
-  allOptions: FilterOption[];
-}) {
-  const selectedItems = allOptions.filter(opt => selectedIds.includes(opt.id));
+const RECENT_PROMPTS_KEY = 'ai-query-recent';
+const RECENT_PROMPTS_MAX = 10;
 
-  return (
-    <div className="space-y-1">
-      <label className="text-sm font-medium text-muted-foreground">{label}</label>
-      <div className="min-h-[40px] p-2 rounded-md border bg-muted/30 flex flex-wrap gap-1 items-center">
-        {selectedItems.length > 0 ? (
-          selectedItems.map(item => (
-            <Badge key={item.id} variant="secondary" className="flex items-center gap-1">
-              {item.logo && (
-                <img src={item.logo} alt="" className="h-4 w-4 rounded-sm object-contain" />
-              )}
-              {item.label}
-            </Badge>
-          ))
-        ) : (
-          <span className="text-sm text-muted-foreground italic">None detected</span>
-        )}
-      </div>
-    </div>
-  );
+function stageIcon(step: ProgressStep) {
+  if (step.status === 'failed') return <AlertCircle className="h-4 w-4 text-amber-600" />;
+  if (step.status === 'done') return <Check className="h-4 w-4 text-green-600" />;
+  return <Loader2 className="h-4 w-4 animate-spin text-primary" />;
 }
 
 export function AIQueryClient({
   schoolOptions,
-  gradeOptions,
-  gradeGroupOptions,
-  genderOptions,
-  ethnicityOptions,
-  programOptions,
   activeSchool,
   isDistrictWide,
   canEditQueries = false,
 }: AIQueryClientProps) {
-  const [state, setState] = useState<AIQueryState>({
-    prompt: '',
-    isGenerating: false,
-    generatedSql: null,
-    formattedSql: null,
-    explanation: null,
-    error: null,
-    isExecuting: false,
-    results: null,
-    copied: false,
-    parsedFilters: null,
-    fragmentsUsed: [],
-    referencedViews: [],
-    warnings: [],
-    queryMode: 'view', // Default to view mode (simpler, more reliable)
-    suggestedEnhancements: [],
-    debugInfo: null,
-    attemptCount: 0,
-  });
+  const [prompt, setPrompt] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [steps, setSteps] = useState<ProgressStep[]>([]);
+  const [elapsed, setElapsed] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const [cancelled, setCancelled] = useState(false);
+  const [result, setResult] = useState<QueryResultState | null>(null);
+  const [recentPrompts, setRecentPrompts] = useState<string[]>([]);
 
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [showDebugInfo, setShowDebugInfo] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [isRerunning, setIsRerunning] = useState(false);
 
-  const [filtersOpen, setFiltersOpen] = useState(true);
-  const [enhancementsOpen, setEnhancementsOpen] = useState(false);
-  const [selectedEnhancements, setSelectedEnhancements] = useState<string[]>([]);
-  const [lockedEnhancements, setLockedEnhancements] = useState(false); // When locked, AI suggestions won't auto-update selections
-  const [filterByEnhancements, setFilterByEnhancements] = useState(false); // false = LEFT JOIN (all students), true = INNER JOIN (only matching)
+  // Save-as-Query dialog
+  const [saveOpen, setSaveOpen] = useState(false);
+  const [saveName, setSaveName] = useState('');
+  const [saveDescription, setSaveDescription] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
-  // Detect suggested enhancements from prompt keywords
-  const detectSuggestedEnhancements = useCallback((prompt: string): string[] => {
-    const lowerPrompt = prompt.toLowerCase();
-    const suggestions: string[] = [];
+  const abortRef = useRef<AbortController | null>(null);
 
-    // Program-related keywords
-    if (/\b(ieps|iep|special ed|sped|disability|individualized education)\b/.test(lowerPrompt)) {
-      suggestions.push('special_ed');
-      suggestions.push('program_flags');
-    }
-    if (/\b(504|504s|accommodation|plan)\b/.test(lowerPrompt)) {
-      suggestions.push('program_flags');
-    }
-    if (/\b(english learner|english learners| el |ell|el student|elpac|lep|language)\b/.test(lowerPrompt)) {
-      suggestions.push('program_flags');
-    }
-    if (/\b(foster|homeless|migrant|mckinney|unhoused)\b/.test(lowerPrompt)) {
-      suggestions.push('program_flags');
-    }
-
-    // Attendance-related keywords
-    if (/\b(absent|attendance|chronic|truant|tardy|missing school)\b/.test(lowerPrompt)) {
-      suggestions.push('attendance_summary');
-    }
-
-    // Academic-related keywords
-    if (/\b(gpa|grades?|failing|academic|credit|honor|at.?risk)\b/.test(lowerPrompt)) {
-      suggestions.push('gpa');
-    }
-    if (/\b(test|score|sbac|caaspp|assessment|elpac)\b/.test(lowerPrompt)) {
-      suggestions.push('test_scores');
-    }
-
-    // Discipline-related keywords
-    if (/\b(suspend|suspension|discipline|expel|incident|behavior)\b/.test(lowerPrompt)) {
-      suggestions.push('discipline');
-    }
-
-    // Demographics-related keywords
-    if (/\b(lunch|frpm|free|reduced|low.?income|socioeconomic|sed)\b/.test(lowerPrompt)) {
-      suggestions.push('frpm');
-      suggestions.push('sed');
-    }
-
-    // Contact-related keywords
-    if (/\b(parent|guardian|contact|phone|email|emergency)\b/.test(lowerPrompt)) {
-      suggestions.push('contacts');
-    }
-
-    return [...new Set(suggestions)]; // Remove duplicates
-  }, []);
-
-  // Auto-detect and suggest enhancements when prompt changes (if not locked)
+  // Load recent prompts (client only)
   useEffect(() => {
-    if (state.queryMode !== 'view') return; // Only for view mode
-
-    const detected = detectSuggestedEnhancements(state.prompt);
-
-    // Update suggested enhancements in state
-    setState(s => ({ ...s, suggestedEnhancements: detected }));
-
-    // Auto-select detected enhancements if not locked
-    if (!lockedEnhancements && detected.length > 0) {
-      // Simply set to the detected enhancements when unlocked
-      // User can manually add/remove after detection
-      setSelectedEnhancements(detected);
-      // Auto-open the enhancements panel if we detected something
-      setEnhancementsOpen(true);
-    }
-  }, [state.prompt, state.queryMode, lockedEnhancements, detectSuggestedEnhancements]);
-
-  // Parse fragment IDs into categorized filters
-  const categorizeFragments = useCallback((fragmentIds: string[]): ParsedFilters => {
-    const filters: ParsedFilters = {
-      schools: [],
-      grades: [],
-      gradeGroups: [],
-      gender: [],
-      ethnicity: [],
-      programs: [],
-    };
-
-    for (const id of fragmentIds) {
-      if (id.startsWith('school_')) {
-        filters.schools.push(id);
-      } else if (id.startsWith('grade_')) {
-        if (['grade_elementary', 'grade_middle', 'grade_high'].includes(id)) {
-          filters.gradeGroups.push(id);
-        } else {
-          filters.grades.push(id);
-        }
-      } else if (id.startsWith('gender_')) {
-        filters.gender.push(id);
-      } else if (id.startsWith('ethnicity_')) {
-        filters.ethnicity.push(id);
-      } else if (id.startsWith('has_') || id.startsWith('is_')) {
-        filters.programs.push(id);
-      }
-    }
-
-    return filters;
+    try {
+      const stored = localStorage.getItem(RECENT_PROMPTS_KEY);
+      if (stored) setRecentPrompts(JSON.parse(stored));
+    } catch { /* ignore */ }
   }, []);
 
-  // Toggle enhancement selection
-  const toggleEnhancement = useCallback((id: string) => {
-    setSelectedEnhancements(prev =>
-      prev.includes(id) ? prev.filter(e => e !== id) : [...prev, id]
+  // Elapsed-seconds ticker while generating
+  useEffect(() => {
+    if (!isGenerating) return;
+    const startedAt = Date.now();
+    setElapsed(0);
+    const interval = setInterval(() => setElapsed(Math.floor((Date.now() - startedAt) / 1000)), 1000);
+    return () => clearInterval(interval);
+  }, [isGenerating]);
+
+  const rememberPrompt = useCallback((text: string) => {
+    setRecentPrompts((prev) => {
+      const next = [text, ...prev.filter((p) => p !== text)].slice(0, RECENT_PROMPTS_MAX);
+      try { localStorage.setItem(RECENT_PROMPTS_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+  }, []);
+
+  const handleProgressEvent = useCallback((event: { stage: string; attempt: number; message: string; detail?: string }) => {
+    setSteps((prev) => {
+      // Previous in-flight step completes when the next stage starts
+      const settled = prev.map((s) => (s.status === 'active' ? { ...s, status: 'done' as const } : s));
+      const failed = event.stage.endsWith('_failed');
+      return [
+        ...settled,
+        {
+          key: `${event.stage}-${event.attempt}-${prev.length}`,
+          label: event.message,
+          detail: event.detail,
+          status: failed ? 'failed' : 'active',
+          isRepair: event.attempt > 1 || failed,
+        },
+      ];
+    });
+  }, []);
+
+  const finishSteps = useCallback((success: boolean) => {
+    setSteps((prev) =>
+      prev.map((s) => (s.status === 'active' ? { ...s, status: success ? 'done' : 'failed' } : s))
     );
   }, []);
 
-  // Build enhanced prompt with data inclusion hints
-  const buildEnhancedPrompt = useCallback((basePrompt: string, enhancements: string[], filterByData: boolean): string => {
-    if (enhancements.length === 0) return basePrompt;
-
-    const enhancementDescriptions = enhancements.map(id => {
-      const enhancement = DATA_ENHANCEMENTS.find(e => e.id === id);
-      return enhancement ? enhancement.label : id;
+  const applyResultPayload = useCallback((payload: any) => {
+    if (!payload.success) {
+      finishSteps(false);
+      setError(payload.error || payload.details?.join(', ') || 'Failed to generate query');
+      return;
+    }
+    finishSteps(!payload.executeError);
+    setResult({
+      sql: payload.sql,
+      originalSql: payload.originalSql,
+      formattedSql: payload.formattedSql,
+      data: payload.data ?? null,
+      rowCount: payload.rowCount ?? 0,
+      executeError: payload.executeError ?? null,
+      referencedViews: payload.metadata?.referencedViews ?? [],
+      warnings: payload.metadata?.warnings ?? [],
+      schoolScope: payload.metadata?.schoolScope ?? '',
+      appliedSchools: payload.metadata?.appliedSchools ?? [],
+      attemptCount: payload.metadata?.attemptCount ?? 1,
+      debugInfo: payload.debugInfo ?? null,
     });
+    if (payload.executeError) {
+      setError(`Query generated but failed to execute: ${payload.executeError}`);
+    }
+  }, [finishSteps]);
 
-    const joinType = filterByData
-      ? 'Use INNER JOIN to filter to only students who have this data'
-      : 'Use LEFT JOIN to include all students, with NULL for those without this data';
+  const generateQuery = useCallback(async (promptOverride?: string) => {
+    const text = (promptOverride ?? prompt).trim();
+    if (!text || isGenerating) return;
+    if (promptOverride) setPrompt(promptOverride);
 
-    return `${basePrompt}
+    setIsGenerating(true);
+    setError(null);
+    setCancelled(false);
+    setResult(null);
+    setSteps([]);
+    setDetailsOpen(false);
 
-(Include additional data: ${enhancementDescriptions.join(', ')}. ${joinType})`;
-  }, []);
-
-  const generateQuery = useCallback(async () => {
-    if (!state.prompt.trim()) return;
-
-    setState(s => ({
-      ...s,
-      isGenerating: true,
-      error: null,
-      generatedSql: null,
-      results: null,
-      parsedFilters: null,
-      fragmentsUsed: [],
-      referencedViews: [],
-      warnings: [],
-      debugInfo: null,
-      attemptCount: 0,
-    }));
+    const controller = new AbortController();
+    abortRef.current = controller;
 
     try {
-      // Choose endpoint based on query mode
-      const endpoint = state.queryMode === 'view'
-        ? '/api/ai-query/view-generate'
-        : '/api/ai-query/generate';
-
-      // Build prompt with enhancements for view mode
-      const enhancedPrompt = state.queryMode === 'view'
-        ? buildEnhancedPrompt(state.prompt, selectedEnhancements, filterByEnhancements)
-        : state.prompt;
-
-      const response = await fetch(endpoint, {
+      const response = await fetch('/api/ai-query/view-generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt: enhancedPrompt,
-          execute: true, // Auto-execute for view mode
-        }),
+        body: JSON.stringify({ prompt: text, execute: true, stream: true }),
+        signal: controller.signal,
       });
 
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || data.details?.join(', ') || 'Failed to generate query');
+      // Auth/validation failures come back as plain JSON, not a stream
+      const contentType = response.headers.get('content-type') ?? '';
+      if (!response.ok || !contentType.includes('ndjson')) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.error || `Request failed (${response.status})`);
       }
 
-      if (state.queryMode === 'view') {
-        // View mode response
-        setState(s => ({
-          ...s,
-          isGenerating: false,
-          generatedSql: data.sql,
-          formattedSql: data.formattedSql,
-          explanation: null, // View mode doesn't provide structured explanation
-          parsedFilters: null,
-          fragmentsUsed: [],
-          referencedViews: data.metadata?.referencedViews || [],
-          warnings: data.metadata?.warnings || [],
-          results: data.data || null,
-          debugInfo: data.debugInfo || null,
-          attemptCount: data.metadata?.attemptCount || 1,
-        }));
+      const reader = response.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        let newlineIndex;
+        while ((newlineIndex = buffer.indexOf('\n')) >= 0) {
+          const line = buffer.slice(0, newlineIndex).trim();
+          buffer = buffer.slice(newlineIndex + 1);
+          if (!line) continue;
+
+          const event = JSON.parse(line);
+          if (event.type === 'progress') {
+            handleProgressEvent(event);
+          } else if (event.type === 'result') {
+            applyResultPayload(event.payload);
+            rememberPrompt(text);
+          } else if (event.type === 'error') {
+            throw new Error(event.error);
+          }
+        }
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        setCancelled(true);
+        setSteps((prev) => prev.map((s) => (s.status === 'active' ? { ...s, status: 'failed' } : s)));
       } else {
-        // Fragment mode response
-        const fragmentsUsed = data.metadata?.fragmentsUsed || [];
-        const parsedFilters = categorizeFragments(fragmentsUsed);
-
-        setState(s => ({
-          ...s,
-          isGenerating: false,
-          generatedSql: data.sql,
-          formattedSql: data.formattedSql,
-          explanation: data.explanation,
-          parsedFilters,
-          fragmentsUsed,
-          referencedViews: [],
-          warnings: [],
-        }));
+        finishSteps(false);
+        const message = err instanceof Error ? err.message : 'Query generation failed';
+        setError(`${message}. Try rephrasing your question.`);
       }
-
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Query generation failed';
-      const actionableError = `${errorMessage}. Try simplifying your prompt or selecting different filters.`;
-      setState(s => ({
-        ...s,
-        isGenerating: false,
-        error: actionableError,
-      }));
+    } finally {
+      setIsGenerating(false);
+      abortRef.current = null;
     }
-  }, [state.prompt, state.queryMode, categorizeFragments, selectedEnhancements, filterByEnhancements, buildEnhancedPrompt]);
+  }, [prompt, isGenerating, handleProgressEvent, applyResultPayload, rememberPrompt, finishSteps]);
 
-  const executeQuery = useCallback(async () => {
-    if (!state.generatedSql) return;
+  const cancelGeneration = useCallback(() => {
+    abortRef.current?.abort();
+  }, []);
 
-    setState(s => ({ ...s, isExecuting: true, error: null }));
-
+  // Re-run the generated SQL through the validated/scoped execution API
+  const rerunQuery = useCallback(async () => {
+    if (!result?.sql) return;
+    setIsRerunning(true);
+    setError(null);
     try {
-      const results = await runQuery(state.generatedSql);
-      setState(s => ({
-        ...s,
-        isExecuting: false,
-        results: results || [],
-      }));
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Query execution failed';
-      const actionableError = `${errorMessage}. Please check the generated SQL for errors or try regenerating the query.`;
-      setState(s => ({
-        ...s,
-        isExecuting: false,
-        error: actionableError
-      }));
+      const response = await fetch('/api/custom-query/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sql: result.sql }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Query execution failed');
+      }
+      setResult((r) => (r ? { ...r, data: data.data ?? [], rowCount: data.rowCount ?? 0, executeError: null } : r));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Query execution failed');
+    } finally {
+      setIsRerunning(false);
     }
-  }, [state.generatedSql]);
+  }, [result?.sql]);
 
   const copyToClipboard = useCallback(() => {
-    if (state.generatedSql) {
-      navigator.clipboard.writeText(state.generatedSql);
-      setState(s => ({ ...s, copied: true }));
-      setTimeout(() => setState(s => ({ ...s, copied: false })), 2000);
-    }
-  }, [state.generatedSql]);
+    if (!result?.sql) return;
+    navigator.clipboard.writeText(result.sql);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [result?.sql]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
@@ -447,349 +304,288 @@ export function AIQueryClient({
     }
   }, [generateQuery]);
 
-  const hasFilters = state.parsedFilters && (
-    state.parsedFilters.schools.length > 0 ||
-    state.parsedFilters.grades.length > 0 ||
-    state.parsedFilters.gradeGroups.length > 0 ||
-    state.parsedFilters.gender.length > 0 ||
-    state.parsedFilters.ethnicity.length > 0 ||
-    state.parsedFilters.programs.length > 0
-  );
+  const handleSave = useCallback(async () => {
+    if (!result?.originalSql) return;
+    setIsSaving(true);
+    try {
+      const saved = await saveAiQuery({
+        name: saveName,
+        description: saveDescription,
+        sql: result.originalSql,
+      });
+      if (saved.success) {
+        toast.success(`Saved as "${saveName}"`);
+        setSaveOpen(false);
+        setSaveName('');
+        setSaveDescription('');
+      } else {
+        toast.error(saved.error ?? 'Failed to save query');
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  }, [result?.originalSql, saveName, saveDescription]);
 
-  const totalFilters = state.parsedFilters ? (
-    state.parsedFilters.schools.length +
-    state.parsedFilters.grades.length +
-    state.parsedFilters.gradeGroups.length +
-    state.parsedFilters.gender.length +
-    state.parsedFilters.ethnicity.length +
-    state.parsedFilters.programs.length
-  ) : 0;
-
-
-  const placeholderTextEscaped = `Examples: Students with ... 
+  const placeholderText = `Examples:
 • Students with an IEP at Jefferson
-• Students who are English Learners by grade level
-• Students in 3rd grade at Madison who are foster youth
-• Students who are Hispanic and homeless at each school
-• Students who are female in middle school grades`
+• English learners who are chronically absent, with parent contacts
+• Count of suspensions by grade level
+• Class rosters for period 3`;
+
+  const singleSchoolScope = !isDistrictWide && (result?.appliedSchools.length ?? 0) <= 1;
+
   return (
-    <div className="space-y-6">
-      {/* Input Card */}
+    <div className="space-y-4">
+      {/* Compact prompt bar */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+        <CardContent className="pt-6 space-y-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-2 text-base font-semibold">
               <Sparkles className="h-5 w-5 text-yellow-500" />
               AI Query Builder
             </div>
-            <div className="flex items-center gap-2">
-              {/* Query Mode Toggle */}
-              <Select
-                value={state.queryMode}
-                onValueChange={(value: QueryMode) => setState(s => ({ ...s, queryMode: value }))}
-              >
-                <SelectTrigger className="w-[140px] h-8 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="view">
-                    <div className="flex items-center gap-1.5">
-                      <Layers className="h-3.5 w-3.5" />
-                      View Mode
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="fragment">
-                    <div className="flex items-center gap-1.5">
-                      <Database className="h-3.5 w-3.5" />
-                      Fragment Mode
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-              <Badge variant={isDistrictWide ? "default" : "secondary"} className="text-xs">
-                {isDistrictWide
-                  ? `District-wide (${schoolOptions.length} schools)`
-                  : schoolOptions.length === 1
-                    ? schoolOptions[0]?.label
-                    : 'Single School'}
-              </Badge>
-            </div>
-          </CardTitle>
-          <p className="text-xs text-muted-foreground">
-            {state.queryMode === 'view'
-              ? 'Uses optimized llm_* views for faster, more reliable queries'
-              : 'Uses fragment-based SQL composition for complex queries'}
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* All/Filter toggle at top (View Mode Only) */}
-          {state.queryMode === 'view' && (
-            <div className="flex items-center justify-between p-2 rounded-lg border bg-muted/30">
-              <div className="flex items-center gap-2">
-                <Label className="text-sm font-medium">
-                  {filterByEnhancements ? 'Filter to matching students only' : 'Include all students'}
-                </Label>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className={`text-xs ${!filterByEnhancements ? 'font-medium' : 'text-muted-foreground'}`}>All</span>
-                <Checkbox
-                  checked={filterByEnhancements}
-                  onCheckedChange={(checked) => setFilterByEnhancements(checked === true)}
-                  className="data-[state=checked]:bg-primary"
-                />
-                <span className={`text-xs ${filterByEnhancements ? 'font-medium' : 'text-muted-foreground'}`}>Filter</span>
-              </div>
-            </div>
-          )}
-
-          <div>
-            <Textarea
-              value={state.prompt}
-              onChange={(e) => setState(s => ({ ...s, prompt: e.target.value }))}
-              onKeyDown={handleKeyDown}
-              placeholder={placeholderTextEscaped}
-              className="min-h-[140px] font-mono text-sm"
-            />
-            <p className="text-xs text-muted-foreground mt-2">
-              Press <kbd className="px-1 py-0.5 bg-muted rounded text-xs">Ctrl</kbd>+<kbd className="px-1 py-0.5 bg-muted rounded text-xs">Enter</kbd> to generate
-            </p>
+            <Badge variant={isDistrictWide ? 'default' : 'secondary'} className="text-xs shrink-0">
+              {isDistrictWide
+                ? `District-wide (${schoolOptions.length} schools)`
+                : schoolOptions[0]?.label ?? 'Single School'}
+            </Badge>
           </div>
 
-          <Button
-            onClick={generateQuery}
-            disabled={state.isGenerating || !state.prompt.trim()}
-            className="w-full sm:w-auto"
-          >
-            {state.isGenerating ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Generating...
-              </>
-            ) : (
-              <>
-                <Sparkles className="h-4 w-4 mr-2" />
-                Generate SQL
-              </>
-            )}
-          </Button>
+          <Textarea
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={placeholderText}
+            className="min-h-[90px] font-mono text-sm"
+            disabled={isGenerating}
+          />
 
-          {/* Data Enhancement Options (View Mode Only) */}
-          {state.queryMode === 'view' && (
-            <Collapsible open={enhancementsOpen} onOpenChange={setEnhancementsOpen}>
-              <div className="flex items-center gap-2">
-                <CollapsibleTrigger asChild>
-                  <Button variant="outline" size="sm" className="flex-1 justify-between">
-                    <div className="flex items-center gap-2">
-                      <Settings2 className="h-4 w-4" />
-                      <span>Include Additional Data</span>
-                      {selectedEnhancements.length > 0 && (
-                        <Badge variant="secondary" className="ml-2">
-                          {selectedEnhancements.length} selected
-                        </Badge>
-                      )}
-                      {state.suggestedEnhancements.length > 0 && !lockedEnhancements && (
-                        <Badge variant="outline" className="ml-1 text-yellow-600 border-yellow-400 bg-yellow-50">
-                          <Wand2 className="h-3 w-3 mr-1" />
-                          AI suggested
-                        </Badge>
-                      )}
-                    </div>
-                    {enhancementsOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                  </Button>
-                </CollapsibleTrigger>
-                <Button
-                  variant={lockedEnhancements ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setLockedEnhancements(!lockedEnhancements)}
-                  className="shrink-0"
-                  title={lockedEnhancements ? "Unlock to let AI update selections based on prompt" : "Lock to prevent AI from changing selections"}
-                >
-                  {lockedEnhancements ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2">
+              <Button onClick={() => generateQuery()} disabled={isGenerating || !prompt.trim()}>
+                {isGenerating ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generating…</>
+                ) : (
+                  <><Sparkles className="h-4 w-4 mr-2" /> Generate & Run</>
+                )}
+              </Button>
+              {isGenerating && (
+                <Button variant="outline" onClick={cancelGeneration}>
+                  <X className="h-4 w-4 mr-1" /> Cancel
                 </Button>
-              </div>
-              {lockedEnhancements && (
-                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                  <Lock className="h-3 w-3" />
-                  Selections locked - AI won&apos;t auto-update based on prompt changes
-                </p>
               )}
-              <CollapsibleContent className="pt-3">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 border rounded-lg bg-muted/30">
-                  {(['attendance', 'academics', 'programs', 'demographics', 'contacts'] as const).map(category => {
-                    const categoryEnhancements = DATA_ENHANCEMENTS.filter(e => e.category === category);
-                    if (categoryEnhancements.length === 0) return null;
-                    return (
-                      <div key={category} className="space-y-2">
-                        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                          {category}
-                        </h4>
-                        {categoryEnhancements.map(enhancement => {
-                          const isAiSuggested = state.suggestedEnhancements.includes(enhancement.id);
-                          const isSelected = selectedEnhancements.includes(enhancement.id);
-                          return (
-                            <div key={enhancement.id} className={`flex items-start gap-2 p-1.5 rounded ${isAiSuggested && isSelected ? 'bg-yellow-50 border border-yellow-200' : ''}`}>
-                              <Checkbox
-                                id={enhancement.id}
-                                checked={isSelected}
-                                onCheckedChange={() => toggleEnhancement(enhancement.id)}
-                              />
-                              <div className="grid gap-0.5 leading-none flex-1">
-                                <Label htmlFor={enhancement.id} className="text-sm font-medium cursor-pointer flex items-center gap-1.5">
-                                  {enhancement.label}
-                                  {isAiSuggested && isSelected && (
-                                    <span title="AI suggested based on your prompt">
-                                      <Wand2 className="h-3 w-3 text-yellow-600" />
-                                    </span>
-                                  )}
-                                </Label>
-                                <p className="text-xs text-muted-foreground">{enhancement.description}</p>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    );
-                  })}
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
+              <span className="text-xs text-muted-foreground hidden sm:inline">
+                <kbd className="px-1 py-0.5 bg-muted rounded text-xs">Ctrl</kbd>+<kbd className="px-1 py-0.5 bg-muted rounded text-xs">Enter</kbd>
+              </span>
+            </div>
+          </div>
+
+          {/* Recent prompts */}
+          {recentPrompts.length > 0 && !isGenerating && (
+            <div className="flex items-start gap-2 flex-wrap">
+              <History className="h-3.5 w-3.5 text-muted-foreground mt-1 shrink-0" />
+              {recentPrompts.slice(0, 5).map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => generateQuery(p)}
+                  className="text-xs px-2 py-1 rounded-full border bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground max-w-[280px] truncate"
+                  title={p}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
           )}
 
-          {/* Error Display */}
-          {state.error && (
+          {error && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{state.error}</AlertDescription>
+              <AlertDescription>{error}</AlertDescription>
             </Alert>
+          )}
+          {cancelled && !error && (
+            <p className="text-sm text-muted-foreground">Cancelled.</p>
           )}
         </CardContent>
       </Card>
 
-      {/* Query Metadata Card - Shows filters (fragment mode) or views (view mode) */}
-      {state.generatedSql && (
+      {/* Live progress stepper */}
+      {(isGenerating || (steps.length > 0 && !result && !cancelled)) && (
         <Card>
-          <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen}>
-            <CardHeader className="pb-3">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-medium">Working on it…</span>
+              <span className="text-xs text-muted-foreground tabular-nums">{elapsed}s elapsed</span>
+            </div>
+            <div className="space-y-2">
+              {steps.length === 0 && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <CircleDashed className="h-4 w-4 animate-spin" /> Contacting the AI model…
+                </div>
+              )}
+              {steps.map((step) => (
+                <div key={step.key} className={`flex items-start gap-2 text-sm ${step.isRepair ? 'text-amber-700 dark:text-amber-400' : ''}`}>
+                  <span className="mt-0.5 shrink-0">{stageIcon(step)}</span>
+                  <div className="min-w-0">
+                    <span>{step.label}</span>
+                    {step.detail && (
+                      <p className="text-xs text-muted-foreground truncate" title={step.detail}>{step.detail}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground mt-3">
+              Queries run on a local AI model and typically take 15–90 seconds. Fix-up attempts add time.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Results - the hero */}
+      {result && !result.executeError && result.data !== null && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center justify-between text-base">
+              <span>Results ({result.rowCount.toLocaleString()} rows)</span>
+              <div className="flex items-center gap-2">
+                {canEditQueries && result.attemptCount > 1 && (
+                  <Badge variant="outline" className="text-amber-600 border-amber-400 font-normal">
+                    <RefreshCw className="h-3 w-3 mr-1" /> auto-repaired ({result.attemptCount} attempts)
+                  </Badge>
+                )}
+                <Badge variant="secondary" className="font-normal">{result.schoolScope}</Badge>
+              </div>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {result.rowCount > 0 ? (
+              <div className="h-[600px]">
+                <DataTableAgGrid data={result.data as Record<string, unknown>[]} />
+              </div>
+            ) : (
+              <div className="py-10 text-center space-y-2">
+                <p className="text-muted-foreground">No matches within {result.schoolScope}.</p>
+                {singleSchoolScope && (
+                  <p className="text-sm text-muted-foreground">
+                    You&apos;re scoped to a single school - switch to &quot;District&quot; in the school picker to search all of your schools.
+                  </p>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Query details drawer */}
+      {result && (
+        <Card>
+          <Collapsible open={detailsOpen} onOpenChange={setDetailsOpen}>
+            <CardHeader className="py-3">
               <CollapsibleTrigger asChild>
                 <div className="flex items-center justify-between cursor-pointer">
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    {state.queryMode === 'view' ? (
-                      <>
-                        <Layers className="h-4 w-4" />
-                        Views Used
-                        {state.referencedViews.length > 0 && (
-                          <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
-                            {state.referencedViews.length}
-                          </span>
-                        )}
-                      </>
-                    ) : (
-                      <>
-                        Interpreted Filters
-                        {hasFilters && (
-                          <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
-                            {totalFilters}
-                          </span>
-                        )}
-                      </>
-                    )}
+                  <CardTitle className="flex items-center gap-2 text-sm font-medium">
+                    <Database className="h-4 w-4" />
+                    Query details
+                    <span className="flex gap-1 ml-2">
+                      {result.referencedViews.map((view) => (
+                        <Badge key={view} variant="secondary" className="font-mono text-[10px]">{view}</Badge>
+                      ))}
+                    </span>
                   </CardTitle>
-                  <Button variant="ghost" size="sm">
-                    {filtersOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    {canEditQueries && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => { e.stopPropagation(); setSaveName(''); setSaveOpen(true); }}
+                      >
+                        <Save className="h-4 w-4 mr-1" /> Save as Query
+                      </Button>
+                    )}
+                    <Button variant="ghost" size="sm">
+                      {detailsOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </Button>
+                  </div>
                 </div>
               </CollapsibleTrigger>
-              <p className="text-sm text-muted-foreground">
-                {state.queryMode === 'view'
-                  ? 'Database views referenced in this query'
-                  : 'These filters were detected from your query'}
-              </p>
             </CardHeader>
             <CollapsibleContent>
-              <CardContent className="space-y-4">
-                {state.queryMode === 'view' ? (
-                  <>
-                    {/* View Mode: Show referenced views */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-muted-foreground">Referenced Views</label>
-                      <div className="flex flex-wrap gap-2">
-                        {state.referencedViews.length > 0 ? (
-                          state.referencedViews.map(view => (
-                            <Badge key={view} variant="secondary" className="font-mono text-xs">
-                              {view}
+              <CardContent className="space-y-4 pt-0">
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={copyToClipboard}>
+                    {copied ? <Check className="h-4 w-4 mr-1 text-green-500" /> : <Copy className="h-4 w-4 mr-1" />}
+                    {copied ? 'Copied!' : 'Copy SQL'}
+                  </Button>
+                  <Button size="sm" onClick={rerunQuery} disabled={isRerunning}>
+                    {isRerunning ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Play className="h-4 w-4 mr-1" />}
+                    Re-run
+                  </Button>
+                </div>
+
+                <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-sm font-mono whitespace-pre-wrap">
+                  {result.formattedSql || result.sql}
+                </pre>
+
+                {result.warnings.length > 0 && (
+                  <div className="space-y-1">
+                    {result.warnings.map((warning, i) => (
+                      <p key={i} className="text-sm text-amber-600 flex items-center gap-2">
+                        <AlertCircle className="h-3.5 w-3.5" /> {warning}
+                      </p>
+                    ))}
+                  </div>
+                )}
+
+                {/* Debug attempts (query editors only) */}
+                {canEditQueries && result.debugInfo && result.debugInfo.attempts.length > 0 && (
+                  <div className="border-t pt-4 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="flex items-center gap-2 text-sm font-medium">
+                        <Bug className="h-4 w-4 text-amber-500" />
+                        Generation attempts ({result.debugInfo.totalAttempts})
+                      </span>
+                      <Button variant="outline" size="sm" onClick={() => setShowDebugInfo(!showDebugInfo)}>
+                        {showDebugInfo ? 'Hide' : 'Show'}
+                      </Button>
+                    </div>
+                    {showDebugInfo && result.debugInfo.attempts.map((attempt, index) => (
+                      <div key={index} className="space-y-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge variant={attempt.validation.valid && !attempt.executionError ? 'default' : 'destructive'}>
+                            Attempt {attempt.attemptNumber}
+                          </Badge>
+                          {!attempt.validation.valid && (
+                            <Badge variant="outline" className="text-red-600 border-red-400">
+                              <AlertCircle className="h-3 w-3 mr-1" /> Invalid
                             </Badge>
-                          ))
-                        ) : (
-                          <span className="text-sm text-muted-foreground italic">No views detected</span>
-                        )}
-                      </div>
-                    </div>
-                    {/* Warnings */}
-                    {state.warnings.length > 0 && (
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-amber-600">Warnings</label>
-                        <div className="space-y-1">
-                          {state.warnings.map((warning, i) => (
-                            <p key={i} className="text-sm text-amber-600 flex items-center gap-2">
-                              <AlertCircle className="h-3.5 w-3.5" />
-                              {warning}
-                            </p>
-                          ))}
+                          )}
+                          {attempt.executionError && (
+                            <Badge variant="outline" className="text-red-600 border-red-400">
+                              <AlertCircle className="h-3 w-3 mr-1" /> Execution failed
+                            </Badge>
+                          )}
                         </div>
+                        <pre className="bg-muted p-3 rounded-md overflow-x-auto text-xs font-mono whitespace-pre-wrap max-h-48">
+                          {attempt.sql}
+                        </pre>
+                        {attempt.validation.errors.length > 0 && (
+                          <div className="bg-red-50 dark:bg-red-950/30 p-3 rounded-md space-y-1">
+                            {attempt.validation.errors.map((e, i) => (
+                              <p key={i} className="text-xs text-red-600">{e}</p>
+                            ))}
+                          </div>
+                        )}
+                        {attempt.executionError && (
+                          <div className="bg-red-50 dark:bg-red-950/30 p-3 rounded-md">
+                            <p className="text-xs text-red-600">{attempt.executionError}</p>
+                          </div>
+                        )}
+                        {index < result.debugInfo!.attempts.length - 1 && <Separator />}
                       </div>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    {/* Fragment Mode: Show parsed filters */}
-                    {/* Row 1: Schools */}
-                    <FilterDisplay
-                      label="Schools"
-                      items={schoolOptions}
-                      selectedIds={state.parsedFilters?.schools || []}
-                      allOptions={schoolOptions}
-                    />
-
-                    {/* Row 2: Grades */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FilterDisplay
-                        label="Grade Level"
-                        items={gradeGroupOptions}
-                        selectedIds={state.parsedFilters?.gradeGroups || []}
-                        allOptions={gradeGroupOptions}
-                      />
-                      <FilterDisplay
-                        label="Specific Grades"
-                        items={gradeOptions}
-                        selectedIds={state.parsedFilters?.grades || []}
-                        allOptions={gradeOptions}
-                      />
-                    </div>
-
-                    {/* Row 3: Demographics */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FilterDisplay
-                        label="Gender"
-                        items={genderOptions}
-                        selectedIds={state.parsedFilters?.gender || []}
-                        allOptions={genderOptions}
-                      />
-                      <FilterDisplay
-                        label="Ethnicity"
-                        items={ethnicityOptions}
-                        selectedIds={state.parsedFilters?.ethnicity || []}
-                        allOptions={ethnicityOptions}
-                      />
-                    </div>
-
-                    {/* Row 4: Programs */}
-                    <FilterDisplay
-                      label="Programs"
-                      items={programOptions}
-                      selectedIds={state.parsedFilters?.programs || []}
-                      allOptions={programOptions}
-                    />
-                  </>
+                    ))}
+                  </div>
                 )}
               </CardContent>
             </CollapsibleContent>
@@ -797,201 +593,45 @@ export function AIQueryClient({
         </Card>
       )}
 
-      {/* Generated SQL Display */}
-      {state.generatedSql && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span>Generated SQL</span>
-                <Badge variant="outline" className="text-xs font-normal">
-                  {state.queryMode === 'view' ? 'View Mode' : 'Fragment Mode'}
-                </Badge>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={copyToClipboard}>
-                  {state.copied ? (
-                    <Check className="h-4 w-4 mr-1 text-green-500" />
-                  ) : (
-                    <Copy className="h-4 w-4 mr-1" />
-                  )}
-                  {state.copied ? 'Copied!' : 'Copy'}
-                </Button>
-                <Button size="sm" onClick={executeQuery} disabled={state.isExecuting}>
-                  {state.isExecuting ? (
-                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                  ) : (
-                    <Play className="h-4 w-4 mr-1" />
-                  )}
-                  {state.results ? 'Re-run Query' : 'Run Query'}
-                </Button>
-              </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-sm font-mono whitespace-pre-wrap">
-              {state.formattedSql || state.generatedSql}
-            </pre>
-
-            {/* Explanation */}
-            {state.explanation && (
-              <div className="border-t pt-4">
-                <h4 className="font-medium mb-2">Query Explanation</h4>
-                <p className="text-sm text-muted-foreground mb-3">{state.explanation.summary}</p>
-                <div className="space-y-2">
-                  {state.explanation.sections.map((section, i) => (
-                    <div key={i} className="text-sm">
-                      <span className="font-medium">{section.name}:</span>{' '}
-                      <span className="text-muted-foreground">{section.description}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Attempt count indicator (for editors) */}
-            {canEditQueries && state.attemptCount > 1 && (
-              <div className="border-t pt-4">
-                <div className="flex items-center gap-2 text-sm text-amber-600">
-                  <RefreshCw className="h-4 w-4" />
-                  <span>Query succeeded after {state.attemptCount} attempts (validation errors were auto-corrected)</span>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Debug Info Card (only visible to query editors) */}
-      {canEditQueries && state.debugInfo && state.debugInfo.attempts.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Bug className="h-5 w-5 text-amber-500" />
-                <span>Query Generation Debug Info</span>
-                <Badge variant="outline" className="text-xs font-normal">
-                  {state.debugInfo.totalAttempts} attempt{state.debugInfo.totalAttempts !== 1 ? 's' : ''}
-                </Badge>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowDebugInfo(!showDebugInfo)}
-              >
-                {showDebugInfo ? (
-                  <><ChevronUp className="h-4 w-4 mr-1" /> Hide</>
-                ) : (
-                  <><ChevronDown className="h-4 w-4 mr-1" /> Show</>
-                )}
-              </Button>
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Shows all query generation attempts with validation results (visible only to query editors)
-            </p>
-          </CardHeader>
-          {showDebugInfo && (
-            <CardContent className="space-y-6">
-              {state.debugInfo.attempts.map((attempt, index) => (
-                <div key={index} className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Badge variant={attempt.validation.valid ? "default" : "destructive"}>
-                      Attempt {attempt.attemptNumber}
-                    </Badge>
-                    {attempt.validation.valid ? (
-                      <Badge variant="outline" className="text-green-600 border-green-400 bg-green-50">
-                        <Check className="h-3 w-3 mr-1" /> Valid
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-red-600 border-red-400 bg-red-50">
-                        <AlertCircle className="h-3 w-3 mr-1" /> Invalid
-                      </Badge>
-                    )}
-                    {attempt.validation.referencedViews.length > 0 && (
-                      <span className="text-xs text-muted-foreground">
-                        Views: {attempt.validation.referencedViews.join(', ')}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Generated SQL for this attempt */}
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-muted-foreground uppercase">Generated SQL</label>
-                    <pre className="bg-muted p-3 rounded-md overflow-x-auto text-xs font-mono whitespace-pre-wrap max-h-48">
-                      {attempt.sql}
-                    </pre>
-                  </div>
-
-                  {/* Validation errors */}
-                  {attempt.validation.errors.length > 0 && (
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium text-red-600 uppercase">Validation Errors</label>
-                      <div className="bg-red-50 dark:bg-red-950/30 p-3 rounded-md space-y-1">
-                        {attempt.validation.errors.map((error, i) => (
-                          <div key={i} className="text-xs text-red-600 flex items-start gap-2">
-                            <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />
-                            <span>{error}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Validation warnings */}
-                  {attempt.validation.warnings.length > 0 && (
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium text-amber-600 uppercase">Warnings</label>
-                      <div className="bg-amber-50 dark:bg-amber-950/30 p-3 rounded-md space-y-1">
-                        {attempt.validation.warnings.map((warning, i) => (
-                          <div key={i} className="text-xs text-amber-600 flex items-start gap-2">
-                            <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />
-                            <span>{warning}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Correction prompt (for retry attempts) */}
-                  {attempt.correctionPrompt && (
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium text-blue-600 uppercase">Correction Prompt Sent</label>
-                      <pre className="bg-blue-50 dark:bg-blue-950/30 p-3 rounded-md overflow-x-auto text-xs font-mono whitespace-pre-wrap max-h-32 text-blue-800 dark:text-blue-200">
-                        {attempt.correctionPrompt}
-                      </pre>
-                    </div>
-                  )}
-
-                  {/* Separator between attempts */}
-                  {index < state.debugInfo!.attempts.length - 1 && (
-                    <Separator className="my-4" />
-                  )}
-                </div>
-              ))}
-            </CardContent>
-          )}
-        </Card>
-      )}
-
-      {/* Results Display */}
-      {state.results && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Results ({state.results.length} rows)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {state.results.length > 0 ? (
-              <div className="h-[500px]">
-                <DataTableAgGrid
-                  data={state.results}
-                />
-              </div>
-            ) : (
-              <p className="text-muted-foreground">No results found</p>
-            )}
-          </CardContent>
-        </Card>
-      )}
+      {/* Save as Query dialog */}
+      <Dialog open={saveOpen} onOpenChange={setSaveOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save as Query</DialogTitle>
+            <DialogDescription>
+              Adds this query to the saved-query system. The school filter becomes dynamic
+              (@@sc), so it scopes to whoever runs it.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <Label htmlFor="save-query-name">Name</Label>
+              <Input
+                id="save-query-name"
+                value={saveName}
+                onChange={(e) => setSaveName(e.target.value)}
+                placeholder="e.g. Chronically absent English learners"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="save-query-description">Description</Label>
+              <Input
+                id="save-query-description"
+                value={saveDescription}
+                onChange={(e) => setSaveDescription(e.target.value)}
+                placeholder="Optional"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSaveOpen(false)}>Cancel</Button>
+            <Button onClick={handleSave} disabled={isSaving || !saveName.trim()}>
+              {isSaving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
