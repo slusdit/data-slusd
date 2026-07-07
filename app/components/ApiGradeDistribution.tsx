@@ -198,22 +198,29 @@ const ApiGradeDistribution = ({
     }
   }, [gridApi]);
 
+  // Stabilize the initialFilters reference. The parent passes a fresh object
+  // (default `{}`) on every render; depending on its identity in the effects
+  // below caused an infinite fetch → setState → refetch loop. Key on content.
+  const initialFiltersKey = JSON.stringify(initialFilters ?? {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const stableInitialFilters = useMemo(() => initialFilters ?? {}, [initialFiltersKey]);
+
   // Initial data load
   useEffect(() => {
     // Fetch filter options
     fetchFilterOptions();
-    
+
     // Fetch initial data with any provided initial filters
-    fetchData(initialFilters);
-  }, [fetchFilterOptions, fetchData, initialFilters]);
+    fetchData(stableInitialFilters);
+  }, [fetchFilterOptions, fetchData, stableInitialFilters]);
 
   // Update data when filters change
   useEffect(() => {
     if (isLoading) return;
 
     const filters = {
-      ...initialFilters,
-      teacherNumber: selectedTeachers.length > 0 
+      ...stableInitialFilters,
+      teacherNumber: selectedTeachers.length > 0
         ? selectedTeachers.map(t => t.id) 
         : undefined,
       departmentCode: selectedDepartments.length > 0 
@@ -245,7 +252,7 @@ const ApiGradeDistribution = ({
     selectedEll,
     selectedSpecialEd,
     selectedArd,
-    initialFilters,
+    stableInitialFilters,
     isLoading,
     fetchData
   ]);

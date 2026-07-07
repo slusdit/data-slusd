@@ -8,10 +8,8 @@ export default async function AssessmentLayout({
       children: React.ReactNode;
       
   }>) {
-    // const session = await serverAuth()
     const session = await auth()
     const userRoles = session?.user?.roles
-    console.log(userRoles)
 
     if (!userRoles?.some(role => ["ASSESSMENT", "SUPERADMIN"].includes(role))) {
       return (

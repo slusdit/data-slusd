@@ -98,7 +98,8 @@ const QueryList = ({
                 // Don't render the category if there are no queries in that category
                 let queriesWithCategories = queries.filter((query) => {
                   if (category.label.toLowerCase() === "favorites") {
-                    return user.favorites.includes(query.id);
+                    // favorites is an array of Query objects, not ids.
+                    return user.favorites.some((fav) => fav.id === query.id);
                   }
 
                   return (
@@ -120,12 +121,6 @@ const QueryList = ({
                 // console.log("userRoles", userRoles);
                 // console.log("categoryRoles", categoryRoles);
                 // console.log('SuperAdmin', userRoles.includes("SUPERADMIN"));
-
-                // Don't render the category if the user doesn't have any of the roles in that category
-                if (categoryRoles && categoryRoles?.length < 0) {
-                  // console.log("~~~~~~~ Empty Category ~~~~~~~")
-                  return null;
-                }
 
                 if (
                   (categoryRoles &&
@@ -191,7 +186,6 @@ const QueryList = ({
       </ScrollArea>
     );
   }
-  console.log(user);
   return (
     <ScrollArea className="w-full h-full">
       <ul className="flex flex-col gap-1 w-2/3 mb-8">
@@ -244,11 +238,6 @@ const QueryList = ({
               // console.log("userRoles", userRoles);
               // console.log("categoryRoles", categoryRoles);
               // console.log('SuperAdmin', userRoles.includes("SUPERADMIN"));
-
-              // Don't render the category if the user doesn't have any of the roles in that category
-              if (categoryRoles && categoryRoles?.length < 0) {
-                return null;
-              }
 
               if (
                 (categoryRoles &&
