@@ -2,6 +2,7 @@
 "use server";
 
 import prisma from "@/lib/db";
+import { requireUser, requireAdmin, assertSchoolAccess } from "@/lib/authGuard";
 
 // To avoid creating multiple instances of Prisma in development
 // const globalForPrisma = global as unknown as { prisma: PrismaClient };
@@ -22,7 +23,8 @@ export async function getStudentGrades(
   schoolYear?: string
 ) {
   try {
-    console.log("Server action called with:", { sc, tn, term, courseTitle, genderStatus, ellStatus, specialEdStatus, ardStatus, period, schoolYear });
+    const user = await requireUser();
+    assertSchoolAccess(user, sc);
 
     // Use Prisma's $queryRaw to execute raw SQL safely with parameter binding
     // This approach prevents SQL injection
@@ -122,6 +124,7 @@ export async function getStudentGrades(
 
 // Optional: Add a debug function to check if data exists
 export async function checkGradeDistributionData() {
+  await requireAdmin();
   try {
     const count = await prisma.$queryRaw`
       SELECT COUNT(*) as count FROM GradeDistribution

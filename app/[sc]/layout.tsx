@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import UnauthorizedButton from "../components/UnauthorizedButton";
+import AccessDenied from "../components/AccessDenied";
 
 export default async function SchoolLayout(
   props: Readonly<{
@@ -14,17 +15,11 @@ export default async function SchoolLayout(
     children
   } = props;
 
-  // const session = await serverAuth()
   const session = await auth()
   const sc = session?.user?.activeSchool
-  console.log('userSchools: ', )
 
   if (sc?.toString() !== params.sc && sc != 0) {
-    return (
-      <div>
-        Unauthorized, please go back
-      </div>
-    );
+    return <AccessDenied message="You do not have access to this school." />;
   }
 
 

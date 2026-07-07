@@ -4,6 +4,27 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit, getRateLimitIdentifier } from "@/lib/rateLimit";
 
 /**
+ * Best-effort emulation audit write. Never throws — audit logging must not
+ * break the emulation action itself, and the EmulationLog table may not exist
+ * until `prisma db push` has run.
+ */
+async function logEmulation(data: {
+  action: "start" | "stop";
+  realUserId: string;
+  realUserEmail?: string | null;
+  targetUserId?: string | null;
+  targetUserEmail?: string | null;
+}) {
+  try {
+    const delegate = (prisma as any).emulationLog;
+    if (!delegate) return;
+    await delegate.create({ data });
+  } catch (error) {
+    console.error("Failed to write emulation audit log:", error);
+  }
+}
+
+/**
  * POST /api/admin/emulate
  * Start emulating another user (admin only)
  */
@@ -74,6 +95,16 @@ export async function POST(request: NextRequest) {
     // Update the real user's emulatingId using raw SQL
     await prisma.$executeRaw`UPDATE User SET emulatingId = ${userId} WHERE id = ${realUserId}`;
 
+    // Audit trail: record who started emulating whom. Guarded so a not-yet-migrated
+    // DB (EmulationLog table / regenerated client missing) never breaks emulation.
+    await logEmulation({
+      action: "start",
+      realUserId,
+      realUserEmail: user.realUser?.email ?? user.email,
+      targetUserId: targetUser.id,
+      targetUserEmail: targetUser.email,
+    });
+
     return NextResponse.json({
       success: true,
       message: `Now viewing as ${targetUser.name}`,
@@ -109,6 +140,13 @@ export async function DELETE() {
 
     // Clear the emulatingId using raw SQL
     await prisma.$executeRaw`UPDATE User SET emulatingId = NULL WHERE id = ${realUserId}`;
+
+    // Audit trail: record the end of the emulation session.
+    await logEmulation({
+      action: "stop",
+      realUserId,
+      realUserEmail: user.realUser?.email ?? user.email,
+    });
 
     return NextResponse.json({
       success: true,

@@ -9,89 +9,9 @@ import { NextResponse } from 'next/server';
 import { auth, SessionUser } from '@/auth';
 import { runQuery } from '@/lib/aeries';
 import { checkRateLimit, getRateLimitIdentifier } from '@/lib/rateLimit';
-
-// School code to name mapping for logging
-const SCHOOL_NAMES: Record<string, string> = {
-  '2': 'Garfield Elementary',
-  '3': 'Jefferson Elementary',
-  '4': 'Madison Elementary',
-  '5': 'McKinley Elementary',
-  '6': 'Monroe Elementary',
-  '7': 'Roosevelt Elementary',
-  '8': 'Washington Elementary',
-  '9': 'Halkin Elementary',
-  '11': 'Bancroft Middle School',
-  '12': 'Muir Middle School',
-  '15': 'Lincoln High School',
-  '16': 'San Leandro High School',
-  '60': 'SLVA Elementary',
-  '61': 'SLVA Middle',
-  '62': 'SLVA High',
-};
-
-/**
- * Inject school security filter into SQL query
- */
-function injectSchoolFilter(sql: string, schoolIds: string[]): string {
-  if (schoolIds.length === 0) {
-    return sql;
-  }
-
-  const schoolList = schoolIds.join(', ');
-  const filterCondition = `d.school_id IN (${schoolList})`;
-
-  // Check if query already has a WHERE clause
-  const whereMatch = sql.match(/\bWHERE\b/i);
-
-  if (whereMatch) {
-    // Insert school filter after WHERE
-    const whereIndex = sql.search(/\bWHERE\b/i);
-    const beforeWhere = sql.substring(0, whereIndex + 5);
-    const afterWhere = sql.substring(whereIndex + 5);
-    return `${beforeWhere} ${filterCondition}\n  AND${afterWhere}`;
-  } else {
-    // No WHERE clause, add one before ORDER BY
-    const orderMatch = sql.match(/\bORDER\s+BY\b/i);
-    if (orderMatch) {
-      const orderIndex = sql.search(/\bORDER\s+BY\b/i);
-      const beforeOrder = sql.substring(0, orderIndex);
-      const orderClause = sql.substring(orderIndex);
-      return `${beforeOrder}\nWHERE ${filterCondition}\n${orderClause}`;
-    } else {
-      // No ORDER BY either, just append WHERE
-      return `${sql}\nWHERE ${filterCondition}`;
-    }
-  }
-}
-
-/**
- * Validate SQL for basic safety
- */
-function validateSql(sql: string): { valid: boolean; error?: string } {
-  const upperSql = sql.toUpperCase();
-
-  // Check for dangerous keywords
-  const dangerousKeywords = ['DROP', 'DELETE', 'UPDATE', 'INSERT', 'ALTER', 'CREATE', 'TRUNCATE', 'EXEC', 'EXECUTE'];
-  for (const keyword of dangerousKeywords) {
-    // Use word boundary check
-    const regex = new RegExp(`\\b${keyword}\\b`, 'i');
-    if (regex.test(sql)) {
-      return { valid: false, error: `Query contains forbidden keyword: ${keyword}` };
-    }
-  }
-
-  // Must start with SELECT
-  if (!upperSql.trim().startsWith('SELECT')) {
-    return { valid: false, error: 'Query must start with SELECT' };
-  }
-
-  // Must reference llm_* views
-  if (!sql.includes('llm_')) {
-    return { valid: false, error: 'Query must use llm_* views' };
-  }
-
-  return { valid: true };
-}
+import { validateSql as validateSqlStrict } from '@/lib/ai-query/sql-validator';
+import { viewQueryBuilder } from '@/lib/ai-query/view-query-builder';
+import { SCHOOL_NAMES } from '@/lib/constants/schools';
 
 export async function POST(request: Request) {
   const startTime = Date.now();
@@ -148,12 +68,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'SQL query is required' }, { status: 400 });
     }
 
-    // Validate SQL
-    const validation = validateSql(sql);
+    // Validate SQL with the strict validator: SELECT-only, llm_* view whitelist,
+    // blocked base tables, and no multi-statement injection.
+    const validation = validateSqlStrict(sql);
     if (!validation.valid) {
       return NextResponse.json({
         success: false,
-        error: validation.error
+        error: validation.errors.join('; ')
       }, { status: 400 });
     }
 
@@ -176,13 +97,22 @@ export async function POST(request: Request) {
       schoolsToFilter = [activeSchool.toString()];
     }
 
-    console.log(`[Custom Query] User: ${user.email}`);
-    console.log(`[Custom Query] Schools: ${schoolsToFilter.length > 0 ? schoolsToFilter.join(', ') : 'all'}`);
+    // Deny by default: a non-admin whose query resolves to no school filter would
+    // otherwise read across all schools. Only full admins may run unscoped.
+    if (schoolsToFilter.length === 0 && !user.admin) {
+      return NextResponse.json({
+        success: false,
+        error: 'No accessible schools resolved for this query.'
+      }, { status: 403 });
+    }
 
-    // Inject school security filter
-    const securedSql = injectSchoolFilter(sql, schoolsToFilter);
+    // Inject school security filter (detects the real view alias and
+    // parenthesizes any existing predicate so OR can't escape the scope)
+    const securedSql = viewQueryBuilder.injectSecurityFilters(sql, schoolsToFilter);
 
-    console.log('[Custom Query] Executing:', securedSql);
+    if (process.env.AI_QUERY_DEBUG === 'true') {
+      console.log('[Custom Query] Executing:', securedSql);
+    }
 
     // Execute query
     const queryResult = await runQuery(securedSql);

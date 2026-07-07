@@ -138,7 +138,7 @@ model UserRole {
   userId String
   roleId String
   role   Role   @relation(fields: [roleId], references: [id])
-  user   User   @relation(fields: [userId], references: [id])
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([userId, roleId])
   @@index([roleId], map: "UserRole_roleId_fkey")
@@ -148,7 +148,7 @@ model UserClass {
   classId String
   userId  String
   class   Class  @relation(fields: [classId], references: [id], onDelete: Cascade)
-  user    User   @relation(fields: [userId], references: [id])
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([userId, classId])
   @@index([classId], map: "UserClass_classId_fkey")
@@ -165,6 +165,7 @@ model Class {
   activeOverride Boolean     @default(false)
   UserClass      UserClass[]
 
+  @@unique([sc, tn, psl]) // Prevent duplicate class rows on concurrent teacher sync
   @@index([email]) // For looking up classes by teacher email
   @@index([sc, tn]) // For composite lookups by school and teacher number
 }
@@ -429,4 +430,20 @@ model AppSetting {
   label     String?  // Human-readable label for admin UI
   updatedAt DateTime @updatedAt
   updatedBy String?  // User ID who last updated
+}
+
+// Audit trail for admin user-emulation actions (compliance requirement for
+// a student-data system). One row per start/stop event.
+model EmulationLog {
+  id           String   @id @default(cuid())
+  createdAt    DateTime @default(now())
+  action       String   // "start" | "stop"
+  realUserId   String   // the admin performing the action
+  realUserEmail String?
+  targetUserId String?  // the user being emulated (null on stop)
+  targetUserEmail String?
+
+  @@index([realUserId])
+  @@index([targetUserId])
+  @@index([createdAt])
 }

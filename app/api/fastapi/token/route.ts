@@ -1,19 +1,21 @@
 // app/api/fastapi/token/route.ts
 import { NextRequest, NextResponse } from 'next/server';
+import { getSessionUser } from '@/lib/authGuard';
 
 export async function POST(request: NextRequest) {
-  console.log('Available env vars:', {
-  FAST_API_URL: process.env.FAST_API_URL,
-  // NEXT_PUBLIC_FAST_API_URL: process.env.NEXT_PUBLIC_FAST_API_URL
-  });
+  // Only authenticated users may mint a FastAPI service token.
+  const user = await getSessionUser();
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // Credentials come from server-only env vars and are never logged or echoed.
   const body = {
     "username": process.env.FAST_API_USER,
     "password": process.env.FAST_API_PASSWORD
   }
-  console.log("Body received in token route", JSON.stringify(body));
   try {
     const urlBase = process.env.FAST_API_URL;
-    console.log("FastAPI URL:", urlBase);
     const response = await fetch(`${urlBase}/token/`, {
       method: 'POST',
       headers: {

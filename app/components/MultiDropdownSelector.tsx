@@ -87,7 +87,6 @@ const MultiDropdownSelector: FC<MultiDropdownSelectorProps> = ({
   
   useEffect(() => {
     if (!initialized) {
-      console.log("defaultValues", defaultValues);
       // Apply default values if they exist and values array is empty
       if (defaultValues.length > 0 && values.length === 0 && !disabled && !schoolValues) {
         // If singleSelect is true, only use the first default value
@@ -172,8 +171,16 @@ const MultiDropdownSelector: FC<MultiDropdownSelectorProps> = ({
             {item.label}
             <span
               role="button"
+              tabIndex={0}
+              aria-label={`Remove ${item.label}`}
               onPointerDown={(e) => handleRemoveItem(item.id, e)}
               onClick={(e) => stopAllPropagation(e)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  handleRemoveItem(item.id, e as any);
+                }
+              }}
             >
               <X className="h-3 w-3 cursor-pointer opacity-70 hover:opacity-100" />
             </span>
@@ -237,8 +244,16 @@ const MultiDropdownSelector: FC<MultiDropdownSelectorProps> = ({
               {selectedItems.length > 0 && (
                 <span
                   role="button"
+                  tabIndex={0}
+                  aria-label="Clear all selected"
                   onPointerDown={(e) => handleClearAll(e)}
                   onClick={(e) => stopAllPropagation(e)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleClearAll(e as any);
+                    }
+                  }}
                 >
                   <X className="h-4 w-4 shrink-0 opacity-50 hover:opacity-100 ml-2 cursor-pointer" />
                 </span>

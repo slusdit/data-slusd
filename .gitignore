@@ -50,3 +50,6 @@ tests/
 Aeries_Database_Schema.sql
 AERIES_SQL_QUERY_VUILDER_TECHNICAL_SPEC.md
 NUL
+
+# AI query eval run outputs
+scripts/eval/results-*.json

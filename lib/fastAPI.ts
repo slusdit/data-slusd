@@ -1,15 +1,14 @@
 // lib/fastAPI.ts - Updated to use Next.js API routes as proxy
 
 export async function apiAuth() {
+  // Credentials live only on the server; the /api/fastapi/token proxy injects
+  // them. The browser must never see FastAPI credentials, so send no body.
   const requestOptions: RequestInit = {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      username: process.env.NEXT_PUBLIC_FAST_API_USER,
-      password: process.env.NEXT_PUBLIC_FAST_API_PASSWORD,
-    }),
+    body: JSON.stringify({}),
   };
 
   try {

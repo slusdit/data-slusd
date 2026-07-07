@@ -1,9 +1,10 @@
 "use server";
 import { runQuery } from "./aeries";
 import prisma from "./db";
+import { requireUser } from "./authGuard";
 
 export async function getQuery(queryId: string) {
-  // console.log(queryId);
+  await requireUser();
   const ret = await prisma.query.findUnique({
     where: {
       id: queryId,
@@ -23,6 +24,7 @@ export async function getQueryData({
   queryId?: string;
   queryLabel?: string;
 }) {
+  await requireUser();
   async function fetchQuery({
     queryId,
     queryLabel,

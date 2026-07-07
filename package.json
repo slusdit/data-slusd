@@ -8,7 +8,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "host": "next dev --host 0.0.0.0"
+    "host": "next dev --host 0.0.0.0",
+    "eval:ai-query": "tsx scripts/eval-ai-query.ts",
+    "generate:view-schema": "tsx scripts/generate-view-schema.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.4.1",

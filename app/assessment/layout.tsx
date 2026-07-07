@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import UnauthorizedButton from "../components/UnauthorizedButton";
+import AccessDenied from "../components/AccessDenied";
 
 export default async function AssessmentLayout({
     children,
@@ -8,17 +9,11 @@ export default async function AssessmentLayout({
       children: React.ReactNode;
       
   }>) {
-    // const session = await serverAuth()
     const session = await auth()
     const userRoles = session?.user?.roles
-    console.log(userRoles)
 
     if (!userRoles?.some(role => ["ASSESSMENT", "SUPERADMIN"].includes(role))) {
-      return (
-        <div>
-          Unauthorized, please go back
-        </div>
-      );
+      return <AccessDenied />;
     }
 
   
