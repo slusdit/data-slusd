@@ -1,18 +1,11 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import { Loader2 } from "lucide-react";
 
+// Root loading UI cascades to every route, so keep it layout-agnostic:
+// a neutral centered spinner rather than a skeleton that mimics one page.
 export default function Loading() {
   return (
-    <div className="container mx-auto space-y-6 p-6">
-      <Skeleton className="h-9 w-64" />
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="bg-card space-y-3 rounded-lg border p-4">
-            <Skeleton className="h-5 w-32" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-3/4" />
-          </div>
-        ))}
-      </div>
+    <div className="flex min-h-[50vh] w-full items-center justify-center">
+      <Loader2 className="text-muted-foreground h-8 w-8 animate-spin" aria-label="Loading" />
     </div>
   );
 }
