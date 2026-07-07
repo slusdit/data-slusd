@@ -132,24 +132,26 @@ export async function updateSchools(profileEmail: string, allQueriedSchools?: Ge
         const existingSchoolCodes = existingSchools.map(school => school.sc)
         // console.log(existingSchoolCodes)
 
-        // First, remove all existing school associations
-        await prisma.userSchool.deleteMany({
-            where: { userId: user.id }
-        });
-
-        // Then, create new associations
-        await prisma.user.update({
-            where: { id: user.id },
-            data: {
-                UserSchool: {
-                    create: existingSchoolCodes.map(sc => ({
-                        school: {
-                            connect: { sc: sc }
-                        }
-                    }))
+        // Replace all school associations atomically so a concurrent sign-in
+        // (e.g. a second browser tab) can't observe the user mid-delete with no
+        // schools. The delete + recreate run in a single transaction.
+        await prisma.$transaction([
+            prisma.userSchool.deleteMany({
+                where: { userId: user.id }
+            }),
+            prisma.user.update({
+                where: { id: user.id },
+                data: {
+                    UserSchool: {
+                        create: existingSchoolCodes.map(sc => ({
+                            school: {
+                                connect: { sc: sc }
+                            }
+                        }))
+                    }
                 }
-            }
-        });
+            }),
+        ]);
 
         // const updateUser = await prisma.user.update({
         //     where: {

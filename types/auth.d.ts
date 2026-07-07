@@ -1,23 +1,14 @@
-import { Role, SchoolInfo } from "@prisma/client";
-import NextAuth, { DefaultSession } from "next-auth";
+import { DefaultSession } from "next-auth";
+import type { SessionUser } from "@/auth";
 
 declare module "next-auth" {
   /**
-   * Returned by `useSession`, `getSession` and received as a prop on the `SessionProvider` React Context
+   * Returned by `useSession`, `getSession` and received as a prop on the
+   * `SessionProvider` React Context. The session callback in auth.ts populates
+   * the full SessionUser shape, so type it as such instead of a partial subset
+   * (which forced `as unknown as SessionUser` casts everywhere).
    */
   interface Session {
-    user: {
-      admin?: boolean;
-      schools?: string[];
-      roles?: ROLE[];
-      classes?: Class[];
-      primaryRole: string;
-      primarySchool?: number;
-      activeSchool: number;
-      psl: number;
-      favorites: Query[];
-      UserSchool: SchoolInfo[];
-      userRole: Role[];
-    } & DefaultSession["user"];
+    user: SessionUser & DefaultSession["user"];
   }
 }
