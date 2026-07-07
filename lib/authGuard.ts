@@ -1,18 +1,21 @@
 import { auth, SessionUser } from "@/auth";
-import { ROLE } from "@prisma/client";
+import {
+  AuthError,
+  assertSchoolAccess,
+  userIsAdmin,
+  userIsQueryEditor,
+} from "@/lib/authorization";
+
+// Re-export so existing callers keep importing these from authGuard.
+export { AuthError, assertSchoolAccess };
 
 /**
- * Thrown when a server action / route is invoked without the required
- * authentication or authorization. Server actions are public POST endpoints,
- * so every mutating action must gate on one of these helpers — hiding a button
- * in the UI is not access control.
+ * Session-backed authorization for server actions and routes.
+ *
+ * Server actions are public POST endpoints, so every mutating action must gate
+ * on one of these helpers — hiding a button in the UI is not access control.
+ * The pure role logic lives in lib/authorization.ts (unit-tested there).
  */
-export class AuthError extends Error {
-  constructor(message = "Unauthorized") {
-    super(message);
-    this.name = "AuthError";
-  }
-}
 
 /** Returns the current session user, or null if not signed in. */
 export async function getSessionUser(): Promise<SessionUser | null> {
@@ -32,8 +35,7 @@ export async function requireUser(): Promise<SessionUser> {
 /** Require full admin (user.admin or SUPERADMIN role). */
 export async function requireAdmin(): Promise<SessionUser> {
   const user = await requireUser();
-  const roles = user.roles ?? [];
-  if (!user.admin && !roles.includes("SUPERADMIN" as ROLE)) {
+  if (!userIsAdmin(user)) {
     throw new AuthError("Admin access required.");
   }
   return user;
@@ -45,26 +47,8 @@ export async function requireAdmin(): Promise<SessionUser> {
  */
 export async function requireQueryEditor(): Promise<SessionUser> {
   const user = await requireUser();
-  const roles = user.roles ?? [];
-  if (
-    !user.admin &&
-    !user.queryEdit &&
-    !roles.includes("QUERYEDITOR" as ROLE) &&
-    !roles.includes("SUPERADMIN" as ROLE)
-  ) {
+  if (!userIsQueryEditor(user)) {
     throw new AuthError("Query editor access required.");
   }
   return user;
-}
-
-/**
- * Assert the given user may access data for a specific school code.
- * Admins bypass; everyone else must have the school in their resolved list.
- */
-export function assertSchoolAccess(user: SessionUser, sc: string | number): void {
-  if (user.admin) return;
-  const schools = user.schools ?? [];
-  if (!schools.includes(String(sc))) {
-    throw new AuthError("You do not have access to this school.");
-  }
 }
