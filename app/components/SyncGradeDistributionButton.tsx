@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { aggregateTeacherGradeSummaries, syncGradeDistribution } from "@/lib/syncGradeDistribution";
 import { useState } from "react";
+import { toast } from "sonner";
 
 const SyncGradeDistributionButton = () => {
     const [isLoading, setIsLoading] = useState(false);
@@ -10,9 +11,15 @@ const SyncGradeDistributionButton = () => {
     const handleFullSync = async () => {
         setIsLoading(true);
         try {
-            await syncGradeDistribution();  // Uncomment if you want to include this function
-            // await aggregateTeacherGradeSummaries();
-            console.log("Syncing grades...");
+            await syncGradeDistribution();
+            toast.success("Grade distribution imported successfully.");
+        } catch (error) {
+            console.error("Grade sync failed:", error);
+            toast.error(
+                error instanceof Error
+                    ? `Import failed: ${error.message}`
+                    : "Grade import failed. Please try again."
+            );
         } finally {
             setIsLoading(false);
         }

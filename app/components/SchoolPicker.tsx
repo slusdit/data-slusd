@@ -1,5 +1,6 @@
 "use client";
 import * as React from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -66,7 +67,7 @@ const SchoolPicker = ({
           refreshCurrentPage();
         } catch (error) {
           console.error('Error updating active school:', error);
-          // Handle error (e.g., show an error message to the user)
+          toast.error("Couldn't switch schools. Please try again.");
         }
       });
     }

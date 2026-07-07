@@ -127,6 +127,12 @@ const IepDropzone = () => {
           }
         }, 2000);
       }
+    } else if (files.length > 0 && !authToken) {
+      // Previously a silent no-op: the file was stored in state but nothing
+      // uploaded because the auth token hadn't loaded yet.
+      setUploadError(
+        "Still connecting to the upload service. Please wait a moment and try again."
+      );
     }
   };
 

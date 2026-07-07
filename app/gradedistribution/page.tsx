@@ -3,7 +3,6 @@ import { runQuery } from "@/lib/aeries";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-// import GradeDistribution from "@/app/components/GradeDistribution";
 import prisma from "@/lib/db";
 
 import SyncGradeDistributionButton from "../components/SyncGradeDistributionButton";
@@ -17,7 +16,9 @@ export default async function GradeDistributionPage() {
         return (
             <div className="container mx-auto p-4">
                 <h1 className="text-3xl font-bold">Grade Distribution</h1>
-                <p className="text-muted-foreground">Grade Distribution Description</p>
+                <p className="text-muted-foreground">
+                    Analyze A–F grade distributions by school, teacher, course, and student group.
+                </p>
                 <p className="text-red-500">You must be logged in to view this page.</p>
             </div>
         );
