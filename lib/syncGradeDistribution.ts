@@ -2,6 +2,7 @@
 import prisma from "./db";
 import { runQuery } from "./aeries";
 import { Prisma } from "@prisma/client";
+import { requireAdmin, requireUser, assertSchoolAccess, AuthError } from "./authGuard";
 
 export interface RawGradeData {
   SOURCE: string;
@@ -28,6 +29,7 @@ export interface RawGradeData {
 }
 
 export async function syncGradeDistribution() {
+  await requireAdmin();
   const percentQueryId = process.env.QUERY_ASSESSMENT_GRADE_PERCENTAGE;
   const resultsPercent = await prisma.query.findUnique({
     where: { id: percentQueryId },
@@ -212,6 +214,19 @@ export async function aggregateTeacherGradeSummaries({
   setData?: (data: any) => void;
   }) {
   try {
+    const user = await requireUser();
+    // Non-admins may only aggregate schools they have access to.
+    if (!user.admin) {
+      const requestedScs = [
+        ...(sc !== undefined ? [sc] : []),
+        ...(scs ?? []),
+      ];
+      if (requestedScs.length === 0) {
+        throw new AuthError("A school must be specified.");
+      }
+      requestedScs.forEach((s) => assertSchoolAccess(user, s));
+    }
+
     // Create base WHERE clause
     let whereConditions = Prisma.sql`WHERE 1=1`;
 

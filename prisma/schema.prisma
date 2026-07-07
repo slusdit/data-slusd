@@ -430,3 +430,19 @@ model AppSetting {
   updatedAt DateTime @updatedAt
   updatedBy String?  // User ID who last updated
 }
+
+// Audit trail for admin user-emulation actions (compliance requirement for
+// a student-data system). One row per start/stop event.
+model EmulationLog {
+  id           String   @id @default(cuid())
+  createdAt    DateTime @default(now())
+  action       String   // "start" | "stop"
+  realUserId   String   // the admin performing the action
+  realUserEmail String?
+  targetUserId String?  // the user being emulated (null on stop)
+  targetUserEmail String?
+
+  @@index([realUserId])
+  @@index([targetUserId])
+  @@index([createdAt])
+}

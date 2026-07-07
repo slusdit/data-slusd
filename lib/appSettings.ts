@@ -2,6 +2,7 @@
 
 import prisma from './db';
 import { calculateCurrentSchoolYear, AVAILABLE_DB_YEARS } from './schoolYear';
+import { requireAdmin } from './authGuard';
 
 // Setting keys - defined inline since "use server" files can only export async functions
 const SETTING_KEYS = {
@@ -27,6 +28,9 @@ export async function setSetting(
   label?: string,
   updatedBy?: string
 ): Promise<void> {
+  const admin = await requireAdmin();
+  // Never trust a caller-supplied identity for the audit field.
+  updatedBy = admin.id;
   await prisma.appSetting.upsert({
     where: { key },
     update: {

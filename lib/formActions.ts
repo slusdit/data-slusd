@@ -1,12 +1,11 @@
 'use server'
 import { z } from "zod"
 import { queryFormSchema } from "@/app/components/forms/AddQueryForm"
-import { PrismaClient } from "@prisma/client"
-// import { prisma } from "@/lib/db"
-
-const prisma = new PrismaClient()
+import prisma from "@/lib/db"
+import { requireAdmin, requireQueryEditor } from "@/lib/authGuard"
 
 export async function addQuery(values: z.infer<typeof queryFormSchema>) {
+  await requireQueryEditor()
   // values.query = values.query.split("\n").map((line) => "\"" + line + "\"").join("\n");
 
   try {
@@ -39,6 +38,7 @@ export async function addQuery(values: z.infer<typeof queryFormSchema>) {
 }
 
 export async function updateQuery(data: any, field: string) {
+  await requireQueryEditor()
   const { id, ...updateData } = data
 
   // console.log("updateQuery", data)
@@ -59,7 +59,7 @@ export async function updateQuery(data: any, field: string) {
 
 // UPDATED: Improved updateUser function with better handling of many-to-many relationships
 export async function updateUser(data: any, field: string) {
-  console.log(`Updating user ${data.id} - Field: ${field}`, data);
+  await requireAdmin();
 
   try {
     if (field === "User") {
@@ -164,6 +164,7 @@ export async function updateUser(data: any, field: string) {
 }
 
 export async function addQueryCategory(data: { label: string; value: string; sort?: number; roleIds?: string[] }) {
+  await requireQueryEditor()
   try {
     const result = await prisma.queryCategory.create({
       data: {
@@ -184,6 +185,7 @@ export async function addQueryCategory(data: { label: string; value: string; sor
 }
 
 export async function updateQueryCategory(data: { id: string; label?: string; value?: string; sort?: number; roleIds?: string[] }) {
+  await requireQueryEditor()
   try {
     const result = await prisma.queryCategory.update({
       where: { id: data.id },
@@ -207,6 +209,7 @@ export async function updateQueryCategory(data: { id: string; label?: string; va
 }
 
 export async function deleteQueryCategory(id: string) {
+  await requireQueryEditor()
   try {
     await prisma.queryCategory.delete({
       where: { id },
