@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { auth } from "@/auth";
+import { requireUser } from "./authGuard";
 import { ROLE } from "@prisma/client";
 import sql from "mssql";
 
@@ -228,10 +229,12 @@ export async function getAllSchools(profileEmail: string) {
 }
 
 
-export async function updateActiveSchool(userId: string, activeSchool: number) {
-    const update = await prisma.user.update({
+export async function updateActiveSchool(_userId: string, activeSchool: number) {
+    // Always act on the authenticated session user — never a caller-supplied id.
+    const sessionUser = await requireUser()
+    await prisma.user.update({
         where: {
-            id: userId
+            id: sessionUser.id
         },
         data: {
             activeSchool
@@ -240,15 +243,15 @@ export async function updateActiveSchool(userId: string, activeSchool: number) {
     const headersList = await headers()
     const referer = headersList.get('referer')
     const currentPath = referer ? new URL(referer).pathname : '/'
-    // console.log('Redirecting to:', currentPath)
-    redirect('/')
     redirect(currentPath)
 }
 
-export async function updateActiveDbYear(userId: string, activeDbYear: number) {
-    const update = await prisma.user.update({
+export async function updateActiveDbYear(_userId: string, activeDbYear: number) {
+    // Always act on the authenticated session user — never a caller-supplied id.
+    const sessionUser = await requireUser()
+    await prisma.user.update({
         where: {
-            id: userId
+            id: sessionUser.id
         },
         data: {
             activeDbYear
@@ -257,7 +260,6 @@ export async function updateActiveDbYear(userId: string, activeDbYear: number) {
     const headersList = await headers()
     const referer = headersList.get('referer')
     const currentPath = referer ? new URL(referer).pathname : '/'
-    redirect('/')
     redirect(currentPath)
 }
 

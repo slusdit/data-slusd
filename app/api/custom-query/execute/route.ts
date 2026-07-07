@@ -9,6 +9,7 @@ import { NextResponse } from 'next/server';
 import { auth, SessionUser } from '@/auth';
 import { runQuery } from '@/lib/aeries';
 import { checkRateLimit, getRateLimitIdentifier } from '@/lib/rateLimit';
+import { validateSql as validateSqlStrict } from '@/lib/ai-query/sql-validator';
 
 // School code to name mapping for logging
 const SCHOOL_NAMES: Record<string, string> = {
@@ -62,35 +63,6 @@ function injectSchoolFilter(sql: string, schoolIds: string[]): string {
       return `${sql}\nWHERE ${filterCondition}`;
     }
   }
-}
-
-/**
- * Validate SQL for basic safety
- */
-function validateSql(sql: string): { valid: boolean; error?: string } {
-  const upperSql = sql.toUpperCase();
-
-  // Check for dangerous keywords
-  const dangerousKeywords = ['DROP', 'DELETE', 'UPDATE', 'INSERT', 'ALTER', 'CREATE', 'TRUNCATE', 'EXEC', 'EXECUTE'];
-  for (const keyword of dangerousKeywords) {
-    // Use word boundary check
-    const regex = new RegExp(`\\b${keyword}\\b`, 'i');
-    if (regex.test(sql)) {
-      return { valid: false, error: `Query contains forbidden keyword: ${keyword}` };
-    }
-  }
-
-  // Must start with SELECT
-  if (!upperSql.trim().startsWith('SELECT')) {
-    return { valid: false, error: 'Query must start with SELECT' };
-  }
-
-  // Must reference llm_* views
-  if (!sql.includes('llm_')) {
-    return { valid: false, error: 'Query must use llm_* views' };
-  }
-
-  return { valid: true };
 }
 
 export async function POST(request: Request) {
@@ -148,12 +120,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'SQL query is required' }, { status: 400 });
     }
 
-    // Validate SQL
-    const validation = validateSql(sql);
+    // Validate SQL with the strict validator: SELECT-only, llm_* view whitelist,
+    // blocked base tables, and no multi-statement injection.
+    const validation = validateSqlStrict(sql);
     if (!validation.valid) {
       return NextResponse.json({
         success: false,
-        error: validation.error
+        error: validation.errors.join('; ')
       }, { status: 400 });
     }
 
@@ -176,8 +149,14 @@ export async function POST(request: Request) {
       schoolsToFilter = [activeSchool.toString()];
     }
 
-    console.log(`[Custom Query] User: ${user.email}`);
-    console.log(`[Custom Query] Schools: ${schoolsToFilter.length > 0 ? schoolsToFilter.join(', ') : 'all'}`);
+    // Deny by default: a non-admin whose query resolves to no school filter would
+    // otherwise read across all schools. Only full admins may run unscoped.
+    if (schoolsToFilter.length === 0 && !user.admin) {
+      return NextResponse.json({
+        success: false,
+        error: 'No accessible schools resolved for this query.'
+      }, { status: 403 });
+    }
 
     // Inject school security filter
     const securedSql = injectSchoolFilter(sql, schoolsToFilter);

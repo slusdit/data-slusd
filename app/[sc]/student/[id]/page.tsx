@@ -1,6 +1,8 @@
 import BackButton from "@/app/components/BackButton";
-import { auth } from "@/auth";
-import { runQuery } from "@/lib/aeries";
+import { auth, SessionUser } from "@/auth";
+import { runParameterizedQuery } from "@/lib/aeries";
+import { redirect } from "next/navigation";
+import mssql from "mssql";
 
 export default async function StudentDemoPage(
   props: {
@@ -14,11 +16,34 @@ export default async function StudentDemoPage(
     sc
   } = params;
 
-  const session = await auth()
-  const sql = `select * from stu where sc = '${sc}' and id = '${id}' and del = 0 and tg = ''`
-  console.log(sql)
-  const data = await runQuery(sql)
-  console.log(data)
+  const session = await auth();
+  const user = session?.user as SessionUser | undefined;
+  if (!user) {
+    redirect("/");
+  }
+
+  // Enforce that the viewer may access this student's school.
+  const schools = user.schools ?? [];
+  if (!user.admin && !schools.includes(String(sc))) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="bg-card rounded-lg shadow-lg p-6 text-center">
+          <h1 className="text-2xl font-bold mb-2">Access Denied</h1>
+          <p className="text-muted-foreground mb-4">
+            You do not have access to student records for this school.
+          </p>
+          <BackButton />
+        </div>
+      </div>
+    );
+  }
+
+  // Parameterized query — never interpolate route params into SQL.
+  const query = `select * from stu where sc = @sc and id = @id and del = 0 and tg = ''`;
+  const data = await runParameterizedQuery(query, {
+    sc: { type: mssql.VarChar, value: sc },
+    id: { type: mssql.VarChar, value: id },
+  });
 
   const student = data?.[0];
 
@@ -46,7 +71,7 @@ export default async function StudentDemoPage(
               <p className="text-lg font-semibold">{student?.PG}</p>
             </div>
             <div className="bg-muted/10 p-4 rounded-md">
-              <p className="text-sm text-muted-foreground">Enter Date</p>
+              <p className="text-sm text-muted-foreground">Birth Date</p>
               <p className="text-lg font-semibold">{student?.BD?.toLocaleDateString('en-US')}</p>
             </div>
             <div className="bg-muted/10 p-4 rounded-md">

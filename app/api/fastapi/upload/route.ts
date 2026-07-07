@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getSessionUser } from "@/lib/authGuard";
 
 // app/api/fastapi/upload/route.ts
 export async function POST(request: NextRequest) {
   try {
+    // Require an authenticated session, not merely the presence of a header.
+    const user = await getSessionUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const formData = await request.formData();
     const authHeader = request.headers.get('authorization');
 
