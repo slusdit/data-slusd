@@ -10,20 +10,15 @@ export default async function Profile() {
     }
 
     return (
-        <div>
-            <h1>Profile</h1>
-            <SchoolPicker
-                schools={session?.user?.UserSchool}
-                initialSchool={session?.user?.activeSchool}
-                label={"Select School"}
-            />
-            {/* <RenewSchools email={session?.user?.email} /> */}
-            
-                {/* <Link href="/">Query List</Link> */}
-
-            {/* {session?.user?.admin  &&
-            <pre>{JSON.stringify(session, null, 2)}</pre>
-            } */}
+        <div className="container mx-auto py-6">
+            <h1 className="mb-6 text-3xl font-bold">Profile</h1>
+            <div className="bg-card max-w-md rounded-lg border p-6">
+                <SchoolPicker
+                    schools={session?.user?.UserSchool}
+                    initialSchool={session?.user?.activeSchool}
+                    label={"Select School"}
+                />
+            </div>
         </div>
     );
 }

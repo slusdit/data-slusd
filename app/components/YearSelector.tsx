@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Check, ChevronDown, Loader2, Calendar } from "lucide-react";
 import { updateActiveDbYear } from "@/lib/signinMiddleware";
+import { toast } from "sonner";
 
 // Available database years - imported from shared module
 import { AVAILABLE_DB_YEARS } from '@/lib/schoolYear';
@@ -35,6 +36,7 @@ const YearSelector = ({ activeDbYear, userId }: YearSelectorProps) => {
         router.refresh();
       } catch (error) {
         console.error("Error updating active database year:", error);
+        toast.error("Couldn't change the school year. Please try again.");
       }
     });
   };
