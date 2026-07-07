@@ -138,7 +138,7 @@ model UserRole {
   userId String
   roleId String
   role   Role   @relation(fields: [roleId], references: [id])
-  user   User   @relation(fields: [userId], references: [id])
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([userId, roleId])
   @@index([roleId], map: "UserRole_roleId_fkey")
@@ -148,7 +148,7 @@ model UserClass {
   classId String
   userId  String
   class   Class  @relation(fields: [classId], references: [id], onDelete: Cascade)
-  user    User   @relation(fields: [userId], references: [id])
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([userId, classId])
   @@index([classId], map: "UserClass_classId_fkey")
@@ -165,6 +165,7 @@ model Class {
   activeOverride Boolean     @default(false)
   UserClass      UserClass[]
 
+  @@unique([sc, tn, psl]) // Prevent duplicate class rows on concurrent teacher sync
   @@index([email]) // For looking up classes by teacher email
   @@index([sc, tn]) // For composite lookups by school and teacher number
 }
