@@ -157,10 +157,33 @@ export async function POST(request: Request) {
     // ---- Streaming mode ----
     if (body.stream === true) {
       const encoder = new TextEncoder();
+      // The single LLM call can take ~100s and emits no bytes during that
+      // window, so the browser/reverse-proxy may close the connection before
+      // generate() resolves. Guard every write/close so a late enqueue on an
+      // already-closed controller can't throw ERR_INVALID_STATE, and keep the
+      // stream warm with a heartbeat so it doesn't idle-timeout.
+      let closed = false;
       const stream = new ReadableStream({
         async start(controller) {
-          const send = (obj: unknown) =>
-            controller.enqueue(encoder.encode(`${JSON.stringify(obj)}\n`));
+          const send = (obj: unknown) => {
+            if (closed) return;
+            try {
+              controller.enqueue(encoder.encode(`${JSON.stringify(obj)}\n`));
+            } catch {
+              closed = true; // client already disconnected
+            }
+          };
+          const safeClose = () => {
+            if (closed) return;
+            closed = true;
+            try {
+              controller.close();
+            } catch {
+              /* already closed */
+            }
+          };
+
+          const heartbeat = setInterval(() => send({ type: 'ping' }), 15000);
           try {
             const result = await generate((event) => send({ type: 'progress', ...event }));
             const durationMs = Date.now() - startTime;
@@ -174,8 +197,12 @@ export async function POST(request: Request) {
               error: error instanceof Error ? error.message : 'Query generation failed',
             });
           } finally {
-            controller.close();
+            clearInterval(heartbeat);
+            safeClose();
           }
+        },
+        cancel() {
+          closed = true; // client went away; stop the heartbeat from writing
         },
       });
 
