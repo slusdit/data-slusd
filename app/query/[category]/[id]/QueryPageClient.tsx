@@ -1,15 +1,17 @@
 "use client";
-// Registers AG Grid Enterprise modules + licence for this grid (finding P1)
-import "@/app/components/providers/AGGridProvider";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { AgGridReact } from "ag-grid-react";
 import { AgCharts } from "ag-charts-react";
-import { ColDef, GridReadyEvent, GridApi } from "ag-grid-community";
-import { colorSchemeDarkBlue, themeQuartz } from "ag-grid-enterprise";
+import type { GridApi } from "ag-grid-community";
+import { toast } from "sonner";
+import ReportDataGrid, {
+  ReportDataGridHandle,
+  exportGridCsv,
+  exportGridExcel,
+} from "@/app/components/ReportDataGrid";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -70,6 +72,7 @@ import {
   LayoutGrid,
   Filter,
   RefreshCw,
+  RotateCcw,
   Share2,
   Printer,
   Link as LinkIcon,
@@ -87,12 +90,7 @@ import {
 
 import FavoriteStarSwitch from "@/app/components/FavoriteStarSwitch";
 import { SessionUser } from "@/auth";
-import {
-  TotalSpec,
-  computeTotalsRow,
-  inferNumericColumn,
-  pickLabelColumn,
-} from "@/lib/reportTotals";
+import { TotalSpec, computeTotalsRow, pickLabelColumn } from "@/lib/reportTotals";
 
 interface Category {
   id: string;
@@ -198,40 +196,6 @@ function addToQueryHistory(query: { id: string; name: string; category: string }
     // Ignore storage errors
   }
 }
-
-// Number cell display: thousands separators; "%" columns get one decimal and a % sign.
-// Export keeps the raw value (useValueFormatterForExport is off on these columns).
-function formatNumberCell(value: unknown, percent: boolean): string {
-  if (value === null || value === undefined || value === "") return "";
-  const n = typeof value === "number" ? value : Number(value);
-  if (!Number.isFinite(n)) return String(value);
-  if (percent) {
-    return `${n.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
-  }
-  return Number.isInteger(n) ? n.toLocaleString() : n.toLocaleString(undefined, { maximumFractionDigits: 2 });
-}
-
-// ID Cell Renderer for linking to student pages
-const IdCellRenderer = (props: any) => {
-  const sc = props.data?.sc || props.data?.SC || "";
-  const value = props.value || "";
-
-  if (props.node.rowPinned || props.node.group || props.node.aggData) {
-    const displayValue = props.value?.value || props.value || "";
-    return <div>{displayValue}</div>;
-  }
-
-  if (!sc) return <div>{value}</div>;
-
-  return (
-    <Link
-      href={`/${sc}/student/${value}`}
-      className="text-blue-500 hover:text-blue-700 hover:underline"
-    >
-      {value}
-    </Link>
-  );
-};
 
 export default function QueryPageClient({
   query,
@@ -340,118 +304,11 @@ export default function QueryPageClient({
     return row ? [row] : undefined;
   }, [data, filteredData, selectedRows, totalSpecs]);
 
-  // Grid theme
-  const gridTheme = useMemo(() => {
-    return resolvedTheme === "dark"
-      ? themeQuartz.withPart(colorSchemeDarkBlue)
-      : themeQuartz;
-  }, [resolvedTheme]);
-
   // Chart theme
   const chartTheme = useMemo(
     () => (resolvedTheme === "dark" ? "ag-polychroma-dark" : "ag-polychroma"),
     [resolvedTheme]
   );
-
-  // Update filtered data when grid filters change
-  const updateFilteredData = useCallback((params: any) => {
-    const updatedData: any[] = [];
-    params.api.forEachNodeAfterFilterAndSort((node: any) => {
-      if (node.data) updatedData.push(node.data);
-    });
-    setFilteredData(updatedData);
-  }, []);
-
-  // Column definitions
-  const columnDefs = useMemo<ColDef[]>(() => {
-    if (!data || data.length === 0) return [];
-
-    const checkboxCol: ColDef = {
-      headerName: "",
-      field: "checkboxCol",
-      headerCheckboxSelection: true,
-      checkboxSelection: true,
-      filter: false,
-      width: 50,
-      flex: 0,
-      suppressSizeToFit: true,
-    };
-
-    const dataCols: ColDef[] = Object.keys(data[0]).map((key) => {
-      const baseCol: ColDef = {
-        field: key,
-        headerName: key,
-        hide: hiddenColumns?.includes(key.toUpperCase()),
-      };
-
-      if (key.toLowerCase() === "id" && ("sc" in data[0] || "SC" in data[0])) {
-        return { ...baseCol, cellRenderer: IdCellRenderer };
-      }
-
-      if (["dt", "date", "day"].includes(key.toLowerCase())) {
-        return {
-          ...baseCol,
-          filter: "agDateColumnFilter",
-          filterParams: { buttons: ["apply", "reset"], closeOnApply: true },
-        };
-      }
-
-      if (inferNumericColumn(data, key)) {
-        const isPercent = key.includes("%");
-        return {
-          ...baseCol,
-          filter: "agNumberColumnFilter",
-          filterParams: { buttons: ["apply", "reset"], closeOnApply: true },
-          enableValue: true,
-          allowedAggFuncs: ['sum', 'avg', 'count', 'min', 'max', 'first', 'last'],
-          valueFormatter: (params) => formatNumberCell(params.value, isPercent),
-          useValueFormatterForExport: false,
-          type: "rightAligned",
-        };
-      }
-
-      return baseCol;
-    });
-
-    return [checkboxCol, ...dataCols];
-  }, [data, hiddenColumns]);
-
-  // Default column definition
-  const defaultColDef = useMemo<ColDef>(
-    () => ({
-      sortable: true,
-      resizable: true,
-      filter: true,
-      floatingFilter: true,
-      flex: 1,
-      minWidth: 100,
-      enableValue: true,
-      enableRowGroup: true,
-      enablePivot: true,
-    }),
-    []
-  );
-
-  // Status bar configuration for showing aggregates
-  const statusBar = useMemo(() => ({
-    statusPanels: [
-      {
-        statusPanel: 'agTotalAndFilteredRowCountComponent',
-        align: 'left' as const,
-      },
-      {
-        statusPanel: 'agSelectedRowCountComponent',
-        align: 'left' as const,
-      },
-      {
-        statusPanel: 'agAggregationComponent',
-        align: 'right' as const,
-        statusPanelParams: {
-          aggFuncs: ['count', 'sum', 'avg', 'min', 'max'],
-        },
-      },
-    ],
-  }), []);
 
   // Chart options with dynamic chart type
   const chartOptions = useMemo(() => {
@@ -524,15 +381,27 @@ export default function QueryPageClient({
     };
   }, [query, data, selectedRows, filteredData, chartTheme, chartType]);
 
-  // Export to CSV
+  // Export (finding U1): CSV and Excel (Enterprise), selection-aware, with feedback (U7)
   const exportToCSV = useCallback(() => {
     if (!gridApi) return;
-    gridApi.exportDataAsCsv({
-      skipHeader: false,
-      onlySelected: selectedRows.length > 0,
-      fileName: `${query.name.replace(/[^a-z0-9]/gi, "_")}_${new Date().toISOString().split("T")[0]}.csv`,
-    });
+    exportGridCsv(gridApi, query.name, selectedRows.length > 0);
+    toast.success(
+      selectedRows.length > 0 ? `Exported ${selectedRows.length} selected rows as CSV` : "Exported CSV"
+    );
   }, [gridApi, query.name, selectedRows.length]);
+
+  const exportToExcel = useCallback(() => {
+    if (!gridApi) return;
+    exportGridExcel(gridApi, query.name, selectedRows.length > 0);
+    toast.success(
+      selectedRows.length > 0 ? `Exported ${selectedRows.length} selected rows as Excel` : "Exported Excel"
+    );
+  }, [gridApi, query.name, selectedRows.length]);
+
+  const resetColumns = useCallback(() => {
+    gridRef.current?.resetColumns();
+    toast.success("Columns reset");
+  }, []);
 
   // Print function
   const handlePrint = useCallback(() => {
@@ -552,45 +421,14 @@ export default function QueryPageClient({
   const handleRefresh = useCallback(() => {
     setIsRefreshing(true);
     router.refresh();
-    setTimeout(() => setIsRefreshing(false), 1000);
+    setTimeout(() => {
+      setIsRefreshing(false);
+      toast.success("Data refreshed");
+    }, 1000);
   }, [router]);
 
-  // Grid ready handler
-  const onGridReady = useCallback((params: GridReadyEvent) => {
-    setGridApi(params.api);
-    params.api.sizeColumnsToFit();
-  }, []);
-
-  // Sidebar config with aggregation support
-  const sideBar = useMemo(
-    () => ({
-      toolPanels: [
-        {
-          id: "columns",
-          labelDefault: "Columns",
-          labelKey: "columns",
-          iconKey: "columns",
-          toolPanel: "agColumnsToolPanel",
-          toolPanelParams: {
-            suppressRowGroups: false,
-            suppressValues: false,
-            suppressPivots: false,
-            suppressPivotMode: false,
-          },
-        },
-        {
-          id: "filters",
-          labelDefault: "Filters",
-          labelKey: "filters",
-          iconKey: "filter",
-          toolPanel: "agFiltersToolPanel",
-        },
-      ],
-      defaultToolPanel: "",
-      position: "right" as const,
-    }),
-    []
-  );
+  const gridRef = useRef<ReportDataGridHandle>(null);
+  const handleGridReady = useCallback((api: GridApi) => setGridApi(api), []);
 
   // Handle query selection change
   const handleQueryChange = (queryId: string) => {
@@ -675,30 +513,19 @@ export default function QueryPageClient({
     );
   }
 
-  // Render grid - uses calc to fill available viewport height
-  const renderGrid = (minHeight: string = "500px") => (
-    <div style={{ height: `calc(100vh - 280px)`, minHeight }} className="w-full">
-      <AgGridReact
-        theme={gridTheme}
-        rowData={data}
+  // Render grid (finding U1): shared ReportDataGrid, responsive height (fills the
+  // viewport on desktop, 70% of it on small screens instead of a fixed calc)
+  const renderGrid = (minHeight: string = "400px") => (
+    <div className="w-full h-[70vh] md:h-[calc(100vh-280px)]" style={{ minHeight }}>
+      <ReportDataGrid
+        ref={gridRef}
+        rows={data}
+        hiddenColumns={hiddenColumns}
         pinnedBottomRowData={pinnedBottomRow}
-        columnDefs={columnDefs}
-        defaultColDef={defaultColDef}
-        onGridReady={onGridReady}
-        rowSelection="multiple"
-        onSelectionChanged={(e) => setSelectedRows(e.api.getSelectedRows())}
-        onFilterChanged={updateFilteredData}
-        onSortChanged={updateFilteredData}
-        enableCellTextSelection
-        suppressRowClickSelection
-        pagination
-        paginationPageSize={50}
-        paginationPageSizeSelector={[25, 50, 100, 500]}
-        animateRows
-        sideBar={sideBar}
-        statusBar={statusBar}
-        enableCharts={true}
-        cellSelection={true}
+        storageKey={`report-columns:${query.id}`}
+        onGridReady={handleGridReady}
+        onSelectionChanged={setSelectedRows}
+        onFilteredRowsChanged={setFilteredData}
       />
     </div>
   );
@@ -841,7 +668,13 @@ export default function QueryPageClient({
                 {/* Refresh button */}
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="outline" size="icon" onClick={handleRefresh} disabled={isRefreshing}>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={handleRefresh}
+                      disabled={isRefreshing}
+                      aria-label="Refresh data"
+                    >
                       <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
                     </Button>
                   </TooltipTrigger>
@@ -852,7 +685,7 @@ export default function QueryPageClient({
                 {quickStats.length > 0 && (
                   <Dialog open={showStats} onOpenChange={setShowStats}>
                     <DialogTrigger asChild>
-                      <Button variant="outline" size="icon">
+                      <Button variant="outline" size="icon" aria-label="Quick statistics">
                         <Calculator className="h-4 w-4" />
                       </Button>
                     </DialogTrigger>
@@ -918,6 +751,15 @@ export default function QueryPageClient({
                     <DropdownMenuItem onClick={exportToCSV}>
                       <Download className="h-4 w-4 mr-2" />
                       Export CSV {selectedRows.length > 0 && `(${selectedRows.length})`}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={exportToExcel}>
+                      <FileSpreadsheet className="h-4 w-4 mr-2" />
+                      Export Excel {selectedRows.length > 0 && `(${selectedRows.length})`}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={resetColumns}>
+                      <RotateCcw className="h-4 w-4 mr-2" />
+                      Reset columns
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handlePrint}>

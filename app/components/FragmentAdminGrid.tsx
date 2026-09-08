@@ -8,6 +8,8 @@ import { themeQuartz } from "ag-grid-community";
 import "ag-grid-community/styles/ag-theme-quartz.css";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { deleteFragments } from "@/lib/actions/adminBulk";
+import ConfirmDeleteDialog from "./ConfirmDeleteDialog";
 import { useTheme } from "next-themes";
 import {
   Dialog,
@@ -109,6 +111,7 @@ export default function FragmentAdminGrid({
   const [isLoading, setIsLoading] = useState(false);
   const [selectedRows, setSelectedRows] = useState<Fragment[]>([]);
   const [fragmentToDelete, setFragmentToDelete] = useState<Fragment | null>(null);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
 
   const myTheme = themeQuartz.withParams({
     backgroundColor: resolvedTheme === "dark" ? "#1f2937" : "#fff",
@@ -392,28 +395,23 @@ export default function FragmentAdminGrid({
     }
   }, []);
 
-  const handleBulkDelete = async () => {
+  const handleBulkDelete = () => {
     if (selectedRows.length === 0) return;
-    if (!confirm(`Are you sure you want to delete ${selectedRows.length} fragments?`)) return;
+    setBulkDeleteOpen(true);
+  };
 
+  // One audited server action for all selected ids (finding U8)
+  const confirmBulkDelete = async () => {
     setIsLoading(true);
-    let successCount = 0;
     try {
-      for (const fragment of selectedRows) {
-        try {
-          const response = await fetch(`/api/admin/fragments/${fragment.id}`, {
-            method: "DELETE",
-          });
-          if (response.ok) successCount++;
-        } catch (e) {
-          console.error(`Failed to delete fragment ${fragment.id}`, e);
-        }
-      }
-      setFragments((prev) => prev.filter((f) => !selectedRows.find((s) => s.id === f.id)));
-      toast.success(`Deleted ${successCount} fragments`);
+      const ids = selectedRows.map((f) => f.id);
+      const { deleted } = await deleteFragments(ids);
+      setFragments((prev) => prev.filter((f) => !ids.includes(f.id)));
+      toast.success(`Deleted ${deleted} fragment${deleted === 1 ? "" : "s"}`);
       gridRef.current?.api?.deselectAll();
+      setBulkDeleteOpen(false);
     } catch (error) {
-      toast.error("Failed to delete some fragments");
+      toast.error(error instanceof Error ? error.message : "Failed to delete fragments");
     } finally {
       setIsLoading(false);
     }
@@ -771,6 +769,17 @@ export default function FragmentAdminGrid({
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
+      <ConfirmDeleteDialog
+        open={bulkDeleteOpen}
+        onOpenChange={setBulkDeleteOpen}
+        title={`Delete ${selectedRows.length} fragment${selectedRows.length === 1 ? "" : "s"}`}
+        description="This permanently deletes the selected AI SQL fragments."
+        confirmText={String(selectedRows.length)}
+        actionLabel="Delete Selected"
+        pending={isLoading}
+        onConfirm={confirmBulkDelete}
+      />
+
       <AlertDialog open={!!fragmentToDelete} onOpenChange={(open) => !open && setFragmentToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>

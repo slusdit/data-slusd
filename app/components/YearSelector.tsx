@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,8 +8,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Check, ChevronDown, Loader2, Calendar } from "lucide-react";
-import { updateActiveDbYear } from "@/lib/signinMiddleware";
-import { toast } from "sonner";
+import { useSchoolYearSwitch } from "./hooks/useSchoolYearSwitch";
 
 // Available database years - imported from shared module
 import { AVAILABLE_DB_YEARS } from '@/lib/schoolYear';
@@ -21,24 +19,14 @@ interface YearSelectorProps {
 }
 
 const YearSelector = ({ activeDbYear, userId }: YearSelectorProps) => {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
+  const { isPending, switchYear } = useSchoolYearSwitch(userId);
 
   const currentYearInfo = AVAILABLE_DB_YEARS.find(y => y.year === activeDbYear) || AVAILABLE_DB_YEARS[0];
 
-  const handleYearChange = async (year: number) => {
-    if (!userId) return;
+  const handleYearChange = (year: number) => {
     setOpen(false);
-    startTransition(async () => {
-      try {
-        await updateActiveDbYear(userId, year);
-        router.refresh();
-      } catch (error) {
-        console.error("Error updating active database year:", error);
-        toast.error("Couldn't change the school year. Please try again.");
-      }
-    });
+    switchYear(year);
   };
 
   return (
@@ -46,6 +34,7 @@ const YearSelector = ({ activeDbYear, userId }: YearSelectorProps) => {
       <DropdownMenuTrigger
         className="flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-title-foreground/10 transition-colors focus:outline-none text-sm"
         disabled={isPending}
+        aria-label={`School year: ${currentYearInfo.label}. Change school year`}
       >
         {isPending ? (
           <Loader2 className="h-4 w-4 animate-spin text-mainTitle-foreground" />

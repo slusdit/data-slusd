@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import prisma from '@/lib/db';
 import adminCheck from '@/lib/adminCheck';
+import { recordAudit } from '@/lib/auditLog';
 
 /**
  * Validates SQL fragment for safety
@@ -155,6 +156,13 @@ export async function POST(request: Request) {
         sortOrder: (maxSortOrder._max.sortOrder || 0) + 1,
       },
       include: { category: true },
+    });
+    await recordAudit({
+      actor: access.session!.user, // adminCheck() returned non-null, so the session is set
+      action: 'fragment.create',
+      entity: 'AIFragment',
+      entityId: fragment.id,
+      after: { fragmentId: fragment.fragmentId, name: fragment.name, categoryId: fragment.categoryId, snippet: fragment.snippet },
     });
 
     return NextResponse.json(fragment);

@@ -1,5 +1,7 @@
 'use server'
 import { z } from "zod"
+import { editableQueryFields, type EditableQueryFields } from "@/lib/querySchemas"
+import { recordAudit } from "@/lib/auditLog"
 import { queryFormSchema } from "@/app/components/forms/AddQueryForm"
 import prisma from "@/lib/db"
 import { requireAdmin, requireQueryEditor } from "@/lib/authGuard"
@@ -7,7 +9,7 @@ import { invalidateReportCatalogue } from "@/lib/reportCatalogue"
 import { queryCache } from "@/lib/queryCache"
 
 export async function addQuery(values: z.infer<typeof queryFormSchema>) {
-  await requireQueryEditor()
+  const actor = await requireQueryEditor()
   // values.query = values.query.split("\n").map((line) => "\"" + line + "\"").join("\n");
 
   try {
@@ -32,6 +34,13 @@ export async function addQuery(values: z.infer<typeof queryFormSchema>) {
       },
     })
     invalidateReportCatalogue()
+    await recordAudit({
+      actor,
+      action: "query.create",
+      entity: "Query",
+      entityId: result.id,
+      after: { name: result.name, label: result.label, categoryId: result.categoryId },
+    })
 
     return true
   } catch (error) {
@@ -40,32 +49,17 @@ export async function addQuery(values: z.infer<typeof queryFormSchema>) {
   }
 }
 
-// Fields the admin Edit Query dialog may change (finding U6: the old single-field
-// update silently dropped every edit except the SQL). `.strict()` rejects
-// anything else so a client cannot write createdBy, label or roles this way.
-const editableQueryFields = z
-  .object({
-    name: z.string().min(1).optional(),
-    categoryId: z.string().nullable().optional(),
-    description: z.string().optional(),
-    query: z.string().min(1).optional(),
-    chart: z.boolean().optional(),
-    chartXKey: z.string().nullable().optional(),
-    chartYKey: z.string().nullable().optional(),
-    chartTypeKey: z.string().nullable().optional(),
-    chartStackKey: z.boolean().optional(),
-    hiddenCols: z.string().optional(),
-    totalColumns: z.string().nullable().optional(),
-    publicQuery: z.boolean().optional(),
-  })
-  .strict()
-
-export type EditableQueryFields = z.infer<typeof editableQueryFields>
+const auditedQueryFields = {
+  id: true, name: true, categoryId: true, description: true, query: true, chart: true,
+  chartXKey: true, chartYKey: true, chartTypeKey: true, chartStackKey: true,
+  hiddenCols: true, totalColumns: true, publicQuery: true,
+} as const
 
 export async function updateQuery(id: string, data: EditableQueryFields) {
-  await requireQueryEditor()
+  const actor = await requireQueryEditor()
   if (typeof id !== "string" || !id) throw new Error("Query id is required")
   const parsed = editableQueryFields.parse(data)
+  const before = await prisma.query.findUnique({ where: { id }, select: auditedQueryFields })
   const updated = await prisma.query.update({
     where: { id },
     data: {
@@ -78,11 +72,13 @@ export async function updateQuery(id: string, data: EditableQueryFields) {
   // Cached rows may belong to the old SQL; the header/sidebar catalogue may be stale (P4, P8)
   queryCache.clear()
   invalidateReportCatalogue()
+  const after = Object.fromEntries(Object.keys(auditedQueryFields).map((k) => [k, (updated as any)[k]]))
+  await recordAudit({ actor, action: "query.update", entity: "Query", entityId: id, before, after })
   return updated
 }
 
 // UPDATED: Improved updateUser function with better handling of many-to-many relationships
-export async function updateUser(data: any, field: string) {
+async function updateUserImpl(data: any, field: string) {
   await requireAdmin();
 
   try {
@@ -247,19 +243,44 @@ async function deleteQueryCategoryImpl(id: string) {
 
 // Category changes alter the header/sidebar catalogue (finding P4).
 export async function addQueryCategory(...args: Parameters<typeof addQueryCategoryImpl>) {
+  const actor = await requireQueryEditor()
   const result = await addQueryCategoryImpl(...args)
   invalidateReportCatalogue()
+  await recordAudit({ actor, action: "category.create", entity: "QueryCategory", entityId: (result as any)?.id ?? null, after: args[0] })
   return result
 }
 
 export async function updateQueryCategory(...args: Parameters<typeof updateQueryCategoryImpl>) {
+  const actor = await requireQueryEditor()
+  const before = await prisma.queryCategory.findUnique({ where: { id: args[0].id }, include: { roles: { select: { role: true } } } })
   const result = await updateQueryCategoryImpl(...args)
   invalidateReportCatalogue()
+  await recordAudit({ actor, action: "category.update", entity: "QueryCategory", entityId: args[0].id, before, after: args[0] })
   return result
 }
 
 export async function deleteQueryCategory(...args: Parameters<typeof deleteQueryCategoryImpl>) {
+  const actor = await requireQueryEditor()
+  const before = await prisma.queryCategory.findUnique({ where: { id: args[0] } })
   const result = await deleteQueryCategoryImpl(...args)
   invalidateReportCatalogue()
+  await recordAudit({ actor, action: "category.delete", entity: "QueryCategory", entityId: args[0], before })
+  return result
+}
+
+const auditedUserFields = {
+  id: true, name: true, email: true, admin: true, queryEdit: true, primaryRole: true,
+  blockedSchools: true, addedSchools: true, blockedRoles: true, addedRoles: true,
+  UserRole: { select: { role: { select: { role: true } } } },
+  UserSchool: { select: { schoolSc: true } },
+} as const
+
+// User changes are audited with a before/after snapshot of access-relevant fields (finding U8)
+export async function updateUser(data: any, field: string) {
+  const actor = await requireAdmin()
+  const before = data?.id ? await prisma.user.findUnique({ where: { id: data.id }, select: auditedUserFields }) : null
+  const result = await updateUserImpl(data, field)
+  const after = data?.id ? await prisma.user.findUnique({ where: { id: data.id }, select: auditedUserFields }) : null
+  await recordAudit({ actor, action: `user.update.${field.toLowerCase().replace(/\s+/g, "-")}`, entity: "User", entityId: data?.id ?? null, before, after })
   return result
 }

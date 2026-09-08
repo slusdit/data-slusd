@@ -8,18 +8,9 @@ import { themeQuartz } from "ag-grid-community";
 import "ag-grid-community/styles/ag-theme-quartz.css";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { updateQuery } from "@/lib/formActions";
 import { deleteQuery } from "@/lib/deleteQuery";
+import { deleteQueries } from "@/lib/actions/adminBulk";
 import { useTheme } from "next-themes";
-import { format } from "sql-formatter";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,31 +21,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Plus, Pencil, Trash2, Copy, Download, ExternalLink, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { QueryWithCategory } from "./QueryBar";
-import { CHARTTYPE } from "@prisma/client";
 import AddQueryForm from "./forms/AddQueryForm";
 import FormDialog from "./forms/FormDialog";
+import EditQueryDialog from "./forms/EditQueryDialog";
+import ConfirmDeleteDialog from "./ConfirmDeleteDialog";
+import type { EditQueryFormValues } from "@/lib/querySchemas";
 
 type QueryAdminGridProps = {
   dataIn: QueryWithCategory[];
   categories: any[];
   session: any;
 };
-
-const chartTypes = Object.values(CHARTTYPE).map((t) => t.toLowerCase());
 
 export default function QueryAdminGrid({
   dataIn,
@@ -64,24 +44,11 @@ export default function QueryAdminGrid({
   const gridRef = useRef<AgGridReact>(null);
   const { resolvedTheme } = useTheme();
   const [queries, setQueries] = useState(dataIn);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedQuery, setSelectedQuery] = useState<QueryWithCategory | null>(null);
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    query: "",
-    categoryId: "",
-    chart: false,
-    chartTypeKey: "",
-    chartXKey: "",
-    chartYKey: "",
-    chartStackKey: false,
-    hiddenCols: "",
-    totalColumns: "",
-  });
+  const [dialog, setDialog] = useState<{ mode: "edit" | "duplicate"; query: QueryWithCategory } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedRows, setSelectedRows] = useState<QueryWithCategory[]>([]);
   const [queryToDelete, setQueryToDelete] = useState<QueryWithCategory | null>(null);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
 
   const myTheme = themeQuartz.withParams({
     backgroundColor: resolvedTheme === "dark" ? "#1f2937" : "#fff",
@@ -177,24 +144,30 @@ export default function QueryAdminGrid({
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => handleEdit(params.data)}
+              onClick={() => setDialog({ mode: "edit", query: params.data })}
               className="h-7 w-7 p-0"
+              aria-label={`Edit ${params.data.name}`}
+              title="Edit"
             >
               <Pencil className="h-4 w-4" />
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => handleDuplicate(params.data)}
+              onClick={() => setDialog({ mode: "duplicate", query: params.data })}
               className="h-7 w-7 p-0"
+              aria-label={`Duplicate ${params.data.name}`}
+              title="Duplicate"
             >
               <Copy className="h-4 w-4" />
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => handleDelete(params.data)}
+              onClick={() => setQueryToDelete(params.data)}
               className="h-7 w-7 p-0 text-red-500 hover:text-red-700"
+              aria-label={`Delete ${params.data.name}`}
+              title="Delete"
             >
               <Trash2 className="h-4 w-4" />
             </Button>
@@ -212,51 +185,28 @@ export default function QueryAdminGrid({
     []
   );
 
-  const handleEdit = (query: QueryWithCategory) => {
-    setSelectedQuery(query);
-    setFormData({
-      name: query.name || "",
-      description: query.description || "",
-      query: query.query || "",
-      categoryId: query.categoryId || "",
-      chart: query.chart || false,
-      chartTypeKey: query.chartTypeKey || "",
-      chartXKey: query.chartXKey || "",
-      chartYKey: query.chartYKey || "",
-      chartStackKey: Boolean(query.chartStackKey),
-      hiddenCols: query.hiddenCols || "",
-      totalColumns: query.totalColumns || "",
-    });
-    setIsEditDialogOpen(true);
-  };
-
-  const handleDuplicate = (query: QueryWithCategory) => {
-    setSelectedQuery(null);
-    setFormData({
-      name: query.name + " (Copy)",
-      description: query.description || "",
-      query: query.query || "",
-      categoryId: query.categoryId || "",
-      chart: query.chart || false,
-      chartTypeKey: query.chartTypeKey || "",
-      chartXKey: query.chartXKey || "",
-      chartYKey: query.chartYKey || "",
-      chartStackKey: Boolean(query.chartStackKey),
-      hiddenCols: query.hiddenCols || "",
-      totalColumns: query.totalColumns || "",
-    });
-    setIsEditDialogOpen(true);
-  };
-
-  const handleDelete = (query: QueryWithCategory) => {
-    setQueryToDelete(query);
+  // Apply a saved edit to the local grid state (no refetch needed)
+  const handleSaved = (id: string, values: EditQueryFormValues) => {
+    setQueries((prev) =>
+      prev.map((q) => {
+        if (q.id !== id) return q;
+        const category = categories.find((c) => c.id === values.categoryId);
+        return {
+          ...q,
+          ...values,
+          categoryId: values.categoryId || null,
+          category: category || q.category,
+        };
+      })
+    );
   };
 
   const confirmDelete = async () => {
     if (!queryToDelete) return;
 
     try {
-      await deleteQuery(queryToDelete.id);
+      const ok = await deleteQuery(queryToDelete.id);
+      if (!ok) throw new Error("The server refused to delete this query");
       setQueries((prev) => prev.filter((q) => q.id !== queryToDelete.id));
       toast.success("Query deleted successfully");
     } catch (error) {
@@ -268,63 +218,12 @@ export default function QueryAdminGrid({
     }
   };
 
-  const handleSave = async () => {
-    setIsLoading(true);
-    try {
-      // Format SQL
-      let formattedQuery = formData.query;
-      try {
-        formattedQuery = format(formData.query, {
-          language: "tsql",
-          keywordCase: "upper",
-        });
-      } catch (e) {
-        // Keep original if formatting fails
-      }
-
-      const saveData = {
-        ...formData,
-        query: formattedQuery,
-      };
-
-      if (selectedQuery) {
-        // Update existing
-        await updateQuery(selectedQuery.id, saveData);
-
-        setQueries((prev) =>
-          prev.map((q) => {
-            if (q.id === selectedQuery.id) {
-              const category = categories.find((c) => c.id === saveData.categoryId);
-              return {
-                ...q,
-                ...saveData,
-                category: category || q.category,
-              };
-            }
-            return q;
-          })
-        );
-        toast.success("Query updated successfully");
-      } else {
-        // Create new - use the form dialog instead
-        toast.info("Use the Add Query button to create new queries");
-      }
-
-      setIsEditDialogOpen(false);
-      setSelectedQuery(null);
-    } catch (error: any) {
-      toast.error(error.message || "Failed to save query");
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleExportCsv = useCallback(() => {
     if (gridRef.current?.api) {
       gridRef.current.api.exportDataAsCsv({
         fileName: `queries_export_${new Date().toISOString().split("T")[0]}.csv`,
       });
+      toast.success("Exported CSV");
     }
   }, []);
 
@@ -335,40 +234,21 @@ export default function QueryAdminGrid({
     }
   }, []);
 
-  const handleBulkDelete = async () => {
+  // Bulk delete: one server action for all selected ids (finding U8)
+  const confirmBulkDelete = async () => {
     if (selectedRows.length === 0) return;
-    if (!confirm(`Are you sure you want to delete ${selectedRows.length} queries?`)) return;
-
     setIsLoading(true);
-    let successCount = 0;
     try {
-      for (const query of selectedRows) {
-        try {
-          await deleteQuery(query.id);
-          successCount++;
-        } catch (e) {
-          console.error(`Failed to delete query ${query.id}`, e);
-        }
-      }
-      setQueries((prev) => prev.filter((q) => !selectedRows.find((s) => s.id === q.id)));
-      toast.success(`Deleted ${successCount} queries`);
+      const ids = selectedRows.map((q) => q.id);
+      const { deleted } = await deleteQueries(ids);
+      setQueries((prev) => prev.filter((q) => !ids.includes(q.id)));
+      toast.success(`Deleted ${deleted} ${deleted === 1 ? "query" : "queries"}`);
       gridRef.current?.api?.deselectAll();
+      setBulkDeleteOpen(false);
     } catch (error) {
-      toast.error("Failed to delete some queries");
+      toast.error(error instanceof Error ? error.message : "Failed to delete queries");
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleFormatSql = () => {
-    try {
-      const formatted = format(formData.query, {
-        language: "tsql",
-        keywordCase: "upper",
-      });
-      setFormData({ ...formData, query: formatted });
-    } catch (e) {
-      toast.error("Failed to format SQL - check for syntax errors");
     }
   };
 
@@ -389,7 +269,7 @@ export default function QueryAdminGrid({
               <Button
                 variant="destructive"
                 size="sm"
-                onClick={handleBulkDelete}
+                onClick={() => setBulkDeleteOpen(true)}
                 disabled={isLoading}
               >
                 {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
@@ -427,182 +307,18 @@ export default function QueryAdminGrid({
         />
       </div>
 
-      {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{selectedQuery ? "Edit Query" : "Duplicate Query"}</DialogTitle>
-            <DialogDescription>
-              {selectedQuery
-                ? "Update query settings and SQL"
-                : "Create a copy of this query"}
-            </DialogDescription>
-          </DialogHeader>
+      {/* Edit / Duplicate (react-hook-form + zod, finding U12) */}
+      <EditQueryDialog
+        open={!!dialog}
+        onOpenChange={(open) => !open && setDialog(null)}
+        mode={dialog?.mode ?? "edit"}
+        query={dialog?.query ?? null}
+        categories={categories}
+        createdBy={session?.user?.email ?? ""}
+        onSaved={handleSaved}
+      />
 
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="category">Category</Label>
-                <Select
-                  value={formData.categoryId}
-                  onValueChange={(value) => setFormData({ ...formData, categoryId: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>
-                        {cat.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Input
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <Label htmlFor="query">SQL Query</Label>
-                <Button variant="outline" size="sm" onClick={handleFormatSql}>
-                  Format SQL
-                </Button>
-              </div>
-              <Textarea
-                id="query"
-                value={formData.query}
-                onChange={(e) => setFormData({ ...formData, query: e.target.value })}
-                className="font-mono text-sm min-h-[200px]"
-              />
-            </div>
-
-            <div className="border-t pt-4">
-              <h3 className="text-sm font-medium mb-3">Chart Configuration</h3>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="chart"
-                    checked={formData.chart}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, chart: checked as boolean })
-                    }
-                  />
-                  <Label htmlFor="chart">Enable Chart</Label>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="chartType">Chart Type</Label>
-                  <Select
-                    value={formData.chartTypeKey}
-                    onValueChange={(value) => setFormData({ ...formData, chartTypeKey: value })}
-                    disabled={!formData.chart}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {chartTypes.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {type}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="chartStack">Stacked Chart</Label>
-                  <div className="flex items-center gap-2 h-10">
-                    <Checkbox
-                      id="chartStack"
-                      checked={formData.chartStackKey}
-                      onCheckedChange={(checked) =>
-                        setFormData({ ...formData, chartStackKey: checked === true })
-                      }
-                      disabled={!formData.chart}
-                    />
-                    <span className="text-sm text-muted-foreground">Stack the Y-axis series</span>
-                  </div>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4 mt-3">
-                <div className="space-y-2">
-                  <Label htmlFor="chartX">X Axis Key</Label>
-                  <Input
-                    id="chartX"
-                    value={formData.chartXKey}
-                    onChange={(e) => setFormData({ ...formData, chartXKey: e.target.value })}
-                    disabled={!formData.chart}
-                    placeholder="Column name for X axis"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="chartY">Y Axis Key</Label>
-                  <Input
-                    id="chartY"
-                    value={formData.chartYKey}
-                    onChange={(e) => setFormData({ ...formData, chartYKey: e.target.value })}
-                    disabled={!formData.chart}
-                    placeholder="Column name for Y axis"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="hiddenCols">Hidden Columns (comma separated)</Label>
-              <Input
-                id="hiddenCols"
-                value={formData.hiddenCols}
-                onChange={(e) => setFormData({ ...formData, hiddenCols: e.target.value })}
-                placeholder="e.g., id, internal_code"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="totalColumns">Total Columns (comma separated)</Label>
-              <Input
-                id="totalColumns"
-                value={formData.totalColumns}
-                onChange={(e) => setFormData({ ...formData, totalColumns: e.target.value })}
-                placeholder="e.g., # UPP, Total, UPP %:ratio(# UPP,Total)"
-              />
-              <p className="text-xs text-muted-foreground">
-                Adds a totals footer. Each entry is <code>column</code> (sum), <code>column:fn</code> with fn =
-                sum, avg, min, max or count, or <code>column:ratio(numerator,denominator)</code> for
-                100 × sum(numerator) / sum(denominator). Leave blank for no footer.
-              </p>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} disabled={isLoading}>
-              Cancel
-            </Button>
-            <Button onClick={handleSave} disabled={isLoading}>
-              {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {selectedQuery ? "Save Changes" : "Create Copy"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation Dialog */}
+      {/* Single delete */}
       <AlertDialog open={!!queryToDelete} onOpenChange={(open) => !open && setQueryToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -621,6 +337,18 @@ export default function QueryAdminGrid({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Bulk delete with typed confirmation (finding U8) */}
+      <ConfirmDeleteDialog
+        open={bulkDeleteOpen}
+        onOpenChange={setBulkDeleteOpen}
+        title={`Delete ${selectedRows.length} ${selectedRows.length === 1 ? "query" : "queries"}`}
+        description="This permanently deletes the selected reports. Users who favourited them will lose those favourites."
+        confirmText={String(selectedRows.length)}
+        actionLabel="Delete Selected"
+        pending={isLoading}
+        onConfirm={confirmBulkDelete}
+      />
     </div>
   );
 }

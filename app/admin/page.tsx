@@ -156,6 +156,11 @@ export default async function AdminPage() {
     );
   }
 
+  // Audit log (finding U8): super admins only, newest first
+  const auditEntries = isSuperAdmin
+    ? await prisma.adminAuditLog.findMany({ orderBy: { createdAt: "desc" }, take: 200 })
+    : [];
+
   // Transform UserRole data to flat userRole shape expected by components
   const transformedUsers = allUsers.map((user) => ({
     ...user,
@@ -203,6 +208,7 @@ export default async function AdminPage() {
           isQueryEditor,
           userSchools,
         }}
+        auditEntries={auditEntries as any}
         settingsData={{
           currentDefaultYear,
           calculatedYear: calculateCurrentSchoolYear(),

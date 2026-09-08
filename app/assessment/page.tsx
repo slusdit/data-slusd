@@ -3,7 +3,12 @@ import { ClipboardList } from "lucide-react";
 export default function AssessmentPage() {
   return (
     <div className="container mx-auto py-6">
-      <h1 className="mb-6 text-3xl font-bold">Assessment</h1>
+      <h1 className="mb-6 flex items-center gap-3 text-3xl font-bold">
+        Assessment
+        <span className="rounded-full border border-amber-400/60 bg-amber-50 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+          Preview
+        </span>
+      </h1>
       <div className="bg-card flex flex-col items-center justify-center rounded-lg border p-12 text-center">
         <div className="bg-muted mb-4 flex h-14 w-14 items-center justify-center rounded-full">
           <ClipboardList className="text-muted-foreground h-7 w-7" />

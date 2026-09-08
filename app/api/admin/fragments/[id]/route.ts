@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import adminCheck from '@/lib/adminCheck';
+import { recordAudit } from '@/lib/auditLog';
 
 /**
  * Validates SQL fragment for safety
@@ -151,6 +152,14 @@ export async function PUT(
       data: updateData,
       include: { category: true },
     });
+    await recordAudit({
+      actor: access.session!.user, // adminCheck() returned non-null, so the session is set
+      action: 'fragment.update',
+      entity: 'AIFragment',
+      entityId: id,
+      before: existing,
+      after: updateData,
+    });
 
     return NextResponse.json(fragment);
   } catch (error) {
@@ -186,6 +195,13 @@ export async function DELETE(
     // Hard delete
     await prisma.aIFragment.delete({
       where: { id },
+    });
+    await recordAudit({
+      actor: access.session!.user, // adminCheck() returned non-null, so the session is set
+      action: 'fragment.delete',
+      entity: 'AIFragment',
+      entityId: id,
+      before: existing,
     });
 
     return NextResponse.json({ success: true });

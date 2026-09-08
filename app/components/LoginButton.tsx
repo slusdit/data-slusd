@@ -15,7 +15,6 @@ import { ModeToggle } from "./ModeToggle";
 import { useRouter } from "next/router";
 import { User } from "@prisma/client";
 import { useEffect, useState } from "react";
-import SchoolPicker from "./SchoolPicker";
 
 const HandleSignOut = async () => {
     await SignOutGoogle()
@@ -60,9 +59,7 @@ export default function LoginButton({
                         <p>Welcome, {user.name}</p>
                         <p className="text-card-foreground/750 font-thin text-sm">{user.email}</p>
                         <div >
-                            <div className="w-full">
-                            <SchoolPicker schools={user.UserSchool} initialSchool={user.activeSchool} />
-                            </div>
+                            {/* School switching lives in the header picker and on /profile (finding U3) */}
 
                             <div className="flex w-full justify-center my-1 ">
 

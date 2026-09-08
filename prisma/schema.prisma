@@ -436,6 +436,24 @@ model AppSetting {
 
 // Audit trail for admin user-emulation actions (compliance requirement for
 // a student-data system). One row per start/stop event.
+// Phase 5 (finding U8): who changed what through the admin tools. Written by
+// lib/auditLog.ts; read on the Audit tab (super admins).
+model AdminAuditLog {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  actorId    String
+  actorEmail String?
+  action     String   // e.g. "query.update", "user.delete"
+  entity     String   // "Query" | "QueryCategory" | "User" | "AIFragment"
+  entityId   String?
+  before     Json?
+  after      Json?
+
+  @@index([createdAt])
+  @@index([entity, entityId])
+  @@index([actorId])
+}
+
 model EmulationLog {
   id           String   @id @default(cuid())
   createdAt    DateTime @default(now())

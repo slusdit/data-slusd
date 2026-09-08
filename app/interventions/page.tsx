@@ -254,7 +254,7 @@ const InterventionsPage = () => {
           </p>
         </div>
       </div>
-      <Interventions data={sampleData} title="Student Interventions (Demo)" />
+      <Interventions data={sampleData} title="Student Interventions (Preview)" />
     </div>
   );
 };

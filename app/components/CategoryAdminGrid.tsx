@@ -275,6 +275,7 @@ export default function CategoryAdminGrid({
                       variant="ghost"
                       size="icon"
                       onClick={() => handleEdit(category)}
+                      aria-label={`Edit ${category.label}`}
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
@@ -282,6 +283,7 @@ export default function CategoryAdminGrid({
                       variant="ghost"
                       size="icon"
                       onClick={() => handleDelete(category)}
+                      aria-label={`Delete ${category.label}`}
                     >
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>

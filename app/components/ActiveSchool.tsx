@@ -1,10 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
-import { SchoolInfo } from "@prisma/client";
+import { useState } from "react";
 import Image from "next/image";
-import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Check, ChevronDown, Loader2 } from "lucide-react";
-import { updateActiveSchool } from "@/lib/signinMiddleware";
+import { useSchoolYearSwitch } from "./hooks/useSchoolYearSwitch";
 
 export type SelectableSchool = {
   sc: string;
@@ -21,32 +18,25 @@ export type SelectableSchool = {
 };
 
 interface ActiveSchoolProps {
-  activeSchool: SchoolInfo;
-  /** Schools the user may switch to, resolved server-side in MainHeader. */
+  activeSchool: { sc: string; name: string; logo?: string | null };
+  /** Schools the user may switch to, resolved server-side from user.schools. */
   schools?: SelectableSchool[];
   userId?: string;
+  /** Larger, labelled variant for the profile page */
+  variant?: "header" | "card";
 }
 
-const ActiveSchool = ({ activeSchool, schools, userId }: ActiveSchoolProps) => {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+const ActiveSchool = ({ activeSchool, schools, userId, variant = "header" }: ActiveSchoolProps) => {
   const [open, setOpen] = useState(false);
+  const { isPending, switchSchool } = useSchoolYearSwitch(userId);
 
   const selectableSchools = schools ?? [];
   const hasMultipleSchools = selectableSchools.length > 1;
+  const textClass = variant === "card" ? "font-semibold" : "text-mainTitle-foreground font-semibold";
 
-  const handleSchoolChange = async (schoolSc: string) => {
-    if (!userId) return;
+  const handleSchoolChange = (schoolSc: string) => {
     setOpen(false);
-    startTransition(async () => {
-      try {
-        await updateActiveSchool(userId, Number(schoolSc));
-        router.refresh();
-      } catch (error) {
-        console.error("Error updating active school:", error);
-        toast.error("Couldn't switch schools. Please try again.");
-      }
-    });
+    switchSchool(schoolSc);
   };
 
   // If user only has one school, show static display
@@ -60,7 +50,7 @@ const ActiveSchool = ({ activeSchool, schools, userId }: ActiveSchoolProps) => {
           alt="School Logo"
           className="rounded-md"
         />
-        <span className="text-mainTitle-foreground font-semibold hidden sm:inline">
+        <span className={`${textClass} ${variant === "header" ? "hidden sm:inline" : ""}`}>
           {activeSchool.name}
         </span>
       </div>
@@ -71,7 +61,11 @@ const ActiveSchool = ({ activeSchool, schools, userId }: ActiveSchoolProps) => {
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger
-        className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-title-foreground/10 transition-colors focus:outline-none"
+        className={
+          variant === "card"
+            ? "flex w-full items-center gap-3 rounded-lg border px-3 py-2 hover:bg-muted transition-colors focus:outline-none"
+            : "flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-title-foreground/10 transition-colors focus:outline-none"
+        }
         disabled={isPending}
         aria-label={`Active school: ${activeSchool.name}. Change school`}
       >
@@ -86,7 +80,7 @@ const ActiveSchool = ({ activeSchool, schools, userId }: ActiveSchoolProps) => {
             className="rounded-md"
           />
         )}
-        <span className="text-mainTitle-foreground font-semibold hidden sm:inline max-w-[200px] truncate">
+        <span className={`${textClass} ${variant === "header" ? "hidden sm:inline" : "flex-1 text-left"} max-w-[200px] truncate`}>
           {activeSchool.name}
         </span>
         <ChevronDown className={`h-4 w-4 text-title-foreground/70 transition-transform ${open ? "rotate-180" : ""}`} />

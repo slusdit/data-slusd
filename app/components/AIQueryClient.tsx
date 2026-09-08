@@ -169,7 +169,9 @@ export function AIQueryClient({
   const applyResultPayload = useCallback((payload: any) => {
     if (!payload.success) {
       finishSteps(false);
-      setError(payload.error || payload.details?.join(', ') || 'Failed to generate query');
+      const message = payload.error || payload.details?.join(', ') || 'Failed to generate query';
+      setError(message);
+      toast.error(message);
       return;
     }
     finishSteps(!payload.executeError);
@@ -189,6 +191,9 @@ export function AIQueryClient({
     });
     if (payload.executeError) {
       setError(`Query generated but failed to execute: ${payload.executeError}`);
+      toast.error('Query generated but failed to execute');
+    } else if (payload.data) {
+      toast.success(`Query ready: ${(payload.rowCount ?? 0).toLocaleString()} rows`);
     }
   }, [finishSteps]);
 
@@ -256,6 +261,7 @@ export function AIQueryClient({
         finishSteps(false);
         const message = err instanceof Error ? err.message : 'Query generation failed';
         setError(`${message}. Try rephrasing your question.`);
+        toast.error(message);
       }
     } finally {
       setIsGenerating(false);

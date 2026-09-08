@@ -17,7 +17,12 @@ import {
 import { Check, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { FC, ReactNode, useMemo, useState, useEffect, useRef } from "react";
-import UserSchoolWithDetails from "./SchoolPicker";
+// Shape of a UserSchool row with its school (the SchoolPicker component this used to import is gone, finding U3)
+type UserSchoolWithDetails = {
+  userId?: string;
+  schoolSc?: string;
+  school: { id?: string; sc: string; name: string; logo?: string | null };
+};
 import Image from "next/image";
 
 // Updated interface to include logo

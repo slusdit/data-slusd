@@ -9,6 +9,8 @@ import "ag-grid-community/styles/ag-theme-quartz.css";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { updateUser } from "@/lib/formActions";
+import { deleteUser } from "@/lib/actions/adminBulk";
+import ConfirmDeleteDialog from "./ConfirmDeleteDialog";
 import { useTheme } from "next-themes";
 import {
   Dialog,
@@ -96,6 +98,8 @@ export default function UserAdminGrid({
   const router = useRouter();
   const { resolvedTheme } = useTheme();
   const [users, setUsers] = useState(dataIn);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [formData, setFormData] = useState({
@@ -328,6 +332,7 @@ export default function UserAdminGrid({
               onClick={() => handleEdit(params.data)}
               className="h-7 w-7 p-0"
               title="Edit user"
+              aria-label="Edit user"
             >
               <Pencil className="h-4 w-4" />
             </Button>
@@ -337,6 +342,7 @@ export default function UserAdminGrid({
               onClick={() => handleDelete(params.data)}
               className="h-7 w-7 p-0 text-red-500 hover:text-red-700"
               title="Delete user"
+              aria-label="Delete user"
             >
               <Trash2 className="h-4 w-4" />
             </Button>
@@ -373,12 +379,28 @@ export default function UserAdminGrid({
     setIsEditDialogOpen(true);
   };
 
-  const handleDelete = async (user: User) => {
-    if (!confirm(`Are you sure you want to delete "${user.name}"?`)) {
-      return;
+  const handleDelete = (user: User) => {
+    setUserToDelete(user);
+  };
+
+  // Deletion is a single audited server action behind a typed confirmation (finding U8)
+  const confirmDeleteUser = async () => {
+    if (!userToDelete) return;
+    setIsDeleting(true);
+    try {
+      const result = await deleteUser(userToDelete.id);
+      if (!result.deleted) {
+        toast.error(result.error ?? "Failed to delete user");
+        return;
+      }
+      setUsers((prev) => prev.filter((u) => u.id !== userToDelete.id));
+      toast.success(`Deleted ${userToDelete.name}`);
+      setUserToDelete(null);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to delete user");
+    } finally {
+      setIsDeleting(false);
     }
-    // Note: Implement delete API if needed
-    toast.error("User deletion not implemented yet");
   };
 
   const handleEmulate = async (user: User) => {
@@ -652,6 +674,22 @@ export default function UserAdminGrid({
           paginationPageSizeSelector={[20, 50, 100]}
         />
       </div>
+
+      <ConfirmDeleteDialog
+        open={!!userToDelete}
+        onOpenChange={(open) => !open && setUserToDelete(null)}
+        title="Delete user"
+        description={
+          <>
+            This permanently removes <strong>{userToDelete?.name}</strong> ({userToDelete?.email}) together with
+            their sign-in, role, school and class links. They can sign in again later and will be re-created
+            from Aeries.
+          </>
+        }
+        confirmText={userToDelete?.email ?? ""}
+        pending={isDeleting}
+        onConfirm={confirmDeleteUser}
+      />
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
