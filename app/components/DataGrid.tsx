@@ -1,4 +1,6 @@
 // @ts-nocheck
+// Registers AG Grid Enterprise modules + licence for this grid (finding P1)
+import "@/app/components/providers/AGGridProvider";
 import { useEffect, useState } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { ColDef, GridApi, GridReadyEvent } from "ag-grid-community";

@@ -182,3 +182,21 @@ and restarting — adds prompt/model/base-url/SQL logging in the route and clien
   alternative is Gemini (`LLM_PROVIDER=gemini`, `LLM_MODEL=gemini-2.5-flash`) —
   fast, but subject to the free-tier rate limits noted previously.
 ```
+
+## Reverse proxy timeout (finding P14, outside the repo)
+
+nginx's default `proxy_read_timeout` is 60 s, which kills the AI query
+request before a slow local model finishes (the route allows up to ~105 s
+across its attempts). On the production host, raise it for the AI route only:
+
+```nginx
+location /api/ai-query/ {
+    proxy_pass         http://127.0.0.1:3000;
+    proxy_read_timeout 300s;
+    proxy_send_timeout 300s;
+    # keep the streaming (NDJSON) response flowing
+    proxy_buffering    off;
+}
+```
+
+Then `sudo nginx -t && sudo systemctl reload nginx`.

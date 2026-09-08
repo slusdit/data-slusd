@@ -37,6 +37,8 @@ interface FavoriteData {
   query: any;
   data: any[];
   chartOptions: any;
+  /** theme the chartOptions were built for */
+  chartTheme?: string;
   loading: boolean;
   error: string | null;
 }
@@ -93,79 +95,88 @@ export default function Dashboard({ user, activeSchool, quickStats }: DashboardP
     URL.revokeObjectURL(url);
   }, []);
 
+  // Fetch favorite report rows once per favorites/school change (finding P2).
+  // Chart options are derived in a separate effect so a theme toggle never
+  // re-runs SQL against Aeries.
+  const chartFavoriteIds = chartFavorites.map((q) => q.id).join(",");
   useEffect(() => {
+    let cancelled = false;
     const fetchFavorites = async () => {
       if (!chartFavorites.length) {
         setIsLoading(false);
         return;
       }
 
-      // Initialize loading state
       const initialState: Record<string, FavoriteData> = {};
       chartFavorites.forEach((query) => {
-        initialState[query.id] = {
-          query,
-          data: [],
-          chartOptions: null,
-          loading: true,
-          error: null,
-        };
+        initialState[query.id] = { query, data: [], chartOptions: null, chartTheme: undefined, loading: true, error: null };
       });
       setFavoritesData(initialState);
 
-      // Fetch all in parallel
-      const promises = chartFavorites.map(async (query) => {
-        try {
-          const { rows: response, error: queryError } = await runSavedQuery(query.id);
-          if (queryError) throw new Error(queryError);
+      // Fetch all in parallel; update state as each completes
+      await Promise.all(
+        chartFavorites.map(async (query) => {
+          let update: FavoriteData;
+          try {
+            const { rows, error: queryError } = await runSavedQuery(query.id);
+            if (queryError) throw new Error(queryError);
+            update = { query, data: rows, chartOptions: null, chartTheme: undefined, loading: false, error: null };
+          } catch {
+            update = { query, data: [], chartOptions: null, chartTheme: undefined, loading: false, error: "Failed to load" };
+          }
+          if (!cancelled) setFavoritesData((prev) => ({ ...prev, [query.id]: update }));
+        })
+      );
+      if (!cancelled) setIsLoading(false);
+    };
+
+    fetchFavorites();
+    return () => {
+      cancelled = true;
+    };
+    // chartFavorites is re-derived from user.favorites on every render; key on its ids
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chartFavoriteIds, activeSchool]);
+
+  // Build (or rebuild) chart options for loaded favorites when the theme changes.
+  // Entries record the theme they were built with, so this settles after one pass.
+  useEffect(() => {
+    const stale = Object.values(favoritesData).filter(
+      (f) => !f.loading && !f.error && f.data.length > 0 && f.chartTheme !== resolvedTheme
+    );
+    if (stale.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      const updates = await Promise.all(
+        stale.map(async (f) => {
           const chartOptions = await createChartOptions({
-            chartTitle: query.name,
-            chartXKey: query.chartXKey,
-            chartYKey: query.chartYKey,
-            chartTypeKey: query.chartTypeKey,
-            rowData: response,
-            visibleColumns: query.hiddenCols?.split(",") || [],
-            chartStackKey: query.chartStackKey || false,
+            chartTitle: f.query.name,
+            chartXKey: f.query.chartXKey,
+            chartYKey: f.query.chartYKey,
+            chartTypeKey: f.query.chartTypeKey,
+            rowData: f.data,
+            visibleColumns: f.query.hiddenCols?.split(",") || [],
+            chartStackKey: f.query.chartStackKey || false,
             aggFunction: "sum",
             theme: resolvedTheme,
             height: 220,
           });
-
-          return {
-            id: query.id,
-            query,
-            data: response,
-            chartOptions,
-            loading: false,
-            error: null,
-          };
-        } catch (error) {
-          return {
-            id: query.id,
-            query,
-            data: [],
-            chartOptions: null,
-            loading: false,
-            error: "Failed to load",
-          };
+          return [f.query.id, chartOptions] as const;
+        })
+      );
+      if (cancelled) return;
+      setFavoritesData((prev) => {
+        const next = { ...prev };
+        for (const [id, chartOptions] of updates) {
+          if (next[id]) next[id] = { ...next[id], chartOptions, chartTheme: resolvedTheme };
         }
+        return next;
       });
-
-      // Update state as each completes
-      promises.forEach(async (promise) => {
-        const result = await promise;
-        setFavoritesData((prev) => ({
-          ...prev,
-          [result.id]: result,
-        }));
-      });
-
-      await Promise.all(promises);
-      setIsLoading(false);
+    })();
+    return () => {
+      cancelled = true;
     };
-
-    fetchFavorites();
-  }, [chartFavorites.length, resolvedTheme, activeSchool]);
+  }, [favoritesData, resolvedTheme]);
 
   const greeting = () => {
     const hour = new Date().getHours();

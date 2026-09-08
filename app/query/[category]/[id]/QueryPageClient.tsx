@@ -1,4 +1,6 @@
 "use client";
+// Registers AG Grid Enterprise modules + licence for this grid (finding P1)
+import "@/app/components/providers/AGGridProvider";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTheme } from "next-themes";

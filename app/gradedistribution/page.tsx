@@ -45,12 +45,14 @@ export default async function GradeDistributionPage() {
     const schoolYearOptions = [...new Set(rawData.map(item => item.schoolYear).filter(Boolean))].sort().reverse();
     const periodOptions = [...new Set(rawData.map(item => item.period).filter(Boolean))].sort();
 
-    const data = await aggregateTeacherGradeSummaries({ scs: schoolFilter })
-
+    // Defaults first, then aggregate only the default year and term (finding P6);
+    // the client re-queries through the server action whenever a filter changes.
     const termFilter = (session?.user?.activeSchool > 10) ? session?.user?.activeSchool : undefined;
     const defaultSchoolYear = schoolYearOptions.length > 0 ? schoolYearOptions[0] : undefined;
     const defaultTerm = await getHighestIndexTermFromDatabase({ sc: termFilter, schoolYear: defaultSchoolYear })
-    const sentTerm = await defaultTerm?.term ? defaultTerm.term : "SEM1"
+    const sentTerm = defaultTerm?.term ? defaultTerm.term : "SEM1"
+
+    const data = await aggregateTeacherGradeSummaries({ scs: schoolFilter, schoolYear: defaultSchoolYear, term: sentTerm })
 
     return (
         <div className="container mx-auto p-4">

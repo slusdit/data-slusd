@@ -1,6 +1,10 @@
 /**
- * In-memory LRU cache for query results
- * This can be easily replaced with Redis in production
+ * In-memory LRU cache for report query results (one per server process).
+ *
+ * Keys are the fully scoped SQL plus the database year. Entries are cleared
+ * whenever a saved report is edited or deleted (lib/formActions.ts,
+ * lib/deleteQuery.ts). This could be swapped for Redis if the app ever runs
+ * on more than one instance.
  */
 
 interface CacheEntry<T> {
@@ -20,16 +24,17 @@ class QueryCache {
   }
 
   /**
-   * Generate a cache key from query string and parameters
+   * Generate a cache key from the query text and parameters (e.g. { dbYear }).
    */
   private generateKey(query: string, params?: Record<string, any>): string {
     const normalizedQuery = query.trim().toLowerCase();
-    const paramsKey = params ? JSON.stringify(params) : '';
+    const paramsKey = params ? JSON.stringify(params) : "";
     return `${normalizedQuery}:${paramsKey}`;
   }
 
   /**
-   * Get cached data if it exists and hasn't expired
+   * Get cached data if it exists and hasn't expired. A hit is moved to the
+   * most-recently-used position so eviction is true LRU.
    */
   get<T>(query: string, params?: Record<string, any>): T | null {
     const key = this.generateKey(query, params);
@@ -39,12 +44,14 @@ class QueryCache {
       return null;
     }
 
-    // Check if expired
     if (Date.now() > entry.expiresAt) {
       this.cache.delete(key);
       return null;
     }
 
+    // Map preserves insertion order: re-insert to mark as recently used
+    this.cache.delete(key);
+    this.cache.set(key, entry);
     return entry.data as T;
   }
 
@@ -55,11 +62,13 @@ class QueryCache {
     const key = this.generateKey(query, params);
     const ttl = ttlSeconds ? ttlSeconds * 1000 : this.defaultTTL;
 
-    // If cache is full, remove oldest entry (LRU)
-    if (this.cache.size >= this.maxSize) {
-      const firstKey = this.cache.keys().next().value;
-      if (firstKey) {
-        this.cache.delete(firstKey);
+    if (this.cache.has(key)) {
+      this.cache.delete(key);
+    } else if (this.cache.size >= this.maxSize) {
+      // Evict the least recently used entry (first key in insertion order)
+      const oldestKey = this.cache.keys().next().value;
+      if (oldestKey !== undefined) {
+        this.cache.delete(oldestKey);
       }
     }
 
@@ -67,6 +76,11 @@ class QueryCache {
       data,
       expiresAt: Date.now() + ttl,
     });
+  }
+
+  /** Drop every entry (a saved report changed, so any cached rows may be stale). */
+  clear(): void {
+    this.cache.clear();
   }
 
   /**
@@ -116,7 +130,9 @@ export const queryCache = new QueryCache(
   300  // 5 minute TTL by default
 );
 
-// Cleanup expired entries every 5 minutes
-setInterval(() => {
+// Cleanup expired entries every 5 minutes. unref() so the timer never keeps a
+// script or test process alive on its own.
+const cleanupTimer = setInterval(() => {
   queryCache.cleanup();
 }, 5 * 60 * 1000);
+cleanupTimer.unref?.();

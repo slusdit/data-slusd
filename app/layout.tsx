@@ -11,7 +11,6 @@ import { auth, SessionUser } from "@/auth";
 import {
   TooltipProvider,
 } from "@/components/ui/tooltip"
-import { AGGridProvider } from "./components/providers/AGGridProvider";
 import EmulationBanner from "./components/EmulationBanner";
 
 const fontSans = FontSans({
@@ -45,7 +44,6 @@ export default async function RootLayout({
           <TooltipProvider
             delayDuration={1800}
           >
-            <AGGridProvider>
               {/* Emulation Banner - shows when admin is viewing as another user */}
               {isEmulating && user?.emulatingUser && user?.realUser && (
                 <EmulationBanner
@@ -65,7 +63,6 @@ export default async function RootLayout({
                   }
                 </div>
               </main>
-            </AGGridProvider>
           </TooltipProvider>
           <Toaster richColors />
         </ThemeProvider>

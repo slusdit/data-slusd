@@ -196,7 +196,7 @@ export async function updateSchools(profileEmail: string, allQueriedSchools?: Ge
     return null
 }
 
-export async function getAllSchools(profileEmail: string) {
+export async function getAllSchools(profileEmail: string, prefetchedStaff?: AeriesSimpleStaff | null) {
 
     const results = await getPrimarySchool(profileEmail) ?? { primarySchool: null, psl: null, allSchools: [] as number[] }
 
@@ -205,7 +205,10 @@ export async function getAllSchools(profileEmail: string) {
     // per-school rows. (The original USR query was retired because its
     // `NM LIKE '<name>%'` match could return a different person's schools.)
     try {
-        const aeriesStaff = await getAeriesStaff({ email: profileEmail, endpoint: "/api/v5/staff" })
+        const aeriesStaff = prefetchedStaff ?? await getAeriesStaff({ email: profileEmail })
+        if (!aeriesStaff) {
+            throw new Error(`No Aeries staff record for ${profileEmail}`)
+        }
         if (aeriesStaff.hasSchoolPermissions) {
             results['allSchools'] = aeriesStaff.schoolPermissions
         } else {
@@ -301,7 +304,24 @@ export async function getPrimarySchool(profileEmail: string): Promise<GetAllScho
 
 }
 
-export async function syncTeacherClasses(profileId: string, profileEmail: string) {
+/**
+ * Insert classes and their user links in three statements instead of one
+ * INSERT per class (finding P7).
+ */
+async function createClassesAndLinks(profileId: string, classes: AeriesSimpleTeacher[]) {
+    if (classes.length === 0) return
+    await prisma.class.createMany({ data: classes, skipDuplicates: true })
+    const created = await prisma.class.findMany({
+        where: { email: classes[0].email, OR: classes.map((c) => ({ sc: c.sc, tn: c.tn })) },
+        select: { id: true },
+    })
+    await prisma.userClass.createMany({
+        data: created.map((c) => ({ classId: c.id, userId: profileId })),
+        skipDuplicates: true,
+    })
+}
+
+export async function syncTeacherClasses(profileId: string, profileEmail: string, prefetchedStaff?: AeriesSimpleStaff | null) {
 
     function isMatched(obj1: any, array2: any[], key1: string, key2: string) {
         const objKey = obj1[key1]
@@ -309,7 +329,7 @@ export async function syncTeacherClasses(profileId: string, profileEmail: string
             return obj1[key1] === obj2[key1] && obj1[key2] === obj2[key2]
         });
     }
-    let aeriesPermissions: AeriesSimpleStaff | AeriesSimpleTeacher | null = await getAeriesStaff({ email: profileEmail, endpoint: "/api/v5/staff" });
+    const aeriesPermissions: AeriesSimpleStaff | null = prefetchedStaff ?? await getAeriesStaff({ email: profileEmail });
     let aeriesClasses: AeriesSimpleTeacher[] | undefined
     if (!aeriesPermissions) {
         return null
@@ -362,20 +382,7 @@ export async function syncTeacherClasses(profileId: string, profileEmail: string
             if (newAeriesClasses.length > 0) {
                 // Add new classes to DB using createMany for better performance
                 // First create all classes
-                const createdClasses = await Promise.all(
-                    newAeriesClasses.map(async (aeriesClass) => {
-                        return await prisma.class.create({ data: aeriesClass })
-                    })
-                )
-
-                // Then create all UserClass associations in a single transaction
-                await prisma.userClass.createMany({
-                    data: createdClasses.map(newClass => ({
-                        classId: newClass.id,
-                        userId: profileId,
-                    })),
-                    skipDuplicates: true
-                })
+                await createClassesAndLinks(profileId, newAeriesClasses)
 
                 displayResult = `${newAeriesClasses.length} New Classes Added`
             }
@@ -398,20 +405,7 @@ export async function syncTeacherClasses(profileId: string, profileEmail: string
             }
         } else {
             // Add all classes to DB using batch operations for better performance
-            const createdClasses = await Promise.all(
-                aeriesClasses.map(async (aeriesClass) => {
-                    return await prisma.class.create({ data: aeriesClass })
-                })
-            )
-
-            // Create all UserClass associations in one batch
-            await prisma.userClass.createMany({
-                data: createdClasses.map(newClass => ({
-                    classId: newClass.id,
-                    userId: profileId,
-                })),
-                skipDuplicates: true
-            })
+            await createClassesAndLinks(profileId, aeriesClasses)
 
             displayResult = `${aeriesClasses.length} classes added - All Classes Added`
 

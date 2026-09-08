@@ -7,6 +7,7 @@ import { QueryCategory } from "@prisma/client";
 import type { Session } from "next-auth";
 import { QueryWithCategory } from "./QueryBar";
 import prisma from "@/lib/db";
+import { getReportCatalogueFor } from "@/lib/reportCatalogue";
 import ActiveSchool, { SelectableSchool } from "./ActiveSchool";
 import ReportsDropdown from "./ReportsDropdown";
 import YearSelector from "./YearSelector";
@@ -29,36 +30,15 @@ export default async function MainHeader({
     // permission does not by itself put every school in the picker.
     const allowedSchoolCodes = user.schools ?? [];
 
-    // Fetch school info, categories, queries, and the picker's schools in parallel
-    const [schoolResult, categoriesResult, queriesResult, selectableResult] = await Promise.all([
+    // School info, the cached role-filtered report catalogue (finding P4), and
+    // the picker's schools, in parallel
+    const [schoolResult, catalogue, selectableResult] = await Promise.all([
       prisma.schoolInfo.findUnique({
         where: {
           sc: session?.user?.activeSchool.toString(),
         },
       }),
-      prisma.queryCategory.findMany({
-        include: {
-          roles: {
-            select: { role: true },
-          },
-        },
-        orderBy: { sort: "asc" },
-      }),
-      prisma.query.findMany({
-        select: {
-          id: true,
-          name: true,
-          description: true,
-          category: {
-            select: {
-              id: true,
-              label: true,
-              value: true,
-            },
-          },
-        },
-        orderBy: { name: "asc" },
-      }),
+      getReportCatalogueFor(user),
       prisma.schoolInfo.findMany({
         where: { sc: { in: allowedSchoolCodes } },
         select: { sc: true, name: true, logo: true },
@@ -67,8 +47,8 @@ export default async function MainHeader({
     ]);
 
     schoolInfo = schoolResult;
-    categories = categoriesResult;
-    queries = queriesResult;
+    categories = catalogue.categories;
+    queries = catalogue.queries as unknown as QueryWithCategory[];
     selectableSchools = selectableResult;
   }
 

@@ -1,6 +1,7 @@
 import { auth, SessionUser } from "@/auth";
 import { runQueryWithMeta, formatQueryErrorForUser } from "@/lib/aeries";
-import { userCanRunQuery, userCanSeeCategory } from "@/lib/authorization";
+import { userCanRunQuery } from "@/lib/authorization";
+import { getReportCatalogueFor } from "@/lib/reportCatalogue";
 import { parseTotalColumns } from "@/lib/reportTotals";
 import prisma from "@/lib/db";
 import { notFound, redirect } from "next/navigation";
@@ -37,8 +38,8 @@ export default async function Page({ params }: PageProps) {
   }
   const user = session.user as SessionUser;
 
-  // Fetch query details and categories/queries for sidebar
-  const [result, categories, allQueries] = await Promise.all([
+  // Fetch the report and the cached, role-filtered sidebar catalogue (P4)
+  const [result, catalogue] = await Promise.all([
     prisma.query.findUnique({
       where: { id },
       include: {
@@ -46,30 +47,7 @@ export default async function Page({ params }: PageProps) {
         roles: { select: { role: true } },
       },
     }),
-    prisma.queryCategory.findMany({
-      include: {
-        roles: true,
-      },
-      orderBy: { label: "asc" },
-    }),
-    prisma.query.findMany({
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        publicQuery: true,
-        roles: { select: { role: true } },
-        category: {
-          select: {
-            id: true,
-            label: true,
-            value: true,
-            roles: { select: { role: true } },
-          },
-        },
-      },
-      orderBy: { name: "asc" },
-    }),
+    getReportCatalogueFor(user),
   ]);
 
   // Report authorization (finding S5): a report the user may not run is
@@ -106,18 +84,6 @@ export default async function Page({ params }: PageProps) {
   // Totals footer spec (Phase 3), e.g. "# UPP, Total, UPP %:ratio(# UPP,Total)"
   const totalSpecs = parseTotalColumns(result.totalColumns);
 
-  // Sidebar: only the reports and categories this user may open (S5, P4)
-  const visibleQueries = allQueries
-    .filter((q) => userCanRunQuery(user, q))
-    .map((q) => ({
-      id: q.id,
-      name: q.name,
-      description: q.description,
-      category: q.category
-        ? { id: q.category.id, label: q.category.label, value: q.category.value }
-        : null,
-    }));
-  const visibleCategories = categories.filter((c) => userCanSeeCategory(user, c));
 
   return (
     <QueryPageClient
@@ -142,8 +108,8 @@ export default async function Page({ params }: PageProps) {
       truncated={truncated}
       totalSpecs={totalSpecs}
       urlCategory={urlCategory}
-      categories={visibleCategories}
-      allQueries={visibleQueries}
+      categories={catalogue.categories}
+      allQueries={catalogue.queries}
     />
   );
 }

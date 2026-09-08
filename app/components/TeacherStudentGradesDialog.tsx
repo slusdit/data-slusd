@@ -1,4 +1,6 @@
 "use client";
+// Registers AG Grid Enterprise modules + licence for this grid (finding P1)
+import "@/app/components/providers/AGGridProvider";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { colorSchemeDarkBlue, themeQuartz } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";

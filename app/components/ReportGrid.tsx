@@ -1,3 +1,5 @@
+// Registers AG Grid Enterprise modules + licence for this grid (finding P1)
+import "@/app/components/providers/AGGridProvider";
 import { AgGridReact } from "ag-grid-react"
 
 interface ReportGridType<T> {

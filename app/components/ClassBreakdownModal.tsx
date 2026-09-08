@@ -1,5 +1,7 @@
 // @ts-nocheck
 'use client';
+// Registers AG Grid Enterprise modules + licence for this grid (finding P1)
+import "@/app/components/providers/AGGridProvider";
 import React from 'react';
 import {
   Dialog,

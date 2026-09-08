@@ -3,6 +3,8 @@ import { z } from "zod"
 import { queryFormSchema } from "@/app/components/forms/AddQueryForm"
 import prisma from "@/lib/db"
 import { requireAdmin, requireQueryEditor } from "@/lib/authGuard"
+import { invalidateReportCatalogue } from "@/lib/reportCatalogue"
+import { queryCache } from "@/lib/queryCache"
 
 export async function addQuery(values: z.infer<typeof queryFormSchema>) {
   await requireQueryEditor()
@@ -29,7 +31,7 @@ export async function addQuery(values: z.infer<typeof queryFormSchema>) {
         categoryId: values.categoryId,
       },
     })
-    // console.log({result})
+    invalidateReportCatalogue()
 
     return true
   } catch (error) {
@@ -64,7 +66,7 @@ export async function updateQuery(id: string, data: EditableQueryFields) {
   await requireQueryEditor()
   if (typeof id !== "string" || !id) throw new Error("Query id is required")
   const parsed = editableQueryFields.parse(data)
-  return prisma.query.update({
+  const updated = await prisma.query.update({
     where: { id },
     data: {
       ...parsed,
@@ -73,6 +75,10 @@ export async function updateQuery(id: string, data: EditableQueryFields) {
       totalColumns: parsed.totalColumns === "" ? null : parsed.totalColumns,
     },
   })
+  // Cached rows may belong to the old SQL; the header/sidebar catalogue may be stale (P4, P8)
+  queryCache.clear()
+  invalidateReportCatalogue()
+  return updated
 }
 
 // UPDATED: Improved updateUser function with better handling of many-to-many relationships
@@ -181,7 +187,7 @@ export async function updateUser(data: any, field: string) {
   }
 }
 
-export async function addQueryCategory(data: { label: string; value: string; sort?: number; roleIds?: string[] }) {
+async function addQueryCategoryImpl(data: { label: string; value: string; sort?: number; roleIds?: string[] }) {
   await requireQueryEditor()
   try {
     const result = await prisma.queryCategory.create({
@@ -202,7 +208,7 @@ export async function addQueryCategory(data: { label: string; value: string; sor
   }
 }
 
-export async function updateQueryCategory(data: { id: string; label?: string; value?: string; sort?: number; roleIds?: string[] }) {
+async function updateQueryCategoryImpl(data: { id: string; label?: string; value?: string; sort?: number; roleIds?: string[] }) {
   await requireQueryEditor()
   try {
     const result = await prisma.queryCategory.update({
@@ -226,7 +232,7 @@ export async function updateQueryCategory(data: { id: string; label?: string; va
   }
 }
 
-export async function deleteQueryCategory(id: string) {
+async function deleteQueryCategoryImpl(id: string) {
   await requireQueryEditor()
   try {
     await prisma.queryCategory.delete({
@@ -237,4 +243,23 @@ export async function deleteQueryCategory(id: string) {
     console.error(`Error deleting query category ${id}:`, error);
     throw error;
   }
+}
+
+// Category changes alter the header/sidebar catalogue (finding P4).
+export async function addQueryCategory(...args: Parameters<typeof addQueryCategoryImpl>) {
+  const result = await addQueryCategoryImpl(...args)
+  invalidateReportCatalogue()
+  return result
+}
+
+export async function updateQueryCategory(...args: Parameters<typeof updateQueryCategoryImpl>) {
+  const result = await updateQueryCategoryImpl(...args)
+  invalidateReportCatalogue()
+  return result
+}
+
+export async function deleteQueryCategory(...args: Parameters<typeof deleteQueryCategoryImpl>) {
+  const result = await deleteQueryCategoryImpl(...args)
+  invalidateReportCatalogue()
+  return result
 }

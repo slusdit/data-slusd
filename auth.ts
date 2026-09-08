@@ -1,10 +1,11 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import NextAuth from "next-auth";
+import { cache } from "react";
 import Google from "next-auth/providers/google";
 import prisma from "./lib/db";
 import { getAllSchools, getPrimarySchool, syncTeacherClasses } from "./lib/signinMiddleware";
 import { Class, Query, ROLE, SchoolInfo, User } from "@prisma/client";
-import { AeriesSimpleTeacher } from "./lib/aeries";
+import { AeriesSimpleTeacher, getAeriesStaff } from "./lib/aeries";
 import { calculateCurrentSchoolYear } from "./lib/schoolYear";
 
 
@@ -105,7 +106,7 @@ function applyRoleOverrides(
 }
 
 // const prisma = new PrismaClient();
-export const { handlers, auth, signIn, signOut } = NextAuth({
+const nextAuth = NextAuth({
   adapter: PrismaAdapter(prisma),
   providers: [Google],
   trustHost: true,
@@ -118,8 +119,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const profileId = user?.id
         if (profileId && profileEmail) {
           try {
-            await syncTeacherClasses(profileId, profileEmail)
-            await getAllSchools(profileEmail)
+            // One Aeries staff lookup shared by both syncs (finding P7); they write
+            // to different tables (classes/roles vs schools) so they run in parallel.
+            const aeriesStaff = await getAeriesStaff({ email: profileEmail }).catch((err) => {
+              console.error("Aeries staff lookup failed at sign-in:", err)
+              return null
+            })
+            await Promise.all([
+              syncTeacherClasses(profileId, profileEmail, aeriesStaff),
+              getAllSchools(profileEmail, aeriesStaff),
+            ])
 
             // Update lastLogin timestamp
             await prisma.user.update({
@@ -302,4 +311,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
 });
 
+export const { handlers, signIn, signOut } = nextAuth;
 
+// Request-memoized session (finding P3): the layout, page, header and every
+// requireUser() in one render share a single session lookup instead of each
+// re-running the five-include Prisma query. React's cache() is scoped to one
+// server request; outside a React render (route handlers) it calls through.
+export const auth: typeof nextAuth.auth = cache(nextAuth.auth);

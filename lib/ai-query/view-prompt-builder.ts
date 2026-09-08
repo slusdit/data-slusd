@@ -230,7 +230,7 @@ function buildSchoolCodeListing(): string {
  * prune the schema listing/join map/examples to just those views; omit it for
  * the full 25-view prompt.
  */
-export function buildViewSystemPrompt(relevantViews?: string[]): string {
+function buildViewSystemPromptUncached(relevantViews?: string[]): string {
   const selected = relevantViews && relevantViews.length > 0 && relevantViews.length < Object.keys(VIEW_SCHEMAS).length
     ? new Set(relevantViews)
     : undefined;
@@ -336,7 +336,7 @@ const COMPACT_VIEWS = [
   'llm_sed_status',
 ];
 
-export function buildCompactViewPrompt(): string {
+function buildCompactViewPromptUncached(): string {
   const viewLines = COMPACT_VIEWS.filter((v) => VIEW_SCHEMAS[v]).map(
     (view) => `- ${view}: ${VIEW_SCHEMAS[view].map(formatColumn).join(', ')}`
   );
@@ -371,4 +371,27 @@ CORRECT vs WRONG examples:
 - CORRECT: is_chronically_absent = 'Yes'  |  WRONG: is_chronically_absent = 1
 - CORRECT: gender = 'F'  |  WRONG: gender = F
 - CORRECT: grade_level = 5  |  WRONG: grade_level = '5'`;
+}
+
+// The prompt text depends only on the generated view schema, so build each
+// variant once per process instead of on every request (finding P13).
+const promptCache = new Map<string, string>();
+
+export function buildViewSystemPrompt(relevantViews?: string[]): string {
+  const key = relevantViews ? `views:${[...relevantViews].sort().join('|')}` : 'views:*';
+  let prompt = promptCache.get(key);
+  if (prompt === undefined) {
+    prompt = buildViewSystemPromptUncached(relevantViews);
+    promptCache.set(key, prompt);
+  }
+  return prompt;
+}
+
+export function buildCompactViewPrompt(): string {
+  let prompt = promptCache.get('compact');
+  if (prompt === undefined) {
+    prompt = buildCompactViewPromptUncached();
+    promptCache.set('compact', prompt);
+  }
+  return prompt;
 }

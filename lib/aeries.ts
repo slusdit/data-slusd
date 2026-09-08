@@ -274,6 +274,21 @@ async function applyScopePlaceholders(query: string, user: SessionUser): Promise
   return query;
 }
 
+const TRANSIENT_MSSQL_CODES = new Set(["ETIMEOUT", "ECONNRESET", "ESOCKET", "ECONNCLOSED"]);
+
+/** Retry once after a short backoff on a transient MSSQL connection error (finding P10). */
+async function withTransientRetry<T>(run: () => Promise<T>): Promise<T> {
+  try {
+    return await run();
+  } catch (error) {
+    const code = (error as { code?: string } | null)?.code;
+    if (!code || !TRANSIENT_MSSQL_CODES.has(code)) throw error;
+    console.warn(`[aeries] transient ${code}, retrying once`);
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    return run();
+  }
+}
+
 function toExecutionError(error: unknown, context: string): QueryExecutionError {
   const ref = randomUUID().slice(0, 8);
   console.error(`[aeries] query failed ref=${ref} ${context}`, error);
@@ -299,13 +314,16 @@ export async function runParameterizedQuery(
   const dbYear = options?.dbYear ?? user.activeDbYear ?? DEFAULT_DB_YEAR;
   const database = getDatabaseName(dbYear);
   const pool = await getPoolForDatabase(database);
-  const request = pool.request();
-  for (const [name, param] of Object.entries(parameters)) {
-    request.input(name, param.type, param.value);
-  }
+  const runOnce = () => {
+    const request = pool.request();
+    for (const [name, param] of Object.entries(parameters)) {
+      request.input(name, param.type, param.value);
+    }
+    return request.query(cleanQuery);
+  };
 
   try {
-    const result = await request.query(cleanQuery);
+    const result = await withTransientRetry(runOnce);
     return result.recordset;
   } catch (error) {
     throw toExecutionError(error, `user=${user.email} db=${database} parameterized`);
@@ -328,7 +346,7 @@ export async function runQueryWithMeta(
   const dbYear = options?.dbYear ?? user.activeDbYear ?? DEFAULT_DB_YEAR;
   const scopedQuery = await applyScopePlaceholders(query, user);
 
-  const cacheKey = { query: scopedQuery, dbYear };
+  const cacheKey = { dbYear }; // the key already contains the scoped SQL (finding P8)
   const cached = queryCache.get<QueryResult>(scopedQuery, cacheKey);
   if (cached) {
     return cached;
@@ -338,7 +356,7 @@ export async function runQueryWithMeta(
   const pool = await getPoolForDatabase(database);
   let recordset: any[];
   try {
-    const result = await pool.request().query(scopedQuery);
+    const result = await withTransientRetry(() => pool.request().query(scopedQuery));
     recordset = result.recordset ?? [];
   } catch (error) {
     throw toExecutionError(error, `user=${user.email} db=${database}`);
@@ -467,17 +485,19 @@ export async function getAeriesStaff({
 }: {
   email: string
   endpoint?: string
-}) {
+}): Promise<AeriesSimpleStaff | null> {
 
   const cert = process.env.AERIES_API_KEY as string
 
   // console.log({ endpoint, email })
 
+  // Ask Aeries for this one person instead of the whole staff list (finding P7).
+  // Not cached: school permissions must be current at every sign-in.
   const response = await fetch(
-    `${process.env.AERIES_URL}${endpoint}`,
+    `${process.env.AERIES_URL}${endpoint}?EmailAddress=${encodeURIComponent(email)}`,
     {
       method: "GET",
-      cache: "force-cache",
+      cache: "no-store",
       headers: {
         "Content-Type": "application/json",
         "AERIES-CERT": cert
@@ -504,7 +524,10 @@ export async function getAeriesStaff({
   }
   // console.log(data)
   // console.log(email)
-  let person = data.filter(p => p.EmailAddress === email)[0]
+  const person = data.find((p) => p.EmailAddress?.toLowerCase() === email.toLowerCase())
+  if (!person) {
+    return null
+  }
   // person = data.filter(p => p.EmailAddress === "mabadia@slusd.us")[0]
   // person = data.filter(p => p.EmailAddress === "acorona@slusd.us")[0]
   // person = data.filter(p => p.EmailAddress === "xbugarin@slusd.us")[0]
@@ -573,7 +596,7 @@ async function getAeriesSchoolTeacher({
     `${process.env.AERIES_URL}/api/v5/schools/${sc}/teachers`,
     {
       method: "GET",
-      cache: "force-cache",
+      cache: "no-store",
       headers: {
         "Content-Type": "application/json",
         "AERIES-CERT": cert
