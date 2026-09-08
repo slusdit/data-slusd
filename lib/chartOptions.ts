@@ -84,9 +84,10 @@ export async function createChartOptions({
   let chartYKeyArray = chartYKey?.split(",").map((item) => item.trim()) || [];
 
   // Add axes and legend configuration based on size
+  // AG Charts 14: axes are keyed by `x` / `y`, not an array
   const axesAndLegend = {
-    axes: [
-      {
+    axes: {
+      x: {
         type: "category",
         position: "bottom",
         label: {
@@ -100,7 +101,7 @@ export async function createChartOptions({
           title: chartXKey ? { text: chartXKey, fontSize: 11 } : undefined,
         }),
       },
-      {
+      y: {
         type: "number",
         position: "left",
         label: {
@@ -118,7 +119,7 @@ export async function createChartOptions({
           title: chartYKey ? { text: chartYKey, fontSize: 11 } : undefined,
         }),
       },
-    ],
+    },
     legend: {
       enabled: chartYKeyArray.length > 1,
       position: isCompact ? "right" as const : "bottom" as const,

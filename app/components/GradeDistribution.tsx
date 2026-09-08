@@ -1270,16 +1270,17 @@ const GradeDistribution = ({
           tooltip: { renderer: CustomTooltip },
         },
       ],
-      axes: [
-        { type: "category", position: "bottom", label: { rotation: 45 } },
-        {
+      // AG Charts 14: axes are keyed by `x` / `y`, not an array
+      axes: {
+        x: { type: "category", position: "bottom", label: { rotation: 45 } },
+        y: {
           type: "number",
           position: "left",
           title: { text: "Grade Distribution (%)" },
           min: 0,
           max: 100,
         },
-      ],
+      },
       legend: { position: "bottom", spacing: 40 },
       padding: { top: 10, right: 20, bottom: 40, left: 40 },
     }),

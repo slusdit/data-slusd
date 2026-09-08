@@ -9,14 +9,21 @@ import { AllEnterpriseModule, LicenseManager, IntegratedChartsModule } from "ag-
 import { AgChartsEnterpriseModule } from "ag-charts-enterprise";
 import { useEffect } from "react";
 
-// Register AG Grid modules
+// Set the licence key BEFORE registering the integrated-charts module:
+// IntegratedChartsModule.with() immediately forwards the grid's current key to the
+// charts LicenseManager, so registering first would forward `undefined` and, when
+// AgChartsSetup has already set the charts key, trigger "License Key being set
+// multiple times with different values" and briefly clear it.
+const licenseKey = process.env.NEXT_PUBLIC_AG_GRID_LICENSE_KEY;
+if (licenseKey) {
+    LicenseManager.setLicenseKey(licenseKey);
+}
+
+// Register AG Grid modules (the grid wires the charts licence into the integrated charts)
 ModuleRegistry.registerModules([
     AllEnterpriseModule,
     IntegratedChartsModule.with(AgChartsEnterpriseModule)
 ]);
-
-// Set license key
-LicenseManager.setLicenseKey(process.env.NEXT_PUBLIC_AG_GRID_LICENSE_KEY as string);
 
 export function AGGridProvider({ children }: { children: React.ReactNode }) {
     return children;

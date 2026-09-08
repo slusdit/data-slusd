@@ -357,15 +357,17 @@ export default function QueryPageClient({
         yKey: key,
         yName: key,
         stacked: query.chartStackKey === true,
-        cornerRadius: chartType === "bar" ? 4 : 0,
+        // cornerRadius is a bar-series option only (AG Charts 14 warns otherwise)
+        ...(chartType === "bar" ? { cornerRadius: 4 } : {}),
       })),
-      axes: [
-        {
+      // AG Charts 14: axes are keyed by `x` / `y`, not an array
+      axes: {
+        x: {
           type: "category",
           position: "bottom",
           label: { rotation: 0, fontSize: 11 },
         },
-        {
+        y: {
           type: "number",
           position: "left",
           label: {
@@ -378,7 +380,7 @@ export default function QueryPageClient({
             },
           },
         },
-      ],
+      },
       legend: { enabled: chartYKeyArray.length > 1, position: "bottom" },
     };
   }, [query, data, selectedRows, filteredData, chartTheme, chartType]);

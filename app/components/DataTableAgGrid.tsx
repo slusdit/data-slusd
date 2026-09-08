@@ -171,8 +171,8 @@ function DataTable<T extends object>({
           yName: key,
           stacked: chartStackKey || false,
         })),
-        axes: [
-          {
+        axes: {
+          x: {
             type: "category",
             position: "bottom",
             label: {
@@ -184,7 +184,7 @@ function DataTable<T extends object>({
               fontSize: 14,
             },
           },
-          {
+          y: {
             type: "number",
             position: "left",
             title: {
@@ -195,7 +195,7 @@ function DataTable<T extends object>({
               fontSize: 12,
             },
           },
-        ],
+        },
         padding: {
           top: 10,
           right: 40,

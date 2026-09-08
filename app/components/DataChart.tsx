@@ -17,8 +17,8 @@ export function DataChart({ chartOptions, theme = 'light', height = 350, classNa
   // Merge height into chart options
   const optionsWithHeight = useMemo(() => ({
     ...chartOptions,
+    // a numeric height is applied to the chart; otherwise it fills the container (autoSize is gone in v14)
     height: typeof height === 'number' ? height : undefined,
-    autoSize: typeof height !== 'number', // Only autoSize if height is not a number
   }), [chartOptions, height]);
 
   const containerStyle = useMemo(() => ({
