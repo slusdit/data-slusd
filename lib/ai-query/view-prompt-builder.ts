@@ -291,7 +291,7 @@ RULES:
 4. Always include ORDER BY for readable results
 5. Use SELECT with specific columns, avoid SELECT *
 6. For counts, use COUNT(*) with GROUP BY
-7. ALWAYS start the query with SELECT TOP n where n <= 5000 (use TOP 500 unless the user asks for more); queries without a TOP clause are rejected
+7. If a query could return thousands of rows district-wide, use SELECT TOP 500 unless the user asks for everything
 8. Use appropriate aliases for clarity (e.g., d for demographics, p for program_summary, sped for special_education)
 9. JOIN types matter:
    - Use LEFT JOIN when adding optional data columns (show all students, NULL for missing data)

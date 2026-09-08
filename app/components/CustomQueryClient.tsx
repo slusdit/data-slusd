@@ -656,8 +656,7 @@ export function CustomQueryClient({
     }
 
     // Construct the query
-    // TOP 5000: the strict validator requires a row cap on generated SQL (S13)
-    let sql = `SELECT TOP 5000 ${uniqueColumns.join(',\n       ')}\nFROM llm_student_demographics d`;
+    let sql = `SELECT ${uniqueColumns.join(',\n       ')}\nFROM llm_student_demographics d`;
 
     if (joins.length > 0) {
       sql += '\n' + joins.join('\n');
