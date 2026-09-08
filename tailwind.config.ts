@@ -1,7 +1,7 @@
 import type { Config } from "tailwindcss"
 
 const config = {
-  darkMode: ["class"],
+  darkMode: "class", // v4: string strategy (the CSS also declares @custom-variant dark)
   content: [
     './pages/**/*.{ts,tsx}',
     './components/**/*.{ts,tsx}',
@@ -107,14 +107,7 @@ const config = {
   	}
   },
   plugins: [
-    require("tailwindcss-animate"),
-    function({ addUtilities }: { addUtilities: (utilities: Record<string, Record<string, string>>) => void }) {
-      addUtilities({
-        '.scrollbar-gutter-stable': {
-          'scrollbar-gutter': 'stable',
-        },
-      })
-    }
+    require("tailwindcss-animate")
   ],
 } satisfies Config
 

@@ -766,7 +766,7 @@ export function CustomQueryClient({
                       />
                       <Label htmlFor={`school-${school.code}`} className="text-sm cursor-pointer flex items-center gap-2">
                         {school.logo && (
-                          <img src={school.logo} alt="" className="h-4 w-4 rounded-sm object-contain" />
+                          <img src={school.logo} alt="" className="h-4 w-4 rounded-xs object-contain" />
                         )}
                         {school.name}
                       </Label>

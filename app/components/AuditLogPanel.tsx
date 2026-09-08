@@ -26,7 +26,7 @@ function Snapshot({ label, value }: { label: string; value: unknown }) {
   return (
     <div className="min-w-0">
       <p className="text-xs font-medium text-muted-foreground mb-1">{label}</p>
-      <pre className="max-h-64 overflow-auto rounded bg-muted p-2 text-xs whitespace-pre-wrap break-words">
+      <pre className="max-h-64 overflow-auto rounded-sm bg-muted p-2 text-xs whitespace-pre-wrap break-words">
         {JSON.stringify(value, null, 2)}
       </pre>
     </div>

@@ -49,7 +49,7 @@ export default function EmulationBanner({ emulatingUser, realUser }: EmulationBa
   };
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 bg-amber-500 text-amber-950 px-4 py-1 shadow-sm">
+    <div className="fixed top-0 left-0 right-0 z-50 bg-amber-500 text-amber-950 px-4 py-1 shadow-xs">
       <div className="container mx-auto flex items-center justify-between text-sm">
         <div className="flex items-center gap-2">
           <Eye className="h-4 w-4" />

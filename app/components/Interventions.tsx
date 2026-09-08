@@ -77,7 +77,7 @@ const LevelCellRenderer = (props: any) => {
 
   return (
     <div
-      className={`w-full h-full flex items-center justify-center ${bgColor} ${textColor} rounded px-2 py-1`}
+      className={`w-full h-full flex items-center justify-center ${bgColor} ${textColor} rounded-sm px-2 py-1`}
     >
       {level}
     </div>

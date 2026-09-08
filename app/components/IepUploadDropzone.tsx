@@ -278,7 +278,7 @@ const IepDropzone = () => {
                 </Button>
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full border-collapse border border-red-300 bg-white rounded-lg shadow-sm">
+                <table className="w-full border-collapse border border-red-300 bg-white rounded-lg shadow-xs">
                   <thead>
                     <tr className="bg-red-100">
                       <th className="border border-red-300 px-3 py-2 text-left text-sm font-semibold text-red-800">
@@ -346,7 +346,7 @@ const IepDropzone = () => {
                     successfulCount !== 1 ? "s" : ""
                   } successfully uploaded`;
                 })()}
-                <table className="w-full border-collapse border border-gray-300 bg-white rounded-lg shadow-sm">
+                <table className="w-full border-collapse border border-gray-300 bg-white rounded-lg shadow-xs">
                   <thead>
                     <tr className="bg-gray-50">
                       <th className="border border-gray-300 px-4 py-2 text-left text-sm font-semibold text-gray-700">

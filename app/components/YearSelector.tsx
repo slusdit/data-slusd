@@ -32,7 +32,7 @@ const YearSelector = ({ activeDbYear, userId }: YearSelectorProps) => {
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger
-        className="flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-title-foreground/10 transition-colors focus:outline-none text-sm"
+        className="flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-title-foreground/10 transition-colors focus:outline-hidden text-sm"
         disabled={isPending}
         aria-label={`School year: ${currentYearInfo.label}. Change school year`}
       >

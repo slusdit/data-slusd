@@ -665,7 +665,7 @@ export default function FragmentAdminGrid({
         <div className="flex items-center gap-4">
           <h2 className="text-xl font-semibold">AI Query Fragments ({fragments.length})</h2>
           {selectedRows.length > 0 && (
-            <span className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded">
+            <span className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded-sm">
               {selectedRows.length} selected
             </span>
           )}

@@ -381,7 +381,7 @@ export function AIQueryClient({
                 </Button>
               )}
               <span className="text-xs text-muted-foreground hidden sm:inline">
-                <kbd className="px-1 py-0.5 bg-muted rounded text-xs">Ctrl</kbd>+<kbd className="px-1 py-0.5 bg-muted rounded text-xs">Enter</kbd>
+                <kbd className="px-1 py-0.5 bg-muted rounded-sm text-xs">Ctrl</kbd>+<kbd className="px-1 py-0.5 bg-muted rounded-sm text-xs">Enter</kbd>
               </span>
             </div>
           </div>

@@ -280,7 +280,7 @@ export default function AddQueryForm({
             )}
           />
         </div>
-        <div className="border-2 border-primary/30 rounded p-2">
+        <div className="border-2 border-primary/30 rounded-sm p-2">
           <div className="text-xl underline text-center w-full pb-3">
             Chart Options
           </div>

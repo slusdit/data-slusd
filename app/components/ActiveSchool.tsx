@@ -63,8 +63,8 @@ const ActiveSchool = ({ activeSchool, schools, userId, variant = "header" }: Act
       <DropdownMenuTrigger
         className={
           variant === "card"
-            ? "flex w-full items-center gap-3 rounded-lg border px-3 py-2 hover:bg-muted transition-colors focus:outline-none"
-            : "flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-title-foreground/10 transition-colors focus:outline-none"
+            ? "flex w-full items-center gap-3 rounded-lg border px-3 py-2 hover:bg-muted transition-colors focus:outline-hidden"
+            : "flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-title-foreground/10 transition-colors focus:outline-hidden"
         }
         disabled={isPending}
         aria-label={`Active school: ${activeSchool.name}. Change school`}
@@ -97,7 +97,7 @@ const ActiveSchool = ({ activeSchool, schools, userId, variant = "header" }: Act
               width={28}
               height={28}
               alt={school.name}
-              className="rounded-sm"
+              className="rounded-xs"
             />
             <span className="flex-1 truncate">{school.name}</span>
             {school.sc === activeSchool.sc && (

@@ -173,7 +173,7 @@ export default function ReportsDropdown({
                   )}
                   <Star className="h-4 w-4 text-yellow-500" />
                   <span>Favorites</span>
-                  <span className="ml-auto text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                  <span className="ml-auto text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-sm">
                     {filteredResults.favorites.length}
                   </span>
                 </CollapsibleTrigger>
@@ -218,7 +218,7 @@ export default function ReportsDropdown({
                     )}
                     <FolderClosed className="h-4 w-4 text-muted-foreground" />
                     <span className="truncate">{category.label}</span>
-                    <span className="ml-auto text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                    <span className="ml-auto text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-sm">
                       {categoryQueries.length}
                     </span>
                   </CollapsibleTrigger>

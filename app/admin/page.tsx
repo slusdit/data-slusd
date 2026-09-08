@@ -188,7 +188,7 @@ export default async function AdminPage() {
         <BackButton />
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
         {isSiteAdmin && !isSuperAdmin && (
-          <span className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded">
+          <span className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded-sm">
             Site Admin View
           </span>
         )}

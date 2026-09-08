@@ -165,7 +165,7 @@ const MultiDropdownSelector: FC<MultiDropdownSelectorProps> = ({
           >
             {/* Added logo to badge if available */}
             {item.logo && (
-              <div className="h-4 w-4 mr-1 relative overflow-hidden rounded-sm">
+              <div className="h-4 w-4 mr-1 relative overflow-hidden rounded-xs">
                 <img 
                   src={item.logo} 
                   alt={`${item.label} logo`} 
@@ -206,7 +206,7 @@ const MultiDropdownSelector: FC<MultiDropdownSelectorProps> = ({
         <div className="flex items-center">
           {/* Added logo to single item display if available */}
           {selectedItems[0].logo && (
-            <div className="h-5 w-5 mr-2 relative overflow-hidden rounded-sm">
+            <div className="h-5 w-5 mr-2 relative overflow-hidden rounded-xs">
               <img 
                 src={selectedItems[0].logo} 
                 alt={`${selectedItems[0].label} logo`} 
@@ -281,7 +281,7 @@ const MultiDropdownSelector: FC<MultiDropdownSelectorProps> = ({
                     <div className="flex items-center flex-1">
                       {/* Added logo rendering in dropdown items */}
                       {item.logo ? (
-                        <div className="h-5 w-5 mr-2 relative overflow-hidden rounded-sm">
+                        <div className="h-5 w-5 mr-2 relative overflow-hidden rounded-xs">
                           <img 
                             src={item.logo} 
                             alt={`${item.label} logo`}

@@ -27,7 +27,7 @@ export default function ErrorState({
 
   return (
     <div className="flex min-h-[40vh] items-center justify-center p-6">
-      <div className="bg-card w-full max-w-md rounded-lg border p-6 text-center shadow-sm">
+      <div className="bg-card w-full max-w-md rounded-lg border p-6 text-center shadow-xs">
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
           <AlertTriangle className="h-6 w-6 text-destructive" />
         </div>
