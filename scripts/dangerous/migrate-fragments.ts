@@ -10,10 +10,9 @@
  * Note: This uses upsert, so it will update existing fragments with matching fragmentId.
  */
 
-import { PrismaClient } from '@prisma/client';
+import prisma from '../../lib/db';
 import fragments from '../../data/query-builder/fragments.json';
 
-const prisma = new PrismaClient();
 
 if (!process.argv.includes('--confirm')) {
   console.log(

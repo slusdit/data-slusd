@@ -3,9 +3,8 @@
  * Run with: npx tsx scripts/list-fragments.ts
  */
 
-import { PrismaClient } from '@prisma/client';
+import prisma from '../lib/db';
 
-const prisma = new PrismaClient();
 
 async function listFragments() {
   const fragments = await prisma.aIFragment.findMany({

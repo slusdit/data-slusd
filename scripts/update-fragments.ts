@@ -12,9 +12,8 @@
  * Run with: npx tsx scripts/update-fragments.ts
  */
 
-import { PrismaClient } from '@prisma/client';
+import prisma from '../lib/db';
 
-const prisma = new PrismaClient();
 
 // Fragment updates based on query analysis
 const fragmentUpdates: { fragmentId: string; updates: { snippet?: string; description?: string; tables?: string } }[] = [

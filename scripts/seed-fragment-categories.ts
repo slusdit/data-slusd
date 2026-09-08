@@ -5,9 +5,8 @@
  * Run with: npx tsx scripts/seed-fragment-categories.ts
  */
 
-import { PrismaClient } from '@prisma/client';
+import prisma from '../lib/db';
 
-const prisma = new PrismaClient();
 
 const categories = [
   {

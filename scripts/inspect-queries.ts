@@ -3,9 +3,8 @@
  * Run with: npx tsx scripts/inspect-queries.ts
  */
 
-import { PrismaClient } from '@prisma/client';
+import prisma from '../lib/db';
 
-const prisma = new PrismaClient();
 
 async function inspectQueries() {
   const queries = await prisma.query.findMany({
