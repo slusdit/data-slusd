@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 /**
- * Defense-in-depth session gate.
+ * Defense-in-depth session gate (Next 16 proxy, formerly middleware.ts).
  *
  * This is NOT the primary authorization layer — pages and server actions still
  * call auth()/requireX() for real role checks. The Prisma adapter can't run on
@@ -19,7 +19,7 @@ function hasSessionCookie(request: NextRequest): boolean {
   );
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Always-public: the landing page and the auth endpoints themselves.

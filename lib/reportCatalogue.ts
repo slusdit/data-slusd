@@ -80,5 +80,7 @@ export async function getReportCatalogueFor(user: AuthzUser): Promise<{
 
 /** Call from any server action that creates, edits or deletes a report or category. */
 export function invalidateReportCatalogue(): void {
-  revalidateTag(REPORT_CATALOGUE_TAG);
+  // Next 16: the second argument is the cache-life profile; "max" marks the entry stale
+  // and serves the cached copy while it is refreshed in the background.
+  revalidateTag(REPORT_CATALOGUE_TAG, "max");
 }

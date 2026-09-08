@@ -14,7 +14,7 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "incremental": true,
     "plugins": [
       {
@@ -39,7 +39,8 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "app/components/GradeDistributoin.tsx.old",
-    "app/gradedistribution/page.tsx.old"
+    "app/gradedistribution/page.tsx.old",
+    ".next/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"
