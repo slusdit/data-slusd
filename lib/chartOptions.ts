@@ -40,6 +40,9 @@ export async function createChartOptions({
   showTitle = true,
 }: ChartOptionsProps & { height?: number; showTitle?: boolean }) {
   const agTheme = "ag-polychroma";
+  const seriesType = chartTypeKey || "bar";
+  // cornerRadius is only a bar-series option in this AG Charts version
+  const seriesShape = seriesType === "bar" ? { cornerRadius: 3 } : {};
 
   // Determine if this is a compact chart (for dashboard cards)
   const isCompact = height && height < 300;
@@ -54,7 +57,8 @@ export async function createChartOptions({
     : chartData;
 
   const baseChartOptions = {
-    ...(height ? { height } : { autoSize: true }),
+    // no explicit height: AG Charts fills its container (autoSize is no longer an option)
+    ...(height ? { height } : {}),
     // Hide title for compact charts - it's redundant with the card header
     ...(showTitle && !isCompact ? {
       title: {
@@ -69,10 +73,10 @@ export async function createChartOptions({
       : { top: 10, right: 20, bottom: 20, left: 45 },
     series: [
       {
-        type: chartTypeKey || "bar",
+        type: seriesType,
         xKey: chartXKey || "SC",
         yKey: chartYKey || "ID",
-        cornerRadius: 3,
+        ...seriesShape,
       },
     ],
   };
@@ -89,8 +93,7 @@ export async function createChartOptions({
           // No rotation - use abbreviated labels instead
           rotation: 0,
           fontSize: isCompact ? 9 : 11,
-          // Limit max width to prevent overlap
-          ...(isCompact ? { maxWidth: 60 } : {}),
+          // labels are already abbreviated for compact charts (maxWidth is not an axis label option)
         },
         // Hide axis title for compact charts
         ...(isCompact ? {} : {
@@ -145,12 +148,12 @@ export async function createChartOptions({
       ...baseChartOptions,
       ...axesAndLegend,
       series: chartYKeyArray.map((key) => ({
-        type: chartTypeKey || "bar",
+        type: seriesType,
         xKey: chartXKey || "SC",
         yKey: key || "ID",
         yName: key,
         stacked: chartStackKey || false,
-        cornerRadius: 3,
+        ...seriesShape,
       })),
     };
 
