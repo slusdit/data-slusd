@@ -1,4 +1,5 @@
 import { ChartOptionsProps } from "@/types/types";
+import { aggregateByCategory } from "@/lib/chartData";
 
 // Helper to abbreviate long labels (especially dates and school names)
 function abbreviateLabel(label: string): string {
@@ -47,8 +48,13 @@ export async function createChartOptions({
   // Determine if this is a compact chart (for dashboard cards)
   const isCompact = height && height < 300;
 
+  // District-wide reports return one row per school per category; sum them so
+  // the chart gets one point per category instead of a zig-zag (see lib/chartData).
+  const yKeys = chartYKey?.split(",").map((k) => k.trim()).filter(Boolean) || [];
+  const rawData = selectedRows?.length ? selectedRows : rowData;
+  const chartData = chartXKey && rawData ? aggregateByCategory(rawData, chartXKey, yKeys) : rawData;
+
   // For compact charts, abbreviate x-axis labels to save space
-  const chartData = selectedRows?.length ? selectedRows : rowData;
   const processedData = isCompact && chartXKey
     ? chartData?.map((row: any) => ({
         ...row,

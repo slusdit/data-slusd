@@ -93,6 +93,7 @@ import {
 import FavoriteStarSwitch from "@/app/components/FavoriteStarSwitch";
 import { SessionUser } from "@/auth";
 import { TotalSpec, computeTotalsRow, pickLabelColumn } from "@/lib/reportTotals";
+import { aggregateByCategory } from "@/lib/chartData";
 
 interface Category {
   id: string;
@@ -317,14 +318,20 @@ export default function QueryPageClient({
     if (!query.chart || !data?.length) return null;
 
     const chartYKeyArray = query.chartYKey?.split(",").map((k) => k.trim()) || [];
-    const chartData = (selectedRows.length ? selectedRows : filteredData).map(
-      (row) => ({
-        ...row,
-        ...(query.chartXKey
-          ? { [query.chartXKey]: abbreviateLabel(String(row[query.chartXKey] || "")) }
-          : {}),
-      })
+    const xKey = query.chartXKey || "SC";
+    // District-wide reports return one row per school per category (e.g. per date);
+    // sum them so the chart gets one point per category instead of a zig-zag.
+    const sourceRows = aggregateByCategory(
+      selectedRows.length ? selectedRows : filteredData,
+      xKey,
+      chartYKeyArray
     );
+    const chartData = sourceRows.map((row) => ({
+      ...row,
+      ...(query.chartXKey
+        ? { [query.chartXKey]: abbreviateLabel(String(row[query.chartXKey] || "")) }
+        : {}),
+    }));
 
     // For pie charts, we need different config
     if (chartType === "pie" || chartType === "donut") {
