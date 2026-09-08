@@ -1,6 +1,6 @@
 'use client';
-// Standalone AG Charts enterprise features (no grid modules) for dashboard charts (finding P1)
-import "ag-charts-enterprise";
+// Standalone AG Charts enterprise features + licence for dashboard charts (finding P1)
+import "@/app/components/providers/AgChartsSetup";
 import { AgCharts } from "ag-charts-react";
 import { useMemo } from "react";
 
