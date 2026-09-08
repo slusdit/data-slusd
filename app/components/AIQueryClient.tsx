@@ -437,7 +437,7 @@ export function AIQueryClient({
               ))}
             </div>
             <p className="text-xs text-muted-foreground mt-3">
-              Queries run on a local AI model and typically take 15–90 seconds. Fix-up attempts add time.
+              Queries run on a local AI model and typically take 2 to 3 minutes. Query repair attempts add time.
             </p>
           </CardContent>
         </Card>
