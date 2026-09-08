@@ -4,8 +4,8 @@ import {
   DropzoneContent,
   DropzoneEmptyState,
 } from "@/components/ui/shadcn-io/dropzone";
-import { useEffect, useState } from "react";
-import { apiAuth, uploadIEP } from "@/lib/fastAPI";
+import { useState } from "react";
+import { uploadIEP } from "@/lib/fastAPI";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
@@ -28,26 +28,10 @@ interface UploadResponse {
 
 const IepDropzone = () => {
   const [files, setFiles] = useState<File[] | undefined>();
-  const [authToken, setAuthToken] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadResult, setUploadResult] = useState<UploadResponse | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
-
-  // Move useEffect to the top level of the component
-  useEffect(() => {
-    const fetchAuthToken = async () => {
-      try {
-        const authResponse = await apiAuth();
-        const token = authResponse.token;
-        setAuthToken(token);
-      } catch (error) {
-        console.error("Error fetching auth token:", error);
-      }
-    };
-
-    fetchAuthToken();
-  }, []);
 
   const simulateProgress = () => {
     setProgress(0);
@@ -73,14 +57,14 @@ const IepDropzone = () => {
     setProgress(0); // Reset progress
 
     // Now you can use the authToken here if needed
-    if (authToken && files.length > 0) {
+    if (files.length > 0) {
       setIsUploading(true);
 
       // Start progress simulation
       const progressInterval = simulateProgress();
 
       try {
-        const uploadResponse = await uploadIEP(files, authToken);
+        const uploadResponse = await uploadIEP(files);
         console.log("Raw upload response:", uploadResponse);
 
         // Complete the progress bar
@@ -127,12 +111,6 @@ const IepDropzone = () => {
           }
         }, 2000);
       }
-    } else if (files.length > 0 && !authToken) {
-      // Previously a silent no-op: the file was stored in state but nothing
-      // uploaded because the auth token hadn't loaded yet.
-      setUploadError(
-        "Still connecting to the upload service. Please wait a moment and try again."
-      );
     }
   };
 

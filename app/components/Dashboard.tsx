@@ -26,11 +26,10 @@ import {
   MoreVertical,
   Download,
   ExternalLink,
-  Database,
 } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import { useTheme } from "next-themes";
-import { runQuery } from "@/lib/aeries";
+import { runSavedQuery } from "@/lib/actions/runSavedQuery";
 import { createChartOptions } from "@/lib/chartOptions";
 import { DataChart } from "./DataChart";
 
@@ -117,7 +116,8 @@ export default function Dashboard({ user, activeSchool, quickStats }: DashboardP
       // Fetch all in parallel
       const promises = chartFavorites.map(async (query) => {
         try {
-          const response = await runQuery(query.query);
+          const { rows: response, error: queryError } = await runSavedQuery(query.id);
+          if (queryError) throw new Error(queryError);
           const chartOptions = await createChartOptions({
             chartTitle: query.name,
             chartXKey: query.chartXKey,
@@ -188,12 +188,6 @@ export default function Dashboard({ user, activeSchool, quickStats }: DashboardP
         </div>
         {user?.admin && (
           <div className="flex gap-2">
-            <Button asChild variant="outline">
-              <Link href="/custom-query">
-                <Database className="h-4 w-4 mr-2" />
-                Query Builder
-              </Link>
-            </Button>
             <Button asChild variant="outline">
               <Link href="/ai-query">
                 <Sparkles className="h-4 w-4 mr-2" />

@@ -2,6 +2,7 @@ import { AIQueryClient } from '@/app/components/AIQueryClient';
 import { auth, SessionUser } from '@/auth';
 import { redirect } from 'next/navigation';
 import prisma from '@/lib/db';
+import { userCanAccessAI } from '@/lib/authorization';
 
 export default async function AIQueryPage() {
   const session = await auth();
@@ -13,12 +14,7 @@ export default async function AIQueryPage() {
   const user = session.user as unknown as SessionUser;
 
   // Access matches the nav link in UserMenu: admins, SUPERADMIN, or the AIQUERY role.
-  const aiRoles = user.roles || [];
-  const canAccessAI =
-    user.admin ||
-    aiRoles.includes('AIQUERY' as any) ||
-    aiRoles.includes('SUPERADMIN' as any);
-  if (!canAccessAI) {
+  if (!userCanAccessAI(user)) {
     redirect('/');
   }
 

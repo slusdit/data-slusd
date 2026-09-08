@@ -7,24 +7,31 @@
 
 import { NextResponse } from 'next/server';
 import { auth, SessionUser } from '@/auth';
-import { runQuery } from '@/lib/aeries';
+import { runQueryWithMeta, formatQueryErrorForUser } from '@/lib/aeries';
 import { checkRateLimit, getRateLimitIdentifier } from '@/lib/rateLimit';
 import { validateSql as validateSqlStrict } from '@/lib/ai-query/sql-validator';
 import { viewQueryBuilder } from '@/lib/ai-query/view-query-builder';
 import { SCHOOL_NAMES } from '@/lib/constants/schools';
+import { resolveSchoolScope, userCanAccessAI } from '@/lib/authorization';
+import { validateSchoolCodes } from '@/lib/sql-guard';
 
 export async function POST(request: Request) {
   const startTime = Date.now();
 
+  // Check authentication
+  const session = await auth();
+  if (!session?.user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const user = session.user as unknown as SessionUser;
+
+  // Same gate as /ai-query: both run generated SQL on the same views (finding S9)
+  if (!userCanAccessAI(user)) {
+    return NextResponse.json({ error: 'Query builder access required' }, { status: 403 });
+  }
+
   try {
-    // Check authentication
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const user = session.user as unknown as SessionUser;
-
     // Rate limiting: 20 requests per 30 seconds per user
     const identifier = await getRateLimitIdentifier(request, user.id);
     const rateLimit = checkRateLimit(identifier, {
@@ -50,11 +57,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const activeSchool = user.activeSchool ?? -1;
-    const allowedSchools = user.schools || [];
-
-    // Deny access if no school set
-    if (activeSchool === -1) {
+    // School scope comes from the session, intersected with the user's schools
+    // (finding S2). null = admin district-wide (unfiltered); [] = nothing.
+    const scope = resolveSchoolScope(user);
+    if (scope !== null && scope.length === 0) {
       return NextResponse.json({
         error: 'No school access. Please select a school from the school picker.'
       }, { status: 403 });
@@ -69,7 +75,7 @@ export async function POST(request: Request) {
     }
 
     // Validate SQL with the strict validator: SELECT-only, llm_* view whitelist,
-    // blocked base tables, and no multi-statement injection.
+    // blocked base tables, TOP cap, and no multi-statement injection.
     const validation = validateSqlStrict(sql);
     if (!validation.valid) {
       return NextResponse.json({
@@ -78,32 +84,26 @@ export async function POST(request: Request) {
       }, { status: 400 });
     }
 
-    // Determine school filter
-    let schoolsToFilter: string[];
-
-    if (activeSchool === 0) {
-      // District-wide mode
-      if (schoolFilter && schoolFilter.length > 0) {
-        // User selected specific schools, but verify they have access
-        schoolsToFilter = schoolFilter.filter((s: string) =>
-          allowedSchools.length === 0 || allowedSchools.includes(s)
-        );
-      } else {
-        // No specific selection, use all allowed schools
-        schoolsToFilter = allowedSchools.length > 0 ? allowedSchools : [];
+    // Optional client-side narrowing: integer school codes only (finding S4),
+    // and never wider than the session scope.
+    let schoolsToFilter: string[] = scope ?? [];
+    if (Array.isArray(schoolFilter) && schoolFilter.length > 0) {
+      let requested: string[];
+      try {
+        requested = validateSchoolCodes(schoolFilter).map(String);
+      } catch {
+        return NextResponse.json({
+          success: false,
+          error: 'schoolFilter must contain integer school codes'
+        }, { status: 400 });
       }
-    } else {
-      // Single school mode
-      schoolsToFilter = [activeSchool.toString()];
-    }
-
-    // Deny by default: a non-admin whose query resolves to no school filter would
-    // otherwise read across all schools. Only full admins may run unscoped.
-    if (schoolsToFilter.length === 0 && !user.admin) {
-      return NextResponse.json({
-        success: false,
-        error: 'No accessible schools resolved for this query.'
-      }, { status: 403 });
+      schoolsToFilter = scope === null ? requested : requested.filter((s) => scope.includes(s));
+      if (schoolsToFilter.length === 0) {
+        return NextResponse.json({
+          success: false,
+          error: 'None of the selected schools are in your scope.'
+        }, { status: 403 });
+      }
     }
 
     // Inject school security filter (detects the real view alias and
@@ -115,26 +115,27 @@ export async function POST(request: Request) {
     }
 
     // Execute query
-    const queryResult = await runQuery(securedSql);
-    const data = queryResult as any[] | null;
-    const rowCount = data?.length || 0;
-
+    const queryResult = await runQueryWithMeta(securedSql);
     const duration = Date.now() - startTime;
 
-    console.log(`[Custom Query] Returned ${rowCount} rows in ${duration}ms`);
+    console.log(`[Custom Query] Returned ${queryResult.rowCount} rows in ${duration}ms`);
+
+    const schoolScope =
+      schoolsToFilter.length === 0
+        ? 'All schools'
+        : schoolsToFilter.length === 1
+          ? SCHOOL_NAMES[schoolsToFilter[0]] || `School ${schoolsToFilter[0]}`
+          : `${schoolsToFilter.length} schools`;
 
     return NextResponse.json({
       success: true,
-      data: data,
-      rowCount: rowCount,
+      data: queryResult.rows,
+      rowCount: queryResult.rows.length,
+      truncated: queryResult.truncated,
       executedSql: securedSql,
       metadata: {
         durationMs: duration,
-        schoolScope: activeSchool === 0
-          ? (schoolsToFilter.length > 0
-            ? `${schoolsToFilter.length} schools`
-            : 'All schools')
-          : SCHOOL_NAMES[activeSchool.toString()] || `School ${activeSchool}`,
+        schoolScope,
       }
     });
 
@@ -142,9 +143,10 @@ export async function POST(request: Request) {
     const duration = Date.now() - startTime;
     console.error('[Custom Query] Error:', error);
 
+    // Driver text only for query editors; everyone else gets a reference (S11)
     return NextResponse.json({
       success: false,
-      error: error instanceof Error ? error.message : 'Query execution failed',
+      error: formatQueryErrorForUser(error, user),
       durationMs: duration
     }, { status: 500 });
   }

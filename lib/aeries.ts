@@ -1,10 +1,19 @@
-"use server";
+import "server-only";
 
-import { auth } from "@/auth";
+import { randomUUID } from "crypto";
+import type { SessionUser } from "@/auth";
 import sql from "mssql";
 import prisma from "./db";
-import { number } from "zod";
 import { queryCache } from "./queryCache";
+import { requireUser } from "./authGuard";
+import {
+  AuthError,
+  AuthzUser,
+  resolveSchoolScope,
+  userIsQueryEditor,
+} from "./authorization";
+import { getPoolForDatabase } from "./aeries-pool";
+import { stripSqlComments, validateQueryWhitelist, validateSchoolCodes } from "./sql-guard";
 
 export type SchooolCredentials = {
   id: number;
@@ -121,66 +130,11 @@ export type AeriesSimpleTeacher = {
   StaffID2: number | null;
   StaffID3: number | null;
 }
-// const prisma = new PrismaClient();
+import { DEFAULT_DB_YEAR, getDatabaseName } from "./schoolYear";
 
-// Import school year utilities for local use
-// NOTE: These are NOT re-exported because this is a "use server" file.
-// Import directly from './schoolYear' for these utilities.
-import {
-  DEFAULT_DB_YEAR,
-  getDatabaseName,
-} from './schoolYear';
-
-// Define the base configuration for SQL Server (without database)
-const baseConfig = {
-  user: process.env.DB_USER, // Your SQL Server username
-  password: process.env.DB_PASSWORD, // Your SQL Server password
-  server: process.env.DB_SERVER, // Your SQL Server hostname or IP
-  options: {
-    encrypt: true, // Use encryption
-    trustServerCertificate: true, // Trust the server certificate
-  },
-  // Driver default is 15000ms; some Aeries reports (e.g. grade distribution)
-  // legitimately run longer, so allow more time before timing out.
-  requestTimeout: 60000, // 60s per query
-  connectionTimeout: 30000, // 30s to establish a connection
-  pool: {
-    max: 10, // Maximum number of connections in the pool
-    min: 0, // Minimum number of connections in the pool
-    idleTimeoutMillis: 30000, // Timeout in milliseconds before an idle connection is closed
-  },
-};
-
-// Pool cache for multiple database connections
-const poolCache: Map<string, Promise<sql.ConnectionPool>> = new Map();
-
-// Get or create a connection pool for a specific database
-async function getPoolForDatabase(database: string): Promise<sql.ConnectionPool> {
-  if (!poolCache.has(database)) {
-    const config = {
-      ...baseConfig,
-      database,
-    };
-    // @ts-ignore
-    const poolPromise = new sql.ConnectionPool(config)
-      .connect()
-      .then((pool) => {
-        return pool;
-      })
-      .catch((err) => {
-        console.error(`Database Connection Failed for ${database}! Bad Config: `, err);
-        poolCache.delete(database); // Remove failed pool from cache
-        throw err;
-      });
-    poolCache.set(database, poolPromise);
-  }
-  return poolCache.get(database)!;
-}
-
-// Default pool for backwards compatibility (uses DB_DATABASE from env or default year)
+// Database used when no year is specified (legacy callers). The pool itself is
+// created lazily by lib/aeries-pool.ts on first use (finding P10).
 const defaultDatabase = process.env.DB_DATABASE || getDatabaseName(DEFAULT_DB_YEAR);
-// @ts-ignore
-const poolPromise = getPoolForDatabase(defaultDatabase);
 
 export async function getSchoolsFromEmail({
   email,
@@ -195,7 +149,7 @@ export async function getSchoolsFromEmail({
   }
 
   if (!pool) {
-    pool = await poolPromise;
+    pool = await getPoolForDatabase(defaultDatabase);
   }
   const request = pool.request();
   // Use parameterized query to prevent SQL injection
@@ -221,426 +175,191 @@ export async function getSchoolsFromEmail({
   return schoolCode;
 }
 
-export async function removeCommentsFromQuery(query: string) {
-  let cleanedQuery = query;
-  // Remove single-line comments (--)
-  cleanedQuery = query.replace(/\-\-[^,]*[\n\r]*[^,]*,/gm, '');
 
-  // Remove multi-line comments (/* ... */)
-  cleanedQuery = cleanedQuery.replace(/\/\*[\s\S]*?\*\//gm, '');
-
-  return cleanedQuery;
-}
+/** Hard cap on rows returned to the app from any report query (finding S13). */
+export const MAX_ROWS = 10_000;
 
 /**
- * Validates and sanitizes school codes to prevent SQL injection
- * Ensures all values are valid integers
- * @param schoolCodes - Single school code or array of school codes
- * @returns Validated array of school codes as numbers
+ * Thrown when MSSQL rejects a query. `message` keeps the driver text
+ * ("SQL error: ...") because the AI repair loop feeds it back to the model;
+ * anything that reaches a browser must go through formatQueryErrorForUser().
  */
-function validateSchoolCodes(schoolCodes: string | number | (string | number)[] | undefined): number[] {
-  if (schoolCodes === undefined || schoolCodes === null) {
-    return [];
+export class QueryExecutionError extends Error {
+  readonly ref: string;
+  readonly detail: string;
+
+  constructor(detail: string, ref: string, cause?: unknown) {
+    super(`SQL error: ${detail}`, { cause });
+    this.name = "QueryExecutionError";
+    this.ref = ref;
+    this.detail = detail;
   }
-
-  const codesArray = Array.isArray(schoolCodes) ? schoolCodes : [schoolCodes];
-
-  const validated = codesArray.map(code => {
-    const numCode = typeof code === 'string' ? parseInt(code, 10) : code;
-    if (isNaN(numCode) || !Number.isInteger(numCode)) {
-      throw new Error(`Invalid school code: ${code}. School codes must be integers.`);
-    }
-    return numCode;
-  });
-
-  return validated;
 }
 
 /**
- * Validates that a query only contains SELECT and UNION statements (whitelist approach)
- * This prevents SQL injection by only allowing read-only queries
- * @param query - The SQL query to validate
- * @throws Error if query contains non-whitelisted operations
+ * Message that is safe to send to a browser (finding S11). Query editors and
+ * admins get the driver text (they wrote the SQL); everyone else gets a
+ * correlation reference that matches the server log line.
  */
-function validateQueryWhitelist(query: string): void {
-  // Remove comments first to prevent bypass attempts
-  let cleanQuery = query;
-
-  // Remove single-line comments (--)
-  cleanQuery = cleanQuery.replace(/--[^\r\n]*/g, '');
-
-  // Remove multi-line comments (/* ... */)
-  cleanQuery = cleanQuery.replace(/\/\*[\s\S]*?\*\//g, '');
-
-  // Normalize whitespace and convert to lowercase for analysis
-  const normalized = cleanQuery.replace(/\s+/g, ' ').trim().toLowerCase();
-
-  // Check if query is empty after removing comments
-  if (!normalized || normalized.length === 0) {
-    throw new Error("Query is empty or contains only comments");
+export function formatQueryErrorForUser(error: unknown, user: AuthzUser): string {
+  const privileged = userIsQueryEditor(user);
+  if (error instanceof QueryExecutionError) {
+    return privileged
+      ? `Query failed (ref ${error.ref}): ${error.detail}`
+      : `Query failed (ref ${error.ref}). Please contact an administrator with this reference.`;
   }
+  if (error instanceof AuthError) return error.message;
+  if (privileged && error instanceof Error) return error.message;
+  return "Query failed.";
+}
 
-  // Split by common statement separators (semicolon) to check each statement
-  const statements = normalized.split(';').filter(s => s.trim().length > 0);
+export type QueryResult = {
+  rows: any[];
+  /** true when more than MAX_ROWS came back and the tail was dropped */
+  truncated: boolean;
+  /** rows returned by MSSQL before truncation */
+  rowCount: number;
+};
 
-  for (const statement of statements) {
-    const trimmed = statement.trim();
-
-    // Each statement must start with SELECT or be part of a UNION
-    // We also need to handle CTEs (WITH clause) which are read-only
-    const startsWithSelect = /^select\s/.test(trimmed);
-    const startsWithWith = /^with\s/.test(trimmed); // CTEs (Common Table Expressions)
-    const isUnionPart = /union\s+(all\s+)?select\s/.test(trimmed);
-
-    if (!startsWithSelect && !startsWithWith && !isUnionPart) {
-      throw new Error(`Query validation failed: Only SELECT and UNION queries are allowed. Found: ${trimmed.substring(0, 50)}...`);
-    }
-  }
-
-  // Blocklist dangerous keywords that should never appear in SELECT queries
-  const dangerousKeywords = [
-    'drop', 'delete', 'insert', 'update', 'alter', 'create', 'truncate',
-    'exec', 'execute', 'xp_cmdshell', 'sp_executesql', 'merge', 'grant',
-    'revoke', 'deny', 'backup', 'restore', 'bulk'
-  ];
-
-  const foundDangerous = dangerousKeywords.filter(keyword => {
-    // Use word boundaries to avoid false positives (e.g., "select" contains "elect")
-    const regex = new RegExp(`\\b${keyword}\\b`, 'i');
-    return regex.test(normalized);
-  });
-
-  if (foundDangerous.length > 0) {
-    throw new Error(`Query validation failed: Dangerous keywords detected: ${foundDangerous.join(', ')}`);
-  }
+async function allSchoolCodes(): Promise<number[]> {
+  const schools = await prisma.schoolInfo.findMany({ select: { sc: true } });
+  return validateSchoolCodes(schools.map((s) => s.sc));
 }
 
 /**
- * Helper function to run a parameterized query with proper SQL injection protection
+ * Replace a scope placeholder with validated school codes. `= @@x` becomes
+ * `in (...)` and a bare `@@x` becomes the list itself, so `sc IN (@@x)` also
+ * works. An empty scope substitutes an impossible code so the query returns
+ * no rows instead of running unscoped.
+ */
+function substituteSchoolPlaceholder(
+  query: string,
+  token: string,
+  codes: number[],
+  quoted: boolean
+): string {
+  const fmt = (c: number) => (quoted ? `'${c}'` : String(c));
+  const list = (codes.length ? codes : [-1]).map(fmt).join(", ");
+  return query
+    .replace(new RegExp(`=\\s*${token}\\b`, "g"), `in (${list})`)
+    .replace(new RegExp(`${token}\\b`, "g"), list);
+}
+
+/**
+ * Resolve @@sc (every school the user may see), @@psc (primary school) and
+ * @@asc (the school picker, intersected with the user's schools) from the
+ * session, never from caller input (findings S2/S10).
+ */
+async function applyScopePlaceholders(query: string, user: SessionUser): Promise<string> {
+  if (query.includes("@@sc")) {
+    const scope = resolveSchoolScope({ ...user, activeSchool: 0 });
+    const codes = scope === null ? await allSchoolCodes() : validateSchoolCodes(scope);
+    query = substituteSchoolPlaceholder(query, "@@sc", codes, false);
+  }
+
+  if (query.includes("@@psc")) {
+    const validatedPrimary = validateSchoolCodes(user.primarySchool);
+    if (validatedPrimary.length === 0) {
+      throw new Error("Invalid primary school code");
+    }
+    query = query.replace(/@@psc/g, `'${validatedPrimary[0]}'`);
+  }
+
+  if (query.includes("@@asc")) {
+    const scope = resolveSchoolScope(user);
+    const codes = scope === null ? await allSchoolCodes() : validateSchoolCodes(scope);
+    query = substituteSchoolPlaceholder(query, "@@asc", codes, true);
+  }
+
+  return query;
+}
+
+function toExecutionError(error: unknown, context: string): QueryExecutionError {
+  const ref = randomUUID().slice(0, 8);
+  console.error(`[aeries] query failed ref=${ref} ${context}`, error);
+  return new QueryExecutionError(error instanceof Error ? error.message : String(error), ref, error);
+}
+
+/**
+ * Run a parameterized query (bound @params) as the signed-in user.
  * @param query - SQL query with parameter placeholders (@param1, @param2, etc.)
  * @param parameters - Object mapping parameter names to their values
  * @param options - Optional database year override
- * @returns Query results
+ * @throws AuthError when not signed in; QueryExecutionError on driver errors
  */
 export async function runParameterizedQuery(
   query: string,
   parameters: Record<string, { type: any; value: any }> = {},
   options?: { dbYear?: number }
 ) {
+  const user = await requireUser();
+  validateQueryWhitelist(query);
+  const cleanQuery = stripSqlComments(query);
+
+  const dbYear = options?.dbYear ?? user.activeDbYear ?? DEFAULT_DB_YEAR;
+  const database = getDatabaseName(dbYear);
+  const pool = await getPoolForDatabase(database);
+  const request = pool.request();
+  for (const [name, param] of Object.entries(parameters)) {
+    request.input(name, param.type, param.value);
+  }
+
   try {
-    const session = await auth();
-
-    // Validate query using whitelist approach (only SELECT and UNION allowed)
-    validateQueryWhitelist(query);
-
-    const cleanQuery = await removeCommentsFromQuery(query);
-
-    // Get database year from options, session, or default
-    const dbYear = options?.dbYear ?? (session?.user as any)?.activeDbYear ?? DEFAULT_DB_YEAR;
-    const database = getDatabaseName(dbYear);
-    const pool = await getPoolForDatabase(database);
-
-    const request = pool.request();
-
-    // Add all parameters to the request
-    for (const [name, param] of Object.entries(parameters)) {
-      request.input(name, param.type, param.value);
-    }
-
     const result = await request.query(cleanQuery);
     return result.recordset;
   } catch (error) {
-    console.error("Error in runParameterizedQuery:", error);
-    throw error;
+    throw toExecutionError(error, `user=${user.email} db=${database} parameterized`);
   }
 }
 
-// Function to execute a query
-export async function runQuery(
+/**
+ * Run saved-report SQL as the signed-in user: school placeholders are resolved
+ * from the session and the result is capped at MAX_ROWS. Results are cached for
+ * five minutes keyed on the scoped SQL and database year.
+ * @throws AuthError when not signed in; QueryExecutionError on driver errors
+ */
+export async function runQueryWithMeta(
   query: string,
-  options?: { dbYear?: number } // Optional: override database year
-) {
+  options?: { dbYear?: number }
+): Promise<QueryResult> {
+  const user = await requireUser();
+  validateQueryWhitelist(query);
 
-  try {
+  const dbYear = options?.dbYear ?? user.activeDbYear ?? DEFAULT_DB_YEAR;
+  const scopedQuery = await applyScopePlaceholders(query, user);
 
-    const session = await auth();
-
-    // Validate query using whitelist approach (only SELECT and UNION allowed)
-    validateQueryWhitelist(query);
-
-    let cleanQuery = await removeCommentsFromQuery(query);
-
-    // Get database year from options, session, or default
-    const dbYear = options?.dbYear ?? (session?.user as any)?.activeDbYear ?? DEFAULT_DB_YEAR;
-    const database = getDatabaseName(dbYear);
-    const pool = await getPoolForDatabase(database);
-    // console.log(query)
-    const request = pool.request();
-    try {
-
-      try {
-        let result;
-
-        // Handle @@sc variable (user's allowed schools)
-        if (query.includes("@@sc")) {
-          const schoolCode = session?.user?.schools;
-
-          if (schoolCode === "0") {
-            // User has access to all schools
-            const allSchools = await prisma.schoolInfo.findMany({
-              select: { sc: true },
-            });
-            // Validate all school codes are integers
-            const validatedSchools = validateSchoolCodes(allSchools.map(s => s.sc));
-            const schoolList = validatedSchools.join(",");
-
-            query = query.replace("= @@sc", `in (${schoolList})`);
-          } else {
-            // Validate and sanitize school codes before injection
-            const validatedSchools = validateSchoolCodes(schoolCode);
-
-            if (validatedSchools.length === 1) {
-              query = query.replace(/@@sc/g, validatedSchools[0].toString());
-            } else if (validatedSchools.length > 1) {
-              const schoolList = validatedSchools.join(",");
-              query = query.replace("= @@sc", `in (${schoolList})`);
-              query = query.replace(/@@sc/g, validatedSchools[0].toString()); // Fallback for non-IN usage
-            }
-          }
-        }
-
-        // Handle @@psc variable (user's primary school code)
-        if (query.includes("@@psc")) {
-          const primarySchool = session?.user?.primarySchool;
-          // Validate primary school is a valid integer
-          const validatedPrimary = validateSchoolCodes(primarySchool);
-
-          if (validatedPrimary.length > 0) {
-            query = query.replace(/@@psc/g, "'" + validatedPrimary[0] + "'");
-          } else {
-            throw new Error("Invalid primary school code");
-          }
-        }
-
-        // Handle @@asc variable (user's active school code)
-        if (query.includes("@@asc")) {
-          const activeSchool = session?.user?.activeSchool;
-
-          if (activeSchool === undefined || activeSchool === null) {
-            // No active school set - return no data (use impossible school code)
-            query = query.replace(/@@asc/g, "'-1'");
-          } else if (activeSchool === 0) {
-            // District-wide view (0) - query all schools
-            const schools = await prisma.schoolInfo.findMany({
-              select: { sc: true },
-            });
-            // Validate all school codes
-            const validatedSchools = validateSchoolCodes(schools.map(s => s.sc));
-            const allSchoolSc = validatedSchools.map(sc => `'${sc}'`).join(", ");
-
-            // Handle both "= @@asc" and just "@@asc" patterns
-            query = query.replace("= @@asc", `in (${allSchoolSc})`);
-            query = query.replace(/@@asc/g, allSchoolSc);
-          } else {
-            // Specific school selected - validate and replace
-            const validatedActive = validateSchoolCodes(activeSchool);
-            query = query.replace(/@@asc/g, "'" + validatedActive[0] + "'");
-          }
-        }
-
-        // Handle @TN variable
-        if (query.includes("@tn")) {
-          // TODO: get from session, feed in from auth() call or Aeries query
-        }
-
-        // Check cache before executing query
-        const cacheKey = { query, dbYear };
-        const cachedResult = queryCache.get(query, cacheKey);
-        if (cachedResult) {
-          // console.log("Cache hit for query");
-          return cachedResult;
-        }
-
-        result = await request.query(query);
-
-        // Cache the results (only for SELECT queries)
-        if (result.recordset && query.trim().toLowerCase().startsWith('select')) {
-          queryCache.set(query, result.recordset, cacheKey, 300); // 5 minute TTL
-        }
-
-        // console.log("SQL result", result.recordset);
-        // await closePool();
-        return result.recordset;
-      } catch (error) {
-        console.error("SQL error", error);
-        // Preserve the underlying MSSQL message so callers (e.g. the AI query
-        // repair loop) can act on it
-        const message = error instanceof Error ? error.message : String(error);
-        throw new Error(`SQL error: ${message}`, { cause: error });
-      }
-    } catch (err) {
-      console.error("SQL error", err);
-      throw err;
-    }
-  } catch (error) {
-    console.error("Error in runQuery:", error);
-    throw error
+  const cacheKey = { query: scopedQuery, dbYear };
+  const cached = queryCache.get<QueryResult>(scopedQuery, cacheKey);
+  if (cached) {
+    return cached;
   }
-}
-export async function runQueryStandalone(
-  query: string,
-  standalone: boolean = false,
-  options?: { dbYear?: number } // Optional: override database year
-) {
-  let session
+
+  const database = getDatabaseName(dbYear);
+  const pool = await getPoolForDatabase(database);
+  let recordset: any[];
   try {
-    if (standalone) {
-      session = {
-        user: {
-          email:"test@slusd.us",
-          activeSchool: 0,
-          activeDbYear: DEFAULT_DB_YEAR,
-        }
-      }
-    } else {
-
-      session = await auth();
-    }
-
-    // Validate query using whitelist approach (only SELECT and UNION allowed)
-    validateQueryWhitelist(query);
-
-    let cleanQuery = await removeCommentsFromQuery(query);
-
-    // Get database year from options, session, or default
-    const dbYear = options?.dbYear ?? (session?.user as any)?.activeDbYear ?? DEFAULT_DB_YEAR;
-    const database = getDatabaseName(dbYear);
-    const pool = await getPoolForDatabase(database);
-    // console.log(query)
-    const request = pool.request();
-    try {
-
-      try {
-        let result;
-
-        // Handle @@sc variable (user's allowed schools)
-        if (query.includes("@@sc")) {
-          const schoolCode = session?.user?.schools;
-
-          if (schoolCode === "0") {
-            // User has access to all schools
-            const allSchools = await prisma.schoolInfo.findMany({
-              select: { sc: true },
-            });
-            // Validate all school codes are integers
-            const validatedSchools = validateSchoolCodes(allSchools.map(s => s.sc));
-            const schoolList = validatedSchools.join(",");
-
-            query = query.replace("= @@sc", `in (${schoolList})`);
-          } else {
-            // Validate and sanitize school codes before injection
-            const validatedSchools = validateSchoolCodes(schoolCode);
-
-            if (validatedSchools.length === 1) {
-              query = query.replace(/@@sc/g, validatedSchools[0].toString());
-            } else if (validatedSchools.length > 1) {
-              const schoolList = validatedSchools.join(",");
-              query = query.replace("= @@sc", `in (${schoolList})`);
-              query = query.replace(/@@sc/g, validatedSchools[0].toString()); // Fallback for non-IN usage
-            }
-          }
-        }
-
-        // Handle @@psc variable (user's primary school code)
-        if (query.includes("@@psc")) {
-          const primarySchool = session?.user?.primarySchool;
-          // Validate primary school is a valid integer
-          const validatedPrimary = validateSchoolCodes(primarySchool);
-
-          if (validatedPrimary.length > 0) {
-            query = query.replace(/@@psc/g, "'" + validatedPrimary[0] + "'");
-          } else {
-            throw new Error("Invalid primary school code");
-          }
-        }
-
-        // Handle @@asc variable (user's active school code)
-        if (query.includes("@@asc")) {
-          const activeSchool = session?.user?.activeSchool;
-
-          if (activeSchool === undefined || activeSchool === null) {
-            // No active school set - return no data (use impossible school code)
-            query = query.replace(/@@asc/g, "'-1'");
-          } else if (activeSchool === 0) {
-            // District-wide view (0) - query all schools
-            const schools = await prisma.schoolInfo.findMany({
-              select: { sc: true },
-            });
-            // Validate all school codes
-            const validatedSchools = validateSchoolCodes(schools.map(s => s.sc));
-            const allSchoolSc = validatedSchools.map(sc => `'${sc}'`).join(", ");
-
-            // Handle both "= @@asc" and just "@@asc" patterns
-            query = query.replace("= @@asc", `in (${allSchoolSc})`);
-            query = query.replace(/@@asc/g, allSchoolSc);
-          } else {
-            // Specific school selected - validate and replace
-            const validatedActive = validateSchoolCodes(activeSchool);
-            query = query.replace(/@@asc/g, "'" + validatedActive[0] + "'");
-          }
-        }
-
-        // Handle @TN variable
-        if (query.includes("@tn")) {
-          // TODO: get from session, feed in from auth() call or Aeries query
-        }
-
-        // Check cache before executing query
-        const cacheKey = { query, dbYear };
-        const cachedResult = queryCache.get(query, cacheKey);
-        if (cachedResult) {
-          // console.log("Cache hit for query");
-          return cachedResult;
-        }
-
-        result = await request.query(query);
-
-        // Cache the results (only for SELECT queries)
-        if (result.recordset && query.trim().toLowerCase().startsWith('select')) {
-          queryCache.set(query, result.recordset, cacheKey, 300); // 5 minute TTL
-        }
-
-        // console.log("SQL result", result.recordset);
-        // await closePool();
-        return result.recordset;
-      } catch (error) {
-        console.error("SQL error", error);
-        // Preserve the underlying MSSQL message so callers (e.g. the AI query
-        // repair loop) can act on it
-        const message = error instanceof Error ? error.message : String(error);
-        throw new Error(`SQL error: ${message}`, { cause: error });
-      }
-    } catch (err) {
-      console.error("SQL error", err);
-      throw err;
-    }
+    const result = await pool.request().query(scopedQuery);
+    recordset = result.recordset ?? [];
   } catch (error) {
-    console.error("Error in runQuery:", error);
-    throw error
+    throw toExecutionError(error, `user=${user.email} db=${database}`);
   }
+
+  const truncated = recordset.length > MAX_ROWS;
+  const output: QueryResult = {
+    rows: truncated ? recordset.slice(0, MAX_ROWS) : recordset,
+    truncated,
+    rowCount: recordset.length,
+  };
+
+  if (/^\s*(select|with)\b/i.test(scopedQuery)) {
+    queryCache.set(scopedQuery, output, cacheKey, 300); // 5 minute TTL
+  }
+  return output;
 }
 
-
-// Function to close the pool (useful for clean shutdowns)
-export async function closePool() {
-  const pool = await poolPromise;
-  try {
-    await pool.close();
-    // console.log("Connection pool closed");
-  } catch (err) {
-    console.error("Error closing pool", err);
-    throw err;
-  }
+/** Rows only (capped at MAX_ROWS). Use runQueryWithMeta to learn about truncation. */
+export async function runQuery(query: string, options?: { dbYear?: number }): Promise<any[]> {
+  return (await runQueryWithMeta(query, options)).rows;
 }
 
 /**
@@ -727,7 +446,6 @@ export async function isMatched(obj1: any, array2: any[], key1: string, key2: st
  */
 
 
-
 /**
  * Retrieves the staff information from the Aeries API.
  * 
@@ -756,7 +474,7 @@ export async function getAeriesStaff({
   // console.log({ endpoint, email })
 
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_AERIES_URL}${endpoint}`,
+    `${process.env.AERIES_URL}${endpoint}`,
     {
       method: "GET",
       cache: "force-cache",
@@ -770,7 +488,7 @@ export async function getAeriesStaff({
     throw new Error(`Request failed with status ${response.status}`);
   }
   // Aeries can return a 200 with an HTML error/login page (e.g. when the
-  // AERIES-CERT key is invalid or NEXT_PUBLIC_AERIES_URL is wrong). Parsing
+  // AERIES-CERT key is invalid or AERIES_URL is wrong). Parsing
   // that as JSON throws a confusing "Unexpected token '<'" error, so detect
   // it and surface an actionable message instead.
   const body = await response.text();
@@ -781,7 +499,7 @@ export async function getAeriesStaff({
     const preview = body.slice(0, 120).replace(/\s+/g, " ").trim();
     throw new Error(
       `Aeries staff endpoint ${endpoint} returned non-JSON (status 200). ` +
-      `Check NEXT_PUBLIC_AERIES_URL and the AERIES-CERT key. Response began: ${preview}`
+      `Check AERIES_URL and the AERIES-CERT key. Response began: ${preview}`
     );
   }
   // console.log(data)
@@ -852,7 +570,7 @@ async function getAeriesSchoolTeacher({
 }) {
   const cert = process.env.AERIES_API_KEY as string
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_AERIES_URL}/api/v5/schools/${sc}/teachers`,
+    `${process.env.AERIES_URL}/api/v5/schools/${sc}/teachers`,
     {
       method: "GET",
       cache: "force-cache",

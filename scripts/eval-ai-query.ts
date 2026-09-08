@@ -118,12 +118,12 @@ async function main() {
 
   console.log(`Running ${prompts.length} golden prompts (execute=${opts.execute}, school=${opts.school})...\n`);
 
-  // Use the standalone runner (fake district-wide session) so no auth is needed.
-  // Loaded lazily so --no-execute runs don't need the Next/auth/DB stack at all.
+  // Use the standalone runner (no session, district-wide) so no auth is needed.
+  // Loaded lazily so --no-execute runs don't need the DB stack at all.
   let runner: ((sql: string) => Promise<unknown>) | undefined;
   if (opts.execute) {
-    const { runQueryStandalone } = await import('../lib/aeries');
-    runner = (sql: string) => runQueryStandalone(sql, true, { dbYear: opts.dbYear });
+    const { runStandaloneQuery } = await import('./lib/standalone-query');
+    runner = (sql: string) => runStandaloneQuery(sql, { dbYear: opts.dbYear });
   }
 
   const results: EvalResult[] = [];

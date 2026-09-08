@@ -12,7 +12,6 @@ export default async function getActiveSchoolInfo() {
           sc: session?.user?.activeSchool.toString()
         }
       })
-    console.log(schoolInfo)
     return schoolInfo
 
 }

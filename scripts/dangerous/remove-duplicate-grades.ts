@@ -7,13 +7,20 @@
  * For each set of duplicates, it keeps the record with the earliest createdAt timestamp
  * and deletes the rest.
  *
- * Usage: npx tsx scripts/remove-duplicate-grades.ts
+ * Usage: npx tsx scripts/dangerous/remove-duplicate-grades.ts            (dry run: lists what would be deleted)
+ *        npx tsx scripts/dangerous/remove-duplicate-grades.ts --confirm  (actually deletes)
  */
 
-import prisma from "../lib/db";
+import prisma from "../../lib/db";
+
+const CONFIRM = process.argv.includes("--confirm");
 
 async function removeDuplicateGrades() {
-  console.log("Starting duplicate grade removal process...");
+  console.log(
+    CONFIRM
+      ? "Starting duplicate grade removal process (--confirm: records WILL be deleted)..."
+      : "Dry run: nothing will be deleted. Re-run with --confirm to apply."
+  );
 
   try {
     // Find all duplicate records using a raw SQL query
@@ -75,6 +82,11 @@ async function removeDuplicateGrades() {
 
       console.log(`  Keeping record ${recordToKeep.id} (created ${recordToKeep.createdAt})`);
       console.log(`  Deleting ${recordsToDelete.length} duplicate(s)`);
+
+      if (!CONFIRM) {
+        console.log(`  [dry-run] would delete ${recordsToDelete.length} record(s)`);
+        continue;
+      }
 
       // Delete the duplicate records
       const deleteResult = await prisma.gradeDistribution.deleteMany({

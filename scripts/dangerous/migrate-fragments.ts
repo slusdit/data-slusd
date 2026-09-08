@@ -4,15 +4,25 @@
  * This script is only needed for initial setup or to reset fragments to defaults.
  * For ongoing fragment management, use the Admin UI at /admin -> AI Fragments tab.
  *
- * Run with: npx tsx scripts/migrate-fragments.ts
+ * Run with: npx tsx scripts/dangerous/migrate-fragments.ts --confirm
+ * (without --confirm it prints what it would do and exits; it mutates the app database)
  *
  * Note: This uses upsert, so it will update existing fragments with matching fragmentId.
  */
 
 import { PrismaClient } from '@prisma/client';
-import fragments from '../data/query-builder/fragments.json';
+import fragments from '../../data/query-builder/fragments.json';
 
 const prisma = new PrismaClient();
+
+if (!process.argv.includes('--confirm')) {
+  console.log(
+    `This script upserts ${Array.isArray(fragments) ? fragments.length : 'all'} fragment(s) from data/query-builder/fragments.json into the database.
+` +
+      'Re-run with --confirm to apply. Nothing was changed.'
+  );
+  process.exit(0);
+}
 
 // Map JSON type to Prisma enum
 const typeMap: Record<string, 'base' | 'filter' | 'join' | 'aggregation' | 'order' | 'column'> = {

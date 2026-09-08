@@ -11,6 +11,10 @@
  */
 
 import { VIEW_SCHEMAS, ViewColumn } from './view-schema.generated';
+import { DANGEROUS_SQL_KEYWORDS } from '../sql-guard';
+
+/** Maximum rows an AI/custom query may request via TOP (finding S13). */
+export const MAX_AI_QUERY_ROWS = 5000;
 
 export interface ValidationResult {
   valid: boolean;
@@ -22,26 +26,18 @@ export interface ValidationResult {
 // Allowed views (whitelist) - derived from the introspected database schema
 const ALLOWED_VIEWS = Object.keys(VIEW_SCHEMAS);
 
-// Blocked keywords (destructive/dangerous operations)
+// Blocked keywords: the shared dangerous-statement list (lib/sql-guard.ts,
+// finding S15) plus AI-specific patterns that saved reports may legitimately
+// use but generated SQL never needs (comments, UNION, system catalogs).
 const BLOCKED_KEYWORDS = [
-  // DDL operations
-  'DROP',
-  'DELETE',
-  'INSERT',
-  'UPDATE',
-  'ALTER',
-  'CREATE',
-  'TRUNCATE',
-  'MERGE',
+  // xp_cmdshell / sp_executesql are covered by the broader xp_ / sp_ prefixes below
+  ...DANGEROUS_SQL_KEYWORDS.filter((k) => !k.startsWith('xp_') && !k.startsWith('sp_')).map(
+    (k) => k.toUpperCase()
+  ),
   'REPLACE',
   // Stored procedures / dynamic SQL
-  'EXEC',
-  'EXECUTE',
   'xp_',
   'sp_',
-  'OPENQUERY',
-  'OPENROWSET',
-  'OPENDATASOURCE',
   // SQL injection patterns
   '--',
   '/*',
@@ -52,11 +48,6 @@ const BLOCKED_KEYWORDS = [
   // System tables
   'sys.',
   'INFORMATION_SCHEMA',
-  // Dangerous functions
-  'WAITFOR',
-  'SHUTDOWN',
-  'BACKUP',
-  'RESTORE',
 ];
 
 // Known Aeries base tables that should NOT be queried directly
@@ -359,6 +350,16 @@ export function validateSql(sql: string): ValidationResult {
   const trimmedSql = sql.trim();
   if (!trimmedSql.toUpperCase().startsWith('SELECT')) {
     errors.push('Only SELECT queries are allowed');
+  } else {
+    // 2b. Row cap (finding S13): generated SQL must declare TOP n, n <= MAX_AI_QUERY_ROWS.
+    const topMatch = trimmedSql.match(/^SELECT\s+(?:DISTINCT\s+)?TOP\s*\(?\s*(\d+)\s*\)?/i);
+    if (!topMatch) {
+      errors.push(
+        `Query must start with SELECT TOP n (n <= ${MAX_AI_QUERY_ROWS}) to cap the result size`
+      );
+    } else if (Number(topMatch[1]) > MAX_AI_QUERY_ROWS) {
+      errors.push(`TOP ${topMatch[1]} exceeds the maximum of ${MAX_AI_QUERY_ROWS} rows`);
+    }
   }
 
   // 3. Extract all table/view references from FROM and JOIN clauses

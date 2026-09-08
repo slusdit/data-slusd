@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Copy, Play, Check, AlertCircle, ChevronDown, ChevronUp, Database, X, Wand2 } from 'lucide-react';
-import { runQuery } from '@/lib/aeries';
 import DataTableAgGrid from './DataTableAgGrid';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -657,7 +656,8 @@ export function CustomQueryClient({
     }
 
     // Construct the query
-    let sql = `SELECT ${uniqueColumns.join(',\n       ')}\nFROM llm_student_demographics d`;
+    // TOP 5000: the strict validator requires a row cap on generated SQL (S13)
+    let sql = `SELECT TOP 5000 ${uniqueColumns.join(',\n       ')}\nFROM llm_student_demographics d`;
 
     if (joins.length > 0) {
       sql += '\n' + joins.join('\n');

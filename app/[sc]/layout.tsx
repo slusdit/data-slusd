@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import { userCanAccessSchool } from "@/lib/authorization";
 import UnauthorizedButton from "../components/UnauthorizedButton";
 import AccessDenied from "../components/AccessDenied";
 
@@ -9,19 +10,16 @@ export default async function SchoolLayout(
     }>
 ) {
   const params = await props.params;
-
-
-  const {
-    children
-  } = props;
+  const { children } = props;
 
   const session = await auth()
-  const sc = session?.user?.activeSchool
 
-  if (sc?.toString() !== params.sc && sc != 0) {
+  // Gate on the schools the user actually holds, not on the school picker
+  // (findings S10/U2): a district-wide report may link to any of the user's
+  // schools, and a tampered activeSchool must not widen access.
+  if (!session?.user || !userCanAccessSchool(session.user, params.sc)) {
     return <AccessDenied message="You do not have access to this school." />;
   }
-
 
   return (
       <div>
@@ -33,4 +31,3 @@ export default async function SchoolLayout(
       </div>
   );
 }
-  

@@ -2,6 +2,7 @@ import { CustomQueryClient } from '@/app/components/CustomQueryClient';
 import { auth, SessionUser } from '@/auth';
 import { redirect } from 'next/navigation';
 import prisma from '@/lib/db';
+import { userCanAccessAI } from '@/lib/authorization';
 
 // Define grade ranges for each school
 // TK = -1, K = 0, 1-12 = 1-12
@@ -31,6 +32,12 @@ export default async function CustomQueryPage() {
   }
 
   const user = session.user as unknown as SessionUser;
+
+  // Same gate as /ai-query: both run generated SQL on the same views (finding S9)
+  if (!userCanAccessAI(user)) {
+    redirect('/');
+  }
+
   const activeSchool = user.activeSchool;
   const allowedSchools = user.schools || [];
 

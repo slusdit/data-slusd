@@ -5,6 +5,7 @@ import prisma from "./db";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { requireUser } from "./authGuard";
+import { AuthError, userMaySetActiveSchool } from "./authorization";
 import { ROLE } from "@prisma/client";
 import sql from "mssql";
 
@@ -247,6 +248,12 @@ export async function getAllSchools(profileEmail: string) {
 export async function updateActiveSchool(_userId: string, activeSchool: number) {
     // Always act on the authenticated session user — never a caller-supplied id.
     const sessionUser = await requireUser()
+    // Only a school the user holds (or 0 = district-wide when they hold at
+    // least one); admins may pick anything. A tampered value cannot widen
+    // scope (finding S2).
+    if (!userMaySetActiveSchool(sessionUser, activeSchool)) {
+        throw new AuthError("You do not have access to that school.")
+    }
     await prisma.user.update({
         where: {
             id: sessionUser.id

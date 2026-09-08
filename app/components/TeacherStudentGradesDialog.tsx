@@ -44,7 +44,6 @@ const TeacherStudentGradesDialog = ({
   periodStatus?: string[];
   schoolYearStatus?: string;
   }) => {
-  console.log("Gender Status2:", genderStatus);
   const [gradeData, setGradeData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -52,18 +51,6 @@ const TeacherStudentGradesDialog = ({
   const [open, setOpen] = useState(false);
   const [gridApi, setGridApi] = useState<GridApi | null>(null);
   const { resolvedTheme } = useTheme();
-  console.log("TeacherStudentGradesDialog props:", {
-    teacher,
-    sc,
-    tn,
-    department,
-    term,
-    courseTitle,
-    genderStatus,
-    ellStatus,
-    specialEdStatus,
-    ardStatus,
-  });
 
   const gridThemeClass = useMemo(() => {
     return resolvedTheme === "dark"

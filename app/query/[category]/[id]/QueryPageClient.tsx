@@ -128,6 +128,8 @@ interface QueryPageClientProps {
   urlCategory: string;
   categories: Category[];
   allQueries: QueryItem[];
+  /** true when the server dropped rows beyond the 10,000-row cap (S13) */
+  truncated?: boolean;
 }
 
 // Quick stats interface
@@ -218,6 +220,7 @@ export default function QueryPageClient({
   urlCategory,
   categories,
   allQueries,
+  truncated = false,
 }: QueryPageClientProps) {
   const router = useRouter();
   const { resolvedTheme } = useTheme();
@@ -696,6 +699,17 @@ export default function QueryPageClient({
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
+
+      {truncated && (
+        <div
+          role="status"
+          className="no-print rounded-md border border-yellow-500/50 bg-yellow-500/10 px-4 py-3 text-sm"
+        >
+          <span className="font-semibold">Showing the first 10,000 rows.</span> This report
+          returned more rows than can be displayed; refine the query or add filters to see a
+          smaller set.
+        </div>
+      )}
 
       {/* Header Card */}
       <Card>

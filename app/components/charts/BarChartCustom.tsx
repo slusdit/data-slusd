@@ -3,7 +3,6 @@ import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
 
 import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { ColumnDef, ColumnVisibility, Table, useReactTable } from "@tanstack/react-table"
-import { runQuery } from "@/lib/aeries"
 import { useMemo, useState } from "react"
 import prisma from "@/lib/db"
 import { DataKey } from "recharts/types/util/types"

@@ -63,8 +63,10 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const isAdmin = await adminCheck();
-    if (!isAdmin) {
+    const access = await adminCheck();
+    // Query editors and super admins only (finding S14): site admins and
+    // principals reach the admin dashboard but must not edit SQL fragments.
+    if (!access || !(access.isQueryEditor || access.isSuperAdmin)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -92,8 +94,10 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const isAdmin = await adminCheck();
-    if (!isAdmin) {
+    const access = await adminCheck();
+    // Query editors and super admins only (finding S14): site admins and
+    // principals reach the admin dashboard but must not edit SQL fragments.
+    if (!access || !(access.isQueryEditor || access.isSuperAdmin)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -161,8 +165,10 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const isAdmin = await adminCheck();
-    if (!isAdmin) {
+    const access = await adminCheck();
+    // Query editors and super admins only (finding S14): site admins and
+    // principals reach the admin dashboard but must not edit SQL fragments.
+    if (!access || !(access.isQueryEditor || access.isSuperAdmin)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

@@ -2,21 +2,27 @@
 
 import prisma from './db';
 import { calculateCurrentSchoolYear, AVAILABLE_DB_YEARS } from './schoolYear';
-import { requireAdmin } from './authGuard';
+import { requireAdmin, requireUser } from './authGuard';
 
 // Setting keys - defined inline since "use server" files can only export async functions
 const SETTING_KEYS = {
   DEFAULT_DB_YEAR: 'defaultDbYear',
 } as const;
 
-/**
- * Get a setting value by key
- */
-export async function getSetting(key: string): Promise<string | null> {
+// Internal read used by getDefaultDbYear (no session required there)
+async function readSetting(key: string): Promise<string | null> {
   const setting = await prisma.appSetting.findUnique({
     where: { key },
   });
   return setting?.value ?? null;
+}
+
+/**
+ * Get a setting value by key (signed-in users only; finding S17)
+ */
+export async function getSetting(key: string): Promise<string | null> {
+  await requireUser();
+  return readSetting(key);
 }
 
 /**
@@ -51,6 +57,7 @@ export async function setSetting(
  * Get all settings
  */
 export async function getAllSettings(): Promise<Record<string, string>> {
+  await requireUser();
   const settings = await prisma.appSetting.findMany();
   return settings.reduce((acc, setting) => {
     acc[setting.key] = setting.value;
@@ -66,7 +73,7 @@ export async function getAllSettings(): Promise<Record<string, string>> {
  */
 export async function getDefaultDbYear(): Promise<number> {
   try {
-    const setting = await getSetting(SETTING_KEYS.DEFAULT_DB_YEAR);
+    const setting = await readSetting(SETTING_KEYS.DEFAULT_DB_YEAR);
     if (setting) {
       const parsed = parseInt(setting, 10);
       // Validate it's a valid year

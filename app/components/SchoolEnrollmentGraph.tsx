@@ -1,6 +1,5 @@
 'use client'
 
-import { runQuery } from "@/lib/aeries"
 import { getQueryData } from "@/lib/getQuery"
 import { useEffect, useState } from "react"
 import { DiyChartBySchool } from "./charts/DiyChartBySchool"

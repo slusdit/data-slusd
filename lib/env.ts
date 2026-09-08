@@ -24,6 +24,10 @@ const serverEnvSchema = z.object({
   DB_PASSWORD: z.string().min(1, "DB_PASSWORD is required"),
   DB_SERVER: z.string().min(1, "DB_SERVER is required"),
   DB_DATABASE: z.string().min(1, "DB_DATABASE is required"),
+
+  // Aeries REST API (server-only; was NEXT_PUBLIC_AERIES_URL, finding S17)
+  AERIES_URL: z.string().url().optional(),
+  AERIES_API_KEY: z.string().min(1).optional(),
 })
   // Exactly one of the auth secrets must be present.
   .refine((env) => env.AUTH_SECRET || env.NEXTAUTH_SECRET, {

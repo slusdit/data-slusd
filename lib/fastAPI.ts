@@ -1,66 +1,28 @@
-// lib/fastAPI.ts - Updated to use Next.js API routes as proxy
+// lib/fastAPI.ts - browser-side client for the /api/fastapi/* proxy routes.
+// The FastAPI service token is minted server-side (lib/fastapi-server.ts);
+// the browser never sees credentials or tokens.
 
-export async function apiAuth() {
-  // Credentials live only on the server; the /api/fastapi/token proxy injects
-  // them. The browser must never see FastAPI credentials, so send no body.
-  const requestOptions: RequestInit = {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({}),
-  };
-
-  try {
-    // console.log("Authenticating through Next.js API proxy...");
-    
-    // Use your Next.js API route instead of direct FastAPI call
-    const response = await fetch("/api/fastapi/token", requestOptions);
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
-    }
-
-    const result = await response.json();
-    // console.log("Authentication successful");
-    return result;
-  } catch (error) {
-    console.error("API Auth error:", error);
-    throw error;
-  }
-}
-
-export async function uploadIEP(files: File[], authToken: string) {
+export async function uploadIEP(files: File[]) {
   const formData = new FormData();
-  
-  // Add each file to the FormData
   files.forEach((file) => {
-    formData.append('file', file);
+    formData.append("file", file);
   });
 
-  const requestOptions: RequestInit = {
+  const response = await fetch("/api/fastapi/upload", {
     method: "POST",
-    headers: {
-      "Authorization": `Bearer ${authToken}`,
-    },
     body: formData,
-  };
-  
-  try {
-    // console.log("Uploading through Next.js API proxy...");
-    
-    // Use your Next.js API route instead of direct FastAPI call
-    const response = await fetch("/api/fastapi/upload", requestOptions);
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
+  });
+
+  if (!response.ok) {
+    let message = `Upload failed (HTTP ${response.status})`;
+    try {
+      const body = await response.json();
+      if (body?.error) message = body.error;
+    } catch {
+      // non-JSON error body; keep the generic message
     }
-    
-    const result = await response.json();
-    // console.log("Upload successful");
-    return result;
-  } catch (error) {
-    console.error("API upload error:", error);
-    throw error;
+    throw new Error(message);
   }
+
+  return response.json();
 }

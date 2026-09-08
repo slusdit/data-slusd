@@ -24,6 +24,8 @@ import {
 } from '@/lib/ai-query/generate-view-query';
 import { viewQueryBuilder } from '@/lib/ai-query/view-query-builder';
 import { SCHOOL_NAMES, getSchoolName } from '@/lib/constants/schools';
+import { checkRateLimit, getRateLimitIdentifier } from '@/lib/rateLimit';
+import { resolveSchoolScope, userCanAccessAI } from '@/lib/authorization';
 
 const DEBUG = process.env.AI_QUERY_DEBUG === 'true';
 
@@ -102,8 +104,30 @@ export async function POST(request: Request) {
     const allowedSchools = user.schools || [];
     const canSeeDebugInfo = user.queryEdit === true;
 
-    // Deny access if no active school set
-    if (activeSchool === -1 || (activeSchool === undefined && activeSchool !== 0)) {
+    if (!userCanAccessAI(user)) {
+      return NextResponse.json({ error: 'AI query access required' }, { status: 403 });
+    }
+
+    // Rate limit (finding S12): each request can make up to MAX_TOTAL_ATTEMPTS
+    // paid LLM calls, so 10 requests per minute per user.
+    const rateLimit = checkRateLimit(await getRateLimitIdentifier(request, user.id), {
+      maxRequests: 10,
+      windowSeconds: 60,
+    });
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please wait a minute and try again.' },
+        {
+          status: 429,
+          headers: { 'Retry-After': Math.ceil((rateLimit.reset - Date.now()) / 1000).toString() },
+        }
+      );
+    }
+
+    // School scope from the session, intersected with the user's schools
+    // (finding S2). null = admin district-wide (unfiltered); [] = nothing.
+    const scope = resolveSchoolScope(user);
+    if (scope !== null && scope.length === 0) {
       return NextResponse.json({
         error: 'No school access. Please select a school from the school picker.'
       }, { status: 403 });
@@ -117,10 +141,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
     }
 
-    // Determine which schools to filter by
-    const schoolsToFilter: string[] = activeSchool === 0
-      ? allowedSchools
-      : [activeSchool.toString()];
+    // Schools to filter by; empty only for an admin's district-wide view
+    const schoolsToFilter: string[] = scope ?? [];
 
     if (DEBUG) {
       console.log(`[View AI Query] Processing: "${prompt}"`);

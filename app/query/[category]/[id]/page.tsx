@@ -1,7 +1,8 @@
-import { auth } from "@/auth";
-import { runQuery } from "@/lib/aeries";
+import { auth, SessionUser } from "@/auth";
+import { runQueryWithMeta, formatQueryErrorForUser } from "@/lib/aeries";
+import { userCanRunQuery, userCanSeeCategory } from "@/lib/authorization";
 import prisma from "@/lib/db";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import QueryPageClient from "./QueryPageClient";
 
 // Types
@@ -33,13 +34,15 @@ export default async function Page({ params }: PageProps) {
       </div>
     );
   }
+  const user = session.user as SessionUser;
 
   // Fetch query details and categories/queries for sidebar
   const [result, categories, allQueries] = await Promise.all([
     prisma.query.findUnique({
       where: { id },
       include: {
-        category: true,
+        category: { include: { roles: { select: { role: true } } } },
+        roles: { select: { role: true } },
       },
     }),
     prisma.queryCategory.findMany({
@@ -53,11 +56,14 @@ export default async function Page({ params }: PageProps) {
         id: true,
         name: true,
         description: true,
+        publicQuery: true,
+        roles: { select: { role: true } },
         category: {
           select: {
             id: true,
             label: true,
             value: true,
+            roles: { select: { role: true } },
           },
         },
       },
@@ -65,26 +71,49 @@ export default async function Page({ params }: PageProps) {
     }),
   ]);
 
-  // Handle not found
-  if (!result) {
+  // Report authorization (finding S5): a report the user may not run is
+  // indistinguishable from one that does not exist.
+  if (!result || !userCanRunQuery(user, result)) {
     notFound();
+  }
+
+  // Canonical URL: the category segment must match the report's category.
+  const canonicalCategory = result.category?.value ?? "uncategorized";
+  if (urlCategory !== canonicalCategory) {
+    redirect(`/query/${encodeURIComponent(canonicalCategory)}/${result.id}`);
   }
 
   // Execute query and get data
   let data: any[] = [];
+  let truncated = false;
   let queryError: string | null = null;
 
   try {
-    data = await runQuery(result.query);
+    const queryResult = await runQueryWithMeta(result.query);
+    data = queryResult.rows;
+    truncated = queryResult.truncated;
   } catch (error) {
     console.error("Query execution error:", error);
-    queryError = "Failed to execute query. Please try again later.";
+    queryError = formatQueryErrorForUser(error, user);
   }
 
   // Parse hidden columns
   const hiddenColumns = result.hiddenCols
     ? result.hiddenCols.split(",").map((col) => col.trim().toUpperCase())
     : [];
+
+  // Sidebar: only the reports and categories this user may open (S5, P4)
+  const visibleQueries = allQueries
+    .filter((q) => userCanRunQuery(user, q))
+    .map((q) => ({
+      id: q.id,
+      name: q.name,
+      description: q.description,
+      category: q.category
+        ? { id: q.category.id, label: q.category.label, value: q.category.value }
+        : null,
+    }));
+  const visibleCategories = categories.filter((c) => userCanSeeCategory(user, c));
 
   return (
     <QueryPageClient
@@ -98,15 +127,18 @@ export default async function Page({ params }: PageProps) {
         chartTypeKey: result.chartTypeKey,
         chartStackKey: result.chartStackKey,
         chartSeriesOverride: result.chartSeriesOverride,
-        category: result.category,
+        category: result.category
+          ? { id: result.category.id, label: result.category.label, value: result.category.value }
+          : null,
       }}
       data={data}
       hiddenColumns={hiddenColumns}
-      user={session.user}
+      user={user}
       error={queryError}
+      truncated={truncated}
       urlCategory={urlCategory}
-      categories={categories}
-      allQueries={allQueries}
+      categories={visibleCategories}
+      allQueries={visibleQueries}
     />
   );
 }

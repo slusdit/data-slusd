@@ -62,3 +62,16 @@ export function assertSchoolAccess(user: AuthzUser, sc: string | number): void {
     throw new AuthError("You do not have access to this school.");
   }
 }
+
+// Scope and report-level predicates live in lib/authorization-scope.ts (Phase 2);
+// re-exported here so callers keep a single import.
+export {
+  resolveSchoolScope,
+  userMaySetActiveSchool,
+  queryRequiredRoles,
+  userCanRunQuery,
+  userCanSeeCategory,
+  userCanAccessAI,
+  userCanUploadIep,
+} from "./authorization-scope";
+export type { ScopedUser, RunnableQuery } from "./authorization-scope";

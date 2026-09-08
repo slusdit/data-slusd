@@ -61,8 +61,10 @@ function validateFragmentSQL(snippet: string, fragmentType: string): { valid: bo
 // GET all fragments
 export async function GET() {
   try {
-    const isAdmin = await adminCheck();
-    if (!isAdmin) {
+    const access = await adminCheck();
+    // Query editors and super admins only (finding S14): site admins and
+    // principals reach the admin dashboard but must not edit SQL fragments.
+    if (!access || !(access.isQueryEditor || access.isSuperAdmin)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -81,8 +83,10 @@ export async function GET() {
 // POST create new fragment
 export async function POST(request: Request) {
   try {
-    const isAdmin = await adminCheck();
-    if (!isAdmin) {
+    const access = await adminCheck();
+    // Query editors and super admins only (finding S14): site admins and
+    // principals reach the admin dashboard but must not edit SQL fragments.
+    if (!access || !(access.isQueryEditor || access.isSuperAdmin)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

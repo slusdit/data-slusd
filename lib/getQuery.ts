@@ -2,21 +2,27 @@
 import { runQuery } from "./aeries";
 import prisma from "./db";
 import { requireUser } from "./authGuard";
+import { userCanRunQuery } from "./authorization";
 
+// Roles needed to decide userCanRunQuery (finding S5)
+const authorizationInclude = {
+  roles: { select: { role: true } },
+  category: { include: { roles: { select: { role: true } } } },
+} as const;
+
+/** Load one saved report the signed-in user may run; null otherwise. */
 export async function getQuery(queryId: string) {
-  await requireUser();
+  const user = await requireUser();
+  if (typeof queryId !== "string" || !queryId) return null;
   const ret = await prisma.query.findUnique({
-    where: {
-      id: queryId,
-    },
-    include: {
-      category: true,
-    },
+    where: { id: queryId },
+    include: authorizationInclude,
   });
-
+  if (!ret || !userCanRunQuery(user, ret)) return null;
   return ret;
 }
 
+/** Load and run one saved report by id or label, if the user may run it. */
 export async function getQueryData({
   queryId,
   queryLabel,
@@ -24,50 +30,20 @@ export async function getQueryData({
   queryId?: string;
   queryLabel?: string;
 }) {
-  await requireUser();
-  async function fetchQuery({
-    queryId,
-    queryLabel,
-  }: {
-    queryId?: string;
-    queryLabel?: string;
-  }) {
-    // Add validation to ensure queryId is a string
-    if (queryId && typeof queryId === 'string') {
-      return await prisma.query.findUnique({
-        where: {
-          id: queryId // This should be just the string ID
-        },
-        include: {
-          category: {
-            include: {
-              queries: true,
-            }
-          },
-        },
-      });
-    }
-    if (queryLabel) {
-      return await prisma.query.findUnique({
-        where: {
-          label: queryLabel,
-        },
-        include: {
-          category: true,
-        },
-      });
-    }
-  }
+  const user = await requireUser();
 
-  const query = await fetchQuery({ queryId, queryLabel });
-  
-  if (!query) return;
+  const query =
+    queryId && typeof queryId === "string"
+      ? await prisma.query.findUnique({ where: { id: queryId }, include: authorizationInclude })
+      : queryLabel && typeof queryLabel === "string"
+        ? await prisma.query.findUnique({ where: { label: queryLabel }, include: authorizationInclude })
+        : null;
+
+  if (!query || !userCanRunQuery(user, query)) return;
   const data = await runQuery(query.query);
-  
+
   return {
     data: data,
     query: query,
   };
 }
-
-  

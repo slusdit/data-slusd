@@ -54,16 +54,19 @@ export default async function AdminPage() {
   }
 
   const { isSuperAdmin, isSiteAdmin, isQueryEditor, userSchools } = adminResult;
+  // Report SQL is only fetched for viewers who can see the Queries tab (finding S14)
+  const canSeeQueries = isSuperAdmin || isQueryEditor;
 
   // Fetch all data in parallel
   const [queries, roles, allUsers, session, categories, fragments, fragmentCategories, currentDefaultYear] =
     await Promise.all([
-      prisma.query.findMany({
+      canSeeQueries ? prisma.query.findMany({
         select: {
           id: true,
           name: true,
           description: true,
           publicQuery: true,
+          roles: { select: { role: true } },
           createdBy: true,
           query: true,
           chart: true,
@@ -79,10 +82,11 @@ export default async function AdminPage() {
             select: {
               id: true,
               value: true,
+              roles: { select: { role: true } },
             },
           },
         },
-      }),
+      }) : Promise.resolve([]),
       prisma.role.findMany(),
       prisma.user.findMany({
         select: {
@@ -138,6 +142,18 @@ export default async function AdminPage() {
       }),
       getDefaultDbYear(),
     ]);
+
+  // Finding S5: reports with no roles on themselves or their category are open
+  // to every signed-in user. Surface them so an admin can assign roles.
+  const unrestrictedReports = queries.filter(
+    (q) => q.roles.length === 0 && (q.category?.roles?.length ?? 0) === 0
+  );
+  if (unrestrictedReports.length > 0) {
+    console.warn(
+      `[admin] ${unrestrictedReports.length} report(s) have no role restrictions: ` +
+        unrestrictedReports.map((q) => `${q.name} (${q.id})`).join(", ")
+    );
+  }
 
   // Transform UserRole data to flat userRole shape expected by components
   const transformedUsers = allUsers.map((user) => ({
