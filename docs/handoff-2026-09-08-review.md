@@ -511,3 +511,31 @@ Differences from the Phase 7 procedure above:
 Not verified anywhere yet (needs a real Google sign-in): the totals footer in a browser, the dashboard
 theme toggle, the grade distribution default view, the admin dialogs, and the sign-in sync path
 (single Aeries staff lookup, batched class inserts).
+
+## Major-version upgrade addendum (2026-09-08, branch `phase-8-major-upgrades`)
+
+After Phases 1 to 6 the user reversed the "no majors" decision. `phase-8-major-upgrades` (stacked on
+`phase-6-cleanup`) takes every dependency as far as the toolchain allows, one commit per layer so any
+layer can be reverted alone:
+
+| Layer | Now | Notes |
+| --- | --- | --- |
+| In-range refresh | Radix, react-hook-form 7.87, types | `npm update` |
+| React | 19.2 | next-themes 0.4, lucide-react 1.x, react-dropzone 20, sonner 2, cmdk 1.1, tailwind-merge 3, dotenv 17, mssql 12 |
+| Next | 16.3 | `middleware.ts` is `proxy.ts`; `revalidateTag(tag, "max")`; Turbopack builds |
+| ESLint | 9 (flat config) | ESLint 10 breaks the React plugin bundled by eslint-config-next. React Compiler rules are warnings for now |
+| Prisma | 7.10 | `prisma.config.ts` holds the datasource URL for the CLI; runtime uses `@prisma/adapter-mariadb`; generator unchanged |
+| AG Grid / Charts | 36.1 / 14.1 | licence valid to 27 Jan 2027; selection moved to the object API; legacy CSS imports removed |
+| Tailwind | 4.3 | JS config via `@config`; utility renames applied; compat CSS for container, dark variant, cursors |
+| zod / resolvers | 4.5 / 5.9 | no code changes needed |
+| TypeScript | 6.0 | 7.0 (native compiler) type-checks and builds, but typescript-eslint refuses it |
+
+Deploy differences on top of the earlier addendum:
+
+- `npm ci` then `npx prisma generate` as before; `prisma.config.ts` needs `DATABASE_URL` in the
+  environment when the CLI runs (it loads `.env` itself).
+- No new schema changes in this branch; nothing to push.
+- Node 22 on the prod host satisfies Next 16 (>= 20.9).
+- Every layer was verified with `npm test`, `tsc --noEmit`, `npm run lint` and `next build`, but none
+  of it has been opened in a browser. Check first: overall styling (Tailwind 4), every grid (AG Grid
+  36 selection column, filters, export), the dashboard charts (AG Charts 14), and the admin dialogs.

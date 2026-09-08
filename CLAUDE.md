@@ -10,7 +10,7 @@ npm run dev         # Start Next.js development server
 npm run host        # Start dev server with network access (0.0.0.0)
 npm run build       # Build for production
 npm start           # Start production server
-npm run lint        # Run ESLint
+npm run lint        # ESLint 9 flat config (eslint.config.mjs); ESLint 10 and TypeScript 7 are blocked by the Next/typescript-eslint toolchain
 npm test            # Unit tests (node:test via tsx, lib/*.test.ts)
 npx tsc --noEmit    # Type check (must stay clean; the build no longer ignores type errors)
 npx tsx <file.ts>   # Execute TypeScript files directly
@@ -30,12 +30,12 @@ npx prisma studio       # Open Prisma Studio GUI
 ## Architecture
 
 ### Tech Stack
-- **Framework**: Next.js 15.3 with App Router
+- **Framework**: Next.js 16 with App Router (Turbopack builds; the request gate is `proxy.ts`, not middleware)
 - **Language**: TypeScript with ES modules (`"type": "module"`)
-- **Database**: MySQL via Prisma ORM + Direct MSSQL for Aeries queries
+- **Database**: MySQL via Prisma 7 (MariaDB driver adapter in `lib/db.ts`; connection URL for the CLI lives in `prisma.config.ts`) + direct MSSQL for Aeries queries
 - **Auth**: NextAuth v5 with Google OAuth
-- **UI**: Radix UI components + Tailwind CSS
-- **Tables**: AG-Grid Enterprise for data tables
+- **UI**: React 19, Radix UI components, Tailwind CSS 4 (JS config still loaded via `@config` in `app/globals.css`)
+- **Tables**: AG Grid Enterprise 36 (row selection through `lib/agGridSelection.ts`, licence registered in `AGGridProvider` / `AgChartsSetup`)
 - **Charts**: AG-Charts Enterprise (standalone `AgCharts` on the dashboard, integrated charts in the report grid)
 
 ### Core Architecture
