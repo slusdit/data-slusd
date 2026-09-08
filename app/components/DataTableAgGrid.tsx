@@ -4,6 +4,7 @@
 import "@/app/components/providers/AGGridProvider";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { AgGridReact } from "ag-grid-react";
+import { multiRowSelection, selectionColumnDef } from "@/lib/agGridSelection";
 import { ColDef, GridReadyEvent, GridApi } from "ag-grid-community";
 import { Button } from "@/components/ui/button";
 import {
@@ -251,17 +252,6 @@ function DataTable<T extends object>({
   const columnDefs = useMemo(() => {
     if (!data || data.length === 0) return [];
 
-    const checkboxCol = {
-      headerName: "",
-      field: "checkboxCol",
-      headerCheckboxSelection: true,
-      checkboxSelection: true,
-      filter: false,
-      width: 50,
-      flex: 0.5,
-      hide: false,
-    };
-
     const dataCols = Object.keys(data[0]).map((key) => {
       const baseCol = {
         field: key,
@@ -339,7 +329,7 @@ function DataTable<T extends object>({
       return baseCol;
     });
 
-    return [checkboxCol, ...dataCols];
+    return dataCols;
   }, [data, hiddenColumns]);
 
   const exportToCSV = useCallback(() => {
@@ -460,14 +450,15 @@ function DataTable<T extends object>({
           columnDefs={columnDefs}
           defaultColDef={defaultColDef}
           onGridReady={onGridReady}
-          rowSelection="multiple"
+          rowSelection={multiRowSelection()}
+
+          selectionColumnDef={selectionColumnDef}
           onSelectionChanged={(event) =>
             setSelectedRows(event.api.getSelectedRows())
           }
           onFilterChanged={onFilterChanged}
           onSortChanged={onSortChanged}
           enableCellTextSelection={true}
-          suppressRowClickSelection={true}
           pagination={true}
           animateRows={true}
           suppressLoadingOverlay={false}

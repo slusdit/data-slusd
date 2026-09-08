@@ -22,6 +22,7 @@ import {
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { AgGridReact } from "ag-grid-react";
+import { multiRowSelection, selectionColumnDef } from "@/lib/agGridSelection";
 import type { ColDef, ColumnState, GridApi, GridReadyEvent } from "ag-grid-community";
 import { colorSchemeDarkBlue, themeQuartz } from "ag-grid-enterprise";
 import { inferNumericColumn } from "@/lib/reportTotals";
@@ -63,17 +64,6 @@ const IdCellRenderer = (props: any) => {
 export function buildReportColumnDefs(rows: any[], hiddenColumns: string[] = []): ColDef[] {
   if (!rows || rows.length === 0) return [];
 
-  const checkboxCol: ColDef = {
-    headerName: "",
-    field: "checkboxCol",
-    headerCheckboxSelection: true,
-    checkboxSelection: true,
-    filter: false,
-    width: 50,
-    flex: 0,
-    suppressSizeToFit: true,
-  };
-
   const first = rows[0];
   const dataCols: ColDef[] = Object.keys(first).map((key) => {
     const baseCol: ColDef = {
@@ -111,7 +101,7 @@ export function buildReportColumnDefs(rows: any[], hiddenColumns: string[] = [])
     return baseCol;
   });
 
-  return [checkboxCol, ...dataCols];
+  return dataCols;
 }
 
 // ---------- export helpers ----------
@@ -324,7 +314,9 @@ const ReportDataGrid = forwardRef<ReportDataGridHandle, ReportDataGridProps>(fun
       columnDefs={columnDefs}
       defaultColDef={defaultColDef}
       onGridReady={handleGridReady}
-      rowSelection="multiple"
+      rowSelection={multiRowSelection()}
+
+      selectionColumnDef={selectionColumnDef}
       onSelectionChanged={(e) => onSelectionChanged?.(e.api.getSelectedRows())}
       onFilterChanged={(e) => emitFilteredRows(e.api)}
       onSortChanged={(e) => {
@@ -336,7 +328,6 @@ const ReportDataGrid = forwardRef<ReportDataGridHandle, ReportDataGridProps>(fun
       onColumnVisible={persistColumnState}
       onColumnPinned={persistColumnState}
       enableCellTextSelection
-      suppressRowClickSelection
       pagination
       paginationPageSize={paginationPageSize}
       paginationPageSizeSelector={[25, 50, 100, 500]}

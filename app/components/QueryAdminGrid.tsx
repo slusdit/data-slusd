@@ -4,8 +4,8 @@ import "@/app/components/providers/AGGridProvider";
 
 import { useRef, useState, useMemo, useCallback } from "react";
 import { AgGridReact } from "ag-grid-react";
+import { multiRowSelection, selectionColumnDef } from "@/lib/agGridSelection";
 import { themeQuartz } from "ag-grid-community";
-import "ag-grid-community/styles/ag-theme-quartz.css";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { deleteQuery } from "@/lib/deleteQuery";
@@ -60,15 +60,6 @@ export default function QueryAdminGrid({
 
   const columnDefs = useMemo(
     () => [
-      {
-        headerName: "",
-        field: "checkbox",
-        width: 50,
-        checkboxSelection: true,
-        headerCheckboxSelection: true,
-        headerCheckboxSelectionFilteredOnly: true,
-        pinned: "left" as const,
-      },
       {
         headerName: "Name",
         field: "name",
@@ -297,9 +288,10 @@ export default function QueryAdminGrid({
           defaultColDef={defaultColDef}
           theme={myTheme}
           animateRows={true}
-          rowSelection="multiple"
+          rowSelection={multiRowSelection("filtered")}
+
+          selectionColumnDef={selectionColumnDef}
           onSelectionChanged={onSelectionChanged}
-          suppressRowClickSelection={true}
           getRowId={(params) => params.data.id}
           pagination={true}
           paginationPageSize={20}

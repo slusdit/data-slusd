@@ -3,6 +3,7 @@
 import "@/app/components/providers/AGGridProvider";
 import React, { useCallback, useMemo, useState, useEffect } from "react";
 import { AgGridReact } from "ag-grid-react";
+import { multiRowSelection, selectionColumnDef } from "@/lib/agGridSelection";
 import { ColDef, GridReadyEvent, GridApi } from "ag-grid-community";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -126,15 +127,6 @@ const Interventions: React.FC<InterventionsProps> = ({
 
   const createColumnDefs = useCallback(() => {
     const cols: ColDef[] = [
-      {
-        headerName: "",
-        field: "checkboxCol",
-        headerCheckboxSelection: true,
-        checkboxSelection: true,
-        filter: false,
-        width: 25,
-        pinned: "left",
-      },
       {
         headerName: "ID",
         field: "id",
@@ -373,13 +365,14 @@ const Interventions: React.FC<InterventionsProps> = ({
             defaultColDef={defaultColDef}
             onGridReady={onGridReady}
             onGridSizeChanged={onGridSizeChanged}
-            rowSelection="multiple"
+            rowSelection={multiRowSelection()}
+
+            selectionColumnDef={selectionColumnDef}
             onSelectionChanged={onSelectionChanged}
             animateRows={true}
             pagination={true}
             paginationPageSize={15}
             enableCellTextSelection={true}
-            suppressRowClickSelection={true}
           />
         </div>
       </CardContent>
