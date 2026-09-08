@@ -482,3 +482,32 @@ service, `mv node_modules.prev node_modules`, `rm -rf .next && mv .next.prev .ne
   in dev with `log: ['query']` temporarily); toggling dark mode on the dashboard triggers no MSSQL
   queries.
 - Lint: `npm run lint` clean of errors.
+
+---
+
+## Deploy addendum (2026-09-08, after Phases 1 to 6 were implemented on the dev box)
+
+Branches, each stacked on the previous: `phase-1-env-deps`, `phase-2-security`, `phase-3-totals`,
+`phase-4-performance`, `phase-5-ux`, `phase-6-cleanup` (seven commits ahead of `main`). Merge or
+fast-forward `main` to `phase-6-cleanup`.
+
+Differences from the Phase 7 procedure above:
+
+- **Git history was rewritten** on the dev box to remove `settings.json` and `.vscode/settings.json`
+  (they held database passwords). Every commit SHA changed. Pushing requires `git push --force`
+  for every branch, and the prod host must then run `git fetch origin && git reset --hard origin/main`
+  instead of `git pull --ff-only`. GitHub keeps the old commits reachable by SHA until support purges
+  them; the local pre-rewrite mirror is in the dev session's temp folder and can be deleted.
+- **`npx prisma db push` is already done**: the `Query.totalColumns` column and the `AdminAuditLog`
+  table were pushed to the shared app database from the dev box. The step in the procedure is a no-op.
+- **Prod `.env`**: rename `NEXT_PUBLIC_AERIES_URL` to `AERIES_URL` before starting the service
+  (`lib/aeries.ts` reads only the new name). No other new variables are required.
+- **`next build` now fails on type errors** (`ignoreBuildErrors` removed; `tsc --noEmit` is clean).
+- **nginx**: raise `proxy_read_timeout` for `/api/ai-query/` (see `docs/ai-query-server-handoff.md`).
+- **CSP** ships in report-only mode; promote to enforcing after a week of clean browser reports.
+- The UPP report was already renamed and given its `UPP %` column and totals spec in the database;
+  the footer appears once the new build is live.
+
+Not verified anywhere yet (needs a real Google sign-in): the totals footer in a browser, the dashboard
+theme toggle, the grade distribution default view, the admin dialogs, and the sign-in sync path
+(single Aeries staff lookup, batched class inserts).
