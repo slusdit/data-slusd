@@ -1,36 +1,21 @@
 import { auth, SessionUser } from "@/auth";
 import { QueryWithCategory } from "./components/QueryBar";
 import prisma from "@/lib/db";
+import { getReportCatalogueFor } from "@/lib/reportCatalogue";
 import Dashboard from "./components/Dashboard";
 import ReportsSidebar from "./components/ReportsSidebar";
 
 export default async function Home() {
   const session = await auth();
 
-  const queries: QueryWithCategory[] = await prisma.query.findMany({
-    select: {
-      id: true,
-      name: true,
-      description: true,
-      publicQuery: true,
-      createdBy: true,
-      category: {
-        select: {
-          label: true,
-          value: true,
-        },
-      },
-    },
-  });
-
+  // Cached, role-filtered catalogue (findings P4/S5): only reports this user
+  // may open are serialized to the browser.
+  let queries: QueryWithCategory[] = [];
   let categories: any[] = [];
   if (session?.user) {
-    categories = await prisma.queryCategory.findMany({
-      include: {
-        queries: true,
-        roles: true,
-      },
-    });
+    const catalogue = await getReportCatalogueFor(session.user as SessionUser);
+    queries = catalogue.queries as unknown as QueryWithCategory[];
+    categories = catalogue.categories;
   }
 
   // If not logged in, show a simple landing page
@@ -54,7 +39,7 @@ export default async function Home() {
       <ReportsSidebar
         categories={categories}
         queries={queries}
-        user={session.user}
+        user={session.user as any}
         session={session}
       />
 

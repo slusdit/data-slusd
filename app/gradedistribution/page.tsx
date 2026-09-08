@@ -39,11 +39,11 @@ export default async function GradeDistributionPage() {
         distinct: ['ell', 'specialEd', 'ard', 'schoolYear', 'period']
     });
 
-    const ellOptions = [...new Set(rawData.map(item => item.ell).filter(Boolean))];
-    const specialEdOptions = [...new Set(rawData.map(item => item.specialEd).filter(Boolean))];
-    const ardOptions = [...new Set(rawData.map(item => item.ard).filter(Boolean))];
-    const schoolYearOptions = [...new Set(rawData.map(item => item.schoolYear).filter(Boolean))].sort().reverse();
-    const periodOptions = [...new Set(rawData.map(item => item.period).filter(Boolean))].sort();
+    const ellOptions = [...new Set(rawData.map(item => item.ell).filter((v): v is string => Boolean(v)))];
+    const specialEdOptions = [...new Set(rawData.map(item => item.specialEd).filter((v): v is string => Boolean(v)))];
+    const ardOptions = [...new Set(rawData.map(item => item.ard).filter((v): v is string => Boolean(v)))];
+    const schoolYearOptions = [...new Set(rawData.map(item => item.schoolYear).filter((v): v is string => Boolean(v)))].sort().reverse();
+    const periodOptions = [...new Set(rawData.map(item => item.period).filter((v): v is string => Boolean(v)))].sort();
 
     // Defaults first, then aggregate only the default year and term (finding P6);
     // the client re-queries through the server action whenever a filter changes.
@@ -68,8 +68,7 @@ export default async function GradeDistributionPage() {
                     <p className="text-muted-foreground">Please select a Term and Course to view data</p>
                 </div>
                 <GradeDistribution
-                    data={data}
-                    session={session}
+                    data={data ?? []}
                     defaultTerm={[sentTerm]}
                     studentAttributes={{
                         ellOptions,

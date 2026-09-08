@@ -533,7 +533,7 @@ export default function QueryPageClient({
   // Render chart
   const renderChart = (height: number = 400) => (
     <div className="w-full" style={{ height }}>
-      {chartOptions && <AgCharts options={{ ...chartOptions, height }} />}
+      {chartOptions && <AgCharts options={{ ...(chartOptions as any), height }} />}
     </div>
   );
 

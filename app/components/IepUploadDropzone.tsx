@@ -92,7 +92,7 @@ const IepDropzone = () => {
           console.error("Failed to parse upload response:", parseError);
           console.error("Upload response was:", uploadResponse);
           throw new Error(
-            `Invalid response format from server: ${parseError.message}`
+            `Invalid response format from server: ${parseError instanceof Error ? parseError.message : String(parseError)}`
           );
         }
       } catch (error) {
@@ -156,7 +156,7 @@ const IepDropzone = () => {
       ...errorData.map((row) =>
         headers
           .map((header) => {
-            const value = row[header] || "";
+            const value = (row as Record<string, unknown>)[header] || "";
             // Escape commas and quotes in CSV
             return typeof value === "string" &&
               (value.includes(",") || value.includes('"'))

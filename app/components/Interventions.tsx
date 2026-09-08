@@ -353,7 +353,7 @@ const Interventions: React.FC<InterventionsProps> = ({
                       className="capitalize"
                       checked={!column.hide}
                       onCheckedChange={(value) =>
-                        gridApi?.setColumnVisible(column.field!, value)
+                        gridApi?.setColumnsVisible([column.field!], value)
                       }
                     >
                       {column.headerName || column.field}

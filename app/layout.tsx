@@ -4,7 +4,6 @@ import "./globals.css";
 import UnauthorizedButton from '@/app/components/UnauthorizedButton'
 import { Toaster } from '@/components/ui/sonner'
 import { ThemeProvider } from '@/app/components/providers/ThemeProvider'
-import MainFooter from '@/app/components/MainFooter'
 import MainHeader from "./components/MainHeader";
 import SessionProvider from "@/app/components/providers/SessionProvider";
 import { auth, SessionUser } from "@/auth";

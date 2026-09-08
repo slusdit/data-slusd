@@ -188,7 +188,7 @@ const GradeDistribution = ({
   }, [initialData]);
 
   const { resolvedTheme } = useTheme();
-  const chartRef = useRef(null);
+  const chartRef = useRef<any>(null);
   const isInitialMount = useRef(true);
 
   const baseChartTheme = useMemo(
@@ -854,7 +854,7 @@ const GradeDistribution = ({
         suppressQuotes: true,
         columnSeparator: ",",
         onlyFilteredAndSortedData: true,
-        processCellCallback: (params) => {
+        processCellCallback: (params: any) => {
           if (params.value === null || params.value === undefined) return "";
           if (
             params.column.colDef.headerName &&
@@ -954,7 +954,7 @@ const GradeDistribution = ({
         headerName: "A%",
         type: "numericColumn",
         cellRenderer: PercentCellRenderer,
-        valueFormatter: (params) =>
+        valueFormatter: (params: any) =>
           params.value ? params.value.toFixed(1) : "",
         filter: "agNumberColumnFilter",
         floatingFilter: true,
@@ -968,7 +968,7 @@ const GradeDistribution = ({
         headerName: "B%",
         type: "numericColumn",
         cellRenderer: PercentCellRenderer,
-        valueFormatter: (params) =>
+        valueFormatter: (params: any) =>
           params.value ? params.value.toFixed(1) : "",
         filter: "agNumberColumnFilter",
         floatingFilter: true,
@@ -982,7 +982,7 @@ const GradeDistribution = ({
         headerName: "C%",
         type: "numericColumn",
         cellRenderer: PercentCellRenderer,
-        valueFormatter: (params) =>
+        valueFormatter: (params: any) =>
           params.value ? params.value.toFixed(1) : "",
         filter: "agNumberColumnFilter",
         floatingFilter: true,
@@ -996,7 +996,7 @@ const GradeDistribution = ({
         headerName: "D%",
         type: "numericColumn",
         cellRenderer: PercentCellRenderer,
-        valueFormatter: (params) =>
+        valueFormatter: (params: any) =>
           params.value ? params.value.toFixed(1) : "",
         filter: "agNumberColumnFilter",
         floatingFilter: true,
@@ -1010,7 +1010,7 @@ const GradeDistribution = ({
         headerName: "F%",
         type: "numericColumn",
         cellRenderer: PercentCellRenderer,
-        valueFormatter: (params) =>
+        valueFormatter: (params: any) =>
           params.value ? params.value.toFixed(1) : "",
         filter: "agNumberColumnFilter",
         floatingFilter: true,
@@ -1023,7 +1023,7 @@ const GradeDistribution = ({
         field: "otherPercent",
         headerName: "Other %",
         type: "numericColumn",
-        cellRenderer: (props) => `${props.value ? props.value.toFixed(1) : 0}%`,
+        cellRenderer: (props: any) => `${props.value ? props.value.toFixed(1) : 0}%`,
         filter: "agNumberColumnFilter",
         flex: 1,
         pivot: true,
@@ -1055,13 +1055,13 @@ const GradeDistribution = ({
     }),
     []
   );
-  const onGridSizeChanged = useCallback((params) => {
+  const onGridSizeChanged = useCallback((params: any) => {
     const gridWidth = document.querySelector(".ag-center-cols")?.clientWidth;
     if (gridWidth) {
       params.api.sizeColumnsToFit();
     }
   }, []);
-  const onGridReady = useCallback((params) => {
+  const onGridReady = useCallback((params: any) => {
     setGridApi(params.api);
     params.api.sizeColumnsToFit();
   }, []);
@@ -1295,7 +1295,7 @@ const GradeDistribution = ({
     ]
   );
 
-  const updateChartData = useCallback((params) => {
+  const updateChartData = useCallback((params: any) => {
     const sortedData: SetStateAction<any[]> = [];
     params.api.forEachNodeAfterFilterAndSort((node: { data: any; }) => {
       sortedData.push(node.data);
@@ -1538,7 +1538,7 @@ const GradeDistribution = ({
               ) : (
                 <div className="h-[500px] relative">
                   <AgCharts
-                    options={chartOptions}
+                    options={chartOptions as any}
                     ref={chartRef}
                     style={{ width: "100%", height: "100%" }}
                   />

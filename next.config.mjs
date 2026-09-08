@@ -46,11 +46,6 @@ const nextConfig = {
     async headers() {
         return [{ source: '/(.*)', headers: securityHeaders }];
     },
-    typescript: {
-        // Ignore TypeScript errors during build
-        // TODO: remove once Phase 6 clears the tsc baseline (see docs/handoff-2026-09-08-review.md)
-        ignoreBuildErrors: true,
-    },
 }
 
 export default nextConfig;

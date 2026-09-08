@@ -180,14 +180,13 @@ export default function AddQueryForm({
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
-                        className="w-full"
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Test" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectGroup>
-                            {categories.map((category) => (
+                            {(categories ?? []).map((category) => (
                               <SelectItem key={category.id} value={category.id}>
                                 {category.label}
                               </SelectItem>

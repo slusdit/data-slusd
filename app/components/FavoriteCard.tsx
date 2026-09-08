@@ -42,9 +42,9 @@ const FavoriteCard = ({
     return (       
         <Card className="w-full p-2 mr-4 justify-center flex flex-col h-full shadow-md" key={query.id}>
             <Badge className="mb-5 text-center w-fit text-xs opacity-50">
-                {query.category.label}
+                {query.category?.label ?? "Uncategorized"}
             </Badge>
-            <Link href={query.widgetLinkOverride || `/query/${query.category.label.toLowerCase()}/${query.id}`}>
+            <Link href={query.widgetLinkOverride || `/query/${query.category?.value ?? "uncategorized"}/${query.id}`}>
                 <CardTitle className="mb-5 text-center">
                     {query.name}
                 </CardTitle>

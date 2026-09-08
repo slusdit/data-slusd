@@ -40,7 +40,7 @@ function validateFragmentSQL(snippet: string, fragmentType: string): { valid: bo
   const injectionPatterns = [
     /;\s*(drop|delete|insert|update|create)/i,
     /--\s*$/m, // SQL comments at end of line (potential comment-out attack)
-    /\/\*.*\*\//s, // Block comments (can hide malicious code)
+    /\/\*[\s\S]*\*\//, // Block comments (can hide malicious code)
   ];
 
   for (const pattern of injectionPatterns) {

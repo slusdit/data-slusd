@@ -11,8 +11,14 @@ npm run host        # Start dev server with network access (0.0.0.0)
 npm run build       # Build for production
 npm start           # Start production server
 npm run lint        # Run ESLint
+npm test            # Unit tests (node:test via tsx, lib/*.test.ts)
+npx tsc --noEmit    # Type check (must stay clean; the build no longer ignores type errors)
 npx tsx <file.ts>   # Execute TypeScript files directly
 ```
+
+Never run `next dev` or `next build` on the production host: it serves `npm start` from its own
+checkout and a build empties `.next` under the running server. Develop on the dev box and deploy
+in a maintenance window (see `docs/handoff-2026-09-08-review.md`, Phase 7).
 
 ### Database Operations
 ```bash
@@ -30,7 +36,7 @@ npx prisma studio       # Open Prisma Studio GUI
 - **Auth**: NextAuth v5 with Google OAuth
 - **UI**: Radix UI components + Tailwind CSS
 - **Tables**: AG-Grid Enterprise for data tables
-- **Charts**: AG-Charts Enterprise + Recharts
+- **Charts**: AG-Charts Enterprise (standalone `AgCharts` on the dashboard, integrated charts in the report grid)
 
 ### Core Architecture
 

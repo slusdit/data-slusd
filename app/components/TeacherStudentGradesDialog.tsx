@@ -2,7 +2,7 @@
 // Registers AG Grid Enterprise modules + licence for this grid (finding P1)
 import "@/app/components/providers/AGGridProvider";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { colorSchemeDarkBlue, themeQuartz } from "ag-grid-community";
+import { colorSchemeDarkBlue, themeQuartz, ColDef } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import { useTheme } from "next-themes";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -63,7 +63,7 @@ const TeacherStudentGradesDialog = ({
   // console.log("Props received:", { sc, tn, term, courseTitle, ellStatus, specialEdStatus, ardStatus });
   
   // Define column definitions for student-level grade data
-  const columnDefs = useMemo(
+  const columnDefs = useMemo<ColDef[]>(
     () => [
       {
         field: "teacherName",
@@ -163,7 +163,7 @@ const TeacherStudentGradesDialog = ({
         sortable: true,
         minWidth: 100,
         flex: 1,
-        cellStyle: (params) => {
+        cellStyle: (params: any): any => {
           // Apply different colors based on grades
           const grade = params.value;
           if (grade === "A" || grade === "A+" || grade === "A-") {
@@ -234,7 +234,7 @@ const TeacherStudentGradesDialog = ({
   );
 
   // Function to handle grid ready event and capture the grid API
-  const onGridReady = useCallback((params) => {
+  const onGridReady = useCallback((params: any) => {
     setGridApi(params.api);
   }, []);
 
@@ -250,7 +250,7 @@ const TeacherStudentGradesDialog = ({
         suppressQuotes: true,
         columnSeparator: ",",
         onlyFilteredAndSortedData: true,
-        processCellCallback: (params) => {
+        processCellCallback: (params: any) => {
           // Handle null or undefined values
           if (params.value === null || params.value === undefined) return "";
 
@@ -299,7 +299,7 @@ const TeacherStudentGradesDialog = ({
           setGradeData(Array.isArray(result) ? result : []);
         } catch (error) {
           console.error("Error fetching student grade data:", error);
-          setError(error.message || "Failed to load data");
+          setError(error instanceof Error ? error.message : "Failed to load data");
           setGradeData([]);
         } finally {
           setLoading(false);
@@ -332,7 +332,7 @@ const gradeSummary = useMemo(() => {
     
     if (standardGradeMatch) {
       const baseLetter = standardGradeMatch[1];
-      grades[baseLetter]++;
+      grades[baseLetter as keyof typeof grades]++;
     } else {
       grades.Other++;
     }
@@ -342,7 +342,7 @@ const gradeSummary = useMemo(() => {
 }, [gradeData]);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen} className="w-full h-full">
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger className="hover:underline text-left hover:text-primary">
         {children}
       </DialogTrigger>

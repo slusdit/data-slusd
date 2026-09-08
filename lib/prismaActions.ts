@@ -118,7 +118,7 @@ export async function getStudentGrades(
     return result;
   } catch (error) {
     console.error("Database error in server action:", error);
-    throw new Error(`Failed to fetch student grades: ${error.message}`);
+    throw new Error(`Failed to fetch student grades: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
@@ -132,6 +132,6 @@ export async function checkGradeDistributionData() {
     return count;
   } catch (error) {
     console.error("Error checking data:", error);
-    return { error: error.message };
+    return { error: error instanceof Error ? error.message : String(error) };
   }
 }

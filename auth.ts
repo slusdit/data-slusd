@@ -151,12 +151,7 @@ const nextAuth = NextAuth({
       return true;
     },
     
-    async session({ session, user }:
-      {
-        session: SessionUser
-        user: any
-      }
-    ) {
+    async session({ session, user }: { session: any; user: any }) {
       // Define shared include structure to avoid duplication
       const userInclude = {
         favorites: {
@@ -243,6 +238,7 @@ const nextAuth = NextAuth({
             activeSchool: true,
             activeDbYear: true,
             manualSchool: true,
+            emulatingId: true,
             blockedSchools: true,
             addedSchools: true,
             blockedRoles: true,
