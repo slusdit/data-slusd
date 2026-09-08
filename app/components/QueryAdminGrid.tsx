@@ -73,8 +73,9 @@ export default function QueryAdminGrid({
     chartTypeKey: "",
     chartXKey: "",
     chartYKey: "",
-    chartStackKey: "",
+    chartStackKey: false,
     hiddenCols: "",
+    totalColumns: "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [selectedRows, setSelectedRows] = useState<QueryWithCategory[]>([]);
@@ -220,8 +221,9 @@ export default function QueryAdminGrid({
       chartTypeKey: query.chartTypeKey || "",
       chartXKey: query.chartXKey || "",
       chartYKey: query.chartYKey || "",
-      chartStackKey: query.chartStackKey || "",
+      chartStackKey: Boolean(query.chartStackKey),
       hiddenCols: query.hiddenCols || "",
+      totalColumns: query.totalColumns || "",
     });
     setIsEditDialogOpen(true);
   };
@@ -237,8 +239,9 @@ export default function QueryAdminGrid({
       chartTypeKey: query.chartTypeKey || "",
       chartXKey: query.chartXKey || "",
       chartYKey: query.chartYKey || "",
-      chartStackKey: query.chartStackKey || "",
+      chartStackKey: Boolean(query.chartStackKey),
       hiddenCols: query.hiddenCols || "",
+      totalColumns: query.totalColumns || "",
     });
     setIsEditDialogOpen(true);
   };
@@ -284,7 +287,7 @@ export default function QueryAdminGrid({
 
       if (selectedQuery) {
         // Update existing
-        await updateQuery({ id: selectedQuery.id, ...saveData }, "query");
+        await updateQuery(selectedQuery.id, saveData);
 
         setQueries((prev) =>
           prev.map((q) => {
@@ -521,14 +524,18 @@ export default function QueryAdminGrid({
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="chartStack">Stack Key</Label>
-                  <Input
-                    id="chartStack"
-                    value={formData.chartStackKey}
-                    onChange={(e) => setFormData({ ...formData, chartStackKey: e.target.value })}
-                    disabled={!formData.chart}
-                    placeholder="Optional"
-                  />
+                  <Label htmlFor="chartStack">Stacked Chart</Label>
+                  <div className="flex items-center gap-2 h-10">
+                    <Checkbox
+                      id="chartStack"
+                      checked={formData.chartStackKey}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, chartStackKey: checked === true })
+                      }
+                      disabled={!formData.chart}
+                    />
+                    <span className="text-sm text-muted-foreground">Stack the Y-axis series</span>
+                  </div>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4 mt-3">
@@ -563,6 +570,21 @@ export default function QueryAdminGrid({
                 onChange={(e) => setFormData({ ...formData, hiddenCols: e.target.value })}
                 placeholder="e.g., id, internal_code"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="totalColumns">Total Columns (comma separated)</Label>
+              <Input
+                id="totalColumns"
+                value={formData.totalColumns}
+                onChange={(e) => setFormData({ ...formData, totalColumns: e.target.value })}
+                placeholder="e.g., # UPP, Total, UPP %:ratio(# UPP,Total)"
+              />
+              <p className="text-xs text-muted-foreground">
+                Adds a totals footer. Each entry is <code>column</code> (sum), <code>column:fn</code> with fn =
+                sum, avg, min, max or count, or <code>column:ratio(numerator,denominator)</code> for
+                100 × sum(numerator) / sum(denominator). Leave blank for no footer.
+              </p>
             </div>
           </div>
 

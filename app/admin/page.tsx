@@ -75,6 +75,7 @@ export default async function AdminPage() {
           chartTypeKey: true,
           chartStackKey: true,
           hiddenCols: true,
+          totalColumns: true,
           categoryId: true,
           widgetLinkOverride: true,
           chartSeriesOverride: true,

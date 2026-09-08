@@ -85,6 +85,12 @@ import {
 
 import FavoriteStarSwitch from "@/app/components/FavoriteStarSwitch";
 import { SessionUser } from "@/auth";
+import {
+  TotalSpec,
+  computeTotalsRow,
+  inferNumericColumn,
+  pickLabelColumn,
+} from "@/lib/reportTotals";
 
 interface Category {
   id: string;
@@ -113,7 +119,7 @@ interface QueryPageClientProps {
     chartXKey: string | null;
     chartYKey: string | null;
     chartTypeKey: string | null;
-    chartStackKey: string | null;
+    chartStackKey: boolean | null;
     chartSeriesOverride: string | null;
     category: {
       id: string;
@@ -130,6 +136,8 @@ interface QueryPageClientProps {
   allQueries: QueryItem[];
   /** true when the server dropped rows beyond the 10,000-row cap (S13) */
   truncated?: boolean;
+  /** parsed Query.totalColumns; empty = no footer */
+  totalSpecs?: TotalSpec[];
 }
 
 // Quick stats interface
@@ -189,12 +197,24 @@ function addToQueryHistory(query: { id: string; name: string; category: string }
   }
 }
 
+// Number cell display: thousands separators; "%" columns get one decimal and a % sign.
+// Export keeps the raw value (useValueFormatterForExport is off on these columns).
+function formatNumberCell(value: unknown, percent: boolean): string {
+  if (value === null || value === undefined || value === "") return "";
+  const n = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(n)) return String(value);
+  if (percent) {
+    return `${n.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
+  }
+  return Number.isInteger(n) ? n.toLocaleString() : n.toLocaleString(undefined, { maximumFractionDigits: 2 });
+}
+
 // ID Cell Renderer for linking to student pages
 const IdCellRenderer = (props: any) => {
   const sc = props.data?.sc || props.data?.SC || "";
   const value = props.value || "";
 
-  if (props.node.group || props.node.aggData) {
+  if (props.node.rowPinned || props.node.group || props.node.aggData) {
     const displayValue = props.value?.value || props.value || "";
     return <div>{displayValue}</div>;
   }
@@ -221,6 +241,7 @@ export default function QueryPageClient({
   categories,
   allQueries,
   truncated = false,
+  totalSpecs = [],
 }: QueryPageClientProps) {
   const router = useRouter();
   const { resolvedTheme } = useTheme();
@@ -302,6 +323,21 @@ export default function QueryPageClient({
     return stats;
   }, [data, filteredData, selectedRows, hiddenColumns]);
 
+  // Totals footer (Phase 3). Same row source as quickStats, so it recomputes on
+  // filter, sort and selection. A pinned row stays visible on every page and
+  // is included in exports, unlike grandTotalRow.
+  const pinnedBottomRow = useMemo(() => {
+    if (totalSpecs.length === 0 || !data || data.length === 0) return undefined;
+    const source = selectedRows.length > 0 ? selectedRows : filteredData;
+    const labelColumn = pickLabelColumn(Object.keys(data[0]), totalSpecs, data);
+    const row = computeTotalsRow(
+      source,
+      totalSpecs,
+      labelColumn ? { column: labelColumn, text: selectedRows.length > 0 ? "Selected" : "Total" } : undefined
+    );
+    return row ? [row] : undefined;
+  }, [data, filteredData, selectedRows, totalSpecs]);
+
   // Grid theme
   const gridTheme = useMemo(() => {
     return resolvedTheme === "dark"
@@ -358,13 +394,17 @@ export default function QueryPageClient({
         };
       }
 
-      if (typeof data[0][key] === "number") {
+      if (inferNumericColumn(data, key)) {
+        const isPercent = key.includes("%");
         return {
           ...baseCol,
           filter: "agNumberColumnFilter",
           filterParams: { buttons: ["apply", "reset"], closeOnApply: true },
           enableValue: true,
           allowedAggFuncs: ['sum', 'avg', 'count', 'min', 'max', 'first', 'last'],
+          valueFormatter: (params) => formatNumberCell(params.value, isPercent),
+          useValueFormatterForExport: false,
+          type: "rightAligned",
         };
       }
 
@@ -455,7 +495,7 @@ export default function QueryPageClient({
         xKey: query.chartXKey || "SC",
         yKey: key,
         yName: key,
-        stacked: query.chartStackKey === "true",
+        stacked: query.chartStackKey === true,
         cornerRadius: chartType === "bar" ? 4 : 0,
       })),
       axes: [
@@ -639,6 +679,7 @@ export default function QueryPageClient({
       <AgGridReact
         theme={gridTheme}
         rowData={data}
+        pinnedBottomRowData={pinnedBottomRow}
         columnDefs={columnDefs}
         defaultColDef={defaultColDef}
         onGridReady={onGridReady}
@@ -674,6 +715,11 @@ export default function QueryPageClient({
         @media print {
           .no-print { display: none !important; }
           .print-break { page-break-before: always; }
+        }
+        /* totals footer row */
+        .ag-floating-bottom .ag-cell {
+          font-weight: 600;
+          border-top: 2px solid var(--ag-border-color, #babfc7);
         }
       `}</style>
 

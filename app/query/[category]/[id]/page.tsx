@@ -1,6 +1,7 @@
 import { auth, SessionUser } from "@/auth";
 import { runQueryWithMeta, formatQueryErrorForUser } from "@/lib/aeries";
 import { userCanRunQuery, userCanSeeCategory } from "@/lib/authorization";
+import { parseTotalColumns } from "@/lib/reportTotals";
 import prisma from "@/lib/db";
 import { notFound, redirect } from "next/navigation";
 import QueryPageClient from "./QueryPageClient";
@@ -102,6 +103,9 @@ export default async function Page({ params }: PageProps) {
     ? result.hiddenCols.split(",").map((col) => col.trim().toUpperCase())
     : [];
 
+  // Totals footer spec (Phase 3), e.g. "# UPP, Total, UPP %:ratio(# UPP,Total)"
+  const totalSpecs = parseTotalColumns(result.totalColumns);
+
   // Sidebar: only the reports and categories this user may open (S5, P4)
   const visibleQueries = allQueries
     .filter((q) => userCanRunQuery(user, q))
@@ -136,6 +140,7 @@ export default async function Page({ params }: PageProps) {
       user={user}
       error={queryError}
       truncated={truncated}
+      totalSpecs={totalSpecs}
       urlCategory={urlCategory}
       categories={visibleCategories}
       allQueries={visibleQueries}

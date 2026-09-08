@@ -20,6 +20,7 @@ export async function addQuery(values: z.infer<typeof queryFormSchema>) {
         createdBy: values.createdBy,
         description: values.description,
         hiddenCols: values.hiddenCols || "",
+        totalColumns: values.totalColumns || null,
         chart: values.chart,
         chartTypeKey: values.chartTypeKey,
         chartStackKey: values.chartStackKey,
@@ -37,25 +38,42 @@ export async function addQuery(values: z.infer<typeof queryFormSchema>) {
   }
 }
 
-export async function updateQuery(data: any, field: string) {
-  await requireQueryEditor()
-  const { id, ...updateData } = data
-
-  // console.log("updateQuery", data)
-  // console.log({[field]: updateData[field as keyof typeof updateData]})
-  // try {
-  const result = await prisma.query.update({
-    where: {
-      id: id
-    },
-    data: { [field]: updateData[field as keyof typeof updateData] }
+// Fields the admin Edit Query dialog may change (finding U6: the old single-field
+// update silently dropped every edit except the SQL). `.strict()` rejects
+// anything else so a client cannot write createdBy, label or roles this way.
+const editableQueryFields = z
+  .object({
+    name: z.string().min(1).optional(),
+    categoryId: z.string().nullable().optional(),
+    description: z.string().optional(),
+    query: z.string().min(1).optional(),
+    chart: z.boolean().optional(),
+    chartXKey: z.string().nullable().optional(),
+    chartYKey: z.string().nullable().optional(),
+    chartTypeKey: z.string().nullable().optional(),
+    chartStackKey: z.boolean().optional(),
+    hiddenCols: z.string().optional(),
+    totalColumns: z.string().nullable().optional(),
+    publicQuery: z.boolean().optional(),
   })
-  return result
-  // } catch (error) {
-  // console.error("Error updating query:", error)
-  // return error
-  // }
-};
+  .strict()
+
+export type EditableQueryFields = z.infer<typeof editableQueryFields>
+
+export async function updateQuery(id: string, data: EditableQueryFields) {
+  await requireQueryEditor()
+  if (typeof id !== "string" || !id) throw new Error("Query id is required")
+  const parsed = editableQueryFields.parse(data)
+  return prisma.query.update({
+    where: { id },
+    data: {
+      ...parsed,
+      // an empty category selection means "no category"
+      categoryId: parsed.categoryId === "" ? null : parsed.categoryId,
+      totalColumns: parsed.totalColumns === "" ? null : parsed.totalColumns,
+    },
+  })
+}
 
 // UPDATED: Improved updateUser function with better handling of many-to-many relationships
 export async function updateUser(data: any, field: string) {

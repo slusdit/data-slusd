@@ -180,6 +180,8 @@ model Query {
   publicQuery    Boolean        @default(false)
   categoryId     String?
   hiddenCols     String         @default("")
+  // Phase 3: comma-separated totals footer spec, e.g. "# UPP, Total, UPP %:ratio(# UPP,Total)" (see lib/reportTotals.ts)
+  totalColumns   String?        @db.Text
   chart          Boolean        @default(false)
   chartXKey      String?
   chartYKey      String?

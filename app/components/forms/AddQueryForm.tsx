@@ -47,6 +47,7 @@ type PageValues = {
   chartStackKey: boolean;
   categoryId: string | null;
   hiddenCols: string | null;
+  totalColumns?: string | null;
 };
 interface Props {
   session: Session;
@@ -63,6 +64,7 @@ export const queryFormSchema = z.object({
   description: z.string().min(1, { message: "Description must not be empty" }),
   categoryId: z.string().min(1, { message: "Category must not be empty" }),
   hiddenCols: z.string().optional(),
+  totalColumns: z.string().optional(),
   chart: z.boolean(),
   chartStackKey: z.boolean().optional(),
   chartXKey: z.string().optional(),
@@ -109,6 +111,7 @@ export default function AddQueryForm({
       chartYKey: undefined,
       chartTypeKey: "bar",
       hiddenCols: "",
+      totalColumns: "",
     },
   });
 
@@ -255,6 +258,23 @@ export default function AddQueryForm({
                 </FormControl>
                 <FormDescription>
                   Comma separated list of columns to hide on the result page
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="totalColumns"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Total Columns</FormLabel>
+                <FormControl>
+                  <Input placeholder="# UPP, Total, UPP %:ratio(# UPP,Total)" type="text" {...field} />
+                </FormControl>
+                <FormDescription>
+                  Totals footer: column (sum), column:fn (sum, avg, min, max, count) or
+                  column:ratio(numerator,denominator)
                 </FormDescription>
                 <FormMessage />
               </FormItem>
