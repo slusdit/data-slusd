@@ -7,7 +7,7 @@ import { QueryCategory } from "@prisma/client";
 import type { Session } from "next-auth";
 import { QueryWithCategory } from "./QueryBar";
 import prisma from "@/lib/db";
-import ActiveSchool from "./ActiveSchool";
+import ActiveSchool, { SelectableSchool } from "./ActiveSchool";
 import ReportsDropdown from "./ReportsDropdown";
 import YearSelector from "./YearSelector";
 
@@ -19,10 +19,18 @@ export default async function MainHeader({
   let schoolInfo;
   let categories: (QueryCategory & { roles: { role: string }[] })[] = [];
   let queries: QueryWithCategory[] = [];
+  let selectableSchools: SelectableSchool[] = [];
 
   if (session?.user) {
-    // Fetch school info, categories, and queries in parallel
-    const [schoolResult, categoriesResult, queriesResult] = await Promise.all([
+    const user = session.user as unknown as SessionUser;
+    // Only the schools assigned to this user account: the UserSchool rows and
+    // addedSchools/blockedSchools overrides managed in the admin dashboard.
+    // No implicit widening — an admin or a district-wide (sc 0) Aeries
+    // permission does not by itself put every school in the picker.
+    const allowedSchoolCodes = user.schools ?? [];
+
+    // Fetch school info, categories, queries, and the picker's schools in parallel
+    const [schoolResult, categoriesResult, queriesResult, selectableResult] = await Promise.all([
       prisma.schoolInfo.findUnique({
         where: {
           sc: session?.user?.activeSchool.toString(),
@@ -51,11 +59,17 @@ export default async function MainHeader({
         },
         orderBy: { name: "asc" },
       }),
+      prisma.schoolInfo.findMany({
+        where: { sc: { in: allowedSchoolCodes } },
+        select: { sc: true, name: true, logo: true },
+        orderBy: { name: "asc" },
+      }),
     ]);
 
     schoolInfo = schoolResult;
     categories = categoriesResult;
     queries = queriesResult;
+    selectableSchools = selectableResult;
   }
 
   // console.log(session.user)
@@ -116,9 +130,8 @@ export default async function MainHeader({
         {schoolInfo && (
           <ActiveSchool
             activeSchool={schoolInfo}
-            userSchools={(session?.user as SessionUser)?.UserSchool}
-            allowedSchoolCodes={(session?.user as SessionUser)?.schools}
-            userId={(session?.user as SessionUser)?.id}
+            schools={selectableSchools}
+            userId={(session?.user as unknown as SessionUser)?.id}
           />
         )}
 
@@ -126,7 +139,7 @@ export default async function MainHeader({
         <div className="flex items-center gap-2 pr-2">
           {session?.user && (
             <YearSelector
-              activeDbYear={(session.user as unknown as SessionUser).activeDbYear ?? 25}
+              activeDbYear={(session.user as unknown as SessionUser).activeDbYear ?? 26}
               userId={(session.user as unknown as SessionUser).id}
             />
           )}

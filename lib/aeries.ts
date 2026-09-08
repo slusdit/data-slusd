@@ -104,6 +104,11 @@ export type AeriesSimpleStaff = {
   id: number
   email: string
   schoolPermissions: number[]
+  /**
+   * Whether the staff record actually carries per-school access rows, as
+   * opposed to `getSchools()` having fallen back to the primary school.
+   */
+  hasSchoolPermissions: boolean
   primarySchool: number
   title: string
 }
@@ -650,6 +655,51 @@ function getSchools(data: PersonInfo) {
   return schools
 }
 
+/**
+ * Resolves school access from the Aeries USR security table.
+ *
+ * Roughly two thirds of staff records carry no SchoolAccessPermissions rows, so
+ * the staff API alone reports only their primary school. Their real access
+ * lives in USR, where the same person can appear under up to three logins:
+ * their email ("dmellons@slusd.us"), a bare username ("dmellons"), and a
+ * network account suffixed with ".net" ("dmellons.net"). The ".net" account is
+ * the elevated one, so it is used only when the person has no other login —
+ * a regular account always wins.
+ *
+ * Logins are matched exactly, never with LIKE: the previous USR lookup used
+ * `NM LIKE '<name>%'` and could pull in a different person's schools.
+ *
+ * @param {string} email - The staff member's email address.
+ * @return {Promise<number[]>} School codes for the preferred login, or [] if
+ * the person has no USR account at all.
+ */
+export async function getSchoolsFromUsrAccounts(email: string): Promise<number[]> {
+  const localPart = email.split("@")[0]?.trim()
+  if (!localPart) return []
+
+  // Least-privileged first; the ".net" network account is the last resort.
+  const loginsByPreference = [email, localPart, `${localPart}.net`]
+
+  const rows = await runParameterizedQuery(
+    `SELECT NM, SCH FROM USR WHERE DEL = 0 AND NM IN (@emailLogin, @bareLogin, @netLogin)`,
+    {
+      emailLogin: { type: sql.VarChar, value: email },
+      bareLogin: { type: sql.VarChar, value: localPart },
+      netLogin: { type: sql.VarChar, value: `${localPart}.net` },
+    }
+  )
+
+  for (const login of loginsByPreference) {
+    const schools = rows
+      .filter((row: any) => String(row.NM ?? "").toLowerCase() === login.toLowerCase())
+      .map((row: any) => Number(row.SCH))
+      .filter((sc: number) => Number.isFinite(sc))
+    if (schools.length > 0) return Array.from(new Set(schools))
+  }
+
+  return []
+}
+
 /*
  * Helper Functions
  */
@@ -746,6 +796,7 @@ export async function getAeriesStaff({
     "id": person.ID,
     "email": person.EmailAddress,
     "schoolPermissions": getSchools(person),
+    "hasSchoolPermissions": (person.SchoolAccessPermissions?.length ?? 0) > 0,
     "primarySchool": person.PrimaryAeriesSchool,
     "title": person.Title
   }

@@ -14,34 +14,26 @@ import {
 import { Check, ChevronDown, Loader2 } from "lucide-react";
 import { updateActiveSchool } from "@/lib/signinMiddleware";
 
-type UserSchool = {
-  school: {
-    sc: string;
-    name: string;
-    logo?: string;
-  };
+export type SelectableSchool = {
+  sc: string;
+  name: string;
+  logo?: string | null;
 };
 
 interface ActiveSchoolProps {
   activeSchool: SchoolInfo;
-  userSchools?: UserSchool[];
-  allowedSchoolCodes?: string[]; // Filtered list of school codes the user actually has access to
+  /** Schools the user may switch to, resolved server-side in MainHeader. */
+  schools?: SelectableSchool[];
   userId?: string;
 }
 
-const ActiveSchool = ({ activeSchool, userSchools, allowedSchoolCodes, userId }: ActiveSchoolProps) => {
+const ActiveSchool = ({ activeSchool, schools, userId }: ActiveSchoolProps) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
 
-  // Filter schools to only show those the user has access to
-  const filteredSchools = userSchools?.filter(us => {
-    // If no allowedSchoolCodes provided, show all
-    if (!allowedSchoolCodes || allowedSchoolCodes.length === 0) return true;
-    return allowedSchoolCodes.includes(us.school.sc);
-  }) || [];
-
-  const hasMultipleSchools = filteredSchools.length > 1;
+  const selectableSchools = schools ?? [];
+  const hasMultipleSchools = selectableSchools.length > 1;
 
   const handleSchoolChange = async (schoolSc: string) => {
     if (!userId) return;
@@ -81,6 +73,7 @@ const ActiveSchool = ({ activeSchool, userSchools, allowedSchoolCodes, userId }:
       <DropdownMenuTrigger
         className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-title-foreground/10 transition-colors focus:outline-none"
         disabled={isPending}
+        aria-label={`Active school: ${activeSchool.name}. Change school`}
       >
         {isPending ? (
           <Loader2 className="h-8 w-8 animate-spin text-title-foreground/70" />
@@ -98,22 +91,22 @@ const ActiveSchool = ({ activeSchool, userSchools, allowedSchoolCodes, userId }:
         </span>
         <ChevronDown className={`h-4 w-4 text-title-foreground/70 transition-transform ${open ? "rotate-180" : ""}`} />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="center" className="w-64">
-        {filteredSchools.map((userSchool) => (
+      <DropdownMenuContent align="center" className="w-64 max-h-[70vh] overflow-y-auto">
+        {selectableSchools.map((school) => (
           <DropdownMenuItem
-            key={userSchool.school.sc}
-            onClick={() => handleSchoolChange(userSchool.school.sc)}
+            key={school.sc}
+            onClick={() => handleSchoolChange(school.sc)}
             className="gap-3 py-2.5"
           >
             <Image
-              src={userSchool.school.logo || "/logos/slusd-logo.png"}
+              src={school.logo || "/logos/slusd-logo.png"}
               width={28}
               height={28}
-              alt={userSchool.school.name}
+              alt={school.name}
               className="rounded-sm"
             />
-            <span className="flex-1 truncate">{userSchool.school.name}</span>
-            {userSchool.school.sc === activeSchool.sc && (
+            <span className="flex-1 truncate">{school.name}</span>
+            {school.sc === activeSchool.sc && (
               <Check className="h-4 w-4 text-primary" />
             )}
           </DropdownMenuItem>

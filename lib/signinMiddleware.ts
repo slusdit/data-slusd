@@ -1,10 +1,8 @@
 'use server'
 import { Profile } from "next-auth";
-import { AeriesSimpleStaff, AeriesSimpleTeacher, getAeriesStaff, getTeacherSchoolCredentials, runParameterizedQuery } from "./aeries";
+import { AeriesSimpleStaff, AeriesSimpleTeacher, getAeriesStaff, getSchoolsFromUsrAccounts, getTeacherSchoolCredentials, runParameterizedQuery } from "./aeries";
 import prisma from "./db";
 import { revalidatePath } from "next/cache";
-import { redirect } from 'next/navigation';
-import { headers } from 'next/headers';
 import { auth } from "@/auth";
 import { requireUser } from "./authGuard";
 import { ROLE } from "@prisma/client";
@@ -201,11 +199,26 @@ export async function getAllSchools(profileEmail: string) {
 
     const results = await getPrimarySchool(profileEmail) ?? { primarySchool: null, psl: null, allSchools: [] as number[] }
 
-    // Use the Aeries API SchoolAccessPermissions as the source of truth
-    // instead of the USR table, which could match wrong users via LIKE query
+    // Prefer the Aeries API's SchoolAccessPermissions, falling back to an
+    // exact-match USR lookup for the ~2/3 of staff records that carry no
+    // per-school rows. (The original USR query was retired because its
+    // `NM LIKE '<name>%'` match could return a different person's schools.)
     try {
         const aeriesStaff = await getAeriesStaff({ email: profileEmail, endpoint: "/api/v5/staff" })
-        results['allSchools'] = aeriesStaff.schoolPermissions
+        if (aeriesStaff.hasSchoolPermissions) {
+            results['allSchools'] = aeriesStaff.schoolPermissions
+        } else {
+            // The staff record has no per-school rows, so the API can only
+            // report the primary school. Fall back to the USR security table,
+            // which is where district/site access is actually granted for these
+            // accounts. getSchoolsFromUsrAccounts prefers the person's regular
+            // login and only uses their ".net" network account if it is their
+            // only one. Exact login matching keeps the old LIKE bug out.
+            const usrSchools = await getSchoolsFromUsrAccounts(profileEmail)
+            results['allSchools'] = usrSchools.length > 0
+                ? usrSchools
+                : aeriesStaff.schoolPermissions
+        }
     } catch (error) {
         console.error("Failed to get school permissions from Aeries API, falling back to primary school:", error)
         // Fall back to primary school only if API call fails
@@ -242,10 +255,11 @@ export async function updateActiveSchool(_userId: string, activeSchool: number) 
             activeSchool
         }
     })
-    const headersList = await headers()
-    const referer = headersList.get('referer')
-    const currentPath = referer ? new URL(referer).pathname : '/'
-    redirect(currentPath)
+    // Deliberately no redirect() here. Next rejects a server action's promise
+    // with a NEXT_REDIRECT error whenever the action redirects, so callers that
+    // wrap the call in try/catch saw a "failed" switch even though it had
+    // succeeded. The redirect only ever pointed back at the current path, so
+    // callers refresh the route themselves instead.
 }
 
 export async function updateActiveDbYear(_userId: string, activeDbYear: number) {
@@ -259,10 +273,11 @@ export async function updateActiveDbYear(_userId: string, activeDbYear: number) 
             activeDbYear
         }
     })
-    const headersList = await headers()
-    const referer = headersList.get('referer')
-    const currentPath = referer ? new URL(referer).pathname : '/'
-    redirect(currentPath)
+    // Deliberately no redirect() here. Next rejects a server action's promise
+    // with a NEXT_REDIRECT error whenever the action redirects, so callers that
+    // wrap the call in try/catch saw a "failed" switch even though it had
+    // succeeded. The redirect only ever pointed back at the current path, so
+    // callers refresh the route themselves instead.
 }
 
 export async function getPrimarySchool(profileEmail: string): Promise<GetAllSchoolsReturn> {

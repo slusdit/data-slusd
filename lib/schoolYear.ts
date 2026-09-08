@@ -7,6 +7,7 @@
 // Available Aeries database years (add new years as they become available)
 // Year code is the START year of the school year (e.g., 25 = 2025-26)
 export const AVAILABLE_DB_YEARS = [
+  { year: 26, label: '2026-27', database: 'DST26000SanLeandroUSD' },
   { year: 25, label: '2025-26', database: 'DST25000SanLeandroUSD' },
   { year: 24, label: '2024-25', database: 'DST24000SanLeandroUSD' },
   { year: 23, label: '2023-24', database: 'DST23000SanLeandroUSD' },
