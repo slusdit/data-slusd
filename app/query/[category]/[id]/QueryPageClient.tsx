@@ -1,4 +1,6 @@
 "use client";
+// Registers the AG Charts modules + licence for standalone charts on this page
+import "@/app/components/providers/AgChartsSetup";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTheme } from "next-themes";

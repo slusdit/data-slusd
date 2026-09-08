@@ -1,5 +1,7 @@
 // @ts-nocheck
 "use client";
+// Registers the AG Charts modules + licence for standalone charts on this page
+import "@/app/components/providers/AgChartsSetup";
 // Registers AG Grid Enterprise modules + licence for this grid (finding P1)
 import "@/app/components/providers/AGGridProvider";
 import { useEffect, useMemo, useState, useCallback } from "react";
