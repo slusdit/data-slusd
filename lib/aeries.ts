@@ -296,22 +296,18 @@ function toExecutionError(error: unknown, context: string): QueryExecutionError 
 }
 
 /**
- * Run a parameterized query (bound @params) as the signed-in user.
- * @param query - SQL query with parameter placeholders (@param1, @param2, etc.)
- * @param parameters - Object mapping parameter names to their values
- * @param options - Optional database year override
- * @throws AuthError when not signed in; QueryExecutionError on driver errors
+ * Shared executor for bound-parameter queries. Callers must have already
+ * decided who is allowed to run it: runParameterizedQuery (signed-in user) or
+ * runParameterizedQuerySystem (server-side flows with no session yet).
  */
-export async function runParameterizedQuery(
+async function executeParameterizedQuery(
   query: string,
-  parameters: Record<string, { type: any; value: any }> = {},
-  options?: { dbYear?: number }
+  parameters: Record<string, { type: any; value: any }>,
+  dbYear: number,
+  context: string
 ) {
-  const user = await requireUser();
   validateQueryWhitelist(query);
   const cleanQuery = stripSqlComments(query);
-
-  const dbYear = options?.dbYear ?? user.activeDbYear ?? DEFAULT_DB_YEAR;
   const database = getDatabaseName(dbYear);
   const pool = await getPoolForDatabase(database);
   const runOnce = () => {
@@ -326,8 +322,43 @@ export async function runParameterizedQuery(
     const result = await withTransientRetry(runOnce);
     return result.recordset;
   } catch (error) {
-    throw toExecutionError(error, `user=${user.email} db=${database} parameterized`);
+    throw toExecutionError(error, `${context} db=${database} parameterized`);
   }
+}
+
+/**
+ * Run a parameterized query (bound @params) as the signed-in user.
+ * @param query - SQL query with parameter placeholders (@param1, @param2, etc.)
+ * @param parameters - Object mapping parameter names to their values
+ * @param options - Optional database year override
+ * @throws AuthError when not signed in; QueryExecutionError on driver errors
+ */
+export async function runParameterizedQuery(
+  query: string,
+  parameters: Record<string, { type: any; value: any }> = {},
+  options?: { dbYear?: number }
+) {
+  const user = await requireUser();
+  const dbYear = options?.dbYear ?? user.activeDbYear ?? DEFAULT_DB_YEAR;
+  return executeParameterizedQuery(query, parameters, dbYear, `user=${user.email}`);
+}
+
+/**
+ * Run a parameterized query on behalf of the server itself, with no session.
+ *
+ * Only for server-side flows that run before a session exists, such as the
+ * NextAuth signIn event that syncs a user's schools from Aeries. This module is
+ * `server-only` and not a server action, so the function cannot be reached
+ * from the browser; never re-export it from a `'use server'` file, and never
+ * pass it caller-controlled SQL.
+ */
+export async function runParameterizedQuerySystem(
+  query: string,
+  parameters: Record<string, { type: any; value: any }> = {},
+  options?: { dbYear?: number }
+) {
+  const dbYear = options?.dbYear ?? DEFAULT_DB_YEAR;
+  return executeParameterizedQuery(query, parameters, dbYear, "actor=system");
 }
 
 /**
@@ -417,7 +448,8 @@ export async function getSchoolsFromUsrAccounts(email: string): Promise<number[]
   // Least-privileged first; the ".net" network account is the last resort.
   const loginsByPreference = [email, localPart, `${localPart}.net`]
 
-  const rows = await runParameterizedQuery(
+  // Runs inside the NextAuth signIn event, before a session exists.
+  const rows = await runParameterizedQuerySystem(
     `SELECT NM, SCH FROM USR WHERE DEL = 0 AND NM IN (@emailLogin, @bareLogin, @netLogin)`,
     {
       emailLogin: { type: sql.VarChar, value: email },

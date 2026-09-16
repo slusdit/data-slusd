@@ -61,7 +61,8 @@ npx prisma studio       # Open Prisma Studio GUI
 
 #### Key Services
 - `lib/aeries.ts` - Aeries database integration
-- `lib/signinMiddleware.ts` - User sync with Aeries on login
+- `lib/signinSync.ts` - User sync with Aeries on login (server-only; runs in the NextAuth signIn event)
+- `lib/signinMiddleware.ts` - Server actions for the session user's active school / year
 - `lib/fragment-service.ts` - AI query fragment management
 - `lib/query-composer.ts` - SQL query composition for AI
 - `lib/llm-client.ts` - LLM integration for query generation

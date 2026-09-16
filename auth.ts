@@ -3,7 +3,7 @@ import NextAuth from "next-auth";
 import { cache } from "react";
 import Google from "next-auth/providers/google";
 import prisma from "./lib/db";
-import { getAllSchools, getPrimarySchool, syncTeacherClasses } from "./lib/signinMiddleware";
+import { getAllSchools, syncTeacherClasses } from "./lib/signinSync";
 import { Class, Query, ROLE, SchoolInfo, User } from "@prisma/client";
 import { AeriesSimpleTeacher, getAeriesStaff } from "./lib/aeries";
 import { calculateCurrentSchoolYear } from "./lib/schoolYear";
