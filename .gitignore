@@ -56,3 +56,4 @@ scripts/eval/results-*.json
 # Editor settings (held DB credentials once; see docs/handoff-2026-09-08-review.md S3)
 /settings.json
 .vscode/
+.env.bak-2026-09-15
