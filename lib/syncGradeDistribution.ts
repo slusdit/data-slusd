@@ -28,123 +28,135 @@ export interface RawGradeData {
   DLI: string;
 }
 
-export async function syncGradeDistribution() {
+export type GradeSyncResult = {
+  /** Aeries database the grades were read from (the caller's active year) */
+  database: string;
+  schoolYears: string[];
+  fetched: number;
+  inserted: number;
+  /** rows dropped for a missing school, student, teacher number, term or mark */
+  skipped: number;
+};
+
+/**
+ * Re-import the grade distribution for the signed-in admin's active Aeries
+ * year. Every row for each school year present in the result is replaced.
+ */
+export async function syncGradeDistribution(): Promise<GradeSyncResult> {
   await requireAdmin();
-  const percentQueryId = process.env.QUERY_ASSESSMENT_GRADE_PERCENTAGE;
-  const resultsPercent = await prisma.query.findUnique({
-    where: { id: percentQueryId },
-  });
+  const percentQueryId = process.env.QUERY_ASSESSMENT_GRADE_PERCENTAGE?.trim();
+  const resultsPercent = percentQueryId
+    ? await prisma.query.findUnique({ where: { id: percentQueryId } })
+    : null;
   if (!resultsPercent?.query) {
     throw new Error(
-      "Query is undefined. Please ensure the query is properly configured."
+      "Grade query is not configured. Set QUERY_ASSESSMENT_GRADE_PERCENTAGE to the id of the grade distribution query."
     );
   }
   console.log("Starting grade distribution sync...");
 
-  const dbName = await runQuery('select DB_NAME() [db_name]')
-  console.log(`Current ${dbName.length} database: ${dbName?.map((db) => db.db_name)[0]}`);
+  const dbName = await runQuery("select DB_NAME() [db_name]");
+  const database = String(dbName[0]?.db_name ?? "unknown");
+  console.log(`Grade sync reading from ${database}`);
 
   try {
+    // The sync needs the whole table, not the MAX_ROWS report cap.
+    const rawData = (await runQuery(resultsPercent.query, { uncapped: true })) as RawGradeData[];
+    console.log(`Fetched ${rawData.length} records from SQL Server.`);
+    if (rawData.length === 0) {
+      throw new Error(`The grade query returned no rows from ${database}.`);
+    }
 
-  const rawData = (await runQuery(resultsPercent.query)) as RawGradeData[];
-  console.log(`Fetched ${rawData.length} records from SQL Server.`);
+    // The query joins the same column names from several tables, so the
+    // driver hands back arrays or comma-joined strings for SC/ID/SN. Keep the
+    // first value.
+    const extractFirst = (value: unknown): string => {
+      if (value == null) return "";
+      if (Array.isArray(value)) return extractFirst(value[0]);
+      const str = String(value);
+      return str.includes(",") ? str.split(",")[0].trim() : str;
+    };
+    const text = (value: unknown): string => (value == null ? "" : String(value));
 
-    // Delete existing data for the current school year to avoid duplicates
-    const schoolYears = Array.from(
-      new Set(rawData.map((record) => record["School Year"]))
-    );
-
-    for (const schoolYear of schoolYears) {
-      await prisma.gradeDistribution.deleteMany({
-        where: { schoolYear },
+    // Transform and validate everything before touching the table, so a bad
+    // row cannot wipe a school year and leave it half imported.
+    let skippedRecords = 0;
+    const transformedData: Prisma.GradeDistributionCreateManyInput[] = [];
+    for (const record of rawData) {
+      const scValue = extractFirst(record.SC);
+      const idValue = extractFirst(record.ID);
+      const tnValue = extractFirst(record.TN);
+      const term = text(record.TERM);
+      const mark = text(record.MARK);
+      const schoolYear = text(record["School Year"]);
+      if (!scValue || !idValue || !tnValue || isNaN(Number(scValue)) || !term || !mark || !schoolYear) {
+        skippedRecords++;
+        continue;
+      }
+      transformedData.push({
+        source: text(record.SOURCE),
+        schoolYear,
+        sc: Number(scValue),
+        studentId: idValue,
+        studentNumber: extractFirst(record.SN),
+        grade: text(record.GR),
+        gender: text(record.GN),
+        period: text(record.PD),
+        departmentCode: text(record.DEPT_CODE),
+        divisionCode: text(record.DC),
+        courseNumber: text(record.CN),
+        courseTitle: text(record.CO),
+        teacherNumber: tnValue,
+        section: text(record.SE),
+        term,
+        mark,
+        // TCH is a LEFT JOIN: a section whose teacher number has no TCH row
+        // at that school arrives with TE = null.
+        teacherName: text(record.TE),
+        specialEd: text(record.SpecialEd),
+        ell: text(record.ELL),
+        ard: text(record.ARD),
       });
     }
+    if (skippedRecords > 0) {
+      console.log(`Skipped ${skippedRecords} records with missing required fields (SC, ID, TN, TERM, MARK or School Year)`);
+    }
+    console.log(`Transformed ${rawData.length} records into ${transformedData.length} rows.`);
 
-    console.log('Raw Data Sample', rawData[0])
-
-    // Helper function to extract first value from potentially comma-separated or duplicated fields
-    const extractFirst = (value: any): string => {
-      if (value == null) return "";
-      const str = String(value);
-      // If the value contains a comma, take the first part
-      if (str.includes(",")) {
-        return str.split(",")[0].trim();
-      }
-      return str;
-    };
-
-    // Transform and insert data
-    let transformedData: any[] = [];
-    let skippedRecords = 0;
-    try {
-      transformedData = rawData
-        .filter((record) => {
-          // Filter out records missing required fields
-          const scValue = extractFirst(record.SC);
-          const idValue = extractFirst(record.ID);
-          const tnValue = extractFirst(record.TN);
-          if (!scValue || !idValue || !tnValue || isNaN(Number(scValue))) {
-            skippedRecords++;
-            return false;
-          }
-          return true;
-        })
-        .map((record) => {
-          return {
-            source: record.SOURCE,
-            schoolYear: record["School Year"],
-            sc: Number(extractFirst(record.SC)),
-            studentId: extractFirst(record.ID),
-            studentNumber: extractFirst(record.SN),
-            grade: record.GR?.toString() ?? "",
-            gender: record.GN?.toString() ?? "",
-            period: record.PD?.toString() ?? "",
-            departmentCode: record.DEPT_CODE,
-            divisionCode: record.DC,
-            courseNumber: record.CN?.toString() ?? "",
-            courseTitle: record.CO,
-            teacherNumber: extractFirst(record.TN),
-            section: record.SE?.toString() ?? "",
-            term: record.TERM,
-            mark: record.MARK,
-            teacherName: record.TE,
-            specialEd: record.SpecialEd,
-            ell: record.ELL,
-            ard: record.ARD,
-          };
-        });
-
-      if (skippedRecords > 0) {
-        console.log(`Skipped ${skippedRecords} records with missing required fields (SC, ID, or TN)`);
-      }
-    } catch (error) {
-      console.error("Error transforming data:", error);
-      throw error;
+    const schoolYears = Array.from(new Set(transformedData.map((row) => row.schoolYear)));
+    for (const schoolYear of schoolYears) {
+      const deleted = await prisma.gradeDistribution.deleteMany({ where: { schoolYear } });
+      console.log(`Deleted ${deleted.count} existing rows for ${schoolYear}`);
     }
 
-    console.log(`Transformed data from ${rawData.length} records to ${transformedData.length} records.`);
     const batchSize = 5000;
-    console.log(`Transformed data into ${transformedData.length} records.`);
+    const totalBatches = Math.ceil(transformedData.length / batchSize);
+    let inserted = 0;
     for (let i = 0; i < transformedData.length; i += batchSize) {
       const batch = transformedData.slice(i, i + batchSize);
-      await prisma.gradeDistribution.createMany({
+      const result = await prisma.gradeDistribution.createMany({
         data: batch,
         skipDuplicates: true,
       });
-      console.log(
-        `Inserted batch ${i / batchSize + 1}/${Math.ceil(
-          transformedData.length / batchSize
-        )}`
-      );
+      inserted += result.count;
+      console.log(`Inserted batch ${i / batchSize + 1}/${totalBatches}`);
     }
 
-    console.log("Grade distribution sync completed successfully.");
-
-
-    // await aggregateTeacherGradeSummaries({});
+    console.log(`Grade distribution sync completed: ${inserted} rows for ${schoolYears.join(", ")}.`);
+    return {
+      database,
+      schoolYears,
+      fetched: rawData.length,
+      inserted,
+      skipped: skippedRecords,
+    };
   } catch (error) {
-    console.error("Error syncing grade distribution:", error);
-    throw error;
+    // Prisma validation errors embed the whole batch in their message, which
+    // floods the journal; keep the log line and the rethrown error short.
+    const message = error instanceof Error ? error.message : String(error);
+    const firstLine = message.split("\n").find((line) => line.trim().length > 0) ?? message;
+    console.error(`Error syncing grade distribution: ${firstLine.slice(0, 500)}`);
+    throw new Error(`Grade import failed: ${firstLine.slice(0, 300)}`);
   }
 }
 

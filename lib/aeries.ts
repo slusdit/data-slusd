@@ -367,18 +367,29 @@ export async function runParameterizedQuerySystem(
  * five minutes keyed on the scoped SQL and database year.
  * @throws AuthError when not signed in; QueryExecutionError on driver errors
  */
+export type RunQueryOptions = {
+  dbYear?: number;
+  /**
+   * Return every row instead of capping at MAX_ROWS, and skip the result
+   * cache. Only for admin-gated server flows that import a whole table (the
+   * grade distribution sync); never for report screens.
+   */
+  uncapped?: boolean;
+};
+
 export async function runQueryWithMeta(
   query: string,
-  options?: { dbYear?: number }
+  options?: RunQueryOptions
 ): Promise<QueryResult> {
   const user = await requireUser();
   validateQueryWhitelist(query);
 
   const dbYear = options?.dbYear ?? user.activeDbYear ?? DEFAULT_DB_YEAR;
+  const uncapped = options?.uncapped === true;
   const scopedQuery = await applyScopePlaceholders(query, user);
 
   const cacheKey = { dbYear }; // the key already contains the scoped SQL (finding P8)
-  const cached = queryCache.get<QueryResult>(scopedQuery, cacheKey);
+  const cached = uncapped ? null : queryCache.get<QueryResult>(scopedQuery, cacheKey);
   if (cached) {
     return cached;
   }
@@ -393,21 +404,21 @@ export async function runQueryWithMeta(
     throw toExecutionError(error, `user=${user.email} db=${database}`);
   }
 
-  const truncated = recordset.length > MAX_ROWS;
+  const truncated = !uncapped && recordset.length > MAX_ROWS;
   const output: QueryResult = {
     rows: truncated ? recordset.slice(0, MAX_ROWS) : recordset,
     truncated,
     rowCount: recordset.length,
   };
 
-  if (/^\s*(select|with)\b/i.test(scopedQuery)) {
+  if (!uncapped && /^\s*(select|with)\b/i.test(scopedQuery)) {
     queryCache.set(scopedQuery, output, cacheKey, 300); // 5 minute TTL
   }
   return output;
 }
 
-/** Rows only (capped at MAX_ROWS). Use runQueryWithMeta to learn about truncation. */
-export async function runQuery(query: string, options?: { dbYear?: number }): Promise<any[]> {
+/** Rows only (capped at MAX_ROWS unless `uncapped`). Use runQueryWithMeta to learn about truncation. */
+export async function runQuery(query: string, options?: RunQueryOptions): Promise<any[]> {
   return (await runQueryWithMeta(query, options)).rows;
 }
 

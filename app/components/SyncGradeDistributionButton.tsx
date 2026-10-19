@@ -2,17 +2,23 @@
 
 import { Button } from "@/components/ui/button";
 import { aggregateTeacherGradeSummaries, syncGradeDistribution } from "@/lib/syncGradeDistribution";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
 const SyncGradeDistributionButton = () => {
     const [isLoading, setIsLoading] = useState(false);
+    const router = useRouter();
 
     const handleFullSync = async () => {
         setIsLoading(true);
         try {
-            await syncGradeDistribution();
-            toast.success("Grade distribution imported successfully.");
+            const result = await syncGradeDistribution();
+            toast.success(
+                `Imported ${result.inserted.toLocaleString()} grades for ${result.schoolYears.join(", ")} from ${result.database}` +
+                (result.skipped > 0 ? ` (${result.skipped} rows skipped).` : ".")
+            );
+            router.refresh();
         } catch (error) {
             console.error("Grade sync failed:", error);
             toast.error(
