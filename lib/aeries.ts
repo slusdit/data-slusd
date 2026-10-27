@@ -14,6 +14,7 @@ import {
 } from "./authorization";
 import { getPoolForDatabase } from "./aeries-pool";
 import { stripSqlComments, validateQueryWhitelist, validateSchoolCodes } from "./sql-guard";
+import { MAX_ROWS } from "./reportLimits";
 
 export type SchooolCredentials = {
   id: number;
@@ -176,8 +177,8 @@ export async function getSchoolsFromEmail({
 }
 
 
-/** Hard cap on rows returned to the app from any report query (finding S13). */
-export const MAX_ROWS = 10_000;
+/** Hard cap on rows returned to the app from any report query (finding S13); see lib/reportLimits.ts. */
+export { MAX_ROWS } from "./reportLimits";
 
 /**
  * Thrown when MSSQL rejects a query. `message` keeps the driver text

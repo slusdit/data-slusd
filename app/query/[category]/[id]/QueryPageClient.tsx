@@ -94,6 +94,7 @@ import FavoriteStarSwitch from "@/app/components/FavoriteStarSwitch";
 import { SessionUser } from "@/auth";
 import { TotalSpec, computeTotalsRow, pickLabelColumn } from "@/lib/reportTotals";
 import { aggregateByCategory } from "@/lib/chartData";
+import { MAX_ROWS_LABEL } from "@/lib/reportLimits";
 
 interface Category {
   id: string;
@@ -137,7 +138,7 @@ interface QueryPageClientProps {
   urlCategory: string;
   categories: Category[];
   allQueries: QueryItem[];
-  /** true when the server dropped rows beyond the 10,000-row cap (S13) */
+  /** true when the server dropped rows beyond the MAX_ROWS cap (S13) */
   truncated?: boolean;
   /** parsed Query.totalColumns; empty = no footer */
   totalSpecs?: TotalSpec[];
@@ -591,7 +592,7 @@ export default function QueryPageClient({
           role="status"
           className="no-print rounded-md border border-yellow-500/50 bg-yellow-500/10 px-4 py-3 text-sm"
         >
-          <span className="font-semibold">Showing the first 10,000 rows.</span> This report
+          <span className="font-semibold">Showing the first {MAX_ROWS_LABEL} rows.</span> This report
           returned more rows than can be displayed; refine the query or add filters to see a
           smaller set.
         </div>

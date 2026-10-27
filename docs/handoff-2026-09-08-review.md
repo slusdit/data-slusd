@@ -273,7 +273,7 @@ only when `user.admin || isQueryEditor`.
 **S12.** Apply `rateLimit` to `/api/ai-query/view-generate` (e.g. 10/min/user) and
 `/api/fastapi/upload` (5/min). Keep in-memory (single instance); note in the file header.
 
-**S13.** In `lib/aeries.ts` `runQuery`: after execution, if `recordset.length > MAX_ROWS` (10,000),
+**S13.** In `lib/aeries.ts` `runQuery`: after execution, if `recordset.length > MAX_ROWS` (now 50,000, see lib/reportLimits.ts),
 truncate and return `{ rows, truncated: true }`; report pages show a banner "Showing first 10,000
 rows, refine the query". For AI/custom queries, reject SQL without `TOP n` (n <= 5000) in
 `sql-validator.ts`.
