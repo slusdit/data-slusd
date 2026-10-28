@@ -39,47 +39,66 @@ mysqldump -h <host> -u <user> -p --single-transaction --routines data_slusd > da
 # throwaway .env DATABASE_URL at it, then run the steps below against it
 ```
 
-## Maintenance window
+## Maintenance window (run on the prod host, about 10 minutes)
 
-Do this from the dev box with the branch checked out and `npx prisma generate`
-already run (the client must match the new schema for the snapshot script's
-second run).
+Everything is on `main`. The only step beyond the usual pull, build and
+restart is the SQL file, which must run **after** `git pull` (so the file and
+the matching Prisma schema are present) and **before** `npm run build` (so the
+new code never serves against the old columns). Do not run `npx prisma db push`
+for this release: it would try to make the same changes interactively and stop
+on a data-loss prompt. The SQL file is the push.
 
-1. Stop the production app so no sign-in writes roles mid-migration:
-   `sudo systemctl stop data-slusd` on the prod host.
-2. Take a dump (command above). This is the rollback.
-3. Snapshot the current state:
-   ```bash
-   npx tsx scripts/snapshot-roles.ts > roles-before.json
-   ```
-4. Apply the migration:
-   ```bash
-   npx prisma db execute --file prisma/manual-migrations/2026-10-28-role-catalogue.sql
-   ```
-5. Confirm the database now matches the Prisma schema (exit code 0 means no
-   difference):
-   ```bash
-   npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code
-   ```
-6. Confirm nobody's access changed:
-   ```bash
-   npx tsx scripts/snapshot-roles.ts > roles-after.json
-   diff roles-before.json roles-after.json
-   ```
-   The only acceptable difference is `BOARDMEMBER` appearing in the `roles` list.
-7. Deploy the build from this branch on the prod host (pull, `npm ci`,
-   `npm run build`, `sudo systemctl start data-slusd`), per the usual process.
-8. Sign in as a super admin, open **Admin → Roles**. The system roles should
-   show the **System** badge with labels filled in, and `BOARDMEMBER` should be
-   listed with nobody assigned. Open **Users**, edit a user, and confirm the
-   Primary Role and Additional Roles pickers list `Board Member (BOARDMEMBER)`.
+```bash
+cd /home/administrator/data-slusd
+git status --short                      # must be clean
+git pull --ff-only                      # if this refuses: git fetch origin && git reset --hard origin/main
+sudo systemctl stop data-slusd
+
+# rollback point
+mysqldump -h 10.100.4.98 -u data_user -p --single-transaction data_slusd > ~/data_slusd-pre-roles-$(date +%F).sql
+
+mv node_modules node_modules.prev
+rsync -a --exclude cache .next/ .next.prev/
+npm ci
+npx prisma generate
+
+npm run roles:snapshot > ~/roles-before.json   # who holds what, before
+npm run roles:migrate                          # the SQL file
+npm run roles:verify                           # exit 0 = database matches the schema
+npm run roles:snapshot > ~/roles-after.json
+diff ~/roles-before.json ~/roles-after.json    # only BOARDMEMBER may appear in "roles"
+
+npm run build
+sudo systemctl start data-slusd
+```
+
+Verify:
+
+```bash
+sudo systemctl status data-slusd --no-pager
+journalctl -u data-slusd -n 50 --no-pager
+curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:3000/          # 200
+curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:3000/admin     # 307
+```
+
+Then sign in as a super admin and open **Admin → Roles**. The system roles
+should show the **System** badge with labels filled in (the first admin page
+load seeds them), and `BOARDMEMBER` should be listed with nobody assigned.
+Open **Users**, edit a user, and confirm the Primary Role and Additional Roles
+pickers list `Board Member (BOARDMEMBER)`.
+
+If `npm run roles:migrate` fails part-way (MySQL DDL is not transactional),
+restore the dump before retrying: `mysql -h 10.100.4.98 -u data_user -p data_slusd < ~/data_slusd-pre-roles-<date>.sql`.
 
 ## Rollback
 
-Restore the dump from step 2 and redeploy the previous build. Nothing in the
+Stop the service, restore the dump, then put the previous build back:
+`mv node_modules.prev node_modules`, `rm -rf .next && mv .next.prev .next`,
+`git checkout <previous main sha> -- package.json package-lock.json` (or
+`git reset --hard <previous main sha>`), start the service. Nothing in the
 new code writes anywhere the old schema cannot read until a data role is
 assigned to someone, so a rollback shortly after deploy loses at most those
-assignments.
+assignments. Delete the `.prev` copies after 24 clean hours.
 
 ## After the migration
 

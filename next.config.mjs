@@ -34,6 +34,12 @@ const nextConfig = {
     turbopack: {
         root: import.meta.dirname,
     },
+    // The SQL Server driver is a plain Node dependency; load it at runtime
+    // instead of bundling it. Bundling drags in tedious -> @azure/identity ->
+    // open -> powershell-utils, whose hard-coded powershell.exe path makes
+    // Turbopack's build panic (seen 2026-10-28 after the October dependency
+    // patch; it never needed to be in the bundle).
+    serverExternalPackages: ['mssql', 'tedious'],
     compiler: {
         styledComponents: true,
     },
