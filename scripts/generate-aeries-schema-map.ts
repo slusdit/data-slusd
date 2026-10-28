@@ -192,8 +192,13 @@ function mdEscape(s: string | undefined | null): string {
   return (s ?? '').replace(/\|/g, '\\|').replace(/\r?\n/g, ' ').trim();
 }
 
+// Windows refuses to create files whose stem is a reserved device name (CON, PRN, AUX, NUL,
+// COM1-9, LPT1-9), whatever the extension. Aeries has CON and PRN tables, so suffix those.
+const WINDOWS_RESERVED_NAME = /^(CON|PRN|AUX|NUL|COM[0-9]|LPT[0-9])(\.|$)/i;
+
 function fileNameFor(table: string): string {
-  return table.replace(/[^A-Za-z0-9_.-]/g, '_') + '.md';
+  const safe = table.replace(/[^A-Za-z0-9_.-]/g, '_');
+  return (WINDOWS_RESERVED_NAME.test(safe) ? `${safe}_` : safe) + '.md';
 }
 
 function n(v: number | null | undefined): string {

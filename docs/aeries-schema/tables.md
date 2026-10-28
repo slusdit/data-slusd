@@ -80,7 +80,7 @@
 | [CNF](tables/CNF.md) | 59,123 | PID, SQ | Counseling conference log (detailed). |
 | [COD](tables/COD.md) | 5,334 | SC, TC, FC, CD | Code definitions for coded columns in many tables. |
 | [COL](tables/COL.md) | 452 | ID | Names and Addresses of Colleges – Can be DISTRICT MANAGED. |
-| [CON](tables/CON.md) | 105,510 | PID, SQ | Emergency / parent contacts per student. |
+| [CON](tables/CON_.md) | 105,510 | PID, SQ | Emergency / parent contacts per student. |
 | [CPE](tables/CPE.md) | 0 | ID, CD, SQ | Stores Career Pathways Experiences for each student. |
 | [CPH](tables/CPH.md) | 11,561 | ID, CD, SQ | Stores Career Pathways History for each student. |
 | [CPO](tables/CPO.md) | 1 | ID, CD, SQ | Stores Career Pathways Outcomes for each student. |
@@ -412,7 +412,7 @@
 | [PRE](tables/PRE.md) | 0 | ID, RD, TID, EOC | Stores Texas Assessment Precode file data. |
 | [PRI](tables/PRI.md) | 1,901 | ID, SQ | Stores Pre-Referral Interventions for each student. |
 | [PRM](tables/PRM.md) | 525 | NM, OPT |  |
-| [PRN](tables/PRN.md) | 93 | ID, SQ, SQ1 | Stores Meetings and Contacts for each Pre-Referral Intervention. |
+| [PRN](tables/PRN_.md) | 93 | ID, SQ, SQ1 | Stores Meetings and Contacts for each Pre-Referral Intervention. |
 | [PRR](tables/PRR.md) | 26 | ID, SQ, SQ1 | Stores Reasons and Concerns for each Pre-Referral Intervention. |
 | [PRS](tables/PRS.md) | 10,763 | ID, TY, SQ | Stores parent responses to survey items. |
 | [PRT](tables/PRT.md) | 184 | SC, RN | Provides alignment of printer to output a variety of reports on preprinted forms |
