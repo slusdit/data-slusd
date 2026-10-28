@@ -57,8 +57,11 @@ sudo systemctl stop data-slusd
 # rollback point
 mysqldump -h 10.100.4.98 -u data_user -p --single-transaction data_slusd > ~/data_slusd-pre-roles-$(date +%F).sql
 
-mv node_modules node_modules.prev
-rsync -a --exclude cache .next/ .next.prev/
+# keep the copies OUTSIDE the project: tsconfig type-checks every .ts under it,
+# so a node_modules.prev inside the tree makes `npm run build` fail
+mkdir -p ~/data-slusd-prev
+mv node_modules ~/data-slusd-prev/node_modules
+rsync -a --exclude cache .next/ ~/data-slusd-prev/.next/
 npm ci
 npx prisma generate
 
@@ -93,12 +96,13 @@ restore the dump before retrying: `mysql -h 10.100.4.98 -u data_user -p data_slu
 ## Rollback
 
 Stop the service, restore the dump, then put the previous build back:
-`mv node_modules.prev node_modules`, `rm -rf .next && mv .next.prev .next`,
+`rm -rf node_modules && mv ~/data-slusd-prev/node_modules node_modules`,
+`rm -rf .next && mv ~/data-slusd-prev/.next .next`,
 `git checkout <previous main sha> -- package.json package-lock.json` (or
 `git reset --hard <previous main sha>`), start the service. Nothing in the
 new code writes anywhere the old schema cannot read until a data role is
 assigned to someone, so a rollback shortly after deploy loses at most those
-assignments. Delete the `.prev` copies after 24 clean hours.
+assignments. Delete `~/data-slusd-prev` after 24 clean hours.
 
 ## After the migration
 
