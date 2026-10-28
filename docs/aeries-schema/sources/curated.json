@@ -1,0 +1,363 @@
+{
+  "_about": [
+    "Hand-curated meanings for core Aeries tables and columns, written from Aeries conventions and verified",
+    "against this district's database where noted. Everything here is a hint, not a guarantee: confirm against",
+    "the Aeries Table/Field Info panel (the (i) icon on any Aeries Web page) before relying on a column.",
+    "Edit this file and re-run `npm run generate:aeries-schema` to refresh docs/aeries-schema/."
+  ],
+  "conventions": [
+    "One SQL Server database per school year, named DST<yy>000SanLeandroUSD (yy = year the school year starts). The schema is identical across years; only the data differs.",
+    "Nearly every table has DEL (bit, 1 = soft-deleted) and DTS (datetime, last change). Always filter DEL = 0.",
+    "Student rows are keyed by SC + SN (school code + school-level student number). STU.ID is the district-wide Permanent ID and is the key for IDN, ENR and other cross-school tables.",
+    "STU.TG is the status tag: blank = active, anything else = inactive (I), no-show (N), etc. Active-student queries use ISNULL(STU.TG,'') = ''.",
+    "Coded columns are decoded through COD: COD.TC = table code, COD.FC = field code, COD.CD = value, COD.DE = description. COD.SC = 0 means district-wide.",
+    "Absence codes live in ABS (per school), not COD. ATT.AL is the all-day code; ATT.A0..A9 are the period codes for periods 0-9.",
+    "Aeries writes an ATT row only on days a student has at least one mark. Present days have no ATT row, so days enrolled must come from DAY x ENR (or AHS/YTD summaries), never from COUNT(ATT).",
+    "School days = DAY rows where HO = '' (HO holds a holiday / non-school indicator). Term boundaries are in TRM (TM = '1'..'4', 'F', 'S', 'Y'; D1 = start, D2 = end).",
+    "Sections: MST.SE is the section number; SEC links students (SC, SN) to sections (SE); CRS.CN is the course number; TCH.TN is the teacher number; STU.CU holds the counselor's TCH.TN.",
+    "POP holds school options including the grade-posting windows (NM = 'GradeStartDate1'..'GradeEndDate12', OV = mm/dd/yyyy text). These are the windows teachers post marks, not the term dates.",
+    "Grade marks: GRD.M1..M12 are the marks for grade reporting windows 1..12. In this district M2 is the Q1 mark at the secondary schools (window 1 is the progress report)."
+  ],
+  "tables": {
+    "STU": {
+      "description": "Student demographics, one row per student per school (SC + SN). STU.ID is the district Permanent ID.",
+      "columns": {
+        "SC": "School code (LOC.CD)",
+        "SN": "Student number, unique within the school",
+        "ID": "Permanent ID, unique district-wide (IDN.ID, ENR.ID)",
+        "LN": "Last name",
+        "FN": "First name",
+        "MN": "Middle name",
+        "GR": "Grade level (-1 = TK/pre-K conventions vary; 0 = K)",
+        "SX": "Sex (legacy field, M/F/N)",
+        "GN": "Gender (M/F/N/X); prefer this over SX",
+        "BD": "Birth date",
+        "ETH": "Hispanic/Latino ethnicity flag (Y/N)",
+        "RC1": "Primary race code (COD STU.RC1); 999 = intentionally left blank",
+        "RC2": "Second race code",
+        "RC3": "Third race code",
+        "RC4": "Fourth race code",
+        "RC5": "Fifth race code",
+        "LF": "Language fluency (COD STU.LF; in this district 1 = English Only, 2 = IFEP, 3 = English Learner, 4 = RFEP, 5 = Adult EL)",
+        "HL": "Home language code (COD STU.HL)",
+        "CL": "Correspondence language code",
+        "CU": "Counselor's teacher number (TCH.TN)",
+        "TG": "Status tag: blank = active; I = inactive, N = no show, etc. (COD STU.TG)",
+        "ED": "Entry date at this school",
+        "LD": "Leave date at this school (null while enrolled)",
+        "SP": "Special program / status code (COD STU.SP)",
+        "CID": "State Student ID (CALPADS SSID)",
+        "NS": "Next school",
+        "NG": "Next grade",
+        "TR": "Attendance track",
+        "PR": "Attendance program",
+        "AP1": "Attendance program 1 (COD STU.AP1)",
+        "AP2": "Attendance program 2",
+        "IT": "Inter/intra-district transfer code (CALPADS)",
+        "AD": "Street address",
+        "CY": "City",
+        "ST": "State",
+        "ZC": "ZIP code",
+        "TL": "Home telephone",
+        "PG": "Parent/guardian name",
+        "PEM": "Parent email",
+        "SEM": "Student email",
+        "DEL": "Soft-delete flag",
+        "DTS": "Last change timestamp"
+      }
+    },
+    "IDN": {
+      "description": "District-wide student identity record, one row per Permanent ID.",
+      "columns": { "ID": "Permanent ID (STU.ID)", "LN": "Last name", "FN": "First name", "BD": "Birth date" }
+    },
+    "ENR": {
+      "description": "Enrollment history by Permanent ID: one row per student per school per enrollment spell, across years.",
+      "columns": {
+        "ID": "Permanent ID (STU.ID)",
+        "YR": "School year the enrollment belongs to (start year, e.g. 2026 = 2026-27)",
+        "SC": "School code",
+        "SN": "Student number at that school",
+        "GR": "Grade level during the enrollment",
+        "ED": "Enrollment entry date",
+        "LD": "Enrollment leave date (null while enrolled)",
+        "ER": "Exit/leave reason code (COD ENR.ER)",
+        "TR": "Attendance track",
+        "PR": "Attendance program",
+        "TN": "Teacher number (elementary homeroom)",
+        "NS": "Next school"
+      }
+    },
+    "ATT": {
+      "description": "Daily attendance marks, one row per student per day that has at least one mark. No row = present all day.",
+      "columns": {
+        "SC": "School code",
+        "SN": "Student number",
+        "DT": "Attendance date",
+        "DY": "Day number in the school calendar (DAY.DY)",
+        "AL": "All-day absence code (ABS.CD)",
+        "A0": "Period 0 code (ABS.CD)",
+        "A1": "Period 1 code",
+        "A2": "Period 2 code",
+        "A3": "Period 3 code",
+        "A4": "Period 4 code",
+        "A5": "Period 5 code",
+        "A6": "Period 6 code",
+        "A7": "Period 7 code",
+        "A8": "Period 8 code",
+        "A9": "Period 9 code",
+        "CD": "Enrollment status code on this date (e.g. E = entered, L = left)",
+        "RS": "Reason / note",
+        "GR": "Grade level on this date",
+        "TN": "Teacher number on this date",
+        "TR": "Track",
+        "PR": "Program",
+        "AP1": "Attendance program 1",
+        "AP2": "Attendance program 2"
+      }
+    },
+    "ABS": {
+      "description": "Absence code definitions per school. Decodes ATT.AL and ATT.A0..A9.",
+      "columns": {
+        "SC": "School code",
+        "CD": "Absence code (single character)",
+        "TI": "Title / description",
+        "AB": "Short abbreviation",
+        "TY": "Absence type number (verified / excused / unexcused / tardy groupings)",
+        "AD": "Counts as present for attendance-day purposes (1 = present, e.g. school business, in-school suspension, tardy)",
+        "SU": "Suspension code (1 = yes)",
+        "PT": "Partial-day / tardy-type flag"
+      }
+    },
+    "DAY": {
+      "description": "School calendar, one row per calendar day per school. HO = '' marks an instructional day.",
+      "columns": {
+        "SC": "School code",
+        "DY": "Day number within the school year",
+        "DT": "Calendar date",
+        "HO": "Holiday / non-school indicator; blank = school day",
+        "MO": "Month number in the attendance calendar",
+        "BL": "Bell schedule / periods in session",
+        "T1": "Track 1 in-session flag",
+        "T2": "Track 2 in-session flag"
+      }
+    },
+    "TRM": {
+      "description": "Term definitions per school: quarters, semesters and year with start/end dates.",
+      "columns": {
+        "SC": "School code",
+        "TM": "Term code: 1-4 = quarters, F = fall semester, S = spring semester, Y = year",
+        "D1": "Term start date",
+        "D2": "Term end date",
+        "D1A": "Track A term start (tracked schools only)",
+        "D2A": "Track A term end"
+      }
+    },
+    "GRD": {
+      "description": "Current-year grade reporting marks, one row per student per section.",
+      "columns": {
+        "SC": "School code",
+        "SN": "Student number",
+        "SE": "Section number (MST.SE)",
+        "CN": "Course number (CRS.CN)",
+        "TN": "Teacher number (TCH.TN)",
+        "PD": "Period",
+        "M1": "Mark for grade reporting window 1 (progress report at SLUSD secondary schools)",
+        "M2": "Mark for window 2 (Q1 at SLUSD secondary schools)",
+        "M3": "Mark for window 3",
+        "M4": "Mark for window 4",
+        "M5": "Mark for window 5",
+        "M6": "Mark for window 6",
+        "M7": "Mark for window 7",
+        "M8": "Mark for window 8",
+        "CR": "Credits",
+        "C1": "Comment code 1",
+        "C2": "Comment code 2",
+        "C3": "Comment code 3"
+      }
+    },
+    "GRH": {
+      "description": "History of grade reporting marks for earlier windows in the current year (snapshot per window)."
+    },
+    "HIS": {
+      "description": "Course history / transcript: every course and mark a student has ever earned, including other schools.",
+      "columns": {
+        "SC": "School code of the STU record",
+        "SN": "Student number",
+        "YR": "School year of the course",
+        "TE": "Term the mark was earned in",
+        "ST": "School where the course was taken (CHI code or local school)",
+        "GR": "Grade level when taken",
+        "CN": "Course number (CRS.CN)",
+        "CO": "Course title as recorded",
+        "MK": "Mark earned",
+        "CC": "Credits completed",
+        "CA": "Credits attempted",
+        "CP": "Course completion / repeat flags"
+      }
+    },
+    "MST": {
+      "description": "Master schedule: one row per section offered at a school this year.",
+      "columns": {
+        "SC": "School code",
+        "SE": "Section number (unique within the school)",
+        "CN": "Course number (CRS.CN)",
+        "TN": "Teacher number (TCH.TN)",
+        "PD": "Period",
+        "TM": "Term the section meets (TRM.TM style; 0 = full year at SLUSD)",
+        "RM": "Room",
+        "MX": "Maximum enrollment",
+        "TS": "Total students currently enrolled",
+        "SM": "Semester / scheduling group",
+        "GL": "Low grade",
+        "GH": "High grade",
+        "DY": "Days of the week the section meets"
+      }
+    },
+    "SEC": {
+      "description": "Student schedules: which sections each student is enrolled in. Has no entry/exit dates (see CAR for schedule change history).",
+      "columns": {
+        "SC": "School code",
+        "SN": "Student number",
+        "SE": "Section number (MST.SE)",
+        "CN": "Course number (CRS.CN), denormalised from MST"
+      }
+    },
+    "CAR": {
+      "description": "Course attendance / schedule change history: when students entered and left sections, used for class-level attendance."
+    },
+    "CRS": {
+      "description": "Course catalogue (district-wide): one row per course number.",
+      "columns": {
+        "CN": "Course number",
+        "CO": "Course title",
+        "DC": "Department code (COD CRS.DC)",
+        "CR": "Credits",
+        "GL": "Low grade",
+        "GH": "High grade",
+        "ST": "State course code",
+        "CL": "Course level",
+        "NS": "Non-academic / not for GPA flag",
+        "S1": "Subject area 1 (graduation requirement bucket)",
+        "S2": "Subject area 2",
+        "TG": "Tag / inactive flag"
+      }
+    },
+    "TCH": {
+      "description": "Teachers per school: one row per teacher number. Also used for counselors (STU.CU).",
+      "columns": {
+        "SC": "School code",
+        "TN": "Teacher number (unique within the school)",
+        "TE": "Teacher name (Last, First)",
+        "TF": "First name",
+        "LN": "Last name",
+        "EM": "Email",
+        "ID": "Staff ID (STF.ID)",
+        "RM": "Room",
+        "TG": "Tag / inactive flag"
+      }
+    },
+    "STF": {
+      "description": "Staff demographics (district-wide), keyed by staff ID.",
+      "columns": { "ID": "Staff ID (TCH.ID)", "LN": "Last name", "FN": "First name", "EM": "Email", "TI": "Title", "PSC": "Primary school" }
+    },
+    "COD": {
+      "description": "Code definitions for coded columns in many tables.",
+      "columns": {
+        "SC": "School code (0 = district-wide)",
+        "TC": "Table code the value belongs to (e.g. STU)",
+        "FC": "Field code within that table (e.g. LF)",
+        "CD": "Code value",
+        "DE": "Description",
+        "SQ": "Sort sequence"
+      }
+    },
+    "LOC": {
+      "description": "Schools in the district, one row per school code.",
+      "columns": { "CD": "School code (STU.SC)", "NM": "School name", "AD": "Address", "CY": "City", "PR": "Principal", "TL": "Telephone", "U": "Unused / inactive flag" }
+    },
+    "POP": {
+      "description": "School-level options as name/value pairs, including grade-posting windows.",
+      "columns": { "SC": "School code", "NM": "Option name (e.g. GradeStartDate2)", "OV": "Option value as text" }
+    },
+    "PGM": {
+      "description": "Special program participation per student, one row per program spell.",
+      "columns": { "SC": "School code", "SN": "Student number", "CD": "Program code (COD PGM.CD)", "PSD": "Program start date", "PED": "Program end date", "ESD": "Eligibility start date", "EED": "Eligibility end date" }
+    },
+    "CSE": {
+      "description": "Special education record per student (district managed).",
+      "columns": { "ID": "Permanent ID", "DI": "Primary disability code (COD CSE.DI)", "ED": "Special ed entry date", "XD": "Special ed exit date", "SP": "Program / placement code", "CS": "Case manager" }
+    },
+    "LAC": {
+      "description": "English learner / language assessment record per student.",
+      "columns": { "SC": "School code", "SN": "Student number", "LF": "Language fluency at time of record", "RD1": "Reclassification date", "ED": "EL program entry date" }
+    },
+    "ADS": {
+      "description": "Discipline incidents (assertive discipline), one row per incident per student.",
+      "columns": { "SC": "School code", "SN": "Student number", "CD": "Offense code (COD ADS.CD)", "DT": "Incident date", "SQ": "Sequence number (links DSP)", "DS": "Primary disposition" }
+    },
+    "DSP": {
+      "description": "Dispositions (consequences) for discipline incidents; several per ADS row.",
+      "columns": { "SC": "School code", "SN": "Student number", "SQ": "ADS sequence number", "DS": "Disposition code (COD DSP.DS)", "DD": "Disposition date", "DY": "Days" }
+    },
+    "CON": {
+      "description": "Emergency / parent contacts per student.",
+      "columns": { "SC": "School code", "SN": "Student number", "NM": "Contact name", "RL": "Relationship", "TL": "Telephone", "EM": "Email", "CP": "Cell phone", "ED": "Educational rights holder flag" }
+    },
+    "TST": {
+      "description": "Standardized test score history per student.",
+      "columns": { "SC": "School code", "SN": "Student number", "ID": "Test ID (CTL.ID)", "PT": "Test part", "TD": "Test date", "RS": "Raw score", "SS": "Scale score", "PL": "Performance level", "GR": "Grade when tested" }
+    },
+    "CTL": {
+      "description": "Test and test-part definitions (decodes TST.ID / TST.PT)."
+    },
+    "FRE": {
+      "description": "Free / reduced meal application status per student.",
+      "columns": { "CD": "Eligibility code (F = free, R = reduced, N = not eligible)", "ED": "Effective date", "XD": "Expiration date" }
+    },
+    "SUP": {
+      "description": "Supplemental student fields defined by the district (column meanings are district-specific)."
+    },
+    "DSD": {
+      "description": "District supplemental student fields (column meanings are district-specific; see extended properties)."
+    },
+    "GRC": {
+      "description": "Valid marks and their grade points / credit rules (decodes GRD.M*, HIS.MK)."
+    },
+    "SSS": {
+      "description": "Scheduling: next-year student schedule requests (planning copy of SEC)."
+    },
+    "SMS": {
+      "description": "Scheduling: next-year master schedule (planning copy of MST)."
+    },
+    "GBK": {
+      "description": "Teacher gradebooks."
+    },
+    "GBA": {
+      "description": "Gradebook assignments."
+    },
+    "GBS": {
+      "description": "Gradebook scores per student per assignment."
+    },
+    "SBG": {
+      "description": "Elementary standards-based report card marks."
+    },
+    "AHS": {
+      "description": "Attendance history summary per student per year: enrolled, present, absent, tardy counts."
+    },
+    "YTD": {
+      "description": "Year-to-date attendance totals per student (maintained by Aeries)."
+    },
+    "VIS": {
+      "description": "Counseling visit log (simple)."
+    },
+    "CNF": {
+      "description": "Counseling conference log (detailed)."
+    },
+    "MED": {
+      "description": "Health office visit log."
+    },
+    "IMM": {
+      "description": "Immunization history."
+    }
+  }
+}

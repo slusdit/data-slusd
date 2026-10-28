@@ -1,0 +1,163 @@
+# GRG
+
+Stores students Grade Reporting GPA data as calculated on recompute
+
+Rows: 102,272 · Primary key: PID, YR, SCL · Columns: 149
+
+## Columns
+
+| Column | Type | Null | Meaning | Values / joins |
+|---|---|---|---|---|
+| PID | int |  |  | FK → IDN.ID |
+| YR | varchar(4) |  |  |  |
+| SCL | smallint |  |  |  |
+| T1 | money |  |  |  |
+| T2 | money |  |  |  |
+| T3 | money |  |  |  |
+| T4 | money |  |  |  |
+| T5 | money |  |  |  |
+| T6 | money |  |  |  |
+| T7 | money |  |  |  |
+| T8 | money |  |  |  |
+| T9 | money |  |  |  |
+| T10 | money |  |  |  |
+| T11 | money |  |  |  |
+| T12 | money |  |  |  |
+| A1 | money |  |  |  |
+| A2 | money |  |  |  |
+| A3 | money |  |  |  |
+| A4 | money |  |  |  |
+| A5 | money |  |  |  |
+| A6 | money |  |  |  |
+| A7 | money |  |  |  |
+| A8 | money |  |  |  |
+| A9 | money |  |  |  |
+| A10 | money |  |  |  |
+| A11 | money |  |  |  |
+| A12 | money |  |  |  |
+| CA1 | money |  |  |  |
+| CA2 | money |  |  |  |
+| CA3 | money |  |  |  |
+| CA4 | money |  |  |  |
+| CA5 | money |  |  |  |
+| CA6 | money |  |  |  |
+| CA7 | money |  |  |  |
+| CA8 | money |  |  |  |
+| CA9 | money |  |  |  |
+| CA10 | money |  |  |  |
+| CA11 | money |  |  |  |
+| CA12 | money |  |  |  |
+| CC1 | money |  |  |  |
+| CC2 | money |  |  |  |
+| CC3 | money |  |  |  |
+| CC4 | money |  |  |  |
+| CC5 | money |  |  |  |
+| CC6 | money |  |  |  |
+| CC7 | money |  |  |  |
+| CC8 | money |  |  |  |
+| CC9 | money |  |  |  |
+| CC10 | money |  |  |  |
+| CC11 | money |  |  |  |
+| CC12 | money |  |  |  |
+| CR1 | smallint |  |  |  |
+| CR2 | smallint |  |  |  |
+| CR3 | smallint |  |  |  |
+| CR4 | smallint |  |  |  |
+| CR5 | smallint |  |  |  |
+| CR6 | smallint |  |  |  |
+| CR7 | smallint |  |  |  |
+| CR8 | smallint |  |  |  |
+| CR9 | smallint |  |  |  |
+| CR10 | smallint |  |  |  |
+| CR11 | smallint |  |  |  |
+| CR12 | smallint |  |  |  |
+| CS1 | smallint |  |  |  |
+| CS2 | smallint |  |  |  |
+| CS3 | smallint |  |  |  |
+| CS4 | smallint |  |  |  |
+| CS5 | smallint |  |  |  |
+| CS6 | smallint |  |  |  |
+| CS7 | smallint |  |  |  |
+| CS8 | smallint |  |  |  |
+| CS9 | smallint |  |  |  |
+| CS10 | smallint |  |  |  |
+| CS11 | smallint |  |  |  |
+| CS12 | smallint |  |  |  |
+| TN1 | money |  |  |  |
+| TN2 | money |  |  |  |
+| TN3 | money |  |  |  |
+| TN4 | money |  |  |  |
+| TN5 | money |  |  |  |
+| TN6 | money |  |  |  |
+| TN7 | money |  |  |  |
+| TN8 | money |  |  |  |
+| TN9 | money |  |  |  |
+| TN10 | money |  |  |  |
+| TN11 | money |  |  |  |
+| TN12 | money |  |  |  |
+| AN1 | money |  |  |  |
+| AN2 | money |  |  |  |
+| AN3 | money |  |  |  |
+| AN4 | money |  |  |  |
+| AN5 | money |  |  |  |
+| AN6 | money |  |  |  |
+| AN7 | money |  |  |  |
+| AN8 | money |  |  |  |
+| AN9 | money |  |  |  |
+| AN10 | money |  |  |  |
+| AN11 | money |  |  |  |
+| AN12 | money |  |  |  |
+| C1 | money |  |  |  |
+| C2 | money |  |  |  |
+| C3 | money |  |  |  |
+| C4 | money |  |  |  |
+| C5 | money |  |  |  |
+| C6 | money |  |  |  |
+| C7 | money |  |  |  |
+| C8 | money |  |  |  |
+| C9 | money |  |  |  |
+| C10 | money |  |  |  |
+| C11 | money |  |  |  |
+| C12 | money |  |  |  |
+| OR1 | smallint |  |  |  |
+| OR2 | smallint |  |  |  |
+| OR3 | smallint |  |  |  |
+| OR4 | smallint |  |  |  |
+| OR5 | smallint |  |  |  |
+| OR6 | smallint |  |  |  |
+| OR7 | smallint |  |  |  |
+| OR8 | smallint |  |  |  |
+| OR9 | smallint |  |  |  |
+| OR10 | smallint |  |  |  |
+| OR11 | smallint |  |  |  |
+| OR12 | smallint |  |  |  |
+| TA1 | money |  |  |  |
+| TA2 | money |  |  |  |
+| TA3 | money |  |  |  |
+| TA4 | money |  |  |  |
+| TA5 | money |  |  |  |
+| TA6 | money |  |  |  |
+| TA7 | money |  |  |  |
+| TA8 | money |  |  |  |
+| TA9 | money |  |  |  |
+| TA10 | money |  |  |  |
+| TA11 | money |  |  |  |
+| TA12 | money |  |  |  |
+| AA1 | money |  |  |  |
+| AA2 | money |  |  |  |
+| AA3 | money |  |  |  |
+| AA4 | money |  |  |  |
+| AA5 | money |  |  |  |
+| AA6 | money |  |  |  |
+| AA7 | money |  |  |  |
+| AA8 | money |  |  |  |
+| AA9 | money |  |  |  |
+| AA10 | money |  |  |  |
+| AA11 | money |  |  |  |
+| AA12 | money |  |  |  |
+| DEL | bit |  |  |  |
+| DTS | datetime | yes |  |  |
+
+## Joins
+
+- declared FK → **IDN**: GRG.PID = IDN.ID

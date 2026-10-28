@@ -11,6 +11,7 @@
     "host": "next dev --host 0.0.0.0",
     "eval:ai-query": "tsx scripts/eval-ai-query.ts",
     "generate:view-schema": "tsx scripts/generate-view-schema.ts",
+    "generate:aeries-schema": "tsx scripts/generate-aeries-schema-map.ts",
     "test": "tsx --test lib/*.test.ts"
   },
   "dependencies": {

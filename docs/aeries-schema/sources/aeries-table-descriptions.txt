@@ -1,0 +1,522 @@
+# Official one-line table descriptions published by Aeries Software.
+# Source: https://support.aeries.com/support/solutions/articles/14000075603-aeries-table-names-and-descriptions
+# Format: CODE - Description. Lines starting with # are ignored by scripts/generate-aeries-schema-map.ts.
+ABS - Codes used for recording absences
+ACA - Stores the linking of Alternate Course Requests
+ACL - Maintains a log of when and where new PAC files and DAC tables are created
+ACR - Stores Alternate Course Requests
+ACT - Recording Activities in which student participates, and Awards received by student
+ADH - Stores a history of student address changes
+ADR - For recording Names and Addresses of Staff, Site Council, PTA, etc.
+ADS - Contains data for one of the two Discipline Tables – More details than DIS (both can be used)
+AED - Stores Adult Education data
+AEF - Stores Adult Education data
+AHC - Stores a history of absence code descriptions
+AHD - Stores a detailed history of student attendance counts by code, period and year
+AHS - Stores a summary of student enrollment, present, absent and tardy counts by year
+ANA - Stores Attendance Notification Codes.
+ANC - Stores Attendance Notification Configuration.
+ANL - Stores Attendance Notification Log.
+ANS - Stores Attendance Notification Schools.
+APC - Stores a student's current academic plan
+APL - Maintains a record of any change done to a student's academic plan.
+ARC - Stores At-Risk Indicator information
+ARD - Student Attendance details for TX Attendance Reporting
+ARH - Student Hourly CTE details for TX Attendance Reporting
+ARI - Stores Student At-Risk Indicators
+ARP - Attendance Reporting Periods for use in Texas
+ARR - Student Remote attendance details for TX Attendance Reporting
+ARS - Campus/District Summary details for TX Attendance Reporting
+ART - Records instructional ranges (Instructional Periods or Instructional Minutes) for use in calculating Instructional Minutes in Texas schools.
+ASL - Maintains a record when teachers submit attendance through Teacher Portal - Generates Missing Sheet Log
+ATA - Relationships of Student Numbers to Supplemental Attendance Session numbers
+ATC - Days that a Supplemental Attendance Session meets
+ATD - Supplemental Attendance tracking includes times in and out and total minutes by student
+ATL - Maintains a record of when changes are made to student attendance
+ATN - For recording specific details for a particular student and date.
+ATP - Contains details of Supplemental Attendance Programs offered
+ATR - Relationships of Staff IDs to Supplemental Attendance Session numbers
+ATS - Contains details of Supplemental Attendance Sessions offered
+ATT - Maintains Dates of Enrollment, Absences and Absence Reasons, and Un-enrollment
+AUT - Specific authorizations or prohibitions to student participation in specific programs
+AWL - Master Schedule Wait List
+BAA - Alternate Course Request Association Backup
+BAC - Alternate Course Requests Backup
+BEL - Bell Schedule for Secondary Schools, including Continuation or Alternative Schools
+BER - Tracks Mechanical Restraint, Physical Restraint, and Seclusion for State Reporting and Civil Rights Data Collection.
+BGV - Stores course and data used to calculate Built-In GPAs.
+BIL - For tuition billing of students – more detailed than the FEE table
+BPW - Stores Banned Passwords
+BSA - Summer Alternate Course Request Association Backup
+BSD - Provides for a variety of Bell Schedules which can be assigned to the Calendar
+BST - Contains data from Bell Scheduler
+BWL - Backup Scheduling Wait List
+CAC - Campaign Advertisement Connections
+CAL - Class Attendance Log for use with Flex Scheduling
+CAR - Records changes in students' class schedules so attendance can be tracked at the course level
+CAS - Class Attendance Submission Log for use with Flex Scheduling
+CAT - Class Attendance for use with Flex Scheduling
+CBD - District Attendance Letter Details
+CBS - District Attendance Letter Summary
+CCC - College Course Credit
+CCD - Class Calendar dates for Flex Scheduling
+CCH - Allows districts to define a course in more granular detail.
+CCI - College and Career Indicator
+CCL - Class Calendars for Flex Scheduling
+CCP - Stores Career Pathways specific to each Course.
+CDC - Aeries Web only. Contains documents specific to each Course.
+CDI - Code Table Image
+CER - Stores College Entrance Requirements for each student.
+CHC - Allows removal/addition Course Characteristics to a specific transcript record.
+CHD - Attendance History Details for Flex Scheduling
+CHI - Names / Addresses of Districts & Schools outside the current district used by various drop-downs, such as Transcripts
+CMP - Composite Courses
+CNF - Contains detail for one of the two Counselor Tables - More details than VIS (both can be used)
+COD - Contains CODES for Multiple Tables
+COL - Names and Addresses of Colleges – Can be DISTRICT MANAGED.
+CON - Records of people to be contacted in case of emergency
+CPE - Stores Career Pathways Experiences for each student.
+CPH - Stores Career Pathways History for each student.
+CPO - Stores Career Pathways Outcomes for each student.
+CPR - This table is in the Aeries SQL database for a planned future enhancement to Aeries to implement Course Requests
+CPW - Stores Career Pathways details for each student.
+CRA - Contains which security groups can view each custom report.
+CRC - Stores the definition of each custom report.
+CRD - Contains codes used to setup course request packets
+CRF - Aeries Web only. Contains fee information specific to each Course.
+CRG - Stores which custom report items are on each custom report.
+CRI - Stores the definition of each custom report item.
+CRL - Contains descriptions and colors for each of the 5 test levels.
+CRP - Contains the courses setup within the course request packets
+CRQ - Contains the list of courses offered to students in different grade levels during scheduling
+CRS - Contains details of Courses offered at a Secondary School
+CRT - Stores transcript requests from Colleges
+CSA - Special Ed Alternate Assessment Data – Can be DISTRICT MANAGED
+CSD - Special Ed Disability Services – Can be DISTRICT MANAGED
+CSE - Special Education Demographic Information – Can be DISTRICT MANAGED
+CSI - Special Ed Infant Services data – Can be DISTRICT MANAGED
+CSN - Contains descriptions of Content Standards Tests and Test Parts populated when loading STAR – Can be DISTRICT MANAGED
+CSQ - Academic Plan - Course Sequences
+CSS - Special Ed Student Suspensions – Can be DISTRICT MANAGED
+CST - Stores the Content Standard Scores that are loaded from STAR
+CSV - Special Ed Student Services data – Can be DISTRICT MANAGED
+CSX - Special Ed Secondary Transition data - reported by TX districts for SPPI-13 dataset in the SPEDS summer submission.
+CTD - Defines the layout of custom tables defined in the Aeries SQL database and tells Aeries Web how to display and work with the table. Updated from the Define Custom Tables page
+CTE - Career Technical Education, used by CALPADS. The information in this table is visible from the Students form, Student Secondary Data tab
+CTF - Defines the layout of custom tables defined in the Aeries SQL database and tells Aeries Web how to display and work with the table. Updated from the Define Custom Tables page
+CTL - Contains descriptions of Tests and Test Parts – Can be DISTRICT MANAGED
+CTS - Test Scores to be included on College Transcripts
+CVR - Civil Rights Data
+CVT - Civil Rights Data Totals
+DAA - Alert and Responses Sent and Received
+DAC - Created by Daily Attendance when Sheets are created
+DAG - Aeries Web Only. Define sub groups for district analysis indicators
+DAI - Aeries Web Only. Stores Analysis Indicator Definitions for Aeries Analytics
+DAL - Aeries Web Only. Table stores the titles, codes, and colors for each of the rubric levels
+DAM - Content of Alert Sent and User initiating the Request
+DAQ - Aeries Web Only. Stores the qualifying level of each student for each Aeries Analytics Analysis Item
+DAS - Aeries Web Only. Stores a summary of student level qualifications to different Aeries Analytics Analysis Items by school and grade
+DAT - Aeries Web Only. Stores the low and high values for each Rubric level
+DAU - Alert Recipients, Responding User and Status of Response - Read, Unread, etc.
+DAY - Attendance Calendar – Can be DISTRICT MANAGED
+DCA - Document Archive
+DCL - Table used by Parent Data Confirmation to store a log of parent access to each document and records if they digitally confirmed the information in the document
+DCS - Table used by Parent Data Confirmation to store the basic info about each Document and the document itself
+DCV - Table used by Parent Data Confirmation to store the Schools and Grades each document is visible to
+DDR - Discount Rates
+DDS - District Data Sharing
+DGG - Stores grade points for weight factors added to District Defined GPAs.
+DGP - Stores District Defined GPAs.
+DGS - Stores Schools and Cohorts associated with each District Defined GPA
+DGV - Stores course and data used to calculate each active District GPA.
+DGW - Stores weight factors added to District Defined GPAs
+DIG - Aeries Web Only. Aeries Analytics Dashboard – stores which dashboard items are on each dashboard
+DIO - Aeries Web Only. Aeries Analytics Dashboard – stores the definition of each dashboard item
+DIP - Aeries Web Only. Table for Dashboard Item Push Sharing
+DIS - Contains data for one of the two Discipline Tables – Less detail than ADS (both can be used)
+DLH - Contains multi-year data for student participation in Dual Language Immersion programs
+DNT - Contains history of details for Dental testing
+DOC - Stores any type of documentation. The table is ID based and it is not cached because of its potential big size
+DOF - Digital Offering
+DPT - Stores various District Wide options and is used by various Reports and Forms
+DRA - Aeries Web Only. Contains all of the individual district resource assignments (who they're checked out to)
+DRC - Aeries Web Only. Contains information about courses each district resources applies to
+DRI - Aeries Web Only. Contains all of the individual district resource copies
+DRT - Aeries Web Only. Contains information about district resources including title and other basic information
+DSD - District Supplemental Student demographics (up to 150 District developed fields)
+DSP - For recording multiple dispositions for a specific assertive discipline offense
+DVC - Data Validation Schools
+DVD - Data Validation Definitions
+DVG - Data Validation Groups
+DVR - Data Validation Results
+DVU - Data Validation Users
+ECA - Stores data to track Extracurricular Activity eligibility and participation
+ECD - Early Childhood Development
+ECO - Special Ed Preschool Outcomes data - reported by TX districts for SPPI-7 dataset in the SPEDS summer submission.
+ECP - Stores data to track Extracurricular Activity Probations
+EFD - Ed-Fi Data
+EFE - Ed-Fi Entities
+EFO - Ed-Fi Organization
+EFR - Ed-Fi Results
+EFS - Ed-Fi Schools
+EML - Used to log the emails that are sent out of the Aeries system
+EMP - Contains information concerning Employers for Student Work Permits – Can be DISTRICT MANAGED
+EMU - Used to store how parents in ABI have configured their email address to be used
+ENH - Contains Estimated New Hires information, used for state reporting
+ENR - Contains enrollment history for a student based on their Permanent ID
+EPL - Aeries Web Only. Define performance levels for each exam section
+ERL - Electronic Score Report Log
+ESI - Stores identifying fields from 3rd party products such as Google (G Suite).
+ESN - Aeries Web Only. Define sections of an exam, exam section can be tied to test part
+ESQ - Aeries Web Only. Store exam questions that belong to an exam section
+ESR - Contains grading rules for each exam question.
+ETA - Aeries Web Only. Define Testing Administrations of an exam.
+ETS - Aeries Web Only. Store a snapshot of students along with their classes and teachers in an Exam Testing Admin.
+EVT - Stores the contents of the Event Calendar.
+EXA - Aeries Web Only. Aeries Analytics Table for Exam Response Answers.
+EXC - Aeries Web Only. Aeries Analytics Table for Exam Question Choices.
+EXG - Aeries Web Only. Aeries Analytics Table for Exam Passage Text Groups.
+EXH - Aeries Web Only. Define which schools an exam can be given at.
+EXL - Aeries Web Only. Aeries Analytics Table for Exam Printing Log.
+EXM - Aeries Web Only. Aeries Analytics Table for Exams.
+EXO - Aeries Web Only. Store folder structure of exams.
+EXP - Stores details for student expulsions.
+EXQ - Aeries Web Only. Aeries Analytics Table for Exam Questions.
+EXR - Aeries Web Only. Aeries Analytics Table for Exam Responses.
+EXS - Aeries Web Only. Aeries Analytics Table for Exam Question Standards.
+EXT - Aeries Web Only. Aeries Analytics Table for Exam Passage Text.
+EXV - Aeries Web Only. Aeries Analytics Table for Exam Versions.
+FAP - Contains the accommodations that each 504 student needs.
+FAR - Deprecated
+FBK - Feedback
+FDE - Contains effects of the disabilities for 504 plans.
+FEC - Contains evaluation criteria for each 504 plan.
+FEE - Contains records of Fees charged to and collected from Students
+FLF - Contains definitions of field length files used by the Import Fixed Length Files form - Can be DISTRICT MANAGED.
+FLG - Stores the student number and specific table name flagged with a red flag indicator.
+FLI - File Location Information for use with the CALPADS Extracts page in Aeries Web.
+FLR - Contains definitions of field length record used by the Import Fixed Length Files form - Can be DISTRICT MANAGED.
+FOF - Contains the details of each 504 plan.
+FPP - Contains the basic info of individuals who participate in the 504 plan.
+FPS - Aeries Web Only. Contains Payment Schedules for each student.
+FRE - Contains data for Students whose parents have applied for Free or Reduced meals - Can be DISTRICT MANAGED.
+FRM - Deprecated
+FSA - Foster Action Plans
+FSC - Foster Legal Cases
+FSD - Contains student disabilities for each 504 plan.
+FSE - Foster Education Rights Holder
+FSG - Foster Goals
+FSH - Foster history
+FSI - Foster Student Information
+FSL - Foster Attorneys
+FSM - Foster Meetings
+FSN - Foster Notes
+FSP - Foster Placements
+FSR - Foster Hearings
+FSS - Foster Team Contacts
+FST - Foster Summary Report Notes
+FTD - Aeries Web Only. Contains record of credits and debits for each student.
+FTF - Flex Periods used for Flex Scheduling
+FTS - Aeries Web Only. Contains the current financial transaction summary for each student.
+FTT - Flex Period Times used for special bell schedules in Flex Scheduling
+GBA - Contains information about every teacher's gradebook assignments
+GBB - Stores information about the Gradebook backups that are done
+GBC - Types of Grading Scales used by each teacher, associated with individual Gradebook Assignments so letter or character grades can be given instead of numeric values
+GBD - Stores the gradebook scores by standard for each assignment
+GBE - Stores the Section or Teacher Numbers associated with an individual gradebook
+GBF - Store gradebook assignment's file linking information.
+GBK - Stores the different gradebooks created by the teachers
+GBL - Log used to track parents and/or students who view a teacher's gradebook via Parent Portal
+GBM - Stores actual Marks used by each Gradebook Grading Scale in the GBC table.
+GBN - Stores standards associated with each gradebook assignment. Used for the Load process from the Gradebook to Standards-Based Grade Reporting.
+GBO - Sets options for Teacher Grades
+GBR - Stores terms associated with each gradebook.
+GBS - Contains the scores received by students in a teacher's gradebook
+GBT - Contains definitions of the various assignment types by teachers
+GBU - Stores the information for students the teacher has allowed into the gradebook
+GBV - Stores student overall grade by term.
+GCM - Contains custom marks used with Gradebook
+GEA - Stores requirements for an Endorsement
+GEC - Stores available courses per Endorsement Option
+GEO - Stores available options per Endorsement Requirement
+GEP - Stores pathways a student can take to achieve the Endorsements
+GES - Stores Student Endorsement Statuses
+GPA - Stores student GPAs generated by District Defined GPAs.
+GPC - Stores definition of weighted grading
+GPD - Stores school defined data ranges for each marking period
+GRC - Contains all the possible Grades or Marks and descriptions that might be given to a student - Can be DISTRICT MANAGED.
+GRD - Contains Grades given to Students for Grade Reporting
+GRG - Stores students Grade Reporting GPA data as calculated on recompute
+GRH - Contains previous Grade Reporting data given to Students in the current school year
+GRO - Contains school and user options dealing with Grade Reporting
+GRP - Contains the mark headings and descriptions to be printed on a report card and any messages
+GRS - Contains Standards Based Grades given to Secondary Students
+GSS - Contains Gradebook overall grade information for a point in time.
+GTC - Stores student characteristics that triggered a particular GATE Referral.
+GTE - Stores main GATE information about a student.
+GTG - Defines percent range for each mark for Gradebook to Grades for Report Cards
+GTN - Stores various notes about a GATE Referral.
+GTR - Stores information about each referral to the GATE program that has been made for a student.
+GTS - Stores the default grade that a student earned from the previous teacher.
+GTT - Stores information about tests administered to students pending GATE qualification.
+HIS - History of Grades given to a student, including those from other schools – Transcript Data
+HRN - Contains history of details of Hearing Tests
+HSE - Contains records of Healthy Start Program Services Rendered
+HWO - Contains history of details of Height and Weight of Student
+ICL - Table used by Parent Data Confirmation to store what and when data is confirmed by the parent.
+IDN - Contains Permanent ID and other basic student information
+IMB - Stores student immunizations boosters (COVID-19)
+IMC - Used for weekly Teacher certification of instructional minutes
+IMM - Contains history of Immunizations for Student
+INA - Stores Actions for each Intervention Goal
+INC - Contains detailed information on the progress the student is making towards the established goals
+ING - Contains details regarding the intervention goals set for a student
+INM - Contains meeting information (comments, attendees, etc.) regarding the student intervention
+INP - Contains instructional practices or strategies defined for the student and intervention
+INR - Stores Resources for each Intervention.
+INS - Stores Stakeholders for each Intervention.
+INV - Contains details of Intervention Actions taken
+IPI - Stores Prior Interventions for each Intervention.
+IPR - Stores the programs that the district offers. (CSIS use ONLY). - Can be DISTRICT MANAGED.
+IRC - Stores Reasons and Concerns for each Intervention.
+ISA - Stores Independent Study Agreement records for a student.
+ISG - Stores Independent Study Agreement signatures for agreements.
+ISP - Stores product work hours for Independent Study agreements.
+ISS - Stores Student Strengths for each Intervention.
+ISW - Independent Study Production Work Hours
+IVS - Internship Visits
+LAC - Contains info about ESL students as well as info about initial tests taken by the student – Can be DISTRICT MANAGED.
+LAF - Contains a test history of Oral Language Assessments test taken by the student – Can be DISTRICT MANAGED.
+LAS - Contains a test history of Language Assessments test taken by the student – Can be DISTRICT MANAGED.
+LCN - School Contacts
+LEA - Stores Attendance data relating to a student's Letter
+LEC - Stores which Absence Codes (ABS) count towards each Letter in LET – Can be DISTRICT MANAGED.
+LET - Stores Letter data (similar to existing LTR table) – Can be DISTRICT MANAGED.
+LGD - Logs student detail changes specifically for CALPADS reporting.
+LKR - Contains information about all the lockers in the school
+LNC - Utilized through Teacher Portal to report the daily lunch count to the office
+LNK - Stores the URLs for the Online Resource Center
+LOC - Names, Addresses, and Function variables of schools within the District – Can be DISTRICT MANAGED.
+LOG - Records critical changes made to specific data by the users
+LSI - Contains student legal name and gender data
+LTA - Stores Attendance data from CAT table for use with Flex Scheduling. Similar to LEA.
+LTL - Logs the Letter Type, Student, Date and User who created Letters.
+LTR - Contains the contents of all letter texts available through Aeries
+MDF - Stores Multi Data Profiles Fields to be included
+MDL - Stores Multi Data Profiles layout colors
+MDP - Stores Multi Data Profiles basic information
+MED - Contains records of daily visits to the medical office
+MHS - History of Major Medical concerns
+MII - Contains history of details for Medical Insurance
+MLG - Logs the dates and times medications are administered to a student
+MLM - Contains history of details of Medications
+MNO - Contains confidential medical data regarding a student that is usually entered by nurses
+MSS - Contains Master Schedule Settings for use with Google Classrooms.
+MST - Master Schedule
+NAT - Stores data thresholds which will trigger alerts / notifications to be sent.
+NWS - Stores Schools and District News Articles.
+OAT - Oauth
+OBC - Observation Codes
+OBJ - Test objectives for "Teacher Made Test" – Can be DISTRICT MANAGED.
+OBS - Observations
+ODC - Used to match incoming courses from Records Transfer with local courses.
+ODE - Used to track student enrollment outside of your district
+ODR - Digital Store Order
+OGC - Stores courses taken outside the normal grade range that could be in a student's Course History and should be counted as a regular course
+OHI - Digital Store Order History
+OPT - Used by reports and Forms – School wide options which ADD to Variables
+OMT - Stores additional medical tests, including COVID-19 tests.
+PAO - Contains Portal Account Options for use with Google Classrooms.
+PAY - Record of payments made through the Billing process
+PCT - Contains data for export for CELDT Pre ID - Can be DISTRICT MANAGED.
+PDR - Holds the Document Requests
+PDT - Holds the Translations by CL for Document Requests
+PEI - Pre-Enrollment Information
+PFS - Stores specific Tests selected by administrators to be performed at the school level.
+PFT - Contains results of Physical Performance Testing
+PGM - Contains details of Special Programs in which students are participating
+PGR - Programming Screening
+PGS - Program Services
+PHE - Contains data for export for CAHSEE Pre ID – Can be DISTRICT MANAGED
+PHL - Stores username, school, student id, date, and page information accessed by parents or students through the Parent Portal, Mobile Portal app, Aeries Student app or other vendor Student apps.
+PIC - Stores student pictures. The table is ID based and it is not cached because of its potential big size.
+PNP - Aeries Web Only. Contains information about when parents want to receive Weekly Notification Emails.
+POP - Stores various options for the Teacher, Parent and Student Portals (also school-level grade reporting windows).
+PRC - Stores Pre-Referral Intervention Codes.
+PRD - Stores parent response data for Housing Questionnaire
+PRE - Stores Texas Assessment Precode file data.
+PRESTAR - Data previously stored in PRE table (Before 2013, PRE was used to contain data from a variety of sources to create a Pre ID file for export to STAR).
+PRI - Stores Pre-Referral Interventions for each student.
+PRN - Stores Meetings and Contacts for each Pre-Referral Intervention.
+PRR - Stores Reasons and Concerns for each Pre-Referral Intervention.
+PRS - Stores parent responses to survey items.
+PRT - Provides alignment of printer to output a variety of reports on preprinted forms
+PSA - Contains data for export for SABE Pre ID – Can be DISTRICT MANAGED
+PSB - Contains data for export for Smarter Balanced Pre ID - Can be DISTRICT MANAGED.
+PSD - Contains Payment Schedules for Billing
+PSS - Contains postsecondary survey results from students 6-12 months after their High School Completion
+PST - Defines the Payment Schedules available for Billing
+PWA - Parent and Student Account Management System stores accounts in this table. Self-managing – Can be DISTRICT MANAGED.
+PWS - Stores the students that can be seen by each PWA account. Student numbers are stored by Permanent ID Number – Can be DISTRICT MANAGED
+QRY - Storage of many QUERY statements for use by all users
+RAL - Record of those who have accessed the student data, cumulative record or test scores
+RCH - Aeries Web Only. Contains a running history of report cards that have been created at the end of each marking period.
+REL - Contains Religious information
+REQ - Maintains graduation requirements – Can be DISTRICT MANAGED.
+RET - Record of Retention actions, whether retention occurred or was set aside and for what reason
+RFI - Stores Referrals for Intervention for each student.
+RFP - Stores Prior Interventions for each Referral for Intervention.
+RFR - Stores Reasons and Concerns for each Referral for Intervention.
+RFS - Stores Student Strengths for each Referral for Intervention.
+RHS - Logs reports run in Aeries Web
+RJN - Logs parent's protest to data retained in any student record in accordance with California Ed. Code 49070(d) and 49072.
+ROL - Aeries Web Only. Stores settings used by the New Year Rollover process
+RPP - Stores definitions of Reports to be printed in packets for various reasons
+RRI - Records Request Items
+RRQ - Records Requests
+RT_CHI - Records transfer holding table. Stores a copy of incoming CHI data before it's imported.
+RT_CST - Records transfer holding table. Stores a copy of incoming CST data before it's imported.
+RT_CTS - Records transfer holding table. Stores a copy of incoming CTS data before it's imported.
+RT_HIS - Records transfer holding table. Stores a copy of incoming HIS data before it's imported.
+RT_TST - Records transfer holding table. Stores a copy of incoming TST data before it's imported.
+RTG - Report Tags
+RTM - Stores system and user messages specific to a records transfer (RTR or RTO) record.
+RTO - Stores data regarding student records which were requested from another school district.
+RTR - Stores data regarding student records which are being requested by another school district.
+RUN - Set of procedures that can be run at night to expedite use of the program during the day
+RVM - Rubric Value Marks
+RVT - Rubric Value Types
+SAA - Summer Alternate Course Request Assoc.
+SAB - Summer Alternate Course Req. Backup
+SAD - Contains Performance Indicators against which student success is measured
+SAG - Stores Student Assessment Definition levels by grade
+SAP - Contains the actual Performance Indicator Scores each student – NEW 5 Levels
+SAR - Summer Alternate Course Requests
+SAS - (OLD) Stu Assess Setup
+SAT - (OLD) SAT/ACT Scores
+SAV - Contains Student Schedule Changes for use by the Add/Drop Report
+SBC - Contains Comments that are given at grading time to an Elementary student
+SBD - Stores Standards-Based Template Details.
+SBE - Contains the Categories and Standards selected for Elementary report cards – Can be DISTRICT MANAGED
+SBG - Contains Grades given to Elementary Students
+SBH - History of Grades given to Elementary Students
+SBR - Stores a link between Courses (CRS) and Standards (STN)
+SBS - Stores Standards-Based Templates.
+SBU - Key to each backup table (i.e. backup title, date, sequence). Aeries Web only at this time.
+SBV - Contains all possible Grades or Marks and descriptions that might be given to Elementary students – Can be DISTRICT MANAGED
+SCD - School of Choice Decisions
+SCG - School Group School assignments
+SCH - Seating Chart Table
+SCN - School of Choice Request Notes
+SCO - Contains history of details of Scoliosis Tests
+SCP - Contains Student Scrip Purchases
+SCR - School of Choice Requests
+SDT - Seating Chart Details
+SEC - Relationships of Student Numbers to Master Schedule section numbers – Student Schedules
+SED - Scheduling Exclusions
+SFL - Student File Storage
+SGA - Student Group Analytics
+SGD - Stores the definition of Student Groups
+SGM - Stores the Students assigned to each Student Group
+SGS - Stores the Staff assigned to each Student Group
+SKT - Skills Type
+SLA - Service Learning Areas
+SLD - Aeries Web Only. Contains the specific Service Learning Requirements and Service Learning Hours Completed for each student for each grade level.
+SLH - Service Learning Hours
+SLI - Aeries Web Only. Contains images and other documents related to each Service Learning Log (SLL) record.
+SLL - Aeries Web Only. Contains a log of Service Learning Hours worked by students for specific organizations.
+SLO - Aeries Web Only. Contains information about organizations that students can donate their time to for building Service Learning Hours.
+SLQ - Service Learning Org. Areas
+SLR - Aeries Web Only. Contains detailed information about specific organizations that students are donating their time to.
+SMB - Exactly like SMS, only stores multiple sets of SMS data based on the number of backups made. Aeries Web only at this time.
+SMS - The Master Schedule for the next semester or year – for planning purposes – Scheduling
+SOC - Retains specific data, usually Ed Code, which assist in determination of specific Suspension Action – Can be DISTRICT MANAGED
+SPC - Stores Staff pictures
+SPP - Contains Program Participation for each Student to provide for dis-aggregation of data
+SPR - Contains details of Special Programs in which all students at a school are participating
+SPS - Defines which programs are to be used for dis-aggregation of data
+SPT - Aeries Web Only. Used by back-end processes in Aeries Web to determine if the system is performing effectively.
+SRB - Summer Requests Backup
+SRD - Synchronization Review Date
+SSA - Summer School Availability
+SSB - Exactly like SSS, only stores multiple sets of SSS data based on the number of backups made. Aeries Web only at this time.
+SSC - Summer School Courses
+SSD - Contains additional Student Data
+SSE - Contains Staff records assigned to Master Schedule sections
+SSM - Contains Staff records assigned to Scheduling Master Schedule sections
+SSP - SAML Service Providers
+SSO - Aeries Web Only. Contains temporary information for facilitating Single-Sign-On capabilities with 3rd party systems.
+SSR - Summer School Course Requests
+SSS - Contains Students Schedules for the next semester or year – for planning purposes.
+SST - Summer School Terms
+SSU - Stores multiple sets of Staff Section data from SSM based on the number of backups made.
+STA - Contains required information about the current assignments of staff members for State Reporting – Can be DISTRICT MANAGED
+STAR - Raw test scores imported from the STAR CD
+STC - Contains required information about the current credentials of staff members for State Reporting – Can be DISTRICT MANAGED
+STE - Stores imported credential data from standard CTC file layout distributed to counties and districts
+STF - Contains CBEDS required demographic information about current staff members for State Reporting
+STG - Contains seating chart information – used by Attendance by Photograph in the Teacher Portal
+STH - Stores the Highly Qualified Status for particular NCLB Core Areas for each staff member
+STJ - Contains job classifications and assignments for each staff member.
+STN - Contains all possible Categories and Standards that can be printed on a report card
+STO - Contains Information regarding Stores from which Students can purchase items using scrip
+STP - Contains Percentages of purchases
+STR - Data of all streets, including from-to numbers to determine school of residence and next school
+STS - Stores State Test Settings.
+STU - Student demographics
+SUP - Supplemental Student demographics (up to 150 District developed fields)
+SWL - Scheduling Master Schedule Wait List
+TAA - Aeries Web Only. Used by the Teacher Portal to store the ways a teacher is associated with students. Populated every time a teacher logs in to Aeries Web.
+TAD - Stores Testing Administration settings.
+TBC - Contains all of the individual textbook copies and their assignment (who they're checked out to)
+TBL - Aeries Client Only. The tables to update during Update District Database
+TBO - Contains options about scanning and hand-entry of textbook assignment data
+TBT - Contains information about textbook titles including total copies and replacement costs
+TCH - Contains basic information about Teachers
+TDF - Defines the content of the District's Transcripts
+TEX - Contains accommodations, modifications and info as to why a student missed a scheduled test
+TFL - Aeries Web Only. Contains the files uploaded by teachers to link with Aeries Web Gradebook Assignments.
+TFR - Defines which fields and drop downs on a form are required.
+TKN - Store the token for the upcoming new Aeries Student app.
+TNP - Stores specific Test ID's and the total number that is possible for each part.
+TPE - Third Party Extracts
+TPN - Stores Third Party Names.
+TPO - Stores Third Party Options for use with Aeries APIs
+TPP - Stores Third Party Permissions.
+TPS - Stores calculated status for Algebra I, CAHSEE, and Physical Fitness
+TRM - Define school terms
+TSA - Aeries Web Only. Used by the Teacher Portal to store which students are linked to a teacher and how. Associated with the TAA table and populated dynamically when a teacher logs in to Aeries Web.
+TSD - Stores teacher defined standards by class.
+TSI - Temporary Student Information
+TSO - Stores standard grading options by teacher and class.
+TST - Contains a history of State and Local standardized test scores
+TTC - Contains a list of tables to copy when transferring a student between schools
+TTM - Stores starting and ending dates for terms defined in HIS for all previous years. CSIS use ONLY.
+TTP - Defines which Test Scores, Activities, Immunizations, Student fields etc. are to print on Transcripts
+TXT - Stores letters developed in the QUERY Letter Text Editor, some of which can be District Standard
+UAO - Contains User Account Options for use with Google Classrooms.
+UCE - UC ELC Extract
+UGA - Aeries Web security table to store User and Group Memberships.
+UGC - Aeries Web security table for code-based security. Currently used only in specific areas of the system such as Financials.
+UGN - Aeries Web security table to store information about Users and Groups.
+UGP - Aeries Web security table to store permissions granted to Users and Groups.
+USO - Stores various options for individual users that need to be associated with an individual database
+USR - Aeries Client Only. Stores permissions for the different users to access various schools.
+UTZ - System Check
+VAC - Utilized to update required immunizations for the current state requirements.
+VER - Contains the sheet numbers of absence verification sheets printed
+VIC - Store information for Victims of harassment or any other offenses
+VIS - Contains detail for one of the two Counselor Tables - Less detail than CNF (both can be used)
+VND - Vendors for the Textbooks
+VSN - Contains history of details of Vision Tests
+WEB - Contains information about the valid users of ABI - Not used for Aeries Web
+WGM - Contains global messages displayed to users
+WIA - Contains the assignment scores for the What If feature available in the Aeries Student app
+WIG - Contains the student ID, gradebook number, gradebook term and other settings for the What If feature available in the Aeries Student app
+WIH - Contains score goals and other settings for the What If feature available in the Aeries Student app
+WIT - Store information for Witnesses of harassment or any other offenses
+WPT - Record of Work Permits issued to Students
+WPV - Aeries Web Only. Contains information about visits to work places by CTE/ROP teachers when students are interning at places of employment.
+WRL - WRL Log
+XRF - Tool for District to match criteria required by Testing Pre-IDs and location of data in AERIES
+YTD - Contains Student Attendance data from the beginning of school to the current date

@@ -123,6 +123,7 @@ Critical for operation:
 - Example: `npx tsx scripts/sync-data.ts`
 
 ### Testing Database Queries
+- Aeries schema map (every table, column, key, join and code set): `docs/aeries-schema/` — start at `README.md`, then `tables/<TABLE>.md`. Regenerate with `npm run generate:aeries-schema`; improve meanings in `docs/aeries-schema/sources/curated.json`
 - Check `lib/aeries.ts` for Aeries query patterns
 - Use `lib/db.ts` for Prisma queries
 - Test complex queries in isolation first
