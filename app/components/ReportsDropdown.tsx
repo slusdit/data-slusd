@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/collapsible";
 import { ChevronDown, ChevronRight, Star, FolderClosed, FileText, Search, X } from "lucide-react";
 import Link from "next/link";
-import { QueryCategory, ROLE } from "@prisma/client";
+import { QueryCategory } from "@prisma/client";
 import { QueryWithCategory } from "./QueryBar";
 
 type FavoriteQuery = {
@@ -31,7 +31,7 @@ type FavoriteQuery = {
 
 interface UserWithFavorites {
   favorites: FavoriteQuery[];
-  roles: ROLE[];
+  roles: string[];
   email: string;
   queryEdit?: boolean;
 }

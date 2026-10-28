@@ -9,7 +9,7 @@ async function main() {
   const users = await prisma.user.findMany({
     take: 3,
     include: {
-      userRole: true,
+      UserRole: { include: { role: true } },
       UserSchool: {
         include: {
           school: true

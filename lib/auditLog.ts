@@ -8,7 +8,7 @@ import "server-only";
  */
 import prisma from "./db";
 
-export type AuditEntity = "Query" | "QueryCategory" | "User" | "AIFragment";
+export type AuditEntity = "Query" | "QueryCategory" | "User" | "AIFragment" | "Role";
 
 export interface AuditInput {
   actor: { id: string; email?: string | null };

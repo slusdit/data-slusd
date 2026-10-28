@@ -33,11 +33,12 @@ import {
 import { Pencil, Trash2, Download, UserPlus, Loader2, Eye } from "lucide-react";
 import { useRouter } from "next/navigation";
 import MultiDropdownSelector from "./MultiDropdownSelector";
-import { ROLE_NAMES, SITE_ADMIN_ASSIGNABLE_ROLES } from "@/lib/roles";
+import { SITE_ADMIN_ASSIGNABLE_ROLES, formatRole } from "@/lib/roles";
 
 type UserRole = {
   id: string;
   role: string;
+  label?: string | null;
 };
 
 type UserSchool = {
@@ -75,10 +76,7 @@ type UserAdminGridProps = {
   isSiteAdmin?: boolean; // If true, restricts certain admin-only actions
 };
 
-// Both lists live in lib/roles.ts so they stay in step with the Prisma ROLE enum.
-const primaryRoleOptions: readonly string[] = ROLE_NAMES;
-
-// Roles that Site Admins can assign (not superadmin-level or non-Aeries roles)
+// Roles that Site Admins can assign (not superadmin-level or hand-created roles)
 const siteAdminAllowedRoles: readonly string[] = SITE_ADMIN_ASSIGNABLE_ROLES;
 
 export default function UserAdminGrid({
@@ -122,16 +120,25 @@ export default function UserAdminGrid({
     headerTextColor: resolvedTheme === "dark" ? "#fff" : "#000",
   });
 
-  // Get roles list
+  // Role catalogue from the Role table (admin page). Falls back to the roles
+  // seen on the users themselves if none was passed.
   const rolesList = useMemo(() => {
     if (availableRoles.length > 0) return availableRoles;
-    const uniqueRoles = new Set<string>();
+    const uniqueRoles = new Set<string>(["USER"]);
     dataIn.forEach(user => {
       user.userRole?.forEach(role => uniqueRoles.add(role.role));
     });
-    primaryRoleOptions.forEach(role => uniqueRoles.add(role));
     return Array.from(uniqueRoles).map(role => ({ id: role, role }));
   }, [availableRoles, dataIn]);
+
+  const primaryRoleOptions = useMemo(
+    () => rolesList.map(r => r.role).sort((a, b) => a.localeCompare(b)),
+    [rolesList]
+  );
+  const roleDisplay = useCallback(
+    (name: string) => formatRole(rolesList.find(r => r.role === name) ?? { role: name }),
+    [rolesList]
+  );
 
   // Get schools list
   const schoolsList = useMemo(() => {
@@ -567,7 +574,7 @@ export default function UserAdminGrid({
     .filter(role => !isSiteAdmin || siteAdminAllowedRoles.includes(role.role))
     .map(role => ({
       id: role.role,
-      label: role.role,
+      label: formatRole(role),
     }));
 
   // Filter primary role options for site admins
@@ -722,7 +729,7 @@ export default function UserAdminGrid({
                   <SelectContent>
                     {filteredPrimaryRoleOptions.map((role) => (
                       <SelectItem key={role} value={role}>
-                        {role}
+                        {roleDisplay(role)}
                       </SelectItem>
                     ))}
                   </SelectContent>

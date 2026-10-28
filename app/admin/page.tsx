@@ -9,12 +9,11 @@ import prisma from "@/lib/db";
 import AdminTabs from "../components/AdminTabs";
 import { getDefaultDbYear, updateDefaultDbYear } from "@/lib/appSettings";
 import { calculateCurrentSchoolYear } from "@/lib/schoolYear";
-import { ensureBaseRoleRecords } from "@/lib/roleRecords";
-import type { RoleName } from "@/lib/roles";
+import { ensureSystemRoles, listRoles } from "@/lib/roleRecords";
 
 type UserRole = {
   id: string;
-  role: RoleName;
+  role: string;
 };
 
 type UserSchool = {
@@ -59,9 +58,9 @@ export default async function AdminPage() {
   // Report SQL is only fetched for viewers who can see the Queries tab (finding S14)
   const canSeeQueries = isSuperAdmin || isQueryEditor;
 
-  // Roles that never come from Aeries (e.g. BOARDMEMBER) only get a Role row
-  // here, so they must exist before the pickers below are populated.
-  await ensureBaseRoleRecords();
+  // The roles the code depends on must exist before the pickers below are
+  // populated; everything else in the catalogue is managed on the Roles tab.
+  await ensureSystemRoles();
 
   // Fetch all data in parallel
   const [queries, roles, allUsers, session, categories, fragments, fragmentCategories, currentDefaultYear] =
@@ -94,7 +93,7 @@ export default async function AdminPage() {
           },
         },
       }) : Promise.resolve([]),
-      prisma.role.findMany(),
+      listRoles(),
       prisma.user.findMany({
         select: {
           id: true,

@@ -127,16 +127,23 @@
 
 ### Role
 
+Role catalogue. `role` is the machine name the code and session compare
+against; `isSystem` rows are seeded from `lib/roles.ts` and cannot be deleted.
+Managed on the admin Roles tab (see `docs/roles-migration-2026-10.md`).
 
 | Column | Type | Nullable | Key | Default |
 |--------|------|----------|-----|---------|
 | `id` | String | NO | PK | cuid( |
-| `role` | ROLE | NO |  | None |
-| `queryId` | String | YES |  | None |
-| `Query` | Query | YES | FK | None |
+| `role` | String | NO | UNIQUE | None |
+| `label` | String | NO |  | "" |
+| `description` | String (TEXT) | YES |  | None |
+| `isSystem` | Boolean | NO |  | false |
+| `createdAt` | DateTime | NO |  | now( |
+| `updatedAt` | DateTime | NO |  | now( |
 | `UserRole` | UserRole[] | NO |  | None |
 | `QueryCategory` | QueryCategory[] | NO |  | None |
-| `users` | User[] | NO |  | None |
+| `queries` | Query[] | NO |  | None |
+| `primaryUsers` | User[] | NO |  | None |
 
 **Primary Key:** id
 

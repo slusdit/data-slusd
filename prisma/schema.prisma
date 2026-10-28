@@ -16,7 +16,10 @@ model User {
   updatedAt     DateTime        @updatedAt
   lastLogin     DateTime?
   queryEdit     Boolean         @default(false)
-  primaryRole   ROLE            @default(USER)
+  // Machine name of a Role row. Written by the Aeries title sync for staff and
+  // by an admin for everyone else; the FK keeps it pointing at a real role.
+  primaryRole   String          @default("USER")
+  primaryRoleRef Role           @relation("UserPrimaryRole", fields: [primaryRole], references: [role], onDelete: Restrict, onUpdate: Cascade)
   emailVerified DateTime?
   primarySchool Int?
   psl           Int?            @unique
@@ -36,7 +39,6 @@ model User {
   UserClass     UserClass[]
   UserRole      UserRole[]
   UserSchool    UserSchool[]
-  userRole      Role[]          @relation("UserRole")
   school        SchoolInfo[]    @relation("UserSchool")
 
   @@index([emulatingId]) // For checking who is being emulated
@@ -101,17 +103,22 @@ model Authenticator {
   @@id([userId, credentialID])
 }
 
+// Role catalogue. One row per role; `role` is the machine name the code and the
+// session compare against (e.g. "SUPERADMIN"). System roles are seeded from
+// lib/roles.ts and cannot be deleted; everything else is created by a super
+// admin on the admin Roles tab (board members, outside partners, ...).
 model Role {
   id            String          @id @default(cuid())
-  role          ROLE
-  queryId       String?
-  Query         Query?          @relation(fields: [queryId], references: [id])
+  role          String          @unique
+  label         String          @default("")
+  description   String?         @db.Text
+  isSystem      Boolean         @default(false)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @default(now()) @updatedAt
   UserRole      UserRole[]
   QueryCategory QueryCategory[] @relation("QueryCategoryToRole")
-  users         User[]          @relation("UserRole")
-
-  @@index([queryId], map: "Role_queryId_fkey")
-  @@index([role]) // For looking up roles by ROLE enum value
+  queries       Query[]         @relation("QueryToRole")
+  primaryUsers  User[]          @relation("UserPrimaryRole")
 }
 
 model SchoolInfo {
@@ -190,7 +197,7 @@ model Query {
   chartSeriesOverride String?      
   Chart          Chart[]
   category       QueryCategory? @relation(fields: [categoryId], references: [id])
-  roles          Role[]
+  roles          Role[]         @relation("QueryToRole")
 
   @@index([categoryId], map: "Query_categoryId_fkey")
   @@index([publicQuery]) // For filtering public/private queries
@@ -300,37 +307,8 @@ model GradeDistribution {
 //   @@index([schoolYear, sc])
 // }
 
-enum ROLE {
-  USER
-  ADMIN
-  SUPERADMIN
-  HR
-  TEACHER
-  SITEADMIN
-  STAFF
-  BUSINESS
-  IT
-  DISCIPLINE
-  SECONDARYTEACHER
-  ELEMENTARYTEACHER
-  ASSESSMENT
-  GRADEDISTRIBUTION
-  DIRECTOR
-  PRINCIPAL
-  COUNSELOR
-  NURSE
-  LIBRARIAN
-  INTERVENTIONS
-  IEPUPLOAD
-  SPED
-  AIQUERY
-  QUERYEDITOR
-  // Roles below are assigned by hand in the admin Users tab. They never come
-  // from an Aeries job title because the people who hold them have no Aeries
-  // account. Add new non-Aeries roles here, then mirror them in lib/roles.ts
-  // (lib/roles.test.ts fails until both lists match).
-  BOARDMEMBER
-}
+// Roles used to be a ROLE enum here. They now live in the Role table (see
+// model Role) so new roles are data, not schema changes.
 
 enum CHARTTYPE {
   BAR

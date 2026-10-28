@@ -1,14 +1,13 @@
 import Link from "next/link"
 import LoginButton from "./LoginButton"
-import { ROLE } from "@prisma/client"
 import { Button } from "@/components/ui/button"
 import { AlertTriangle, Home, XOctagon } from "lucide-react"
 import { SignIn } from "./GoogleSignIn"
 import Image from "next/image"
 
 type Role = {
-  adminRoles: ROLE[]
-  authorizedRoles: ROLE[]
+  adminRoles: string[]
+  authorizedRoles: string[]
 }
 
 const UnauthorizedButton = ({

@@ -29,7 +29,6 @@ import { useTheme } from "next-themes";
 import { SignOutGoogle } from "./GoogleSignOut";
 import { SignInGoogle } from "./GoogleSignIn";
 import Link from "next/link";
-import { ROLE } from "@prisma/client";
 
 interface UserMenuProps {
   user: {
@@ -38,7 +37,7 @@ interface UserMenuProps {
     email?: string | null;
     image?: string | null;
     admin?: boolean;
-    roles?: ROLE[];
+    roles?: string[];
   } | null;
 }
 
@@ -71,10 +70,10 @@ export default function UserMenu({ user }: UserMenuProps) {
     .join("")
     .toUpperCase() || "U";
 
-  const canAccessAdmin = user.admin || user.roles?.includes("SUPERADMIN" as ROLE) ||
-    user.roles?.includes("SITEADMIN" as ROLE) || user.roles?.includes("PRINCIPAL" as ROLE);
+  const canAccessAdmin = user.admin || user.roles?.includes("SUPERADMIN") ||
+    user.roles?.includes("SITEADMIN") || user.roles?.includes("PRINCIPAL");
 
-  const canAccessAI = user.roles?.includes("AIQUERY" as ROLE) || user.roles?.includes("SUPERADMIN" as ROLE) || user.admin;
+  const canAccessAI = user.roles?.includes("AIQUERY") || user.roles?.includes("SUPERADMIN") || user.admin;
 
   return (
     <DropdownMenu>

@@ -4,16 +4,16 @@ import { cache } from "react";
 import Google from "next-auth/providers/google";
 import prisma from "./lib/db";
 import { getAllSchools, syncTeacherClasses } from "./lib/signinSync";
-import { Class, Query, ROLE, SchoolInfo, User } from "@prisma/client";
+import { Class, Query, SchoolInfo, User } from "@prisma/client";
 import { AeriesSimpleTeacher, getAeriesStaff } from "./lib/aeries";
 import { calculateCurrentSchoolYear } from "./lib/schoolYear";
 
 
 export interface SessionUser extends User {
   schools?: string[];
-  roles?: ROLE[];
+  roles?: string[];
   classes?: Class[];
-  primaryRole: ROLE;
+  primaryRole: string;
   favorites: Query[];
   primarySchool: number | null;
   activeSchool: number;
@@ -84,15 +84,15 @@ async function getSchools({
 
 // Apply role overrides (add and block)
 function applyRoleOverrides(
-  roles: ROLE[],
+  roles: string[],
   blockedRoles?: string | null,
   addedRoles?: string | null
-): ROLE[] {
+): string[] {
   let effectiveRoles = [...roles];
 
   // Add manually added roles
   if (addedRoles) {
-    const addedList = addedRoles.split(',').map(s => s.trim()).filter(Boolean) as ROLE[];
+    const addedList = addedRoles.split(',').map(s => s.trim()).filter(Boolean);
     effectiveRoles = Array.from(new Set([...effectiveRoles, ...addedList]));
   }
 
@@ -276,7 +276,7 @@ const nextAuth = NextAuth({
       });
 
       // Apply role overrides — read from explicit UserRole table (where Aeries sync writes)
-      const baseRoles: ROLE[] = effectiveUser.UserRole.map((ur) => ur.role.role) || [];
+      const baseRoles: string[] = effectiveUser.UserRole.map((ur) => ur.role.role) || [];
       // Include primaryRole in the roles array so it's used for access control
       if (effectiveUser.primaryRole && !baseRoles.includes(effectiveUser.primaryRole)) {
         baseRoles.push(effectiveUser.primaryRole);

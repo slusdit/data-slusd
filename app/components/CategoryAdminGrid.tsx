@@ -31,11 +31,12 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Pencil, Trash2, Plus } from "lucide-react";
 import MultiDropdownSelector from "./MultiDropdownSelector";
-import { ROLE } from "@prisma/client";
+import { formatRole } from "@/lib/roles";
 
 type CategoryRole = {
   id: string;
-  role: ROLE;
+  role: string;
+  label?: string | null;
 };
 
 type Category = {
@@ -83,7 +84,7 @@ export default function CategoryAdminGrid({
     const uniqueRoles = new Map<string, { id: string; label: string }>();
     roles.forEach((r) => {
       if (!uniqueRoles.has(r.role)) {
-        uniqueRoles.set(r.role, { id: r.id, label: r.role });
+        uniqueRoles.set(r.role, { id: r.id, label: formatRole(r) });
       }
     });
     return Array.from(uniqueRoles.values()).sort((a, b) =>

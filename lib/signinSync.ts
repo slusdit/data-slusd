@@ -9,7 +9,7 @@ import "server-only";
 // caller-supplied user id / email and write roles and school access.
 import { AeriesSimpleStaff, AeriesSimpleTeacher, getAeriesStaff, getSchoolsFromUsrAccounts, getTeacherSchoolCredentials, runParameterizedQuerySystem } from "./aeries";
 import prisma from "./db";
-import { ROLE } from "@prisma/client";
+import { SYSTEM_ROLES, type SystemRoleName } from "./roles";
 import sql from "mssql";
 
 type GetAllSchoolsReturn = {
@@ -19,23 +19,24 @@ type GetAllSchoolsReturn = {
 }
 
 // Map Aeries job titles to Data Dashboard roles
-const TITLE_TO_ROLE_MAP: Record<string, ROLE> = {
-    'teacher': ROLE.TEACHER,
-    'principal': ROLE.PRINCIPAL,
-    'assistant principal': ROLE.PRINCIPAL,
-    'vice principal': ROLE.PRINCIPAL,
-    'counselor': ROLE.COUNSELOR,
-    'nurse': ROLE.NURSE,
-    'librarian': ROLE.LIBRARIAN,
-    'director': ROLE.DIRECTOR,
-    'superintendent': ROLE.SUPERADMIN,
-    'assistant superintendent': ROLE.DIRECTOR,
+// Every target must be a system role (lib/roles.ts) so the row is guaranteed to exist.
+const TITLE_TO_ROLE_MAP: Record<string, SystemRoleName> = {
+    'teacher': "TEACHER",
+    'principal': "PRINCIPAL",
+    'assistant principal': "PRINCIPAL",
+    'vice principal': "PRINCIPAL",
+    'counselor': "COUNSELOR",
+    'nurse': "NURSE",
+    'librarian': "LIBRARIAN",
+    'director': "DIRECTOR",
+    'superintendent': "SUPERADMIN",
+    'assistant superintendent': "DIRECTOR",
 }
 
 /**
  * Determines the appropriate role based on Aeries job title
  */
-function getRoleFromTitle(title: string): ROLE {
+function getRoleFromTitle(title: string): SystemRoleName {
     const normalizedTitle = title.toLowerCase().trim()
 
     // Check for exact matches first
@@ -51,7 +52,7 @@ function getRoleFromTitle(title: string): ROLE {
     }
 
     // Default to STAFF for any recognized employee, USER for unknown
-    return ROLE.STAFF
+    return "STAFF"
 }
 
 /**
@@ -61,14 +62,16 @@ function getRoleFromTitle(title: string): ROLE {
 export async function syncUserRolesFromAeries(userId: string, aeriesTitle: string, primarySchool: number) {
     const baseRole = getRoleFromTitle(aeriesTitle)
 
-    // Find or create the role record for this base role
-    let roleRecord = await prisma.role.findFirst({
+    // Find or create the role record for this base role (normally seeded by
+    // ensureSystemRoles; created here only if the catalogue was never loaded)
+    let roleRecord = await prisma.role.findUnique({
         where: { role: baseRole }
     })
 
     if (!roleRecord) {
+        const seed = SYSTEM_ROLES.find((r) => r.role === baseRole)
         roleRecord = await prisma.role.create({
-            data: { role: baseRole }
+            data: { role: baseRole, label: seed?.label ?? baseRole, description: seed?.description, isSystem: true }
         })
     }
 

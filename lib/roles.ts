@@ -1,59 +1,74 @@
 /**
- * Application role catalogue.
+ * Role catalogue helpers.
  *
- * The Prisma `ROLE` enum in prisma/schema.prisma is the source of truth. This
- * module repeats it as a plain array so client components (which cannot import
- * the Prisma runtime) can render role pickers. lib/roles.test.ts fails whenever
- * the two drift apart, so adding a role is a two-line change: the enum and
- * `ROLE_NAMES`. Then run `npx prisma generate` and `npx prisma db push`.
+ * Roles are rows in the `Role` table (prisma/schema.prisma). A role's `role`
+ * column is its machine name, e.g. "SUPERADMIN"; that string is what sits in
+ * the session's `roles` array and what the authorization predicates compare.
  *
- * Roles reach a user in one of two ways:
- *   - Aeries sync (lib/signinSync.ts) maps the staff member's job title to a
- *     base role on every sign-in. It only ever adds; it never removes.
- *   - An admin assigns roles on the admin Users tab. This is the only path for
- *     people with no Aeries account (board members, outside partners, and so on),
- *     who still sign in with an @slusd.us Google account.
+ * Two kinds of role exist:
  *
- * Role rows in the database are created on demand by lib/roleRecords.ts so a
- * newly added role is pickable in the admin UI without a seed step.
+ *   - System roles (`SYSTEM_ROLES` below, `isSystem = true` in the table). The
+ *     code checks these by name, or the Aeries sign-in sync assigns them from a
+ *     job title, so they must always exist. lib/roleRecords.ts seeds them on
+ *     admin page load and the Roles tab refuses to delete them.
+ *
+ *   - Data roles. Everything else, created by a super admin on the admin Roles
+ *     tab. They matter only for report-category access and carry no behaviour
+ *     in code. Board members, outside partners and other people with no Aeries
+ *     account get their access this way.
+ *
+ * This module has no Prisma or server imports so client components can use it.
  */
 
-export const ROLE_NAMES = [
-  "USER",
-  "ADMIN",
-  "SUPERADMIN",
-  "HR",
-  "TEACHER",
-  "SITEADMIN",
-  "STAFF",
-  "BUSINESS",
-  "IT",
-  "DISCIPLINE",
-  "SECONDARYTEACHER",
-  "ELEMENTARYTEACHER",
-  "ASSESSMENT",
-  "GRADEDISTRIBUTION",
-  "DIRECTOR",
-  "PRINCIPAL",
-  "COUNSELOR",
-  "NURSE",
-  "LIBRARIAN",
-  "INTERVENTIONS",
-  "IEPUPLOAD",
-  "SPED",
-  "AIQUERY",
-  "QUERYEDITOR",
-  // Non-Aeries roles: assigned by hand only.
-  "BOARDMEMBER",
-] as const;
+export type RoleSeed = {
+  role: string;
+  label: string;
+  description: string;
+};
 
-export type RoleName = (typeof ROLE_NAMES)[number];
+/** A Role row as the admin Roles tab sees it (produced by lib/roleRecords.ts). */
+export type RoleRow = {
+  id: string;
+  role: string;
+  label: string;
+  description: string | null;
+  isSystem: boolean;
+  userCount: number;
+  primaryUserCount: number;
+  categoryCount: number;
+  queryCount: number;
+};
+
+/** Roles the code depends on by name. Keep in step with the checks they describe. */
+export const SYSTEM_ROLES = [
+  { role: "USER", label: "User", description: "Default role for every signed-in account." },
+  { role: "SUPERADMIN", label: "Super Admin", description: "Full access to every school, report and admin tool." },
+  { role: "SITEADMIN", label: "Site Admin", description: "Manages users at their own schools from the admin Users tab." },
+  { role: "PRINCIPAL", label: "Principal", description: "Aeries title role; also grants site-admin access and grade distribution." },
+  { role: "QUERYEDITOR", label: "Query Editor", description: "Creates and edits saved reports, categories and AI fragments." },
+  { role: "AIQUERY", label: "AI Query", description: "May use the AI query builder." },
+  { role: "GRADEDISTRIBUTION", label: "Grade Distribution", description: "May open the grade distribution analysis." },
+  { role: "ASSESSMENT", label: "Assessment", description: "May open the assessment pages." },
+  { role: "INTERVENTIONS", label: "Interventions", description: "May open student intervention tracking." },
+  { role: "SPED", label: "Special Education", description: "May upload IEP documents through the SPED tools." },
+  { role: "IEPUPLOAD", label: "IEP Upload", description: "May upload IEP documents." },
+  { role: "TEACHER", label: "Teacher", description: "Aeries title role. Class rosters are synced at sign-in." },
+  { role: "COUNSELOR", label: "Counselor", description: "Aeries title role." },
+  { role: "NURSE", label: "Nurse", description: "Aeries title role." },
+  { role: "LIBRARIAN", label: "Librarian", description: "Aeries title role." },
+  { role: "DIRECTOR", label: "Director", description: "Aeries title role (directors and assistant superintendents)." },
+  { role: "STAFF", label: "Staff", description: "Aeries title role for any other district employee." },
+] as const satisfies readonly RoleSeed[];
+
+export type SystemRoleName = (typeof SYSTEM_ROLES)[number]["role"];
+
+export const SYSTEM_ROLE_NAMES: readonly SystemRoleName[] = SYSTEM_ROLES.map((r) => r.role);
 
 /**
  * Roles a Site Admin may give or take away. Everything else (district-wide,
- * admin-level and non-Aeries roles) is reserved for super admins.
+ * admin-level and hand-created roles) is reserved for super admins.
  */
-export const SITE_ADMIN_ASSIGNABLE_ROLES: readonly RoleName[] = [
+export const SITE_ADMIN_ASSIGNABLE_ROLES: readonly string[] = [
   "USER",
   "TEACHER",
   "STAFF",
@@ -65,6 +80,24 @@ export const SITE_ADMIN_ASSIGNABLE_ROLES: readonly RoleName[] = [
   "AIQUERY",
 ];
 
-export function isRoleName(value: unknown): value is RoleName {
-  return typeof value === "string" && (ROLE_NAMES as readonly string[]).includes(value);
+/** Machine names: upper-case letters, digits and underscores, 2 to 40 characters, starting with a letter. */
+export const ROLE_NAME_PATTERN = /^[A-Z][A-Z0-9_]{1,39}$/;
+
+/** Upper-cases and trims a typed name so "board member" becomes "BOARD_MEMBER". */
+export function normalizeRoleName(input: string): string {
+  return input.trim().toUpperCase().replace(/[\s-]+/g, "_");
+}
+
+export function isValidRoleName(name: string): boolean {
+  return ROLE_NAME_PATTERN.test(name);
+}
+
+export function isSystemRoleName(name: string): name is SystemRoleName {
+  return (SYSTEM_ROLE_NAMES as readonly string[]).includes(name);
+}
+
+/** "Board Member (BOARDMEMBER)" when a label exists, else the bare name. */
+export function formatRole(role: { role: string; label?: string | null }): string {
+  const label = role.label?.trim();
+  return label && label !== role.role ? `${label} (${role.role})` : role.role;
 }
