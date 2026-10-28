@@ -325,6 +325,11 @@ enum ROLE {
   SPED
   AIQUERY
   QUERYEDITOR
+  // Roles below are assigned by hand in the admin Users tab. They never come
+  // from an Aeries job title because the people who hold them have no Aeries
+  // account. Add new non-Aeries roles here, then mirror them in lib/roles.ts
+  // (lib/roles.test.ts fails until both lists match).
+  BOARDMEMBER
 }
 
 enum CHARTTYPE {

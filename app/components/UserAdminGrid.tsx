@@ -33,6 +33,7 @@ import {
 import { Pencil, Trash2, Download, UserPlus, Loader2, Eye } from "lucide-react";
 import { useRouter } from "next/navigation";
 import MultiDropdownSelector from "./MultiDropdownSelector";
+import { ROLE_NAMES, SITE_ADMIN_ASSIGNABLE_ROLES } from "@/lib/roles";
 
 type UserRole = {
   id: string;
@@ -74,18 +75,11 @@ type UserAdminGridProps = {
   isSiteAdmin?: boolean; // If true, restricts certain admin-only actions
 };
 
-const primaryRoleOptions = [
-  "USER", "ADMIN", "SUPERADMIN", "HR", "TEACHER", "SITEADMIN", "STAFF",
-  "BUSINESS", "IT", "DISCIPLINE", "SECONDARYTEACHER", "ELEMENTARYTEACHER",
-  "ASSESSMENT", "GRADEDISTRIBUTION", "DIRECTOR", "PRINCIPAL", "COUNSELOR",
-  "NURSE", "LIBRARIAN", "INTERVENTIONS", "SPED", "AIQUERY", "QUERYEDITOR"
-];
+// Both lists live in lib/roles.ts so they stay in step with the Prisma ROLE enum.
+const primaryRoleOptions: readonly string[] = ROLE_NAMES;
 
-// Roles that Site Admins can assign (not superadmin-level roles)
-const siteAdminAllowedRoles = [
-  "USER", "TEACHER", "STAFF", "COUNSELOR", "NURSE", "LIBRARIAN",
-  "GRADEDISTRIBUTION", "INTERVENTIONS", "AIQUERY"
-];
+// Roles that Site Admins can assign (not superadmin-level or non-Aeries roles)
+const siteAdminAllowedRoles: readonly string[] = SITE_ADMIN_ASSIGNABLE_ROLES;
 
 export default function UserAdminGrid({
   dataIn,
