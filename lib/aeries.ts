@@ -412,7 +412,7 @@ export async function runQueryWithMeta(
     rowCount: recordset.length,
   };
 
-  if (!uncapped && /^\s*(select|with)\b/i.test(scopedQuery)) {
+  if (!uncapped && /^\s*(select|with|declare)\b/i.test(stripSqlComments(scopedQuery))) {
     queryCache.set(scopedQuery, output, cacheKey, 300); // 5 minute TTL
   }
   return output;

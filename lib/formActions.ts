@@ -6,6 +6,7 @@ import prisma from "@/lib/db"
 import { requireAdmin, requireQueryEditor } from "@/lib/authGuard"
 import { invalidateReportCatalogue } from "@/lib/reportCatalogue"
 import { queryCache } from "@/lib/queryCache"
+import { validateQueryWhitelist } from "@/lib/sql-guard"
 
 // Returns { error } instead of throwing: a production build replaces a thrown
 // server-action message with React's opaque "Minified React error #441".
@@ -21,6 +22,11 @@ export async function addQuery(input: QueryFormValues): Promise<{ ok: true } | {
   const parsed = queryFormSchema.safeParse(input)
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid query details" }
   const values = parsed.data
+  try {
+    validateQueryWhitelist(values.query)
+  } catch (error) {
+    return { ok: false, error: (error as Error).message }
+  }
 
   try {
     const label = queryLabel(values.name)

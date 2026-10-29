@@ -32,6 +32,7 @@ import { addQuery } from "@/lib/formActions";
 import { QUERY_DESCRIPTION_MAX, QUERY_TEXT_MAX, queryFormSchema, type QueryFormValues } from "@/lib/querySchemas";
 import { Textarea } from "@/components/ui/textarea";
 import { useFormDialog } from "@/app/components/forms/FormDialog";
+import { validateQueryWhitelist } from "@/lib/sql-guard";
 
 type PageValues = {
   id: string;
@@ -107,14 +108,11 @@ export default function AddQueryForm({
   const { close } = useFormDialog();
 
   async function onSubmit(values: QueryFormValues) {
-    // Basic client-side sanity check; deeper validation happens server-side.
-    const trimmedQuery = values.query?.trim() ?? "";
-    if (!trimmedQuery) {
-      toast.error("Query cannot be empty.");
-      return;
-    }
-    if (!/\bselect\b/i.test(trimmedQuery)) {
-      toast.error("Query must be a SELECT statement.");
+    // Same allow-list the report runner applies (lib/sql-guard.ts); the server re-checks it.
+    try {
+      validateQueryWhitelist(values.query);
+    } catch (e) {
+      toast.error((e as Error).message);
       return;
     }
 

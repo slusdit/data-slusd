@@ -70,6 +70,24 @@ export function hasStatementSeparator(sql: string): boolean {
   return false;
 }
 
+/** Split on `;` outside string literals, dropping empty statements. Strip comments first. */
+export function splitSqlStatements(sql: string): string[] {
+  const statements: string[] = [];
+  let current = "";
+  let inString = false;
+  for (const ch of sql) {
+    if (ch === "'") inString = !inString;
+    if (ch === ";" && !inString) {
+      statements.push(current);
+      current = "";
+    } else {
+      current += ch;
+    }
+  }
+  statements.push(current);
+  return statements.map((s) => s.trim()).filter(Boolean);
+}
+
 /** Dangerous keywords present in the SQL (word-boundary, case-insensitive). */
 export function findDangerousKeywords(sql: string): string[] {
   return DANGEROUS_SQL_KEYWORDS.filter((keyword) =>
@@ -79,8 +97,9 @@ export function findDangerousKeywords(sql: string): string[] {
 
 /**
  * Allow-list validation for saved report SQL: one SELECT (or WITH ... SELECT,
- * UNIONs included), no second statement, no dangerous keywords. A single
- * trailing `;` is tolerated because many saved reports end with one.
+ * UNIONs included), optionally preceded by `DECLARE @variable ...;` statements
+ * (each ended with `;`), no other statement, no dangerous keywords anywhere.
+ * A single trailing `;` is tolerated because many saved reports end with one.
  * @throws Error describing the first violation
  */
 export function validateQueryWhitelist(query: string): void {
@@ -89,12 +108,16 @@ export function validateQueryWhitelist(query: string): void {
     throw new Error("Query is empty or contains only comments");
   }
   const body = normalized.replace(/[\s;]+$/, "");
-  if (hasStatementSeparator(body)) {
-    throw new Error("Query validation failed: multiple statements are not allowed");
-  }
-  if (!/^(select|with)\s/.test(body)) {
+  const statements = splitSqlStatements(body);
+  const main = statements[statements.length - 1] ?? "";
+  if (statements.slice(0, -1).some((s) => !/^declare\s+@/.test(s))) {
     throw new Error(
-      `Query validation failed: Only SELECT and UNION queries are allowed. Found: ${body.substring(0, 50)}...`
+      "Query validation failed: multiple statements are not allowed (only DECLARE @variable statements may come before the SELECT)"
+    );
+  }
+  if (!/^(select|with)\s/.test(main)) {
+    throw new Error(
+      `Query validation failed: Only SELECT and UNION queries are allowed. Found: ${main.substring(0, 50)}...`
     );
   }
   const found = findDangerousKeywords(body);

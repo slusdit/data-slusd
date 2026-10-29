@@ -54,6 +54,22 @@ test("validateQueryWhitelist", async (t) => {
     assert.throws(() => validateQueryWhitelist("SELECT 1; DROP TABLE stu"), /multiple statements/);
     assert.throws(() => validateQueryWhitelist("SELECT 1; /* x */ SeLeCt 2"), /multiple statements/);
   });
+  await t.test("accepts DECLARE @variable statements before the SELECT", () => {
+    assert.doesNotThrow(() =>
+      validateQueryWhitelist(
+        "DECLARE @YearsBack INT = 4; -- note\nDECLARE @From DATE = DATEFROMPARTS(2022, 10, 1);\n" +
+          "WITH c AS (SELECT 1 x) SELECT x FROM c WHERE x < @YearsBack;"
+      )
+    );
+    assert.doesNotThrow(() => validateQueryWhitelist("DECLARE @a INT = 1, @b VARCHAR(3) = ';'; SELECT @a, @b"));
+  });
+  await t.test("still rejects other statements and dangerous keywords around DECLARE", () => {
+    assert.throws(() => validateQueryWhitelist("DECLARE @a INT = 1; DELETE FROM stu"), /delete|Only SELECT/);
+    assert.throws(() => validateQueryWhitelist("DECLARE @a INT = 1; SELECT 1; SELECT 2"), /multiple statements/);
+    assert.throws(() => validateQueryWhitelist("DECLARE @s NVARCHAR(9) = 'x'; EXEC (@s)"), /Only SELECT|exec/);
+    assert.throws(() => validateQueryWhitelist("DECLARE @a INT = 1; DECLARE @b INT = 2"), /Only SELECT/);
+    assert.throws(() => validateQueryWhitelist("SELECT 1; DECLARE @a INT = 1; SELECT 2"), /multiple statements/);
+  });
   await t.test("allows a semicolon inside a string literal", () => {
     assert.doesNotThrow(() => validateQueryWhitelist("SELECT ';' AS sep FROM stu"));
   });
