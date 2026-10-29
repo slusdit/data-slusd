@@ -124,7 +124,7 @@ export default function ReportsSidebar({
                               {query.name}
                             </Link>
                           </TooltipTrigger>
-                          <TooltipContent side="right">
+                          <TooltipContent side="right" className="max-w-sm line-clamp-6">
                             {query.description || "No description"}
                           </TooltipContent>
                         </Tooltip>
@@ -180,7 +180,7 @@ export default function ReportsSidebar({
                                   {query.name}
                                 </Link>
                               </TooltipTrigger>
-                              <TooltipContent side="right">
+                              <TooltipContent side="right" className="max-w-sm line-clamp-6">
                                 {query.description || "No description"}
                               </TooltipContent>
                             </Tooltip>

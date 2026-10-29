@@ -1,20 +1,33 @@
 'use server'
-import { z } from "zod"
-import { editableQueryFields, type EditableQueryFields } from "@/lib/querySchemas"
+import { editableQueryFields, queryFormSchema, queryLabel, type EditableQueryFields, type QueryFormValues } from "@/lib/querySchemas"
 import { recordAudit } from "@/lib/auditLog"
-import { queryFormSchema } from "@/app/components/forms/AddQueryForm"
+import { AuthError } from "@/lib/authorization"
 import prisma from "@/lib/db"
 import { requireAdmin, requireQueryEditor } from "@/lib/authGuard"
 import { invalidateReportCatalogue } from "@/lib/reportCatalogue"
 import { queryCache } from "@/lib/queryCache"
 
-export async function addQuery(values: z.infer<typeof queryFormSchema>) {
-  const actor = await requireQueryEditor()
-  // values.query = values.query.split("\n").map((line) => "\"" + line + "\"").join("\n");
+// Returns { error } instead of throwing: a production build replaces a thrown
+// server-action message with React's opaque "Minified React error #441".
+export async function addQuery(input: QueryFormValues): Promise<{ ok: true } | { ok: false; error: string }> {
+  let actor
+  try {
+    actor = await requireQueryEditor()
+  } catch (error) {
+    if (error instanceof AuthError) return { ok: false, error: error.message }
+    throw error
+  }
+
+  const parsed = queryFormSchema.safeParse(input)
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid query details" }
+  const values = parsed.data
 
   try {
-    // Generate label from name (same logic as before)
-    const label = values.name.toLowerCase().replaceAll('(', "").replaceAll(')', "").replaceAll('%', "").replaceAll(/\s+/g, "-");
+    const label = queryLabel(values.name)
+    const clash = await prisma.query.findUnique({ where: { label }, select: { name: true } })
+    if (clash) return { ok: false, error: `A query named "${clash.name}" already exists; choose a different name.` }
+    const category = await prisma.queryCategory.findUnique({ where: { id: values.categoryId }, select: { id: true } })
+    if (!category) return { ok: false, error: "Pick a category from the list." }
 
     const result = await prisma.query.create({
       data: {
@@ -42,10 +55,14 @@ export async function addQuery(values: z.infer<typeof queryFormSchema>) {
       after: { name: result.name, label: result.label, categoryId: result.categoryId },
     })
 
-    return true
+    return { ok: true }
   } catch (error) {
     console.error("Error creating query:", error)
-    throw error
+    const code = (error as { code?: string } | null)?.code
+    if (code === "P2002") return { ok: false, error: "A query with that name already exists; choose a different name." }
+    if (code === "P2000") return { ok: false, error: "One of the fields is too long to save." }
+    if (code === "P2003") return { ok: false, error: "Pick a category from the list." }
+    return { ok: false, error: "The query could not be saved; the server log has the details." }
   }
 }
 

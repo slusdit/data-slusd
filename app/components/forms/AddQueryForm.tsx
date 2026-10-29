@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -30,6 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { addQuery } from "@/lib/formActions";
+import { QUERY_DESCRIPTION_MAX, QUERY_TEXT_MAX, queryFormSchema, type QueryFormValues } from "@/lib/querySchemas";
 import { Textarea } from "@/components/ui/textarea";
 import { useFormDialog } from "@/app/components/forms/FormDialog";
 
@@ -57,21 +57,6 @@ interface Props {
   dialogState?: () => void;
 }
 
-export const queryFormSchema = z.object({
-  query: z.string().min(1, { message: "Query must not be empty" }),
-  name: z.string().min(1, { message: "Query Title must not be empty" }),
-  createdBy: z.string().email({ message: "Must be a valid email" }),
-  description: z.string().min(1, { message: "Description must not be empty" }),
-  categoryId: z.string().min(1, { message: "Category must not be empty" }),
-  hiddenCols: z.string().optional(),
-  totalColumns: z.string().optional(),
-  chart: z.boolean(),
-  chartStackKey: z.boolean().optional(),
-  chartXKey: z.string().optional(),
-  chartYKey: z.string().optional(),
-  chartTypeKey: z.string().optional(),
-});
-
 export default function AddQueryForm({
   session,
   categories,
@@ -97,14 +82,14 @@ export default function AddQueryForm({
 
   //   {query, name, description, publicQuery, categoryId, id}  = pageValues
   // }
-  const form = useForm<z.infer<typeof queryFormSchema>>({
+  const form = useForm<QueryFormValues>({
     resolver: zodResolver(queryFormSchema),
     defaultValues: {
       query: query ?? "",
       createdBy: createdBy ?? "",
       name: name ?? "",
       description: description ?? "",
-      categoryId: categoryId ?? "0",
+      categoryId: categoryId ?? "",
       chart: chart ?? false,
       chartStackKey: chartStackKey ?? false,
       chartXKey: undefined,
@@ -121,7 +106,7 @@ export default function AddQueryForm({
 
   const { close } = useFormDialog();
 
-  async function onSubmit(values: z.infer<typeof queryFormSchema>) {
+  async function onSubmit(values: QueryFormValues) {
     // Basic client-side sanity check; deeper validation happens server-side.
     const trimmedQuery = values.query?.trim() ?? "";
     if (!trimmedQuery) {
@@ -134,14 +119,17 @@ export default function AddQueryForm({
     }
 
     try {
-      await addQuery(values);
+      const result = await addQuery(values);
+      if (!result.ok) {
+        toast.error(`Failed to create query: ${result.error}`);
+        return;
+      }
       form.reset();
       toast.success("Query inserted successfully");
       close(); // dismiss the dialog on success
     } catch (e) {
       console.error(e);
-      const errorMessage = e instanceof Error ? e.message : String(e);
-      toast.error(`Failed to create query: ${errorMessage}. Please ensure all required fields are filled and the SQL is valid.`);
+      toast.error("Failed to create query: the server could not be reached or hit an unexpected error.");
     }
   }
 
@@ -161,9 +149,9 @@ export default function AddQueryForm({
                   <FormItem>
                     <FormLabel>Query Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="..." type="text" {...field} />
+                      <Input placeholder="..." type="text" maxLength={QUERY_TEXT_MAX} {...field} />
                     </FormControl>
-                    <FormDescription>Simple query name</FormDescription>
+                    <FormDescription>Simple query name (must be unique)</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -182,7 +170,7 @@ export default function AddQueryForm({
                         defaultValue={field.value}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Test" />
+                          <SelectValue placeholder="Select a category" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectGroup>
@@ -211,11 +199,15 @@ export default function AddQueryForm({
                 <FormControl>
                   <Textarea
                     placeholder="..."
-                    className="resize-none"
+                    className="resize-y"
+                    maxLength={QUERY_DESCRIPTION_MAX}
                     {...field}
                   />
                 </FormControl>
-                <FormDescription>Detailed query description</FormDescription>
+                <FormDescription>
+                  Detailed query description, {(field.value?.length ?? 0).toLocaleString()}/
+                  {QUERY_DESCRIPTION_MAX.toLocaleString()} characters
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}

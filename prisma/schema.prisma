@@ -182,7 +182,7 @@ model Query {
   name           String
   label          String         @unique
   createdBy      String
-  description    String
+  description    String         @db.Text
   publicQuery    Boolean        @default(false)
   categoryId     String?
   hiddenCols     String         @default("")

@@ -110,7 +110,7 @@ export default function EditQueryDialog({
         onSaved(query.id, values);
         toast.success("Query updated");
       } else {
-        await addQuery({
+        const result = await addQuery({
           ...values,
           createdBy,
           hiddenCols: values.hiddenCols,
@@ -119,6 +119,10 @@ export default function EditQueryDialog({
           chartYKey: values.chartYKey || undefined,
           chartTypeKey: values.chartTypeKey || undefined,
         });
+        if (!result.ok) {
+          toast.error(result.error);
+          return;
+        }
         toast.success(`Created "${values.name}"`);
         router.refresh();
       }
