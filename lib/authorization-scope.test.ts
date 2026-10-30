@@ -10,6 +10,7 @@ import {
   userCanSeeCategory,
   userCanAccessAI,
   userCanUploadIep,
+  userCanUploadRfep,
 } from "./authorization-scope";
 
 test("resolveSchoolScope", async (t) => {
@@ -102,4 +103,11 @@ test("userCanAccessAI / userCanUploadIep", () => {
   assert.equal(userCanUploadIep({ roles: ["IEPUPLOAD"] }), true);
   assert.equal(userCanUploadIep({ admin: true }), true);
   assert.equal(userCanUploadIep({ roles: ["TEACHER"] }), false);
+});
+
+test("userCanUploadRfep", () => {
+  assert.equal(userCanUploadRfep({ roles: ["RFEPUPLOAD"] }), true);
+  assert.equal(userCanUploadRfep({ admin: true }), true);
+  assert.equal(userCanUploadRfep({ roles: ["IEPUPLOAD"] }), false);
+  assert.equal(userCanUploadRfep(null), false);
 });

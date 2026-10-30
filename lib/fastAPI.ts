@@ -3,12 +3,20 @@
 // the browser never sees credentials or tokens.
 
 export async function uploadIEP(files: File[]) {
+  return postFiles("/api/fastapi/upload", files);
+}
+
+export async function uploadRFEP(files: File[]) {
+  return postFiles("/api/fastapi/rfep-upload", files);
+}
+
+async function postFiles(url: string, files: File[]) {
   const formData = new FormData();
   files.forEach((file) => {
     formData.append("file", file);
   });
 
-  const response = await fetch("/api/fastapi/upload", {
+  const response = await fetch(url, {
     method: "POST",
     body: formData,
   });

@@ -52,6 +52,7 @@ export const SYSTEM_ROLES = [
   { role: "INTERVENTIONS", label: "Interventions", description: "May open student intervention tracking." },
   { role: "SPED", label: "Special Education", description: "May upload IEP documents through the SPED tools." },
   { role: "IEPUPLOAD", label: "IEP Upload", description: "May upload IEP documents." },
+  { role: "RFEPUPLOAD", label: "RFEP Upload", description: "May upload student RFEP (reclassification) documents." },
   { role: "TEACHER", label: "Teacher", description: "Aeries title role. Class rosters are synced at sign-in." },
   { role: "COUNSELOR", label: "Counselor", description: "Aeries title role." },
   { role: "NURSE", label: "Nurse", description: "Aeries title role." },

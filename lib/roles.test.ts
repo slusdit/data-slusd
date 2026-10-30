@@ -30,6 +30,7 @@ const CODE_CHECKED_ROLES = [
   "INTERVENTIONS",
   "SPED",
   "IEPUPLOAD",
+  "RFEPUPLOAD",
 ];
 
 // Targets of the Aeries title map in lib/signinSync.ts plus the default role.

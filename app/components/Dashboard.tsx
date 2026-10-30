@@ -26,6 +26,7 @@ import {
   MoreVertical,
   Download,
   ExternalLink,
+  Languages,
 } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import { useTheme } from "next-themes";
@@ -390,6 +391,16 @@ export default function Dashboard({ user, activeSchool, quickStats }: DashboardP
             bgColor: "bg-green-100 dark:bg-green-900",
             iconColor: "text-green-600 dark:text-green-400",
             hasAccess: isSuperAdmin || user?.roles?.includes("IEPUPLOAD"),
+          },
+          {
+            key: "rfep-upload",
+            href: "/el/uploadRFEP",
+            title: "RFEP Upload",
+            description: "Upload RFEP documents",
+            icon: Languages,
+            bgColor: "bg-teal-100 dark:bg-teal-900",
+            iconColor: "text-teal-600 dark:text-teal-400",
+            hasAccess: isSuperAdmin || user?.roles?.includes("RFEPUPLOAD"),
           },
           // {
           //   key: "custom-query",

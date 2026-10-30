@@ -73,5 +73,6 @@ export {
   userCanSeeCategory,
   userCanAccessAI,
   userCanUploadIep,
+  userCanUploadRfep,
 } from "./authorization-scope";
 export type { ScopedUser, RunnableQuery } from "./authorization-scope";

@@ -105,3 +105,10 @@ export function userCanUploadIep(user: AuthzUser): boolean {
   const roles = user.roles ?? [];
   return roles.includes("SPED") || roles.includes("IEPUPLOAD");
 }
+
+/** May upload student RFEP (reclassification) documents. */
+export function userCanUploadRfep(user: AuthzUser): boolean {
+  if (!user) return false;
+  if (userIsAdmin(user)) return true;
+  return (user.roles ?? []).includes("RFEPUPLOAD");
+}
