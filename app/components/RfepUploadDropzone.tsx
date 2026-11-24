@@ -51,7 +51,12 @@ const parseError = (error: unknown): RfepError => {
 const csvCell = (value: string) =>
   /[",\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
 
-const RfepDropzone = () => {
+interface RfepDropzoneProps {
+  /** Disable the drop area entirely (e.g. while the backend is unfinished). */
+  disabled?: boolean;
+}
+
+const RfepDropzone = ({ disabled = false }: RfepDropzoneProps) => {
   const [files, setFiles] = useState<File[] | undefined>();
   const [isUploading, setIsUploading] = useState(false);
   const [uploadResult, setUploadResult] = useState<UploadResponse | null>(null);
@@ -138,7 +143,12 @@ const RfepDropzone = () => {
 
   return (
     <div className="flex flex-col items-center justify-center w-full">
-      <div className="w-96 max-w-full border-primary/50 border-2 rounded-md mt-4 flex items-center justify-center">
+      <div
+        className={`w-96 max-w-full border-primary/50 border-2 rounded-md mt-4 flex items-center justify-center ${
+          disabled ? "opacity-50 cursor-not-allowed" : ""
+        }`}
+        aria-disabled={disabled}
+      >
         <Dropzone
           accept={{ "application/pdf": [] }}
           maxFiles={10}
@@ -147,7 +157,7 @@ const RfepDropzone = () => {
           onDrop={handleDrop}
           onError={(error) => setUploadError(error.message)}
           src={files}
-          disabled={isUploading}
+          disabled={disabled || isUploading}
         >
           <DropzoneEmptyState />
           <DropzoneContent />

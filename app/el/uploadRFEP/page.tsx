@@ -1,14 +1,26 @@
 import RfepDropzone from "@/app/components/RfepUploadDropzone";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Languages, Upload, AlertTriangle, Info } from "lucide-react";
+import { Languages, Upload, AlertTriangle, Info, Construction } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import BackButton from "@/app/components/BackButton";
+
+// Flip to false once the RFEP backend is working end to end.
+const UNDER_CONSTRUCTION = true;
 
 const UploadRFEP = () => {
   return (
     <div className="container mx-auto px-4 py-6 max-w-5xl">
       <BackButton />
+      {UNDER_CONSTRUCTION && (
+        <Alert className="mb-6 border-amber-400 bg-amber-50 text-amber-900 dark:border-amber-600 dark:bg-amber-950 dark:text-amber-200 [&>svg]:text-amber-600 dark:[&>svg]:text-amber-400">
+          <Construction className="h-4 w-4" />
+          <AlertDescription>
+            <strong>Under construction:</strong> RFEP uploads are temporarily disabled while this
+            tool is being finished. Please check back soon.
+          </AlertDescription>
+        </Alert>
+      )}
       {/* Page Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-4">
@@ -86,7 +98,7 @@ const UploadRFEP = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <RfepDropzone />
+          <RfepDropzone disabled={UNDER_CONSTRUCTION} />
         </CardContent>
       </Card>
 
